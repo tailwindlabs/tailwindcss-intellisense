@@ -1,0 +1,32 @@
+{
+  "name": "vscode-tailwind",
+  "displayName": "vscode-tailwind",
+  "description": "",
+  "version": "0.0.1",
+  "publisher": "bradlc",
+  "engines": {
+    "vscode": "^1.20.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "workspaceContains:**/{tailwind,tailwind.config,.tailwindrc}.js"
+  ],
+  "main": "./out/extension",
+  "contributes": {},
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/node": "^7.0.43",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6"
+  },
+  "dependencies": {
+    "dlv": "^1.1.1",
+    "tailwind-class-names": "^0.5.0"
+  }
+}
