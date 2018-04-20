@@ -6,15 +6,47 @@ const tailwindClassNames = require('tailwind-class-names')
 // const tailwindClassNames = require('/Users/brad/Code/tailwind-class-names/dist')
 const dlv = require('dlv')
 
+const CONFIG_GLOB = '{tailwind,tailwind.config,.tailwindrc}.js'
+
 export async function activate(context: vscode.ExtensionContext) {
+  let tw
+
+  try {
+    tw = await getTailwind()
+  } catch (err) {}
+
+  let intellisense = new TailwindIntellisense(tw)
+  context.subscriptions.push(intellisense)
+
+  let watcher = vscode.workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`)
+
+  watcher.onDidChange(onFileChange)
+  watcher.onDidCreate(onFileChange)
+  watcher.onDidDelete(onFileChange)
+
+  async function onFileChange(event) {
+    try {
+      tw = await getTailwind()
+    } catch (err) {
+      intellisense.dispose()
+      return
+    }
+
+    intellisense.reload(tw)
+  }
+}
+
+async function getTailwind() {
   if (!vscode.workspace.name) return
 
-  const configFile = await vscode.workspace.findFiles(
-    '{tailwind,tailwind.config,.tailwindrc}.js',
+  let files = await vscode.workspace.findFiles(
+    CONFIG_GLOB,
     '**/node_modules/**',
     1
   )
-  if (!configFile) return
+  if (!files) return null
+
+  let configPath = files[0].fsPath
 
   const plugin = join(
     vscode.workspace.workspaceFolders[0].uri.fsPath,
@@ -26,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   try {
     tw = await tailwindClassNames(
-      configFile[0].fsPath,
+      configPath,
       {
         tree: true,
         strings: true
@@ -34,61 +66,10 @@ export async function activate(context: vscode.ExtensionContext) {
       plugin
     )
   } catch (err) {
-    return
+    return null
   }
 
-  const separator = dlv(tw.config, 'options.separator', ':')
-
-  if (separator !== ':') return
-
-  const items = createItems(tw.classNames, separator, tw.config)
-
-  context.subscriptions.push(
-    createCompletionItemProvider(
-      items,
-      ['typescriptreact', 'javascript', 'javascriptreact'],
-      /\btw`([^`]*)$/,
-      ['`', ' ', separator],
-      tw.config
-    )
-  )
-
-  context.subscriptions.push(
-    createCompletionItemProvider(
-      items,
-      ['css', 'sass', 'scss'],
-      /@apply ([^;}]*)$/,
-      ['.', separator],
-      tw.config,
-      '.'
-    )
-  )
-
-  context.subscriptions.push(
-    createCompletionItemProvider(
-      items,
-      [
-        'html',
-        'jade',
-        'razor',
-        'php',
-        'blade',
-        'vue',
-        'twig',
-        'markdown',
-        'erb',
-        'handlebars',
-        'ejs',
-        // for jsx
-        'typescriptreact',
-        'javascript',
-        'javascriptreact'
-      ],
-      /\bclass(Name)?=["']([^"']*)/, // /\bclass(Name)?=(["'])(?!.*?\2)/
-      ["'", '"', ' ', separator],
-      tw.config
-    )
-  )
+  return tw
 }
 
 export function deactivate() {}
@@ -201,7 +182,6 @@ function createItems(classNames, separator, config, parent = '') {
         item
       }
     } else {
-      console.log(key)
       const item = new vscode.CompletionItem(
         `${key}${separator}`,
         vscode.CompletionItemKind.Constant
@@ -225,4 +205,83 @@ function createItems(classNames, separator, config, parent = '') {
   })
 
   return items
+}
+
+class TailwindIntellisense {
+  private _completionProviders: vscode.Disposable[]
+  private _disposable: vscode.Disposable
+  private _items
+
+  constructor(tailwind) {
+    if (tailwind) {
+      this.reload(tailwind)
+    }
+  }
+
+  public reload(tailwind) {
+    this.dispose()
+
+    const separator = dlv(tailwind.config, 'options.separator', ':')
+
+    if (separator !== ':') return
+
+    this._items = createItems(tailwind.classNames, separator, tailwind.config)
+
+    this._completionProviders = []
+
+    this._completionProviders.push(
+      createCompletionItemProvider(
+        this._items,
+        ['typescriptreact', 'javascript', 'javascriptreact'],
+        /\btw`([^`]*)$/,
+        ['`', ' ', separator],
+        tailwind.config
+      )
+    )
+
+    this._completionProviders.push(
+      createCompletionItemProvider(
+        this._items,
+        ['css', 'sass', 'scss'],
+        /@apply ([^;}]*)$/,
+        ['.', separator],
+        tailwind.config,
+        '.'
+      )
+    )
+
+    this._completionProviders.push(
+      createCompletionItemProvider(
+        this._items,
+        [
+          'html',
+          'jade',
+          'razor',
+          'php',
+          'blade',
+          'vue',
+          'twig',
+          'markdown',
+          'erb',
+          'handlebars',
+          'ejs',
+          // for jsx
+          'typescriptreact',
+          'javascript',
+          'javascriptreact'
+        ],
+        /\bclass(Name)?=["']([^"']*)/, // /\bclass(Name)?=(["'])(?!.*?\2)/
+        ["'", '"', ' ', separator],
+        tailwind.config
+      )
+    )
+
+    this._disposable = vscode.Disposable.from(...this._completionProviders)
+  }
+
+  dispose() {
+    if (this._disposable) {
+      this._disposable.dispose()
+    }
+  }
 }
