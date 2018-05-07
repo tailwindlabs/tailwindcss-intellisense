@@ -1,18 +1,27 @@
 {
   "name": "vscode-tailwind",
-  "displayName": "vscode-tailwind",
-  "description": "",
-  "version": "0.0.1",
+  "displayName": "Tailwind CSS IntelliSense",
+  "description": "Tailwind CSS class name completion",
+  "version": "0.1.0",
   "publisher": "bradlc",
   "engines": {
     "vscode": "^1.20.0"
   },
   "categories": ["Other"],
+  "keywords": [
+    "tailwind",
+    "tailwindcss",
+    "css",
+    "vscode",
+    "intellisense",
+    "autocomplete"
+  ],
   "activationEvents": [
     "workspaceContains:**/{tailwind,tailwind.config,.tailwindrc}.js"
   ],
   "main": "./out/extension",
   "contributes": {},
+  "preview": true,
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -28,5 +37,14 @@
   "dependencies": {
     "dlv": "^1.1.1",
     "tailwind-class-names": "^0.5.0"
+  },
+  "homepage": "https://github.com/bradlc/vscode-tailwind/blob/master/README.md",
+  "bugs": {
+    "url": "https://github.com/bradlc/vscode-tailwind/issues",
+    "email": "bradlc41@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bradlc/vscode-tailwind.git"
   }
 }
