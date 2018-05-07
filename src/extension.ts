@@ -117,7 +117,11 @@ function createCompletionItemProvider(
             }
           }
 
-          return prefixItems(items, str, prefix)
+          if (str.indexOf(separator) === -1) {
+            return prefixItems(items, str, prefix)
+          }
+
+          return []
         }
 
         return []
