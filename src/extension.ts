@@ -244,13 +244,15 @@ function createConfigItems(config) {
 }
 
 class TailwindIntellisense {
-  private _completionProviders: vscode.Disposable[]
+  private _providers: vscode.Disposable[]
   private _disposable: vscode.Disposable
+  private _tailwind
   private _items
   private _configItems
 
   constructor(tailwind) {
     if (tailwind) {
+      this._tailwind = tailwind
       this.reload(tailwind)
     }
   }
@@ -265,9 +267,9 @@ class TailwindIntellisense {
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
     this._configItems = createConfigItems(tailwind.config)
 
-    this._completionProviders = []
+    this._providers = []
 
-    this._completionProviders.push(
+    this._providers.push(
       createCompletionItemProvider(
         this._items,
         ['typescriptreact', 'javascript', 'javascriptreact'],
@@ -277,7 +279,7 @@ class TailwindIntellisense {
       )
     )
 
-    this._completionProviders.push(
+    this._providers.push(
       createCompletionItemProvider(
         this._items,
         ['css', 'sass', 'scss'],
@@ -288,7 +290,7 @@ class TailwindIntellisense {
       )
     )
 
-    this._completionProviders.push(
+    this._providers.push(
       createCompletionItemProvider(
         this._items,
         [
@@ -314,7 +316,7 @@ class TailwindIntellisense {
       )
     )
 
-    this._completionProviders.push(
+    this._providers.push(
       vscode.languages.registerCompletionItemProvider(
         ['css', 'sass', 'scss'],
         {
@@ -355,7 +357,90 @@ class TailwindIntellisense {
       )
     )
 
-    this._disposable = vscode.Disposable.from(...this._completionProviders)
+    this._providers.push(
+      vscode.languages.registerHoverProvider('html', {
+        provideHover: (document, position, token) => {
+          const range1: vscode.Range = new vscode.Range(
+            new vscode.Position(Math.max(position.line - 5, 0), 0),
+            position
+          )
+          const text1: string = document.getText(range1)
+
+          if (!/class=['"][^'"]*$/.test(text1)) return
+
+          const range2: vscode.Range = new vscode.Range(
+            new vscode.Position(Math.max(position.line - 5, 0), 0),
+            position.with({ line: position.line + 1 })
+          )
+          const text2: string = document.getText(range2)
+
+          let str = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
+          let matches = str.match(/\bclass(Name)?=["']([^"']*)/)
+
+          if (matches && matches[2]) {
+            let className = matches[2].split(' ').pop()
+            let parts = className.split(':')
+
+            if (typeof dlv(this._tailwind.classNames, parts) === 'string') {
+              let base = parts.pop()
+              let selector = `.${escapeClassName(className)}`
+
+              if (parts.indexOf('hover') !== -1) {
+                selector += ':hover'
+              } else if (parts.indexOf('focus') !== -1) {
+                selector += ':focus'
+              } else if (parts.indexOf('active') !== -1) {
+                selector += ':active'
+              } else if (parts.indexOf('group-hover') !== -1) {
+                selector = `.group:hover ${selector}`
+              }
+
+              let hoverStr = new vscode.MarkdownString()
+              let css = this._tailwind.classNames[base]
+              let m = css.match(/^(::?[a-z-]+) {(.*?)}/)
+              if (m) {
+                selector += m[1]
+                css = m[2].trim()
+              }
+              css = css.replace(/([;{]) /g, '$1\n').replace(/^/gm, '  ')
+              let code = `${selector} {\n${css}\n}`
+              let screens = dlv(this._tailwind.config, 'screens', {})
+
+              Object.keys(screens).some(screen => {
+                if (parts.indexOf(screen) !== -1) {
+                  code = `@media (min-width: ${
+                    screens[screen]
+                  }) {\n${code.replace(/^/gm, '  ')}\n}`
+                  return true
+                }
+                return false
+              })
+              hoverStr.appendCodeblock(code, 'css')
+
+              let hoverRange = new vscode.Range(
+                new vscode.Position(
+                  position.line,
+                  position.character +
+                    str.length -
+                    text1.length -
+                    className.length
+                ),
+                new vscode.Position(
+                  position.line,
+                  position.character + str.length - text1.length
+                )
+              )
+
+              return new vscode.Hover(hoverStr, hoverRange)
+            }
+          }
+
+          return null
+        }
+      })
+    )
+
+    this._disposable = vscode.Disposable.from(...this._providers)
   }
 
   dispose() {
@@ -385,4 +470,8 @@ function stringifyArray(arr: Array<any>): string {
       return acc
     }, [])
     .join(', ')
+}
+
+function escapeClassName(className) {
+  return className.replace(/([^A-Za-z0-9\-])/g, '\\$1')
 }
