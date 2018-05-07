@@ -5,6 +5,7 @@ import { join } from 'path'
 const tailwindClassNames = require('tailwind-class-names')
 // const tailwindClassNames = require('/Users/brad/Code/tailwind-class-names/dist')
 const dlv = require('dlv')
+const Color = require('color')
 
 const CONFIG_GLOB = '{tailwind,tailwind.config,.tailwindrc}.js'
 
@@ -181,6 +182,12 @@ function createItems(classNames, separator, config, parent = '') {
         } else {
           item.detail = classNames[key]
         }
+
+        let color = getColorFromDecl(item.detail)
+        if (color) {
+          item.kind = vscode.CompletionItemKind.Color
+          item.documentation = color
+        }
       }
       items[key] = {
         item
@@ -228,6 +235,12 @@ function createConfigItems(config) {
       item.sortText = naturalExpand(i.toString())
       if (typeof config[key] === 'string' || typeof config[key] === 'number') {
         item.detail = config[key]
+
+        let color = getColorFromValue(item.detail)
+        if (color) {
+          item.kind = vscode.CompletionItemKind.Color
+          item.documentation = color
+        }
       } else if (Array.isArray(config[key])) {
         item.detail = stringifyArray(config[key])
       }
@@ -478,4 +491,27 @@ function stringifyArray(arr: Array<any>): string {
 
 function escapeClassName(className) {
   return className.replace(/([^A-Za-z0-9\-])/g, '\\$1')
+}
+
+function getColorFromDecl(cssStr: string) {
+  let matches = cssStr.match(/: ([^;]+);/g)
+  if (matches === null || matches.length > 1) return
+
+  let color = matches[0].slice(2, -1).trim()
+
+  return getColorFromValue(color)
+}
+
+function getColorFromValue(value: string) {
+  if (value === 'transparent') {
+    return 'rgba(0, 0, 0, 0.01)'
+  }
+
+  try {
+    let parsed = Color(value)
+    if (parsed.valpha === 0) return 'rgba(0, 0, 0, 0.01)'
+    return parsed.rgb().string()
+  } catch (err) {
+    return
+  }
 }
