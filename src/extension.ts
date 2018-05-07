@@ -143,7 +143,7 @@ function prefixItems(items, str, prefix) {
 }
 
 function depthOf(obj) {
-  if (typeof obj !== 'object') return 0
+  if (typeof obj !== 'object' || Array.isArray(obj)) return 0
 
   let level = 1
 
@@ -207,10 +207,47 @@ function createItems(classNames, separator, config, parent = '') {
   return items
 }
 
+function createConfigItems(config) {
+  let items = {}
+  let i = 0
+
+  Object.keys(config).forEach(key => {
+    let item = new vscode.CompletionItem(
+      key,
+      vscode.CompletionItemKind.Constant
+    )
+
+    if (depthOf(config[key]) === 0) {
+      if (key === 'plugins') return
+
+      item.filterText = item.insertText = `.${key}`
+      item.sortText = naturalExpand(i.toString())
+      if (typeof config[key] === 'string' || typeof config[key] === 'number') {
+        item.detail = config[key]
+      } else if (Array.isArray(config[key])) {
+        item.detail = stringifyArray(config[key])
+      }
+      items[key] = { item }
+    } else {
+      if (key === 'modules' || key === 'options') return
+
+      item.filterText = item.insertText = `${key}.`
+      item.sortText = naturalExpand(i.toString())
+      item.command = { title: '', command: 'editor.action.triggerSuggest' }
+      items[key] = { item, children: createConfigItems(config[key]) }
+    }
+
+    i++
+  })
+
+  return items
+}
+
 class TailwindIntellisense {
   private _completionProviders: vscode.Disposable[]
   private _disposable: vscode.Disposable
   private _items
+  private _configItems
 
   constructor(tailwind) {
     if (tailwind) {
@@ -226,6 +263,7 @@ class TailwindIntellisense {
     if (separator !== ':') return
 
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
+    this._configItems = createConfigItems(tailwind.config)
 
     this._completionProviders = []
 
@@ -276,6 +314,47 @@ class TailwindIntellisense {
       )
     )
 
+    this._completionProviders.push(
+      vscode.languages.registerCompletionItemProvider(
+        ['css', 'sass', 'scss'],
+        {
+          provideCompletionItems: (
+            document: vscode.TextDocument,
+            position: vscode.Position
+          ): vscode.CompletionItem[] => {
+            const range: vscode.Range = new vscode.Range(
+              new vscode.Position(Math.max(position.line - 5, 0), 0),
+              position
+            )
+            const text: string = document.getText(range)
+
+            let matches = text.match(/config\(["']([^"']*)$/)
+
+            if (!matches) return []
+
+            let objPath =
+              matches[1]
+                .replace(/\.[^.]*$/, '')
+                .replace('.', '.children.')
+                .trim() + '.children'
+            let foo = dlv(this._configItems, objPath)
+
+            if (foo) {
+              console.log(Object.keys(foo).map(x => foo[x].item))
+              return Object.keys(foo).map(x => foo[x].item)
+            }
+
+            return Object.keys(this._configItems).map(
+              x => this._configItems[x].item
+            )
+          }
+        },
+        "'",
+        '"',
+        '.'
+      )
+    )
+
     this._disposable = vscode.Disposable.from(...this._completionProviders)
   }
 
@@ -284,4 +363,26 @@ class TailwindIntellisense {
       this._disposable.dispose()
     }
   }
+}
+
+function pad(n) {
+  return ('00000000' + n).substr(-8)
+}
+
+function naturalExpand(a: string) {
+  return a.replace(/\d+/g, pad)
+}
+
+function stringifyArray(arr: Array<any>): string {
+  return arr
+    .reduce((acc, curr) => {
+      let str = curr.toString()
+      if (str.includes(' ')) {
+        acc.push(`"${str.replace(/\s\s+/g, ' ')}"`)
+      } else {
+        acc.push(str)
+      }
+      return acc
+    }, [])
+    .join(', ')
 }
