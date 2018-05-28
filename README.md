@@ -1,1 +1,1 @@
-# vscode-tailwind
+# vscode-tailwindcss
