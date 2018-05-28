@@ -3,7 +3,6 @@
 import * as vscode from 'vscode'
 import { join } from 'path'
 const tailwindClassNames = require('tailwind-class-names')
-// const tailwindClassNames = require('/Users/brad/Code/tailwind-class-names/dist')
 const dlv = require('dlv')
 const Color = require('color')
 
