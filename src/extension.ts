@@ -48,7 +48,7 @@ async function getTailwind() {
 
   let configPath = files[0].fsPath
 
-  const plugin = join(
+  const pluginPath = join(
     vscode.workspace.workspaceFolders[0].uri.fsPath,
     'node_modules',
     'tailwindcss'
@@ -57,14 +57,12 @@ async function getTailwind() {
   let tw
 
   try {
-    tw = await tailwindClassNames(
+    tw = await tailwindClassNames({
       configPath,
-      {
-        tree: true,
-        strings: true
-      },
-      plugin
-    )
+      pluginPath,
+      tree: true,
+      strings: true
+    })
   } catch (err) {
     return null
   }
