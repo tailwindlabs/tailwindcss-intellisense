@@ -7,7 +7,7 @@ const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
 
-const CONFIG_GLOB = '{tailwind,tailwind.config,.tailwindrc}.js'
+const CONFIG_GLOB = '{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
 
 export async function activate(context: vscode.ExtensionContext) {
   let tw
