@@ -326,7 +326,7 @@ class TailwindIntellisense {
           'javascript',
           'javascriptreact'
         ],
-        /\bclass(Name)?=["']([^"']*)/, // /\bclass(Name)?=(["'])(?!.*?\2)/
+        /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
         ["'", '"', ' ', separator],
         tailwind.config
       )
@@ -391,7 +391,7 @@ class TailwindIntellisense {
           const text2: string = document.getText(range2)
 
           let str = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
-          let matches = str.match(/\bclass(Name)?=["']([^"']*)/)
+          let matches = str.match(/\bclass(Name)?=["']([^"']*)$/)
 
           if (matches && matches[2]) {
             let className = matches[2].split(' ').pop()
