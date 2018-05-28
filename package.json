@@ -12,9 +12,9 @@
     "tailwind",
     "tailwindcss",
     "css",
-    "vscode",
     "intellisense",
-    "autocomplete"
+    "autocomplete",
+    "vscode"
   ],
   "activationEvents": [
     "workspaceContains:**/{tailwind,tailwind.config,.tailwindrc}.js"
