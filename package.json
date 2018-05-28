@@ -1,5 +1,5 @@
 {
-  "name": "vscode-tailwind",
+  "name": "vscode-tailwindcss",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Tailwind CSS class name completion",
   "version": "0.1.0",
@@ -39,13 +39,14 @@
     "dlv": "^1.1.1",
     "tailwind-class-names": "^0.5.0"
   },
-  "homepage": "https://github.com/bradlc/vscode-tailwind/blob/master/README.md",
+  "homepage":
+    "https://github.com/bradlc/vscode-tailwindcss/blob/master/README.md",
   "bugs": {
-    "url": "https://github.com/bradlc/vscode-tailwind/issues",
+    "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
     "email": "bradlc41@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bradlc/vscode-tailwind.git"
+    "url": "https://github.com/bradlc/vscode-tailwindcss.git"
   }
 }
