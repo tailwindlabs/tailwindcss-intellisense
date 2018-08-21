@@ -2,6 +2,8 @@
 
 > Tailwind CSS class name completion for VS Code
 
+**[Get it from the VS Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
+
 ## HTML
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/src/img/html.gif" alt="HTML autocompletion" width="750">
