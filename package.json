@@ -7,7 +7,9 @@
   "engines": {
     "vscode": "^1.20.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "keywords": [
     "tailwind",
     "tailwindcss",
@@ -39,8 +41,9 @@
     "dlv": "^1.1.1",
     "tailwind-class-names": "0.6.0"
   },
-  "homepage":
-    "https://github.com/bradlc/vscode-tailwindcss/blob/master/README.md",
+  "author": "Brad Cornes <bradlc41@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/bradlc/vscode-tailwindcss/blob/master/README.md",
   "bugs": {
     "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
     "email": "bradlc41@gmail.com"
