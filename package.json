@@ -10,6 +10,9 @@
   "categories": [
     "Other"
   ],
+  "galleryBanner": {
+    "color": "#44a8b3"
+  },
   "keywords": [
     "tailwind",
     "tailwindcss",
