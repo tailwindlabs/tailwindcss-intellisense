@@ -22,6 +22,7 @@ const HTML_TYPES = [
   'handlebars',
   'ejs',
   'nunjucks',
+  'haml',
   // for jsx
   ...JS_TYPES
 ]
