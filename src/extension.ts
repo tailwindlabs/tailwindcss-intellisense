@@ -380,7 +380,7 @@ class TailwindIntellisense {
           )
           const text1: string = document.getText(range1)
 
-          if (!/class=['"][^'"]*$/.test(text1)) return
+          if (!/\bclass(Name)?=['"][^'"]*$/.test(text1)) return
 
           const range2: vscode.Range = new vscode.Range(
             new vscode.Position(Math.max(position.line - 5, 0), 0),
