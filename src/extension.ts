@@ -7,6 +7,24 @@ const dlv = require('dlv')
 const Color = require('color')
 
 const CONFIG_GLOB = '{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
+const JS_TYPES = ['typescriptreact', 'javascript', 'javascriptreact']
+const HTML_TYPES = [
+  'html',
+  'jade',
+  'razor',
+  'php',
+  'blade',
+  'vue',
+  'twig',
+  'markdown',
+  'erb',
+  'handlebars',
+  'ejs',
+  'nunjucks',
+  // for jsx
+  ...JS_TYPES
+]
+const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'postcss', 'stylus']
 
 export async function activate(context: vscode.ExtensionContext) {
   let tw
@@ -286,7 +304,7 @@ class TailwindIntellisense {
     this._providers.push(
       createCompletionItemProvider(
         this._items,
-        ['typescriptreact', 'javascript', 'javascriptreact'],
+        JS_TYPES,
         /\btw`([^`]*)$/,
         ['`', ' ', separator],
         tailwind.config
@@ -296,7 +314,7 @@ class TailwindIntellisense {
     this._providers.push(
       createCompletionItemProvider(
         this._items,
-        ['css', 'sass', 'scss'],
+        CSS_TYPES,
         /@apply ([^;}]*)$/,
         ['.', separator],
         tailwind.config,
@@ -307,23 +325,7 @@ class TailwindIntellisense {
     this._providers.push(
       createCompletionItemProvider(
         this._items,
-        [
-          'html',
-          'jade',
-          'razor',
-          'php',
-          'blade',
-          'vue',
-          'twig',
-          'markdown',
-          'erb',
-          'handlebars',
-          'ejs',
-          // for jsx
-          'typescriptreact',
-          'javascript',
-          'javascriptreact'
-        ],
+        HTML_TYPES,
         /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
         ["'", '"', ' ', separator],
         tailwind.config
@@ -372,7 +374,7 @@ class TailwindIntellisense {
     )
 
     this._providers.push(
-      vscode.languages.registerHoverProvider('html', {
+      vscode.languages.registerHoverProvider(HTML_TYPES, {
         provideHover: (document, position, token) => {
           const range1: vscode.Range = new vscode.Range(
             new vscode.Position(Math.max(position.line - 5, 0), 0),
