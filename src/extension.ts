@@ -342,7 +342,7 @@ class TailwindIntellisense {
 
     this._providers.push(
       vscode.languages.registerCompletionItemProvider(
-        ['css', 'sass', 'scss'],
+        CSS_TYPES,
         {
           provideCompletionItems: (
             document: vscode.TextDocument,
