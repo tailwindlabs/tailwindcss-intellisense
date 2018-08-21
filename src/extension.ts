@@ -130,7 +130,7 @@ function createCompletionItemProvider(
           // match emmet style syntax
           // e.g. .flex.items-center
           let lineText = text.split('\n').pop()
-          matches = lineText.match(/^\s*[a-z-]*\.(.*?)$/i)
+          matches = lineText.match(/\.([^()#>*^ \[\]=$@{}]*)$/i)
           let parts = matches[matches.length - 1].split('.')
           str = parts[parts.length - 1]
         }
