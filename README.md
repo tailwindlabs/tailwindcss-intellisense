@@ -1,4 +1,4 @@
-# Tailwind IntelliSense
+# Tailwind CSS IntelliSense
 
 > Tailwind CSS class name completion for VS Code
 
