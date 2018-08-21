@@ -1,7 +1,7 @@
 'use strict'
 
 import * as vscode from 'vscode'
-import { join } from 'path'
+import { join, dirname } from 'path'
 const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
@@ -64,15 +64,20 @@ async function getTailwind() {
     '**/node_modules/**',
     1
   )
-  if (!files) return null
+
+  if (!files.length) return null
 
   let configPath = files[0].fsPath
 
-  const pluginPath = join(
-    vscode.workspace.workspaceFolders[0].uri.fsPath,
-    'node_modules',
-    'tailwindcss'
+  let tailwindPackage = await vscode.workspace.findFiles(
+    '**/node_modules/tailwindcss/package.json',
+    null,
+    1
   )
+
+  if (!tailwindPackage.length) return null
+
+  let pluginPath = dirname(tailwindPackage[0].fsPath)
 
   let tw
 
