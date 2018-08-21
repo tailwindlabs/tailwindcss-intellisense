@@ -181,6 +181,7 @@ function depthOf(obj) {
 
 function createItems(classNames, separator, config, parent = '') {
   let items = {}
+  let i = 0
 
   Object.keys(classNames).forEach(key => {
     if (depthOf(classNames[key]) === 0) {
@@ -188,6 +189,7 @@ function createItems(classNames, separator, config, parent = '') {
         key,
         vscode.CompletionItemKind.Constant
       )
+      item.sortText = naturalExpand(i.toString())
       if (key !== 'container' && key !== 'group') {
         if (parent) {
           item.detail = classNames[key].replace(
@@ -207,26 +209,32 @@ function createItems(classNames, separator, config, parent = '') {
       items[key] = {
         item
       }
+      i++
     } else {
       const item = new vscode.CompletionItem(
         `${key}${separator}`,
         vscode.CompletionItemKind.Constant
       )
+      item.sortText = naturalExpand(i.toString())
       item.command = { title: '', command: 'editor.action.triggerSuggest' }
       if (key === 'hover' || key === 'focus' || key === 'active') {
         item.detail = `:${key}`
+        item.sortText = `a${item.sortText}`
       } else if (key === 'group-hover') {
         item.detail = '.group:hover &'
+        item.sortText = `a${item.sortText}`
       } else if (
         config.screens &&
         Object.keys(config.screens).indexOf(key) !== -1
       ) {
         item.detail = `@media (min-width: ${config.screens[key]})`
+        item.sortText = `m${item.sortText}`
       }
       items[key] = {
         item,
         children: createItems(classNames[key], separator, config, key)
       }
+      i++
     }
   })
 
