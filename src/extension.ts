@@ -6,7 +6,8 @@ const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
 
-const CONFIG_GLOB = '{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
+const CONFIG_GLOB =
+  '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
 const JS_TYPES = ['typescriptreact', 'javascript', 'javascriptreact']
 const HTML_TYPES = [
   'html',
@@ -36,7 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
   let intellisense = new TailwindIntellisense(tw)
   context.subscriptions.push(intellisense)
 
-  let watcher = vscode.workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`)
+  let watcher = vscode.workspace.createFileSystemWatcher(CONFIG_GLOB)
 
   watcher.onDidChange(onFileChange)
   watcher.onDidCreate(onFileChange)
