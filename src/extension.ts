@@ -112,21 +112,30 @@ function createCompletionItemProvider(
         document: vscode.TextDocument,
         position: vscode.Position
       ): vscode.CompletionItem[] {
+        const separator = config.options.separator || ':'
+        let str
+
         const range: vscode.Range = new vscode.Range(
           new vscode.Position(Math.max(position.line - 5, 0), 0),
           position
         )
         const text: string = document.getText(range)
 
-        let p = prefix
-        const separator = config.options.separator || ':'
-
-        const matches = text.match(regex)
+        let matches = text.match(regex)
 
         if (matches) {
-          const parts = matches[matches.length - 1].split(' ')
-          const str = parts[parts.length - 1]
+          let parts = matches[matches.length - 1].split(' ')
+          str = parts[parts.length - 1]
+        } else if (languages.indexOf('html') !== -1) {
+          // match emmet style syntax
+          // e.g. .flex.items-center
+          let lineText = text.split('\n').pop()
+          matches = lineText.match(/^\s*[a-z-]*\.(.*?)$/i)
+          let parts = matches[matches.length - 1].split('.')
+          str = parts[parts.length - 1]
+        }
 
+        if (typeof str !== 'undefined') {
           const pth = str
             .replace(new RegExp(`${separator}`, 'g'), '.')
             .replace(/\.$/, '')
@@ -342,7 +351,7 @@ class TailwindIntellisense {
         this._items,
         HTML_TYPES,
         /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
-        ["'", '"', ' ', separator],
+        ["'", '"', ' ', '.', separator],
         tailwind.config
       )
     )
