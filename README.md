@@ -1,6 +1,6 @@
 # Tailwind IntelliSense
 
-> Autocompletion for Tailwind CSS utilities
+> Tailwind CSS class name completion for VS Code
 
 ## HTML
 
