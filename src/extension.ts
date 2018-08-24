@@ -180,6 +180,59 @@ function createCompletionItemProvider({
   )
 }
 
+function createConfigItemProvider({
+  languages,
+  items,
+  enable = () => true
+}: {
+  languages?: string[]
+  items?: vscode.CompletionItem[]
+  enable?: (text: string) => boolean
+} = {}) {
+  return vscode.languages.registerCompletionItemProvider(
+    languages,
+    {
+      provideCompletionItems: (
+        document: vscode.TextDocument,
+        position: vscode.Position
+      ): vscode.CompletionItem[] => {
+        const range: vscode.Range = new vscode.Range(
+          new vscode.Position(0, 0),
+          position
+        )
+        const text: string = document.getText(range)
+
+        if (!enable(text)) return []
+
+        let lines = text.split(/[\n\r]/)
+
+        let matches = lines
+          .slice(-5)
+          .join('\n')
+          .match(/config\(["']([^"']*)$/)
+
+        if (!matches) return []
+
+        let objPath =
+          matches[1]
+            .replace(/\.[^.]*$/, '')
+            .replace('.', '.children.')
+            .trim() + '.children'
+        let foo = dlv(items, objPath)
+
+        if (foo) {
+          return Object.keys(foo).map(x => foo[x].item)
+        }
+
+        return Object.keys(items).map(x => items[x].item)
+      }
+    },
+    "'",
+    '"',
+    '.'
+  )
+}
+
 function prefixItems(items, str, prefix) {
   const addPrefix =
     typeof prefix !== 'undefined' && prefix !== '' && str === prefix
@@ -274,7 +327,7 @@ function createItems(classNames, separator, config, parent = '') {
   return items
 }
 
-function createConfigItems(config) {
+function createConfigItems(config, prefix = '') {
   let items = {}
   let i = 0
 
@@ -287,7 +340,7 @@ function createConfigItems(config) {
     if (depthOf(config[key]) === 0) {
       if (key === 'plugins') return
 
-      item.filterText = item.insertText = `.${key}`
+      item.filterText = item.insertText = `${prefix}${key}`
       item.sortText = naturalExpand(i.toString())
       if (typeof config[key] === 'string' || typeof config[key] === 'number') {
         item.detail = config[key]
@@ -307,7 +360,7 @@ function createConfigItems(config) {
       item.filterText = item.insertText = `${key}.`
       item.sortText = naturalExpand(i.toString())
       item.command = { title: '', command: 'editor.action.triggerSuggest' }
-      items[key] = { item, children: createConfigItems(config[key]) }
+      items[key] = { item, children: createConfigItems(config[key], prefix) }
     }
 
     i++
@@ -322,6 +375,7 @@ class TailwindIntellisense {
   private _tailwind
   private _items
   private _configItems
+  private _prefixedConfigItems
 
   constructor(tailwind) {
     if (tailwind) {
@@ -339,6 +393,7 @@ class TailwindIntellisense {
 
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
     this._configItems = createConfigItems(tailwind.config)
+    this._prefixedConfigItems = createConfigItems(tailwind.config, '.')
 
     this._providers = []
 
@@ -415,44 +470,26 @@ class TailwindIntellisense {
     )
 
     this._providers.push(
-      vscode.languages.registerCompletionItemProvider(
-        CSS_TYPES,
-        {
-          provideCompletionItems: (
-            document: vscode.TextDocument,
-            position: vscode.Position
-          ): vscode.CompletionItem[] => {
-            const range: vscode.Range = new vscode.Range(
-              new vscode.Position(Math.max(position.line - 5, 0), 0),
-              position
-            )
-            const text: string = document.getText(range)
+      createConfigItemProvider({
+        languages: CSS_TYPES,
+        items: this._prefixedConfigItems
+      })
+    )
 
-            let matches = text.match(/config\(["']([^"']*)$/)
-
-            if (!matches) return []
-
-            let objPath =
-              matches[1]
-                .replace(/\.[^.]*$/, '')
-                .replace('.', '.children.')
-                .trim() + '.children'
-            let foo = dlv(this._configItems, objPath)
-
-            if (foo) {
-              console.log(Object.keys(foo).map(x => foo[x].item))
-              return Object.keys(foo).map(x => foo[x].item)
-            }
-
-            return Object.keys(this._configItems).map(
-              x => this._configItems[x].item
-            )
+    this._providers.push(
+      createConfigItemProvider({
+        languages: ['vue'],
+        items: this._configItems,
+        enable: text => {
+          if (
+            text.indexOf('<style') !== -1 &&
+            text.indexOf('</style>') === -1
+          ) {
+            return true
           }
-        },
-        "'",
-        '"',
-        '.'
-      )
+          return false
+        }
+      })
     )
 
     this._providers.push(
