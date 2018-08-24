@@ -52,6 +52,11 @@ export async function activate(context: vscode.ExtensionContext) {
       return
     }
 
+    if (!tw) {
+      intellisense.dispose()
+      return
+    }
+
     intellisense.reload(tw)
   }
 }
@@ -132,8 +137,10 @@ function createCompletionItemProvider(
           // e.g. .flex.items-center
           let lineText = text.split('\n').pop()
           matches = lineText.match(/\.([^()#>*^ \[\]=$@{}]*)$/i)
-          let parts = matches[matches.length - 1].split('.')
-          str = parts[parts.length - 1]
+          if (matches) {
+            let parts = matches[matches.length - 1].split('.')
+            str = parts[parts.length - 1]
+          }
         }
 
         if (typeof str !== 'undefined') {
