@@ -68,6 +68,7 @@ async function getTailwind() {
   if (!files.length) return null
 
   let configPath = files[0].fsPath
+  delete require.cache[configPath]
 
   let tailwindPackage = await vscode.workspace.findFiles(
     '**/node_modules/tailwindcss/package.json',
