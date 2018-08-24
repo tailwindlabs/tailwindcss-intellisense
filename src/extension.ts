@@ -15,7 +15,6 @@ const HTML_TYPES = [
   'razor',
   'php',
   'blade',
-  'vue',
   'twig',
   'markdown',
   'erb',
@@ -97,14 +96,25 @@ async function getTailwind() {
 
 export function deactivate() {}
 
-function createCompletionItemProvider(
+function createCompletionItemProvider({
   items,
-  languages: string[],
-  regex: RegExp,
-  triggerCharacters: string[],
+  languages,
+  regex,
+  triggerCharacters,
   config,
-  prefix = ''
-): vscode.Disposable {
+  prefix = '',
+  enable = () => true,
+  emmet = false
+}: {
+  items?
+  languages?: string[]
+  regex?: RegExp
+  triggerCharacters?: string[]
+  config?
+  prefix?: string
+  enable?: (text: string) => boolean
+  emmet?: boolean
+} = {}): vscode.Disposable {
   return vscode.languages.registerCompletionItemProvider(
     languages,
     {
@@ -116,21 +126,28 @@ function createCompletionItemProvider(
         let str
 
         const range: vscode.Range = new vscode.Range(
-          new vscode.Position(Math.max(position.line - 5, 0), 0),
+          new vscode.Position(0, 0),
           position
         )
         const text: string = document.getText(range)
 
-        let matches = text.match(regex)
+        if (!enable(text)) return []
+
+        let lines = text.split(/[\n\r]/)
+
+        let matches = lines
+          .slice(-5)
+          .join('\n')
+          .match(regex)
 
         if (matches) {
           let parts = matches[matches.length - 1].split(' ')
           str = parts[parts.length - 1]
-        } else if (languages.indexOf('html') !== -1) {
+        } else if (emmet) {
           // match emmet style syntax
           // e.g. .flex.items-center
-          let lineText = text.split('\n').pop()
-          matches = lineText.match(/\.([^()#>*^ \[\]=$@{}]*)$/i)
+          let currentLine = lines[lines.length - 1]
+          matches = currentLine.match(/\.([^()#>*^ \[\]=$@{}]*)$/i)
           let parts = matches[matches.length - 1].split('.')
           str = parts[parts.length - 1]
         }
@@ -326,34 +343,75 @@ class TailwindIntellisense {
     this._providers = []
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        JS_TYPES,
-        /\btw`([^`]*)$/,
-        ['`', ' ', separator],
-        tailwind.config
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: JS_TYPES,
+        regex: /\btw`([^`]*)$/,
+        triggerCharacters: ['`', ' ', separator],
+        config: tailwind.config
+      })
     )
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        CSS_TYPES,
-        /@apply ([^;}]*)$/,
-        ['.', separator],
-        tailwind.config,
-        '.'
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: CSS_TYPES,
+        regex: /@apply ([^;}]*)$/,
+        triggerCharacters: ['.', separator],
+        config: tailwind.config,
+        prefix: '.'
+      })
     )
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        HTML_TYPES,
-        /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
-        ["'", '"', ' ', '.', separator],
-        tailwind.config
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: HTML_TYPES,
+        regex: /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
+        triggerCharacters: ["'", '"', ' ', '.', separator],
+        config: tailwind.config,
+        emmet: true
+      })
+    )
+
+    // Vue.js
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        languages: ['vue'],
+        regex: /\bclass(Name)?=["']([^"']*)$/,
+        enable: text => {
+          if (
+            (text.indexOf('<template') !== -1 &&
+              text.indexOf('</template>') === -1) ||
+            (text.indexOf('<script') !== -1 && text.indexOf('</script>') === -1)
+          ) {
+            return true
+          }
+          return false
+        },
+        triggerCharacters: ["'", '"', ' ', '.', separator],
+        config: tailwind.config,
+        emmet: true
+      })
+    )
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        languages: ['vue'],
+        regex: /@apply ([^;}]*)$/,
+        triggerCharacters: ['.', separator],
+        config: tailwind.config,
+        enable: text => {
+          if (
+            text.indexOf('<style') !== -1 &&
+            text.indexOf('</style>') === -1
+          ) {
+            return true
+          }
+          return false
+        }
+      })
     )
 
     this._providers.push(
