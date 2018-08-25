@@ -1,7 +1,8 @@
 'use strict'
 
 import * as vscode from 'vscode'
-import { join, dirname } from 'path'
+import { dirname } from 'path'
+const htmlElements = require('./htmlElements.js')
 const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
@@ -15,16 +16,13 @@ const HTML_TYPES = [
   'razor',
   'php',
   'blade',
-  'vue',
   'twig',
   'markdown',
   'erb',
   'handlebars',
   'ejs',
   'nunjucks',
-  'haml',
-  // for jsx
-  ...JS_TYPES
+  'haml'
 ]
 const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'postcss', 'stylus']
 
@@ -103,14 +101,25 @@ async function getTailwind() {
 
 export function deactivate() {}
 
-function createCompletionItemProvider(
+function createCompletionItemProvider({
   items,
-  languages: string[],
-  regex: RegExp,
-  triggerCharacters: string[],
+  languages,
+  regex,
+  triggerCharacters,
   config,
-  prefix = ''
-): vscode.Disposable {
+  prefix = '',
+  enable = () => true,
+  emmet = false
+}: {
+  items?
+  languages?: string[]
+  regex?: RegExp
+  triggerCharacters?: string[]
+  config?
+  prefix?: string
+  enable?: (text: string) => boolean
+  emmet?: boolean
+} = {}): vscode.Disposable {
   return vscode.languages.registerCompletionItemProvider(
     languages,
     {
@@ -122,21 +131,38 @@ function createCompletionItemProvider(
         let str
 
         const range: vscode.Range = new vscode.Range(
-          new vscode.Position(Math.max(position.line - 5, 0), 0),
+          new vscode.Position(0, 0),
           position
         )
         const text: string = document.getText(range)
 
-        let matches = text.match(regex)
+        if (!enable(text)) return []
+
+        let lines = text.split(/[\n\r]/)
+
+        let matches = lines
+          .slice(-5)
+          .join('\n')
+          .match(regex)
 
         if (matches) {
           let parts = matches[matches.length - 1].split(' ')
           str = parts[parts.length - 1]
-        } else if (languages.indexOf('html') !== -1) {
+        } else if (emmet) {
           // match emmet style syntax
           // e.g. .flex.items-center
-          let lineText = text.split('\n').pop()
-          matches = lineText.match(/\.([^()#>*^ \[\]=$@{}]*)$/i)
+          let currentLine = lines[lines.length - 1]
+          let currentWord = currentLine.split(' ').pop()
+          matches = currentWord.match(/^\.([^.()#>*^ \[\]=$@{}]*)$/)
+          if (!matches) {
+            matches = currentWord.match(
+              new RegExp(
+                `^([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9]*-[a-z0-9-]+|${htmlElements.join(
+                  '|'
+                )}).*?\\.([^.()#>*^ \\[\\]=$@{}]*)$`
+              )
+            )
+          }
           if (matches) {
             let parts = matches[matches.length - 1].split('.')
             str = parts[parts.length - 1]
@@ -168,6 +194,59 @@ function createCompletionItemProvider(
       }
     },
     ...triggerCharacters
+  )
+}
+
+function createConfigItemProvider({
+  languages,
+  items,
+  enable = () => true
+}: {
+  languages?: string[]
+  items?: vscode.CompletionItem[]
+  enable?: (text: string) => boolean
+} = {}) {
+  return vscode.languages.registerCompletionItemProvider(
+    languages,
+    {
+      provideCompletionItems: (
+        document: vscode.TextDocument,
+        position: vscode.Position
+      ): vscode.CompletionItem[] => {
+        const range: vscode.Range = new vscode.Range(
+          new vscode.Position(0, 0),
+          position
+        )
+        const text: string = document.getText(range)
+
+        if (!enable(text)) return []
+
+        let lines = text.split(/[\n\r]/)
+
+        let matches = lines
+          .slice(-5)
+          .join('\n')
+          .match(/config\(["']([^"']*)$/)
+
+        if (!matches) return []
+
+        let objPath =
+          matches[1]
+            .replace(/\.[^.]*$/, '')
+            .replace('.', '.children.')
+            .trim() + '.children'
+        let foo = dlv(items, objPath)
+
+        if (foo) {
+          return Object.keys(foo).map(x => foo[x].item)
+        }
+
+        return Object.keys(items).map(x => items[x].item)
+      }
+    },
+    "'",
+    '"',
+    '.'
   )
 }
 
@@ -265,7 +344,7 @@ function createItems(classNames, separator, config, parent = '') {
   return items
 }
 
-function createConfigItems(config) {
+function createConfigItems(config, prefix = '') {
   let items = {}
   let i = 0
 
@@ -278,7 +357,7 @@ function createConfigItems(config) {
     if (depthOf(config[key]) === 0) {
       if (key === 'plugins') return
 
-      item.filterText = item.insertText = `.${key}`
+      item.filterText = item.insertText = `${prefix}${key}`
       item.sortText = naturalExpand(i.toString())
       if (typeof config[key] === 'string' || typeof config[key] === 'number') {
         item.detail = config[key]
@@ -298,7 +377,7 @@ function createConfigItems(config) {
       item.filterText = item.insertText = `${key}.`
       item.sortText = naturalExpand(i.toString())
       item.command = { title: '', command: 'editor.action.triggerSuggest' }
-      items[key] = { item, children: createConfigItems(config[key]) }
+      items[key] = { item, children: createConfigItems(config[key], prefix) }
     }
 
     i++
@@ -313,6 +392,7 @@ class TailwindIntellisense {
   private _tailwind
   private _items
   private _configItems
+  private _prefixedConfigItems
 
   constructor(tailwind) {
     if (tailwind) {
@@ -330,162 +410,235 @@ class TailwindIntellisense {
 
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
     this._configItems = createConfigItems(tailwind.config)
+    this._prefixedConfigItems = createConfigItems(tailwind.config, '.')
 
     this._providers = []
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        JS_TYPES,
-        /\btw`([^`]*)$/,
-        ['`', ' ', separator],
-        tailwind.config
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: JS_TYPES,
+        regex: /\btw`([^`]*)$/,
+        triggerCharacters: ['`', ' ', separator],
+        config: tailwind.config
+      })
     )
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        CSS_TYPES,
-        /@apply ([^;}]*)$/,
-        ['.', separator],
-        tailwind.config,
-        '.'
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: CSS_TYPES,
+        regex: /@apply ([^;}]*)$/,
+        triggerCharacters: ['.', separator],
+        config: tailwind.config,
+        prefix: '.'
+      })
     )
 
     this._providers.push(
-      createCompletionItemProvider(
-        this._items,
-        HTML_TYPES,
-        /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
-        ["'", '"', ' ', '.', separator],
-        tailwind.config
-      )
+      createCompletionItemProvider({
+        items: this._items,
+        languages: HTML_TYPES,
+        regex: /\bclass=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
+        triggerCharacters: ["'", '"', ' ', '.', separator],
+        config: tailwind.config,
+        emmet: true
+      })
     )
 
     this._providers.push(
-      vscode.languages.registerCompletionItemProvider(
-        CSS_TYPES,
+      createCompletionItemProvider({
+        items: this._items,
+        languages: JS_TYPES,
+        regex: /\bclass(Name)?=["']([^"']*)$/, // /\bclass(Name)?=(["'])(?!.*?\2)/
+        triggerCharacters: ["'", '"', ' ', separator]
+          .concat([
+            Object.keys(
+              vscode.workspace.getConfiguration('emmet.includeLanguages')
+            ).indexOf('javascript') !== -1 && '.'
+          ])
+          .filter(Boolean),
+        config: tailwind.config,
+        emmet:
+          Object.keys(
+            vscode.workspace.getConfiguration('emmet.includeLanguages')
+          ).indexOf('javascript') !== -1
+      })
+    )
+
+    // Vue.js
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        languages: ['vue'],
+        regex: /\bclass=["']([^"']*)$/,
+        enable: text => {
+          if (
+            text.indexOf('<template') !== -1 &&
+            text.indexOf('</template>') === -1
+          ) {
+            return true
+          }
+          return false
+        },
+        triggerCharacters: ["'", '"', ' ', separator]
+          .concat([
+            Object.keys(
+              vscode.workspace.getConfiguration('emmet.includeLanguages')
+            ).indexOf('vue-html') !== -1 && '.'
+          ])
+          .filter(Boolean),
+        config: tailwind.config,
+        emmet:
+          Object.keys(
+            vscode.workspace.getConfiguration('emmet.includeLanguages')
+          ).indexOf('vue-html') !== -1
+      })
+    )
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        languages: ['vue'],
+        regex: /\bclass=["']([^"']*)$/,
+        enable: text => {
+          if (
+            text.indexOf('<script') !== -1 &&
+            text.indexOf('</script>') === -1
+          ) {
+            return true
+          }
+          return false
+        },
+        triggerCharacters: ["'", '"', ' ', separator],
+        config: tailwind.config
+      })
+    )
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        languages: ['vue'],
+        regex: /@apply ([^;}]*)$/,
+        triggerCharacters: ['.', separator],
+        config: tailwind.config,
+        enable: text => {
+          if (
+            text.indexOf('<style') !== -1 &&
+            text.indexOf('</style>') === -1
+          ) {
+            return true
+          }
+          return false
+        }
+      })
+    )
+
+    this._providers.push(
+      createConfigItemProvider({
+        languages: CSS_TYPES,
+        items: this._prefixedConfigItems
+      })
+    )
+
+    this._providers.push(
+      createConfigItemProvider({
+        languages: ['vue'],
+        items: this._configItems,
+        enable: text => {
+          if (
+            text.indexOf('<style') !== -1 &&
+            text.indexOf('</style>') === -1
+          ) {
+            return true
+          }
+          return false
+        }
+      })
+    )
+
+    this._providers.push(
+      vscode.languages.registerHoverProvider(
+        [...HTML_TYPES, ...JS_TYPES, 'vue'],
         {
-          provideCompletionItems: (
-            document: vscode.TextDocument,
-            position: vscode.Position
-          ): vscode.CompletionItem[] => {
-            const range: vscode.Range = new vscode.Range(
+          provideHover: (document, position, token) => {
+            const range1: vscode.Range = new vscode.Range(
               new vscode.Position(Math.max(position.line - 5, 0), 0),
               position
             )
-            const text: string = document.getText(range)
+            const text1: string = document.getText(range1)
 
-            let matches = text.match(/config\(["']([^"']*)$/)
+            if (!/\bclass(Name)?=['"][^'"]*$/.test(text1)) return
 
-            if (!matches) return []
-
-            let objPath =
-              matches[1]
-                .replace(/\.[^.]*$/, '')
-                .replace('.', '.children.')
-                .trim() + '.children'
-            let foo = dlv(this._configItems, objPath)
-
-            if (foo) {
-              console.log(Object.keys(foo).map(x => foo[x].item))
-              return Object.keys(foo).map(x => foo[x].item)
-            }
-
-            return Object.keys(this._configItems).map(
-              x => this._configItems[x].item
+            const range2: vscode.Range = new vscode.Range(
+              new vscode.Position(Math.max(position.line - 5, 0), 0),
+              position.with({ line: position.line + 1 })
             )
-          }
-        },
-        "'",
-        '"',
-        '.'
-      )
-    )
+            const text2: string = document.getText(range2)
 
-    this._providers.push(
-      vscode.languages.registerHoverProvider(HTML_TYPES, {
-        provideHover: (document, position, token) => {
-          const range1: vscode.Range = new vscode.Range(
-            new vscode.Position(Math.max(position.line - 5, 0), 0),
-            position
-          )
-          const text1: string = document.getText(range1)
+            let str = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
+            let matches = str.match(/\bclass(Name)?=["']([^"']*)$/)
 
-          if (!/\bclass(Name)?=['"][^'"]*$/.test(text1)) return
+            if (matches && matches[2]) {
+              let className = matches[2].split(' ').pop()
+              let parts = className.split(':')
 
-          const range2: vscode.Range = new vscode.Range(
-            new vscode.Position(Math.max(position.line - 5, 0), 0),
-            position.with({ line: position.line + 1 })
-          )
-          const text2: string = document.getText(range2)
+              if (typeof dlv(this._tailwind.classNames, parts) === 'string') {
+                let base = parts.pop()
+                let selector = `.${escapeClassName(className)}`
 
-          let str = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
-          let matches = str.match(/\bclass(Name)?=["']([^"']*)$/)
-
-          if (matches && matches[2]) {
-            let className = matches[2].split(' ').pop()
-            let parts = className.split(':')
-
-            if (typeof dlv(this._tailwind.classNames, parts) === 'string') {
-              let base = parts.pop()
-              let selector = `.${escapeClassName(className)}`
-
-              if (parts.indexOf('hover') !== -1) {
-                selector += ':hover'
-              } else if (parts.indexOf('focus') !== -1) {
-                selector += ':focus'
-              } else if (parts.indexOf('active') !== -1) {
-                selector += ':active'
-              } else if (parts.indexOf('group-hover') !== -1) {
-                selector = `.group:hover ${selector}`
-              }
-
-              let hoverStr = new vscode.MarkdownString()
-              let css = this._tailwind.classNames[base]
-              let m = css.match(/^(::?[a-z-]+) {(.*?)}/)
-              if (m) {
-                selector += m[1]
-                css = m[2].trim()
-              }
-              css = css.replace(/([;{]) /g, '$1\n').replace(/^/gm, '  ')
-              let code = `${selector} {\n${css}\n}`
-              let screens = dlv(this._tailwind.config, 'screens', {})
-
-              Object.keys(screens).some(screen => {
-                if (parts.indexOf(screen) !== -1) {
-                  code = `@media (min-width: ${
-                    screens[screen]
-                  }) {\n${code.replace(/^/gm, '  ')}\n}`
-                  return true
+                if (parts.indexOf('hover') !== -1) {
+                  selector += ':hover'
+                } else if (parts.indexOf('focus') !== -1) {
+                  selector += ':focus'
+                } else if (parts.indexOf('active') !== -1) {
+                  selector += ':active'
+                } else if (parts.indexOf('group-hover') !== -1) {
+                  selector = `.group:hover ${selector}`
                 }
-                return false
-              })
-              hoverStr.appendCodeblock(code, 'css')
 
-              let hoverRange = new vscode.Range(
-                new vscode.Position(
-                  position.line,
-                  position.character +
-                    str.length -
-                    text1.length -
-                    className.length
-                ),
-                new vscode.Position(
-                  position.line,
-                  position.character + str.length - text1.length
+                let hoverStr = new vscode.MarkdownString()
+                let css = this._tailwind.classNames[base]
+                let m = css.match(/^(::?[a-z-]+) {(.*?)}/)
+                if (m) {
+                  selector += m[1]
+                  css = m[2].trim()
+                }
+                css = css.replace(/([;{]) /g, '$1\n').replace(/^/gm, '  ')
+                let code = `${selector} {\n${css}\n}`
+                let screens = dlv(this._tailwind.config, 'screens', {})
+
+                Object.keys(screens).some(screen => {
+                  if (parts.indexOf(screen) !== -1) {
+                    code = `@media (min-width: ${
+                      screens[screen]
+                    }) {\n${code.replace(/^/gm, '  ')}\n}`
+                    return true
+                  }
+                  return false
+                })
+                hoverStr.appendCodeblock(code, 'css')
+
+                let hoverRange = new vscode.Range(
+                  new vscode.Position(
+                    position.line,
+                    position.character +
+                      str.length -
+                      text1.length -
+                      className.length
+                  ),
+                  new vscode.Position(
+                    position.line,
+                    position.character + str.length - text1.length
+                  )
                 )
-              )
 
-              return new vscode.Hover(hoverStr, hoverRange)
+                return new vscode.Hover(hoverStr, hoverRange)
+              }
             }
-          }
 
-          return null
+            return null
+          }
         }
-      })
+      )
     )
 
     this._disposable = vscode.Disposable.from(...this._providers)
