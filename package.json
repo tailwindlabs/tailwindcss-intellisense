@@ -2,7 +2,7 @@
   "name": "vscode-tailwindcss",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Tailwind CSS class name completion",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "bradlc",
   "engines": {
     "vscode": "^1.20.0"
