@@ -24,7 +24,7 @@ const HTML_TYPES = [
   'nunjucks',
   'haml'
 ]
-const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'postcss', 'stylus']
+const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'stylus']
 
 export async function activate(context: vscode.ExtensionContext) {
   let tw
@@ -103,15 +103,16 @@ export function deactivate() {}
 
 function createCompletionItemProvider({
   items,
+  prefixedItems,
   languages,
   regex,
   triggerCharacters,
   config,
-  prefix = '',
   enable = () => true,
   emmet = false
 }: {
   items?
+  prefixedItems?
   languages?: string[]
   regex?: RegExp
   triggerCharacters?: string[]
@@ -177,14 +178,21 @@ function createCompletionItemProvider({
             .replace(/\./g, '.children.')
 
           if (pth !== '') {
-            const itms = dlv(items, pth)
+            const itms =
+              prefixedItems &&
+              str.indexOf('.') === 0 &&
+              str.indexOf(separator) === -1
+                ? dlv(prefixedItems, pth)
+                : dlv(items, pth)
             if (itms) {
-              return prefixItems(itms.children, str, prefix)
+              return Object.keys(itms.children).map(x => itms.children[x].item)
             }
           }
 
           if (str.indexOf(separator) === -1) {
-            return prefixItems(items, str, prefix)
+            return prefixedItems && str.indexOf('.') === 0
+              ? Object.keys(prefixedItems).map(x => prefixedItems[x].item)
+              : Object.keys(items).map(x => items[x].item)
           }
 
           return []
@@ -282,7 +290,7 @@ function depthOf(obj) {
   return level
 }
 
-function createItems(classNames, separator, config, parent = '') {
+function createItems(classNames, separator, config, prefix = '', parent = '') {
   let items = {}
   let i = 0
 
@@ -292,6 +300,7 @@ function createItems(classNames, separator, config, parent = '') {
         key,
         vscode.CompletionItemKind.Constant
       )
+      item.filterText = item.insertText = `${prefix}${key}`
       item.sortText = naturalExpand(i.toString())
       if (key !== 'container' && key !== 'group') {
         if (parent) {
@@ -318,6 +327,7 @@ function createItems(classNames, separator, config, parent = '') {
         `${key}${separator}`,
         vscode.CompletionItemKind.Constant
       )
+      item.filterText = item.insertText = `${prefix}${key}${separator}`
       item.sortText = naturalExpand(i.toString())
       item.command = { title: '', command: 'editor.action.triggerSuggest' }
       if (key === 'hover' || key === 'focus' || key === 'active') {
@@ -335,7 +345,7 @@ function createItems(classNames, separator, config, parent = '') {
       }
       items[key] = {
         item,
-        children: createItems(classNames[key], separator, config, key)
+        children: createItems(classNames[key], separator, config, prefix, key)
       }
       i++
     }
@@ -391,6 +401,7 @@ class TailwindIntellisense {
   private _disposable: vscode.Disposable
   private _tailwind
   private _items
+  private _prefixedItems
   private _configItems
   private _prefixedConfigItems
 
@@ -409,6 +420,12 @@ class TailwindIntellisense {
     if (separator !== ':') return
 
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
+    this._prefixedItems = createItems(
+      tailwind.classNames,
+      separator,
+      tailwind.config,
+      '.'
+    )
     this._configItems = createConfigItems(tailwind.config)
     this._prefixedConfigItems = createConfigItems(tailwind.config, '.')
 
@@ -427,11 +444,21 @@ class TailwindIntellisense {
     this._providers.push(
       createCompletionItemProvider({
         items: this._items,
+        prefixedItems: this._prefixedItems,
         languages: CSS_TYPES,
         regex: /@apply ([^;}]*)$/,
         triggerCharacters: ['.', separator],
-        config: tailwind.config,
-        prefix: '.'
+        config: tailwind.config
+      })
+    )
+    this._providers.push(
+      createCompletionItemProvider({
+        items: this._items,
+        prefixedItems: this._items,
+        languages: ['postcss'],
+        regex: /@apply ([^;}]*)$/,
+        triggerCharacters: ['.', separator],
+        config: tailwind.config
       })
     )
 
@@ -536,6 +563,12 @@ class TailwindIntellisense {
       createConfigItemProvider({
         languages: CSS_TYPES,
         items: this._prefixedConfigItems
+      })
+    )
+    this._providers.push(
+      createConfigItemProvider({
+        languages: ['postcss'],
+        items: this._configItems
       })
     )
 
