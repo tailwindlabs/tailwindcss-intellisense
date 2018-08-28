@@ -674,6 +674,14 @@ class TailwindIntellisense {
       )
     )
 
+    // @screen
+    this._providers.push(
+      createScreenCompletionItemProvider({
+        config: tailwind.config,
+        languages: [...CSS_TYPES, 'postcss', 'vue']
+      })
+    )
+
     this._disposable = vscode.Disposable.from(...this._providers)
   }
 
@@ -731,4 +739,52 @@ function getColorFromValue(value: string) {
   } catch (err) {
     return
   }
+}
+
+function createScreenCompletionItemProvider({
+  languages,
+  config
+}): vscode.Disposable {
+  return vscode.languages.registerCompletionItemProvider(
+    languages,
+    {
+      provideCompletionItems: (
+        document: vscode.TextDocument,
+        position: vscode.Position
+      ): vscode.CompletionItem[] => {
+        let range: vscode.Range = new vscode.Range(
+          new vscode.Position(0, 0),
+          position
+        )
+        let text: string = document.getText(range)
+
+        if (
+          document.languageId === 'vue' &&
+          !(text.indexOf('<style') !== -1 && text.indexOf('</style>') === -1)
+        )
+          return []
+
+        let line = text.split(/[\n\r]/).pop()
+
+        if (/@screen $/.test(line)) {
+          return Object.keys(dlv(config, 'screens', {})).map((screen, i) => {
+            let item = new vscode.CompletionItem(
+              screen,
+              vscode.CompletionItemKind.Constant
+            )
+            item.insertText = new vscode.SnippetString(`${screen} {\n\t$0\n}`)
+            item.detail =
+              typeof config.screens[screen] === 'string'
+                ? config.screens[screen]
+                : ''
+            item.sortText = naturalExpand(i.toString())
+            return item
+          })
+        }
+
+        return []
+      }
+    },
+    ' '
+  )
 }
