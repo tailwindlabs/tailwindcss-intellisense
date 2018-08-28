@@ -25,7 +25,20 @@
     "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js"
   ],
   "main": "./out/extension",
-  "contributes": {},
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "source.css.tailwind",
+        "path": "./syntaxes/tailwind.tmLanguage.json",
+        "injectTo": [
+          "source.css",
+          "source.css.scss",
+          "source.css.less",
+          "source.css.postcss"
+        ]
+      }
+    ]
+  },
   "preview": true,
   "scripts": {
     "vscode:prepublish": "npm run compile",
