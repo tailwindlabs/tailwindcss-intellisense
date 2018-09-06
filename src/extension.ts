@@ -158,9 +158,9 @@ function createCompletionItemProvider({
           if (!matches) {
             matches = currentWord.match(
               new RegExp(
-                `^([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9]*-[a-z0-9-]+|${htmlElements.join(
-                  '|'
-                )}).*?\\.([^.()#>*^ \\[\\]=$@{}]*)$`
+                `^([A-Z][a-zA-Z0-9]*|[a-z][a-z0-9]*-[a-z0-9-]+|${htmlElements
+                  .map(x => `${x}\\b`)
+                  .join('|')}).*?\\.([^.()#>*^ \\[\\]=$@{}]*)$`
               )
             )
           }
