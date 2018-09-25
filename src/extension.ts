@@ -370,7 +370,7 @@ function createConfigItems(config, prefix = '') {
       item.filterText = item.insertText = `${prefix}${key}`
       item.sortText = naturalExpand(i.toString())
       if (typeof config[key] === 'string' || typeof config[key] === 'number') {
-        item.detail = config[key]
+        item.detail = config[key].toString()
 
         let color = getColorFromValue(item.detail)
         if (color) {
