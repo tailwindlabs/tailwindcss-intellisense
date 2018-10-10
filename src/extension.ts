@@ -486,16 +486,30 @@ class TailwindIntellisense {
                       : strEnd
                   })
                 }
-                let toFade = classNames
-                  .filter(x => {
-                    return !(
-                      position.isAfterOrEqual(x.start) &&
-                      position.isBeforeOrEqual(x.end)
-                    )
-                  })
-                  .map(x => ({ range: new vscode.Range(x.start, x.end) }))
-                vscode.window.activeTextEditor.setDecorations(fade, toFade)
-                return true
+                let activeClassName = classNames.filter(x => {
+                  return (
+                    position.isAfterOrEqual(x.start) &&
+                    position.isBeforeOrEqual(x.end)
+                  )
+                })
+                if (
+                  activeClassName.length &&
+                  activeClassName[0].className.trim() !== ''
+                ) {
+                  let parts = activeClassName[0].className.split(':')
+                  if (parts.length === 1) return false
+                  let toFade = classNames
+                    .filter(x => {
+                      return !(
+                        position.isAfterOrEqual(x.start) &&
+                        position.isBeforeOrEqual(x.end)
+                      )
+                    })
+                    .filter(x => x.className.indexOf(`${parts[0]}:`) !== 0)
+                    .map(x => ({ range: new vscode.Range(x.start, x.end) }))
+                  vscode.window.activeTextEditor.setDecorations(fade, toFade)
+                  return true
+                }
               }
               return false
             })
