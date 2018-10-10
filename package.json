@@ -55,6 +55,7 @@
   "dependencies": {
     "color": "^3.0.0",
     "dlv": "^1.1.1",
+    "line-column": "^1.0.2",
     "tailwind-class-names": "0.6.0"
   },
   "author": "Brad Cornes <bradlc41@gmail.com>",

@@ -6,6 +6,7 @@ const htmlElements = require('./htmlElements.js')
 const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
+const lineColumn = require('line-column')
 
 const CONFIG_GLOB =
   '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
@@ -409,6 +410,102 @@ class TailwindIntellisense {
     if (tailwind) {
       this._tailwind = tailwind
       this.reload(tailwind)
+
+      let fade = vscode.window.createTextEditorDecorationType({
+        opacity: '0.5'
+      })
+
+      this._providers.push(
+        vscode.window.onDidChangeTextEditorSelection(e => {
+          if (
+            e.selections.length &&
+            e.selections[0].start.line === e.selections[0].end.line &&
+            e.selections[0].start.character === e.selections[0].end.character
+          ) {
+            let position = e.selections[0].start
+            let searchStart = new vscode.Position(
+              Math.max(position.line - 5, 0),
+              0
+            )
+            let searchEnd = new vscode.Position(position.line + 5, 0) // TODO: cap to end of file?
+            let range: vscode.Range = new vscode.Range(searchStart, searchEnd)
+            let text: string = e.textEditor.document.getText(range)
+
+            let regex = /(class=")([^"]+)"/g
+            let matches
+            let indexes = []
+            let strings = []
+
+            while ((matches = regex.exec(text)) !== null) {
+              strings.push(matches[2])
+              indexes.push(
+                regex.lastIndex - matches[0].length + matches[1].length
+              )
+            }
+
+            let addedDecoration = strings.some((str, i) => {
+              let { line, col } = lineColumn(text).fromIndex(indexes[i])
+
+              let strStart = searchStart.translate({
+                characterDelta: col - 1,
+                lineDelta: line - 1
+              })
+              let { line: line1, col: col1 } = lineColumn(text).fromIndex(
+                indexes[i] + str.length
+              )
+              let strEnd = searchStart.translate({
+                characterDelta: col1 - 1,
+                lineDelta: line1 - 1
+              })
+              if (
+                position.isAfterOrEqual(strStart) &&
+                position.isBeforeOrEqual(strEnd)
+              ) {
+                let classNames = []
+                regex = /\S+/g
+                while ((matches = regex.exec(str)) !== null) {
+                  // strings.push(matches[2])
+                  // indexes.push(
+                  //   regex.lastIndex - matches[0].length + matches[1].length
+                  // )
+                  let startIndex = regex.lastIndex - matches[0].length
+                  let endIndex = startIndex + matches[0].length
+                  let foo = lineColumn(str).fromIndex(startIndex)
+                  let bar = lineColumn(str).fromIndex(endIndex)
+                  classNames.push({
+                    className: matches[0],
+                    start: strStart.translate({
+                      lineDelta: foo.line - 1,
+                      characterDelta: foo.col - 1
+                    }),
+                    end: bar
+                      ? strStart.translate({
+                          lineDelta: bar.line - 1,
+                          characterDelta: bar.col - 1
+                        })
+                      : strEnd
+                  })
+                }
+                let toFade = classNames
+                  .filter(x => {
+                    return !(
+                      position.isAfterOrEqual(x.start) &&
+                      position.isBeforeOrEqual(x.end)
+                    )
+                  })
+                  .map(x => ({ range: new vscode.Range(x.start, x.end) }))
+                vscode.window.activeTextEditor.setDecorations(fade, toFade)
+                return true
+              }
+              return false
+            })
+
+            if (!addedDecoration) {
+              vscode.window.activeTextEditor.setDecorations(fade, [])
+            }
+          }
+        })
+      )
     }
   }
 
