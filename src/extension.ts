@@ -432,6 +432,81 @@ class TailwindIntellisense {
     this._providers = []
 
     this._providers.push(
+      vscode.commands.registerCommand(
+        'tailwind.refactor-class-names',
+        (document, range) => {
+          let original = document.getText(range)
+
+          let order = [
+            'hover',
+            'group-hover',
+            'active',
+            'focus',
+            'sm',
+            'md',
+            'lg',
+            'xl'
+          ]
+
+          let next = original
+            .split(/\s+/)
+            .sort((a, b) => {
+              let aPrefix = a.match(/^([^:]+):/)
+              let bPrefix = b.match(/^([^:]+):/)
+              if (!aPrefix && bPrefix) return -1
+              if (!bPrefix && aPrefix) return 1
+              if (!aPrefix && !bPrefix) return 0
+              // at this point they both have a prefix
+              aPrefix = aPrefix[1]
+              bPrefix = bPrefix[1]
+
+              if (aPrefix === bPrefix) return 0
+
+              if (
+                order.indexOf(aPrefix) === -1 &&
+                order.indexOf(bPrefix) === -1
+              )
+                return 0
+              if (
+                order.indexOf(aPrefix) !== -1 &&
+                order.indexOf(bPrefix) === -1
+              )
+                return -1
+              if (
+                order.indexOf(bPrefix) !== -1 &&
+                order.indexOf(aPrefix) === -1
+              )
+                return 1
+
+              return order.indexOf(aPrefix) - order.indexOf(bPrefix)
+            })
+            .join(' ')
+
+          let edit = new vscode.WorkspaceEdit()
+          edit.replace(document.uri, range, next)
+          vscode.workspace.applyEdit(edit)
+        }
+      )
+    )
+
+    this._providers.push(
+      vscode.languages.registerCodeActionsProvider(HTML_TYPES, {
+        provideCodeActions(document, range) {
+          let action = new vscode.CodeAction(
+            'Arrange class names',
+            vscode.CodeActionKind.Refactor
+          )
+          action.command = {
+            title: 'refactor-class-names',
+            command: 'tailwind.refactor-class-names',
+            arguments: [document, range]
+          }
+          return [action]
+        }
+      })
+    )
+
+    this._providers.push(
       createCompletionItemProvider({
         items: this._items,
         languages: JS_TYPES,
