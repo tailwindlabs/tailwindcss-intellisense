@@ -499,15 +499,7 @@ class TailwindIntellisense {
         items: this._items,
         languages: ['vue'],
         regex: /\bclass=["']([^"']*)$/,
-        enable: text => {
-          if (
-            text.indexOf('<template') !== -1 &&
-            text.indexOf('</template>') === -1
-          ) {
-            return true
-          }
-          return false
-        },
+        enable: isWithinTemplate,
         triggerCharacters: ["'", '"', ' ', separator]
           .concat([
             Object.keys(
@@ -787,4 +779,14 @@ function createScreenCompletionItemProvider({
     },
     ' '
   )
+}
+
+function isWithinTemplate(text: string) {
+  let regex = /(<\/?template\b)/g
+  let match
+  let d = 0
+  while ((match = regex.exec(text)) !== null) {
+    d += match[0] === '</template' ? -1 : 1
+  }
+  return d !== 0
 }
