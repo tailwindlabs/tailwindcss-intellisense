@@ -4,6 +4,8 @@
 
 **[Get it from the VS Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html.gif" alt="HTML autocompletion" width="750">
+
 ## Features
 
 Tailwind CSS IntelliSense uses your projects Tailwind installation and configuration to provide suggestions as you type.
@@ -12,16 +14,16 @@ It also includes features that improve the overall Tailwind experience, includin
 
 ### HTML (including Vue, JSX, PHP etc.)
 
-- Class name suggestions, including support for Emmet syntax
+- [Class name suggestions, including support for Emmet syntax](#class-name-suggestions-including-support-for-emmet-syntax)
   - Suggestions include color previews where applicable, for example for text and background colors
   - They also include a preview of the actual CSS for that class name
-- CSS preview when hovering over class names
+- [CSS preview when hovering over class names](#css-preview-when-hovering-over-class-names)
 
 ### CSS
 
-- Suggestions when using `@apply` and `config()`
+- [Suggestions when using `@apply` and `config()`](#suggestions-when-using-apply-and-config)
 - Suggestions when using the `@screen` directive
-- Improves syntax highlighting when using `@apply` and `config()`
+- [Improves syntax highlighting when using `@apply` and `config()`](#improves-syntax-highlighting-when-using-apply-and-config)
 
 ## Examples
 
