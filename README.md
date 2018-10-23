@@ -31,18 +31,18 @@ It also includes features that improve the overall Tailwind experience, includin
 
 #### CSS preview when hovering over class names
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html-hover.gif" alt="HTML hover preview" width="333">
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html-hover.gif" alt="HTML hover preview" width="750">
 
 #### Suggestions when using `@apply` and `config()`
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css.gif" alt="CSS autocompletion" width="333">
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css.gif" alt="CSS autocompletion" width="750">
 
 #### Improves syntax highlighting when using `@apply` and `config()`
 
 Before:
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-before.png" alt="CSS syntax highlighting before" width="750">
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-before.png" alt="CSS syntax highlighting before" width="400">
 
 After:
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="750">
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="400">
