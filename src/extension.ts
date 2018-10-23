@@ -6,6 +6,7 @@ const htmlElements = require('./htmlElements.js')
 const tailwindClassNames = require('tailwind-class-names')
 const dlv = require('dlv')
 const Color = require('color')
+const _lineColumn = require('line-column')
 
 const CONFIG_GLOB =
   '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
@@ -432,76 +433,67 @@ class TailwindIntellisense {
     this._providers = []
 
     this._providers.push(
-      vscode.commands.registerCommand(
-        'tailwind.refactor-class-names',
-        (document, range) => {
-          let original = document.getText(range)
+      vscode.languages.registerDocumentRangeFormattingEditProvider(HTML_TYPES, {
+        provideDocumentRangeFormattingEdits(document, range) {
+          if (
+            !vscode.workspace.getConfiguration('tailwind').get('format.enable')
+          ) {
+            return []
+          }
 
-          let order = [
-            'hover',
-            'group-hover',
-            'active',
-            'focus',
-            'sm',
-            'md',
-            'lg',
-            'xl'
-          ]
+          let searchStart = new vscode.Position(
+            Math.max(range.start.line - 5, 0),
+            0
+          )
+          let searchEnd = new vscode.Position(range.end.line + 5, 0)
 
-          let next = original
-            .split(/\s+/)
-            .sort((a, b) => {
-              let aPrefix = a.match(/^([^:]+):/)
-              let bPrefix = b.match(/^([^:]+):/)
-              if (!aPrefix && bPrefix) return -1
-              if (!bPrefix && aPrefix) return 1
-              if (!aPrefix && !bPrefix) return 0
-              // at this point they both have a prefix
-              aPrefix = aPrefix[1]
-              bPrefix = bPrefix[1]
+          let ranges = findClassListsInRange(
+            document,
+            new vscode.Range(searchStart, searchEnd)
+          )
 
-              if (aPrefix === bPrefix) return 0
+          if (!ranges.some(r => r.contains(range))) return []
 
-              if (
-                order.indexOf(aPrefix) === -1 &&
-                order.indexOf(bPrefix) === -1
+          return ranges.map(
+            range =>
+              new vscode.TextEdit(
+                range,
+                groupClassList(document.getText(range), tailwind.config)
               )
-                return 0
-              if (
-                order.indexOf(aPrefix) !== -1 &&
-                order.indexOf(bPrefix) === -1
-              )
-                return -1
-              if (
-                order.indexOf(bPrefix) !== -1 &&
-                order.indexOf(aPrefix) === -1
-              )
-                return 1
-
-              return order.indexOf(aPrefix) - order.indexOf(bPrefix)
-            })
-            .join(' ')
-
-          let edit = new vscode.WorkspaceEdit()
-          edit.replace(document.uri, range, next)
-          vscode.workspace.applyEdit(edit)
+          )
         }
-      )
+      })
     )
 
     this._providers.push(
-      vscode.languages.registerCodeActionsProvider(HTML_TYPES, {
-        provideCodeActions(document, range) {
-          let action = new vscode.CodeAction(
-            'Arrange class names',
-            vscode.CodeActionKind.Refactor
-          )
-          action.command = {
-            title: 'refactor-class-names',
-            command: 'tailwind.refactor-class-names',
-            arguments: [document, range]
+      vscode.languages.registerDocumentFormattingEditProvider(HTML_TYPES, {
+        provideDocumentFormattingEdits(document) {
+          if (
+            !vscode.workspace.getConfiguration('tailwind').get('format.enable')
+          ) {
+            return []
           }
-          return [action]
+
+          let firstLine = document.lineAt(0)
+          let lastLine = document.lineAt(document.lineCount - 1)
+
+          let ranges = findClassListsInRange(
+            document,
+            new vscode.Range(
+              0,
+              firstLine.range.start.character,
+              document.lineCount - 1,
+              lastLine.range.end.character
+            )
+          )
+
+          return ranges.map(
+            range =>
+              new vscode.TextEdit(
+                range,
+                groupClassList(document.getText(range), tailwind.config)
+              )
+          )
         }
       })
     )
@@ -862,4 +854,88 @@ function createScreenCompletionItemProvider({
     },
     ' '
   )
+}
+
+function findClassListsInRange(
+  document: vscode.TextDocument,
+  range: vscode.Range
+): vscode.Range[] {
+  let text: string = document.getText(range)
+
+  let regex = /(class(Name)?=(['"]))([a-z0-9-_:|!\s]+)\3/gi
+  let match
+  let ranges = []
+  while ((match = regex.exec(text)) !== null) {
+    let start = regex.lastIndex - match[0].length + match[1].length
+    let end = start + match[4].length
+    start = lineColumn(text, start)
+    end = lineColumn(text, end)
+    ranges.push(
+      new vscode.Range(
+        new vscode.Position(
+          range.start.line + start.line,
+          range.start.character + start.col
+        ),
+        new vscode.Position(
+          range.start.line + end.line,
+          range.start.character + end.col
+        )
+      )
+    )
+  }
+  return ranges
+}
+
+function groupClassList(str, twConfig) {
+  let screens = []
+
+  try {
+    screens = Object.keys(dlv(twConfig, 'screens', {}))
+  } catch (_) {}
+
+  let states = ['hover', 'group-hover', 'active', 'focus']
+
+  let order = [
+    ...states,
+    ...flatten(
+      screens.map(screen => [
+        screen,
+        ...states.map(state => `${screen}:${state}`)
+      ])
+    )
+  ]
+
+  return str
+    .split(/\s+/)
+    .sort((a, b) => {
+      let aPrefix = a.match(/^(.*):/)
+      let bPrefix = b.match(/^(.*):/)
+      if (!aPrefix && bPrefix) return -1
+      if (!bPrefix && aPrefix) return 1
+      if (!aPrefix && !bPrefix) return 0
+      // at this point they both have a prefix
+      aPrefix = aPrefix[1]
+      bPrefix = bPrefix[1]
+
+      if (aPrefix === bPrefix) return 0
+
+      if (order.indexOf(aPrefix) === -1 && order.indexOf(bPrefix) === -1)
+        return 0
+      if (order.indexOf(aPrefix) !== -1 && order.indexOf(bPrefix) === -1)
+        return -1
+      if (order.indexOf(bPrefix) !== -1 && order.indexOf(aPrefix) === -1)
+        return 1
+
+      return order.indexOf(aPrefix) - order.indexOf(bPrefix)
+    })
+    .join(' ')
+}
+
+function flatten(arr) {
+  return arr.reduce((acc, val) => acc.concat(val), [])
+}
+
+function lineColumn(str, index) {
+  let { line, col } = _lineColumn(str, index)
+  return { line: line - 1, col: col - 1 }
 }

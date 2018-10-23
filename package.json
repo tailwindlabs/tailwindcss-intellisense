@@ -26,6 +26,17 @@
   ],
   "main": "./out/extension",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Tailwind CSS IntelliSense configuration",
+      "properties": {
+        "tailwind.format.enable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable/disable Tailwind CSS class name formatter."
+        }
+      }
+    },
     "grammars": [
       {
         "scopeName": "source.css.tailwind",
@@ -55,6 +66,7 @@
   "dependencies": {
     "color": "^3.0.0",
     "dlv": "^1.1.1",
+    "line-column": "^1.0.2",
     "tailwind-class-names": "0.6.0"
   },
   "author": "Brad Cornes <bradlc41@gmail.com>",
