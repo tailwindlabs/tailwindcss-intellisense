@@ -11,8 +11,9 @@
     "Other"
   ],
   "galleryBanner": {
-    "color": "#44a8b3"
+    "color": "#f1f5f8"
   },
+  "icon": "icon.png",
   "keywords": [
     "tailwind",
     "tailwindcss",
