@@ -22,7 +22,8 @@ const HTML_TYPES = [
   'handlebars',
   'ejs',
   'nunjucks',
-  'haml'
+  'haml',
+  'leaf'
 ]
 const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'stylus']
 
