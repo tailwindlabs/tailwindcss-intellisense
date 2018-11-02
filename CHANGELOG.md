@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.15
+
+- add support for [leaf](https://github.com/vapor/leaf) files (#16)
+
 ## 0.1.10
 
 - add syntax definitions for `@apply` and `config()`:
