@@ -23,7 +23,8 @@ const HTML_TYPES = [
   'ejs',
   'nunjucks',
   'haml',
-  'leaf'
+  'leaf',
+  'HTML (Eex)'
 ]
 const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'stylus']
 
