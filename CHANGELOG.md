@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.16
+
+- add support for [EEx templates](https://hexdocs.pm/phoenix/templates.html), via [vscode-elixir](https://marketplace.visualstudio.com/items?itemName=mjmcloug.vscode-elixir) – thanks [@dhc02](https://github.com/dhc02)
+
 ## 0.1.15
 
 - add support for [leaf](https://github.com/vapor/leaf) files (#16)
