@@ -3,7 +3,8 @@
 import * as vscode from 'vscode'
 import { dirname } from 'path'
 const htmlElements = require('./htmlElements.js')
-const tailwindClassNames = require('tailwind-class-names')
+// const tailwindClassNames = require('tailwind-class-names')
+const tailwindClassNames = require('/Users/brad/Code/tailwind-class-names/dist')
 const dlv = require('dlv')
 const Color = require('color')
 
@@ -172,29 +173,55 @@ function createCompletionItemProvider({
           }
         }
 
+        let screens = Object.keys(dlv(config, 'screens', {}))
+        let states = ['hover', 'focus', 'active', 'group-hover']
+
         if (typeof str !== 'undefined') {
+          console.log(str)
           const pth = str
-            .replace(new RegExp(`${separator}`, 'g'), '.')
+            .replace(
+              new RegExp(
+                `^(${[...screens, ...states].join('|')})${separator}`,
+                'g'
+              ),
+              '$1.'
+            )
+            .replace(new RegExp(`\\.(${states.join('|')})${separator}`), '.$1.')
             .replace(/\.$/, '')
             .replace(/^\./, '')
             .replace(/\./g, '.children.')
 
+          let hasSep = new RegExp(
+            `^(${[...screens, ...states].join('|')})${separator}`
+          ).test(str)
+          if (!hasSep && str.endsWith(separator)) {
+            // token.cancel()
+            return getItemsWithRange(
+              items,
+              new vscode.Range(position.translate(0, -str.length), position)
+            )
+            let mobNav = new vscode.CompletionItem(
+              'mob-nav-',
+              vscode.CompletionItemKind.Constant
+            )
+            mobNav.range = new vscode.Range(position.translate(0, -4), position)
+            return [mobNav]
+          }
+
           if (pth !== '') {
             const itms =
-              prefixedItems &&
-              str.indexOf('.') === 0 &&
-              str.indexOf(separator) === -1
+              prefixedItems && str.indexOf('.') === 0 && !hasSep
                 ? dlv(prefixedItems, pth)
                 : dlv(items, pth)
             if (itms) {
-              return Object.keys(itms.children).map(x => itms.children[x].item)
+              return getItemsWithRange(itms.children)
             }
           }
 
-          if (str.indexOf(separator) === -1) {
+          if (!hasSep) {
             return prefixedItems && str.indexOf('.') === 0
-              ? Object.keys(prefixedItems).map(x => prefixedItems[x].item)
-              : Object.keys(items).map(x => items[x].item)
+              ? getItemsWithRange(prefixedItems)
+              : getItemsWithRange(items)
           }
 
           return []
@@ -205,6 +232,14 @@ function createCompletionItemProvider({
     },
     ...triggerCharacters
   )
+}
+
+function getItemsWithRange(items, range: vscode.Range = undefined) {
+  return Object.keys(items).map(x => {
+    let i = items[x].item
+    i.range = range
+    return i
+  })
 }
 
 function createConfigItemProvider({
@@ -419,7 +454,7 @@ class TailwindIntellisense {
 
     const separator = dlv(tailwind.config, 'options.separator', ':')
 
-    if (separator !== ':') return
+    // if (separator !== ':') return
 
     this._items = createItems(tailwind.classNames, separator, tailwind.config)
     this._prefixedItems = createItems(
