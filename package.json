@@ -5,7 +5,7 @@
   "version": "0.1.16",
   "publisher": "bradlc",
   "engines": {
-    "vscode": "^1.20.0"
+    "vscode": "^1.23.0"
   },
   "categories": [
     "Other"
@@ -25,7 +25,8 @@
   "activationEvents": [
     "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js"
   ],
-  "main": "./out/extension",
+  "source": "./src/extension.ts",
+  "main": "./dist/extension.js",
   "contributes": {
     "grammars": [
       {
@@ -42,21 +43,11 @@
   },
   "preview": true,
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run build",
+    "build": "microbundle -f cjs --external vscode,child_process,os,crypto,net",
+    "watch": "npm run build -- --watch",
     "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run compile && node ./node_modules/vscode/bin/test"
-  },
-  "devDependencies": {
-    "@types/node": "^7.0.43",
-    "typescript": "^2.6.1",
-    "vscode": "^1.1.6"
-  },
-  "dependencies": {
-    "color": "^3.0.0",
-    "dlv": "^1.1.1",
-    "tailwind-class-names": "0.6.0"
+    "test": "npm run build && node ./node_modules/vscode/bin/test"
   },
   "author": "Brad Cornes <bradlc41@gmail.com>",
   "license": "MIT",
@@ -68,5 +59,12 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/bradlc/vscode-tailwindcss.git"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^5.2.1"
+  },
+  "devDependencies": {
+    "microbundle": "^0.8.3",
+    "vscode": "^1.1.26"
   }
 }
