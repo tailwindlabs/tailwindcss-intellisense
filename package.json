@@ -5,7 +5,7 @@
   "version": "0.1.16",
   "publisher": "bradlc",
   "engines": {
-    "vscode": "^1.23.0"
+    "vscode": "^1.30.0"
   },
   "categories": [
     "Other"
@@ -39,6 +39,20 @@
           "source.css.postcss"
         ]
       }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "tailwindcssConfigExplorer",
+          "name": "Tailwind CSS"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tailwindcss.goToDefinition",
+        "title": "Go To Definition"
+      }
     ]
   },
   "preview": true,
@@ -61,10 +75,13 @@
     "url": "https://github.com/bradlc/vscode-tailwindcss.git"
   },
   "dependencies": {
+    "color": "^3.1.0",
+    "dlv": "^1.1.2",
+    "tmp": "0.0.33",
     "vscode-languageclient": "^5.2.1"
   },
   "devDependencies": {
-    "microbundle": "^0.8.3",
+    "microbundle": "^0.8.4",
     "vscode": "^1.1.26"
   }
 }

@@ -7,9 +7,14 @@ import {
   window as Window,
   ExtensionContext,
   TextDocument,
+  TextEditor,
   OutputChannel,
   WorkspaceFolder,
-  Uri
+  Uri,
+  commands,
+  Selection,
+  Position,
+  Range
 } from 'vscode'
 
 import {
@@ -18,6 +23,10 @@ import {
   TransportKind
 } from 'vscode-languageclient'
 
+import { createTreeView } from './treeView'
+
+const CONFIG_GLOB =
+  '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
 let LANGUAGES: string[] = ['html']
 
 let defaultClient: LanguageClient
@@ -60,12 +69,33 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
   return folder
 }
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
   // let module = context.asAbsolutePath(path.join('server', 'out', 'server.js'))
   let module = '/Users/brad/Code/tailwindcss-language-server/dist/index.js'
   let outputChannel: OutputChannel = Window.createOutputChannel(
     'lsp-multi-server-example'
   )
+
+  let files = await Workspace.findFiles(CONFIG_GLOB, '**/node_modules/**', 1)
+
+  if (!files.length) return
+
+  let configPath = files[0].fsPath
+  delete require.cache[configPath]
+
+  let refresh = createTreeView(configPath)
+  commands.registerCommand('tailwindcss.goToDefinition', () => {
+    // refresh()
+    // Window.showInformationMessage('Hello World!')
+    Workspace.openTextDocument(files[0]).then((doc: TextDocument) => {
+      Window.showTextDocument(doc).then((editor: TextEditor) => {
+        let start = new Position(0, 0)
+        let end = new Position(0, 0)
+        editor.revealRange(new Range(start, end))
+        editor.selection = new Selection(start, end)
+      })
+    })
+  })
 
   function didOpenTextDocument(document: TextDocument): void {
     if (
@@ -109,6 +139,11 @@ export function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
       )
+      // client.onReady().then(() => {
+      //   client.onNotification('tailwind/loaded', () => {
+      //     console.log('loaded')
+      //   })
+      // })
       client.start()
       clients.set(folder.uri.toString(), client)
     }
