@@ -104,7 +104,9 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
             : TreeItemCollapsibleState.None,
           isObj ? undefined : configValueToString(item[key]),
           undefined,
-          isObj ? undefined : command
+          isObj
+            ? undefined
+            : { ...command, arguments: [element.key.concat(key)] }
         )
         let color = getSvgColorFromValue(item[key])
 
@@ -146,7 +148,9 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
                   ICONS[key]
                 )
               : undefined,
-            isObject(this.config[key]) ? undefined : command
+            isObject(this.config[key])
+              ? undefined
+              : { ...command, arguments: [[key]] }
           )
       )
   }

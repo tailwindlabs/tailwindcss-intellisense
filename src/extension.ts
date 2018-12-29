@@ -14,7 +14,8 @@ import {
   commands,
   Selection,
   Position,
-  Range
+  Range,
+  TextEditorRevealType
 } from 'vscode'
 
 import {
@@ -76,34 +77,13 @@ export async function activate(context: ExtensionContext) {
     'lsp-multi-server-example'
   )
 
-  let files = await Workspace.findFiles(CONFIG_GLOB, '**/node_modules/**', 1)
-
-  if (!files.length) return
-
-  let configPath = files[0].fsPath
-  delete require.cache[configPath]
-
-  let refresh = createTreeView(configPath)
-  commands.registerCommand('tailwindcss.goToDefinition', () => {
-    // refresh()
-    // Window.showInformationMessage('Hello World!')
-    Workspace.openTextDocument(files[0]).then((doc: TextDocument) => {
-      Window.showTextDocument(doc).then((editor: TextEditor) => {
-        let start = new Position(0, 0)
-        let end = new Position(0, 0)
-        editor.revealRange(new Range(start, end))
-        editor.selection = new Selection(start, end)
-      })
-    })
-  })
-
-  function didOpenTextDocument(document: TextDocument): void {
-    if (
-      document.uri.scheme !== 'file' ||
-      LANGUAGES.indexOf(document.languageId) === -1
-    ) {
-      return
-    }
+  async function didOpenTextDocument(document: TextDocument): Promise<void> {
+    // if (
+    //   document.uri.scheme !== 'file' ||
+    //   LANGUAGES.indexOf(document.languageId) === -1
+    // ) {
+    //   return
+    // }
 
     let uri = document.uri
     let folder = Workspace.getWorkspaceFolder(uri)
@@ -112,10 +92,18 @@ export async function activate(context: ExtensionContext) {
     if (!folder) {
       return
     }
+
     // If we have nested workspace folders we only start a server on the outer most workspace folder.
     folder = getOuterMostWorkspaceFolder(folder)
 
     if (!clients.has(folder.uri.toString())) {
+      let files = await Workspace.findFiles(
+        CONFIG_GLOB,
+        '**/node_modules/**',
+        1
+      )
+      if (!files.length) return
+
       let debugOptions = {
         execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`]
       }
@@ -139,6 +127,32 @@ export async function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
       )
+
+      client.onReady().then(() => {
+        client.onNotification('tailwindcss/foundConfig', configPath => {
+          let refresh = createTreeView(configPath)
+        })
+        client.onNotification(
+          'tailwindcss/foundDefinition',
+          (configPath, pos) => {
+            Workspace.openTextDocument(configPath).then((doc: TextDocument) => {
+              Window.showTextDocument(doc).then((editor: TextEditor) => {
+                let start = new Position(pos[0], pos[1])
+                let end = new Position(pos[2], pos[3])
+                editor.revealRange(
+                  new Range(start, end),
+                  TextEditorRevealType.InCenter
+                )
+                editor.selection = new Selection(start, end)
+              })
+            })
+          }
+        )
+        commands.registerCommand('tailwindcss.goToDefinition', key => {
+          client.sendNotification('tailwindcss/findDefinition', [key])
+        })
+      })
+
       // client.onReady().then(() => {
       //   client.onNotification('tailwind/loaded', () => {
       //     console.log('loaded')
