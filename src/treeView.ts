@@ -38,7 +38,9 @@ const ICONS = {
   padding: 'padding.svg',
   margin: 'select_all.svg',
   negativeMargin: 'select_all.svg',
-  tracking: 'tracking.svg'
+  tracking: 'tracking.svg',
+  modules: 'extension.svg',
+  options: 'settings.svg'
 }
 
 function configValueToString(value: any): string {
@@ -126,7 +128,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     }
 
     return Object.keys(this.config)
-      .filter(key => ['modules', 'plugins', 'options'].indexOf(key) === -1)
+      .filter(key => ['plugins'].indexOf(key) === -1)
       .map(
         key =>
           new ConfigItem(
