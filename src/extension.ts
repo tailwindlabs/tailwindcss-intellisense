@@ -140,8 +140,8 @@ export async function activate(context: ExtensionContext) {
           (configPath, pos) => {
             Workspace.openTextDocument(configPath).then((doc: TextDocument) => {
               Window.showTextDocument(doc).then((editor: TextEditor) => {
-                let start = new Position(pos[0], pos[1])
-                let end = new Position(pos[2], pos[3])
+                let start = new Position(pos.start.line, pos.start.character)
+                let end = new Position(pos.end.line, pos.end.character)
                 editor.revealRange(
                   new Range(start, end),
                   TextEditorRevealType.InCenter
