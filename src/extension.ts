@@ -97,6 +97,9 @@ export async function activate(context: ExtensionContext) {
     folder = getOuterMostWorkspaceFolder(folder)
 
     if (!clients.has(folder.uri.toString())) {
+      // placeholder
+      clients.set(folder.uri.toString(), null)
+
       let files = await Workspace.findFiles(
         CONFIG_GLOB,
         '**/node_modules/**',
@@ -182,7 +185,9 @@ export function deactivate(): Thenable<void> {
     promises.push(defaultClient.stop())
   }
   for (let client of clients.values()) {
-    promises.push(client.stop())
+    if (client) {
+      promises.push(client.stop())
+    }
   }
   return Promise.all(promises).then(() => undefined)
 }
