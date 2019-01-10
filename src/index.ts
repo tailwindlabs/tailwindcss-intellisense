@@ -28,7 +28,7 @@ import { createTreeView } from './treeView'
 
 const CONFIG_GLOB =
   '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
-let LANGUAGES: string[] = ['html']
+let LANGUAGES: string[] = ['html', 'css']
 
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()

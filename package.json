@@ -25,8 +25,7 @@
   "activationEvents": [
     "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js"
   ],
-  "source": "./src/extension.ts",
-  "main": "./dist/extension.js",
+  "main": "./dist/index.js",
   "contributes": {
     "grammars": [
       {
@@ -58,8 +57,8 @@
   "preview": true,
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "build": "microbundle -f cjs --external vscode,child_process,os,crypto,net",
-    "watch": "npm run build -- --watch",
+    "build": "ncc build src/index.ts --out dist --minify --external vscode",
+    "watch": "ncc build src/index.ts --out dist --watch --external vscode",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "test": "npm run build && node ./node_modules/vscode/bin/test"
   },
@@ -81,7 +80,7 @@
     "vscode-languageclient": "^5.2.1"
   },
   "devDependencies": {
-    "microbundle": "^0.8.4",
+    "@zeit/ncc": "^0.8.1",
     "vscode": "^1.1.26"
   }
 }
