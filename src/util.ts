@@ -6,7 +6,7 @@ export function createTempFile(content: string, options = {}): Promise<string> {
   return new Promise((resolve, reject) => {
     tmp.file(options, (err, path) => {
       if (err) return reject(err)
-      fs.writeFile(path, content, 'utf8', err => {
+      fs.writeFile(path, content, { encoding: 'utf8' }, err => {
         if (err) return reject(err)
         resolve(path)
       })
