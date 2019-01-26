@@ -21,7 +21,8 @@ import {
 import {
   LanguageClient,
   LanguageClientOptions,
-  TransportKind
+  TransportKind,
+  Location
 } from 'vscode-languageclient'
 
 import { createTreeView } from './treeView'
@@ -137,11 +138,14 @@ export async function activate(context: ExtensionContext) {
         })
         client.onNotification(
           'tailwindcss/foundDefinition',
-          (configPath, pos) => {
-            Workspace.openTextDocument(configPath).then((doc: TextDocument) => {
+          ({ uri, range }: Location) => {
+            Workspace.openTextDocument(uri.replace(/^file:\/\//, '')).then((doc: TextDocument) => {
               Window.showTextDocument(doc).then((editor: TextEditor) => {
-                let start = new Position(pos.start.line, pos.start.character)
-                let end = new Position(pos.end.line, pos.end.character)
+                let start = new Position(
+                  range.start.line,
+                  range.start.character
+                )
+                let end = new Position(range.end.line, range.end.character)
                 editor.revealRange(
                   new Range(start, end),
                   TextEditorRevealType.InCenter
