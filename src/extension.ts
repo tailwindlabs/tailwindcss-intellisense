@@ -16,6 +16,7 @@ const HTML_TYPES = [
   'razor',
   'php',
   'blade',
+  'edge',
   'twig',
   'markdown',
   'erb',
