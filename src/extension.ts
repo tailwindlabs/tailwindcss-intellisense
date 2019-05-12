@@ -26,6 +26,7 @@ const HTML_TYPES = [
   'haml',
   'leaf',
   'HTML (Eex)',
+  'slim',
   'edge'
 ]
 const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'stylus']
