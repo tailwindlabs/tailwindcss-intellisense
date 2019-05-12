@@ -9,7 +9,7 @@ const Color = require('color')
 
 const CONFIG_GLOB =
   '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
-const JS_TYPES = ['typescriptreact', 'javascript', 'javascriptreact']
+const JS_TYPES = ['typescriptreact', 'javascript', 'javascriptreact', 'reason']
 const HTML_TYPES = [
   'html',
   'jade',
@@ -21,11 +21,13 @@ const HTML_TYPES = [
   'erb',
   'handlebars',
   'ejs',
+  'njk',
   'nunjucks',
   'haml',
   'leaf',
   'HTML (Eex)',
-  'slim'
+  'slim',
+  'edge'
 ]
 const CSS_TYPES = ['css', 'sass', 'scss', 'less', 'stylus']
 
