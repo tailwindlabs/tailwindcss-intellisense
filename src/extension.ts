@@ -21,6 +21,7 @@ const HTML_TYPES = [
   'erb',
   'handlebars',
   'ejs',
+  'njk',
   'nunjucks',
   'haml',
   'leaf',
