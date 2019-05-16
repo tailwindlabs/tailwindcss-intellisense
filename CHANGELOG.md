@@ -8,6 +8,7 @@
 - Support for non-default Tailwind separators
 - Add `@variants` completions
 - Better support for dynamic class(Name) values in JSX
+- Disables Emmet support by default. This can be enabled via the `tailwindCSS.emmetCompletions` setting
 
 ## 0.1.16
 
