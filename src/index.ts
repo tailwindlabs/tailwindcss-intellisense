@@ -7,29 +7,61 @@ import {
   window as Window,
   ExtensionContext,
   TextDocument,
-  TextEditor,
   OutputChannel,
   WorkspaceFolder,
-  Uri,
-  commands,
-  Selection,
-  Position,
-  Range,
-  TextEditorRevealType
+  Uri
 } from 'vscode'
 
 import {
   LanguageClient,
   LanguageClientOptions,
-  TransportKind,
-  Location
+  TransportKind
 } from 'vscode-languageclient'
 
-import { createTreeView } from './treeView'
+import * as path from 'path'
 
 const CONFIG_GLOB =
   '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
-let LANGUAGES: string[] = ['html', 'css']
+export const CSS_LANGUAGES: string[] = [
+  'css',
+  'less',
+  'postcss',
+  'sass',
+  'scss',
+  'stylus',
+  'vue'
+]
+export const JS_LANGUAGES: string[] = [
+  'javascript',
+  'javascriptreact',
+  'reason',
+  'typescriptreact'
+]
+export const HTML_LANGUAGES: string[] = [
+  'blade',
+  'edge',
+  'ejs',
+  'erb',
+  'haml',
+  'handlebars',
+  'html',
+  'HTML (Eex)',
+  'jade',
+  'leaf',
+  'markdown',
+  'njk',
+  'nunjucks',
+  'php',
+  'razor',
+  'slim',
+  'svelte',
+  'twig',
+  'vue',
+  ...JS_LANGUAGES
+]
+export const LANGUAGES: string[] = [...CSS_LANGUAGES, ...HTML_LANGUAGES].filter(
+  (val, index, arr) => arr.indexOf(val) === index
+)
 
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()
@@ -72,19 +104,18 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
 }
 
 export async function activate(context: ExtensionContext) {
-  // let module = context.asAbsolutePath(path.join('server', 'out', 'server.js'))
-  let module = '/Users/brad/Code/tailwindcss-language-server/dist/index.js'
+  let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
   let outputChannel: OutputChannel = Window.createOutputChannel(
-    'lsp-multi-server-example'
+    'tailwindcss-language-server'
   )
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
-    // if (
-    //   document.uri.scheme !== 'file' ||
-    //   LANGUAGES.indexOf(document.languageId) === -1
-    // ) {
-    //   return
-    // }
+    if (
+      document.uri.scheme !== 'file' ||
+      LANGUAGES.indexOf(document.languageId) === -1
+    ) {
+      return
+    }
 
     let uri = document.uri
     let folder = Workspace.getWorkspaceFolder(uri)
@@ -121,50 +152,20 @@ export async function activate(context: ExtensionContext) {
           language,
           pattern: `${folder.uri.fsPath}/**/*`
         })),
-        diagnosticCollectionName: 'lsp-multi-server-example',
+        diagnosticCollectionName: 'tailwindcss-language-server',
         workspaceFolder: folder,
-        outputChannel: outputChannel
+        outputChannel: outputChannel,
+        synchronize: {
+          fileEvents: Workspace.createFileSystemWatcher(CONFIG_GLOB)
+        }
       }
       let client = new LanguageClient(
-        'lsp-multi-server-example',
-        'LSP Multi Server Example',
+        'tailwindcss-language-server',
+        'Tailwind CSS Language Server',
         serverOptions,
         clientOptions
       )
 
-      client.onReady().then(() => {
-        client.onNotification('tailwindcss/foundConfig', configPath => {
-          let refresh = createTreeView(configPath)
-        })
-        client.onNotification(
-          'tailwindcss/foundDefinition',
-          ({ uri, range }: Location) => {
-            Workspace.openTextDocument(uri.replace(/^file:\/\//, '')).then((doc: TextDocument) => {
-              Window.showTextDocument(doc).then((editor: TextEditor) => {
-                let start = new Position(
-                  range.start.line,
-                  range.start.character
-                )
-                let end = new Position(range.end.line, range.end.character)
-                editor.revealRange(
-                  new Range(start, end),
-                  TextEditorRevealType.InCenter
-                )
-                editor.selection = new Selection(start, end)
-              })
-            })
-          }
-        )
-        commands.registerCommand('tailwindcss.goToDefinition', key => {
-          client.sendNotification('tailwindcss/findDefinition', [key])
-        })
-      })
-
-      // client.onReady().then(() => {
-      //   client.onNotification('tailwind/loaded', () => {
-      //     console.log('loaded')
-      //   })
-      // })
       client.start()
       clients.set(folder.uri.toString(), client)
     }

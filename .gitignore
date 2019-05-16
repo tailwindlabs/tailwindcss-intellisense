@@ -2,5 +2,6 @@ dist
 node_modules
 .vscode-test/
 .vsix
+*.vsix
 .DS_Store
 .rts2_cache_cjs
