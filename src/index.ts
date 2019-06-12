@@ -45,7 +45,7 @@ export const HTML_LANGUAGES: string[] = [
   'haml',
   'handlebars',
   'html',
-  'HTML (Eex)',
+  'HTML (EEx)',
   'jade',
   'leaf',
   'markdown',
