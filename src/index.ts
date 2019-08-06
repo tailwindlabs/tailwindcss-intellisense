@@ -39,6 +39,7 @@ export const JS_LANGUAGES: string[] = [
 ]
 export const HTML_LANGUAGES: string[] = [
   'blade',
+  'django-html',
   'edge',
   'ejs',
   'erb',
