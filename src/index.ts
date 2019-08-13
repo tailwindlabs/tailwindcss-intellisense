@@ -50,6 +50,7 @@ export const HTML_LANGUAGES: string[] = [
   'HTML (EEx)',
   'jade',
   'leaf',
+  'liquid',
   'markdown',
   'njk',
   'nunjucks',
