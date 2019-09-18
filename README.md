@@ -51,8 +51,8 @@ In the case where you to want to disable the autocomplete from Emmet you can add
 
 Before:
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-before.png" alt="CSS syntax highlighting before" width="400">
+<img src="https://raw.githubusercontent.com/viviangb/vscode-tailwindcss/update-docs/img/css-highlighting-before.png" alt="CSS syntax highlighting before" width="400">
 
 After:
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="400">
+<img src="https://raw.githubusercontent.com/viviangb/vscode-tailwindcss/update-docs/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="400">
