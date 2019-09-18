@@ -21,9 +21,17 @@ It also includes features that improve the overall Tailwind experience, includin
 
 ### CSS
 
-- [Suggestions when using `@apply` and `config()`](#suggestions-when-using-apply-and-config)
+- [Suggestions when using `@apply` and `theme()`](#suggestions-when-using-apply-and-config)
 - Suggestions when using the `@screen` directive
-- [Improves syntax highlighting when using `@apply` and `config()`](#improves-syntax-highlighting-when-using-apply-and-config)
+- [Improves syntax highlighting when using `@apply` and `theme()`](#improves-syntax-highlighting-when-using-apply-and-config)
+
+### Config
+
+In the case where you to want to disable the autocomplete from Emmet you can add this to your VSCode settings:
+
+```js
+"tailwindCSS.emmetCompletions": false,
+```
 
 ## Examples
 
@@ -35,11 +43,11 @@ It also includes features that improve the overall Tailwind experience, includin
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html-hover.gif" alt="HTML hover preview" width="750">
 
-#### Suggestions when using `@apply` and `config()`
+#### Suggestions when using `@apply` and `theme()`
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css.gif" alt="CSS autocompletion" width="750">
 
-#### Improves syntax highlighting when using `@apply` and `config()`
+#### Improves syntax highlighting when using `@apply` and `theme()`
 
 Before:
 
