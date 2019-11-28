@@ -38,6 +38,7 @@ export const JS_LANGUAGES: string[] = [
   'typescriptreact'
 ]
 export const HTML_LANGUAGES: string[] = [
+  'aspnetcorerazor',
   'blade',
   'django-html',
   'edge',
