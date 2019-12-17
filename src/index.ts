@@ -59,6 +59,8 @@ export const HTML_LANGUAGES: string[] = [
   'svelte',
   'twig',
   'vue',
+  'aspnetcorerazor',
+  'razor',
   ...JS_LANGUAGES
 ]
 export const LANGUAGES: string[] = [...CSS_LANGUAGES, ...HTML_LANGUAGES].filter(
