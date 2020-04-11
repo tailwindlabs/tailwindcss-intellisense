@@ -22,7 +22,7 @@ import {
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()
 
-const LANGS = ['css', 'javascript', 'html']
+const LANGS = ['css', 'javascript', 'html', 'vue', 'svelte']
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {

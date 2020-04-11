@@ -4,8 +4,7 @@ export const JS_LANGUAGES = [
   'javascript',
   'javascriptreact',
   'reason',
-  'svelte',
-  'typescriptreact'
+  'typescriptreact',
 ]
 
 export function isJsDoc(doc: TextDocument): boolean {

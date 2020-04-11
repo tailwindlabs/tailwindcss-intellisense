@@ -10,8 +10,8 @@ import {
 const dlv = require('dlv')
 import removeMeta from '../util/removeMeta'
 import { getColor, getColorFromString } from '../util/color'
-import { isHtmlDoc } from '../util/html'
-import { isCssDoc } from '../util/css'
+import { isHtmlContext } from '../util/html'
+import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
 import { stringifyConfigValue } from '../util/stringify'
 import isObject from '../util/isObject'
@@ -171,11 +171,11 @@ function provideClassNameCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(params.textDocument.uri)
 
-  if (isHtmlDoc(doc)) {
+  if (isHtmlContext(doc, params.position)) {
     return provideClassAttributeCompletions(state, params)
   }
 
-  if (isCssDoc(doc)) {
+  if (isCssContext(doc, params.position)) {
     return provideAtApplyCompletions(state, params)
   }
 
@@ -188,7 +188,7 @@ function provideCssHelperCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssDoc(doc)) {
+  if (!isCssContext(doc, position)) {
     return null
   }
 
