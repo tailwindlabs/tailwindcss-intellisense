@@ -1,84 +1,11 @@
 {
-  "name": "vscode-tailwindcss",
-  "displayName": "Tailwind CSS IntelliSense",
-  "description": "Tailwind CSS class name completion",
-  "version": "0.2.0",
-  "publisher": "bradlc",
-  "engines": {
-    "vscode": "^1.30.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "galleryBanner": {
-    "color": "#f1f5f8"
-  },
-  "icon": "resources/icon.png",
-  "keywords": [
-    "tailwind",
-    "tailwindcss",
-    "css",
-    "intellisense",
-    "autocomplete",
-    "vscode"
-  ],
-  "activationEvents": [
-    "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js"
-  ],
-  "main": "./dist/index.js",
-  "contributes": {
-    "grammars": [
-      {
-        "scopeName": "source.css.tailwind",
-        "path": "./resources/syntaxes/tailwind.tmLanguage.json",
-        "injectTo": [
-          "source.css",
-          "source.css.scss",
-          "source.css.less",
-          "source.css.postcss"
-        ]
-      }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Tailwind CSS IntelliSense configuration",
-      "properties": {
-        "tailwindCSS.emmetCompletions": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable class name completions for Emmet-style syntax"
-        }
-      }
-    }
-  },
-  "preview": true,
+  "name": "root",
+  "private": true,
   "scripts": {
-    "vscode:prepublish": "npm run build",
-    "build": "ncc build src/index.ts --out dist --minify --external vscode && ncc build src/server.ts --out dist/server --minify",
-    "watch": "ncc build src/index.ts --out dist --watch --external vscode",
-    "start": "npm run watch",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run build && node ./node_modules/vscode/bin/test"
-  },
-  "author": "Brad Cornes <hello@bradley.dev>",
-  "license": "MIT",
-  "homepage": "https://github.com/bradlc/vscode-tailwindcss/blob/master/README.md",
-  "bugs": {
-    "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
-    "email": "hello@bradley.dev"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bradlc/vscode-tailwindcss.git"
+    "bootstrap": "lerna bootstrap",
+    "dev": "lerna run --parallel dev"
   },
   "devDependencies": {
-    "@types/node": "^11.13.5",
-    "@zeit/ncc": "^0.17.4",
-    "color": "^3.1.0",
-    "dlv": "^1.1.2",
-    "tailwindcss-language-server": "0.0.1",
-    "tmp": "0.0.33",
-    "vscode": "^1.1.26",
-    "vscode-languageclient": "^5.2.1"
+    "lerna": "^3.20.2"
   }
 }

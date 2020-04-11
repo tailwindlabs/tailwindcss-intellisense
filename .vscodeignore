@@ -1,9 +1,0 @@
-*
-*/**
-**/.DS_Store
-
-!package.json
-!README.md
-!dist/index.js
-!dist/server/index.js
-!resources/**/*

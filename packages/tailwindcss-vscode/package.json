@@ -1,0 +1,61 @@
+{
+  "name": "tailwindcss-vscode",
+  "description": "",
+  "author": "Brad Cornes <hello@bradley.dev>",
+  "license": "MIT",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bradlc/"
+  },
+  "publisher": "bradlc",
+  "categories": [],
+  "keywords": [
+    "multi-root ready"
+  ],
+  "engines": {
+    "vscode": "^1.33.0"
+  },
+  "activationEvents": [
+    "onLanguage:plaintext"
+  ],
+  "main": "dist/src/extension/index.js",
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "source.css.tailwind",
+        "path": "./syntaxes/tailwind.tmLanguage.json",
+        "injectTo": [
+          "source.css",
+          "source.css.scss",
+          "source.css.less",
+          "source.css.postcss"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "devOld": "concurrently \"npm:devOld:*\"",
+    "devOld:client": "ncc build src/extension.ts --watch -o dist/client",
+    "devOld:server": "ncc build src/server.ts --watch -o dist/server",
+    "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/\\.ts$/, '')}}\"",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "ncc build src/extension.ts --minify -o dist/client",
+    "build:server": "ncc build src/server.ts --minify -o dist/server"
+  },
+  "devDependencies": {
+    "@types/mocha": "^5.2.0",
+    "@types/node": "^8.0.0",
+    "@types/vscode": "^1.32.0",
+    "@zeit/ncc": "^0.22.0",
+    "concurrently": "^5.1.0",
+    "dlv": "^1.1.3",
+    "glob-exec": "^0.1.1",
+    "mkdirp": "^1.0.3",
+    "tailwindcss-language-server": "0.0.1",
+    "tslint": "^5.16.0",
+    "typescript": "^3.8.3",
+    "vscode-languageclient": "^5.2.1"
+  }
+}
