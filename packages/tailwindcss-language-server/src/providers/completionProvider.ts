@@ -286,6 +286,52 @@ function provideCssHelperCompletions(
   }
 }
 
+function provideScreenDirectiveCompletions(
+  state: State,
+  { position, textDocument }: CompletionParams
+): CompletionList {
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  if (!isCssContext(doc, position)) {
+    return null
+  }
+
+  let text = doc.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  const match = text.match(/^\s*@screen\s+(?<partial>[^\s]*)$/i)
+
+  if (match === null) return null
+
+  const screens = dlv(
+    state.config,
+    ['screens'],
+    dlv(state.config, ['theme', 'screens'], {})
+  )
+
+  if (!isObject(screens)) return null
+
+  return {
+    isIncomplete: false,
+    items: Object.keys(screens).map((screen) => ({
+      label: screen,
+      kind: CompletionItemKind.Constant,
+      textEdit: {
+        newText: screen,
+        range: {
+          start: {
+            line: position.line,
+            character: position.character - match.groups.partial.length,
+          },
+          end: position,
+        },
+      },
+    })),
+  }
+}
+
 function provideCssDirectiveCompletions(
   state: State,
   { position, textDocument }: CompletionParams
@@ -377,7 +423,8 @@ export function provideCompletions(
   return (
     provideClassNameCompletions(state, params) ||
     provideCssHelperCompletions(state, params) ||
-    provideCssDirectiveCompletions(state, params)
+    provideCssDirectiveCompletions(state, params) ||
+    provideScreenDirectiveCompletions(state, params)
   )
 }
 
