@@ -1,5 +1,5 @@
 {
-  "scopeName": "source.css.tailwind",
+  "scopeName": "tailwindcss.injection",
   "fileTypes": [],
   "injectionSelector": "meta.property-list.css, meta.property-list.scss",
   "name": "TailwindCSS",

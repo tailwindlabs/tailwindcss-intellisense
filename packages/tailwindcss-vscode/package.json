@@ -23,7 +23,7 @@
   "contributes": {
     "grammars": [
       {
-        "scopeName": "source.css.tailwind",
+        "scopeName": "tailwindcss.injection",
         "path": "./syntaxes/tailwind.tmLanguage.json",
         "injectTo": [
           "source.css",
