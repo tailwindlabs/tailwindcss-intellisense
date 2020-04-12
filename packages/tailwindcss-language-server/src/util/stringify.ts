@@ -9,7 +9,7 @@ export function stringifyConfigValue(x: any): string {
       .filter(Boolean)
       .join(', ')
   }
-  return ''
+  return null
 }
 
 export function stringifyCss(
