@@ -29,7 +29,9 @@
           "source.css",
           "source.css.scss",
           "source.css.less",
-          "source.css.postcss"
+          "source.css.postcss",
+          "source.vue",
+          "source.svelte"
         ]
       }
     ]
