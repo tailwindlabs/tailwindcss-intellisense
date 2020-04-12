@@ -19,6 +19,7 @@
     "@babel/register": "^7.9.0",
     "@types/node": "^13.9.3",
     "@zeit/ncc": "^0.22.0",
+    "css.escape": "^1.5.1",
     "dlv": "^1.1.3",
     "glob-exec": "^0.1.1",
     "tailwindcss-class-names": "0.0.1",

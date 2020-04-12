@@ -13,7 +13,7 @@ import { getColor, getColorFromString } from '../util/color'
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
-import { stringifyConfigValue } from '../util/stringify'
+import { stringifyConfigValue, stringifyCss } from '../util/stringify'
 import isObject from '../util/isObject'
 
 function completionsFromClassList(
@@ -341,25 +341,6 @@ function stringifyDecls(obj: any): string {
       return `${prop}: ${obj[prop]};`
     })
     .join(' ')
-}
-
-function stringifyCss(obj: any, indent: number = 0): string {
-  let indentStr = '  '.repeat(indent)
-  if (obj.__decls === true) {
-    return Object.keys(removeMeta(obj))
-      .reduce((acc, curr, i) => {
-        return `${acc}${i === 0 ? '' : '\n'}${indentStr}${curr}: ${obj[curr]};`
-      }, '')
-      .trim()
-  }
-  return Object.keys(removeMeta(obj))
-    .reduce((acc, curr, i) => {
-      return `${acc}${i === 0 ? '' : '\n'}${indentStr}${curr} {\n${stringifyCss(
-        obj[curr],
-        indent + 2
-      )}\n${indentStr}}`
-    }, '')
-    .trim()
 }
 
 function getCssDetail(state: State, className: any): string {

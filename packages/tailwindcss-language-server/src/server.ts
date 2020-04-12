@@ -13,6 +13,8 @@ import {
   InitializeResult,
   CompletionParams,
   CompletionList,
+  Hover,
+  TextDocumentPositionParams,
 } from 'vscode-languageserver'
 import getTailwindState from 'tailwindcss-class-names'
 import { State } from './util/state'
@@ -20,6 +22,7 @@ import {
   provideCompletions,
   resolveCompletionItem,
 } from './providers/completionProvider'
+import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 
 let state: State = null
@@ -62,6 +65,7 @@ connection.onInitialize(
           resolveProvider: true,
           triggerCharacters: ['"', "'", '`', ' ', '.', '[', state.separator],
         },
+        hoverProvider: true,
       },
     }
   }
@@ -85,6 +89,12 @@ connection.onCompletion(
 connection.onCompletionResolve(
   (item: CompletionItem): CompletionItem => {
     return resolveCompletionItem(state, item)
+  }
+)
+
+connection.onHover(
+  (params: TextDocumentPositionParams): Hover => {
+    return provideHover(state, params)
   }
 )
 
