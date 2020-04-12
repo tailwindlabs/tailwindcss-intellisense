@@ -286,6 +286,88 @@ function provideCssHelperCompletions(
   }
 }
 
+function provideCssDirectiveCompletions(
+  state: State,
+  { position, textDocument }: CompletionParams
+): CompletionList {
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  if (!isCssContext(doc, position)) {
+    return null
+  }
+
+  let text = doc.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  const match = text.match(/^\s*@(?<partial>[a-z]*)$/i)
+
+  if (match === null) return null
+
+  const items: CompletionItem[] = [
+    {
+      label: '@tailwind',
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          'Use the `@tailwind` directive to insert Tailwind’s `base`, `components`, `utilities` and `screens` styles into your CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#tailwind)',
+      },
+    },
+    {
+      label: '@variants',
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          'You can generate `responsive`, `hover`, `focus`, `active`, and `group-hover` versions of your own utilities by wrapping their definitions in the `@variants` directive.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#variants)',
+      },
+    },
+    {
+      label: '@responsive',
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          'You can generate responsive variants of your own classes by wrapping their definitions in the `@responsive` directive.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#responsive)',
+      },
+    },
+    {
+      label: '@screen',
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          'The `@screen` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#screen)',
+      },
+    },
+    {
+      label: '@apply',
+      documentation: {
+        kind: MarkupKind.Markdown,
+        value:
+          'Use `@apply` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#apply)',
+      },
+    },
+  ]
+
+  return {
+    isIncomplete: false,
+    items: items.map((item) => ({
+      ...item,
+      kind: CompletionItemKind.Keyword,
+      data: 'directive',
+      textEdit: {
+        newText: item.label,
+        range: {
+          start: {
+            line: position.line,
+            character: position.character - match.groups.partial.length - 1,
+          },
+          end: position,
+        },
+      },
+    })),
+  }
+}
+
 export function provideCompletions(
   state: State,
   params: CompletionParams
@@ -294,7 +376,8 @@ export function provideCompletions(
 
   return (
     provideClassNameCompletions(state, params) ||
-    provideCssHelperCompletions(state, params)
+    provideCssHelperCompletions(state, params) ||
+    provideCssDirectiveCompletions(state, params)
   )
 }
 
@@ -302,7 +385,7 @@ export function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): CompletionItem {
-  if (item.data === 'helper') {
+  if (item.data === 'helper' || item.data === 'directive') {
     return item
   }
 
