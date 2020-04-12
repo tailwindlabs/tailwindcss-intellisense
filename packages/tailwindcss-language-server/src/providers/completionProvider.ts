@@ -286,6 +286,79 @@ function provideCssHelperCompletions(
   }
 }
 
+function provideVariantsDirectiveCompletions(
+  state: State,
+  { position, textDocument }: CompletionParams
+): CompletionList {
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  if (!isCssContext(doc, position)) {
+    return null
+  }
+
+  let text = doc.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  const match = text.match(/^\s*@variants\s+(?<partial>[^}]*)$/i)
+
+  if (match === null) return null
+
+  const parts = match.groups.partial.split(/\s*,\s*/)
+
+  if (/\s+/.test(parts[parts.length - 1])) return null
+
+  // TODO: move this to tailwindcss-class-names?
+  let variants = dlv(
+    state.config,
+    ['variants'],
+    dlv(state.config, ['modules'], {})
+  )
+  if (!isObject(variants) && !Array.isArray(variants)) {
+    variants = []
+  }
+  let enabledVariants: string[]
+  if (Array.isArray(variants)) {
+    enabledVariants = variants
+  } else {
+    const uniqueVariants: Set<string> = new Set()
+    for (const mod in variants) {
+      if (!Array.isArray(variants[mod])) continue
+      variants[mod].forEach((v: string) => uniqueVariants.add(v))
+    }
+    enabledVariants = [...uniqueVariants]
+  }
+
+  enabledVariants = state.variants.filter(
+    (x) => enabledVariants.indexOf(x) !== -1 || x === 'default'
+  )
+
+  const existingVariants = parts.slice(0, parts.length - 1)
+
+  return {
+    isIncomplete: false,
+    items: enabledVariants
+      .filter((v) => existingVariants.indexOf(v) === -1)
+      .map((variant) => ({
+        // TODO: detail
+        label: variant,
+        kind: CompletionItemKind.Constant,
+        data: 'variant',
+        textEdit: {
+          newText: variant,
+          range: {
+            start: {
+              line: position.line,
+              character: position.character - parts[parts.length - 1].length,
+            },
+            end: position,
+          },
+        },
+      })),
+  }
+}
+
 function provideScreenDirectiveCompletions(
   state: State,
   { position, textDocument }: CompletionParams
@@ -424,7 +497,8 @@ export function provideCompletions(
     provideClassNameCompletions(state, params) ||
     provideCssHelperCompletions(state, params) ||
     provideCssDirectiveCompletions(state, params) ||
-    provideScreenDirectiveCompletions(state, params)
+    provideScreenDirectiveCompletions(state, params) ||
+    provideVariantsDirectiveCompletions(state, params)
   )
 }
 
@@ -432,7 +506,11 @@ export function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): CompletionItem {
-  if (item.data === 'helper' || item.data === 'directive') {
+  if (
+    item.data === 'helper' ||
+    item.data === 'directive' ||
+    item.data === 'variant'
+  ) {
     return item
   }
 
