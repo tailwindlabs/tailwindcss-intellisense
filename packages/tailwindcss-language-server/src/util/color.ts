@@ -16,7 +16,7 @@ const COLOR_PROPS = [
   'outline-color',
   'stop-color',
   'stroke',
-  'text-decoration-color'
+  'text-decoration-color',
 ]
 
 const COLOR_NAMES = {
@@ -169,12 +169,12 @@ const COLOR_NAMES = {
   white: '#fff',
   whitesmoke: '#f5f5f5',
   yellow: '#ff0',
-  yellowgreen: '#9acd32'
+  yellowgreen: '#9acd32',
 }
 
 export function getColor(state: State, keys: string[]): string {
   const item = dlv(state.classNames.classNames, keys)
-  if (!item.__decls) return null
+  if (!item.__rule) return null
   const props = Object.keys(removeMeta(item))
   if (props.length === 0 || props.length > 1) return null
   const prop = props[0]

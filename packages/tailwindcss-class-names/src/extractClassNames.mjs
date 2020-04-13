@@ -18,20 +18,6 @@ function getClassNamesFromSelector(selector) {
   const { nodes: subSelectors } = selectorParser().astSync(selector)
 
   for (let i = 0; i < subSelectors.length; i++) {
-    // const final = subSelectors[i].nodes[subSelectors[i].nodes.length - 1]
-
-    // if (final.type === 'class') {
-    //   const scope = subSelectors[i].nodes.slice(
-    //     0,
-    //     subSelectors[i].nodes.length - 1
-    //   )
-
-    //   classNames.push({
-    //     className: String(final).trim(),
-    //     scope: createSelectorFromNodes(scope)
-    //   })
-    // }
-
     let scope = []
     for (let j = 0; j < subSelectors[i].nodes.length; j++) {
       let node = subSelectors[i].nodes[j]
@@ -47,39 +33,28 @@ function getClassNamesFromSelector(selector) {
         }
 
         classNames.push({
-          className: String(node)
-            .trim()
-            .substr(1),
+          className: node.value.trim(),
           scope: createSelectorFromNodes(scope),
           __rule: j === subSelectors[i].nodes.length - 1,
-          // __pseudo: createSelectorFromNodes(pseudo)
-          __pseudo: pseudo.length === 0 ? null : pseudo.map(String)
+          __pseudo: pseudo.length === 0 ? null : pseudo.map(String),
         })
       }
       scope.push(node, ...pseudo)
     }
   }
 
-  // console.log(classNames)
-
   return classNames
 }
 
-// console.log(getClassNamesFromSelector('h1, h2, h3, .foo .bar, .baz'))
-
-// const css = fs.readFileSync(path.resolve(__dirname, 'tailwind.css'), 'utf8')
-
 async function process(ast) {
-  const start = new Date()
-
   const tree = {}
   const commonContext = {}
 
-  ast.root.walkRules(rule => {
+  ast.root.walkRules((rule) => {
     const classNames = getClassNamesFromSelector(rule.selector)
 
-    const decls = { __decls: true }
-    rule.walkDecls(decl => {
+    const decls = {}
+    rule.walkDecls((decl) => {
       decls[decl.prop] = decl.value
     })
 
@@ -96,49 +71,48 @@ async function process(ast) {
       const context = keys.concat([])
       const baseKeys = classNames[i].className.split('__TAILWIND_SEPARATOR__')
       const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
+      const index = []
 
-      if (classNames[i].scope) {
-        let index = []
-        const existing = dlv(tree, baseKeys)
-        if (typeof existing !== 'undefined') {
-          if (Array.isArray(existing)) {
-            const scopeIndex = existing.findIndex(
-              x => x.__scope === classNames[i].scope
-            )
-            if (scopeIndex > -1) {
-              keys.unshift(scopeIndex)
-              index.push(scopeIndex)
-            } else {
-              keys.unshift(existing.length)
-              index.push(existing.length)
-            }
+      const existing = dlv(tree, baseKeys)
+      if (typeof existing !== 'undefined') {
+        if (Array.isArray(existing)) {
+          const scopeIndex = existing.findIndex(
+            (x) =>
+              x.__scope === classNames[i].scope &&
+              arraysEqual(existing.__context, context)
+          )
+          if (scopeIndex > -1) {
+            keys.unshift(scopeIndex)
+            index.push(scopeIndex)
           } else {
-            if (existing.__scope !== classNames[i].scope) {
-              dset(tree, baseKeys, [existing])
-              keys.unshift(1)
-              index.push(1)
-            }
+            keys.unshift(existing.length)
+            index.push(existing.length)
+          }
+        } else {
+          if (
+            existing.__scope !== classNames[i].scope ||
+            !arraysEqual(existing.__context, context)
+          ) {
+            dset(tree, baseKeys, [existing])
+            keys.unshift(1)
+            index.push(1)
           }
         }
-        if (classNames[i].__rule) {
-          dset(tree, [...baseKeys, ...index, '__rule'], true)
-          dsetEach(tree, [...baseKeys, ...keys], decls)
-        }
-        if (classNames[i].__pseudo) {
-          dset(tree, [...baseKeys, ...keys, '__pseudo'], classNames[i].__pseudo)
-        }
-        dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
-      } else {
-        if (classNames[i].__rule) {
-          dset(tree, [...baseKeys, '__rule'], true)
-          dsetEach(tree, [...baseKeys, ...keys], decls)
-        } else {
-          dset(tree, [...baseKeys, ...keys], {})
-        }
-        if (classNames[i].__pseudo) {
-          dset(tree, [...baseKeys, ...keys, '__pseudo'], classNames[i].__pseudo)
-        }
       }
+      if (classNames[i].__rule) {
+        dset(tree, [...baseKeys, ...index, '__rule'], true)
+
+        dsetEach(tree, [...baseKeys, ...index], decls)
+      }
+      if (classNames[i].__pseudo) {
+        dset(tree, [...baseKeys, '__pseudo'], classNames[i].__pseudo)
+      }
+      dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
+      dset(
+        tree,
+        [...baseKeys, ...index, '__context'],
+        context.concat([]).reverse()
+      )
 
       // common context
       if (classNames[i].__pseudo) {
@@ -157,15 +131,12 @@ async function process(ast) {
       }
     }
   })
-  //   console.log(`${new Date() - start}ms`)
-  // console.log(tree)
-  // console.log(commonContext)
 
   return { classNames: tree, context: commonContext }
 }
 
 function intersection(arr1, arr2) {
-  return arr1.filter(value => arr2.indexOf(value) !== -1)
+  return arr1.filter((value) => arr2.indexOf(value) !== -1)
 }
 
 function dsetEach(obj, keys, values) {
@@ -175,14 +146,15 @@ function dsetEach(obj, keys, values) {
   }
 }
 
-export default process
+function arraysEqual(a, b) {
+  if (a === b) return true
+  if (a == null || b == null) return false
+  if (a.length !== b.length) return false
 
-// process(`
-// .bg-red {
-//     background-color: red;
-//   }
-//   .bg-red {
-//     color: white;
-//   }`).then(x => {
-//   console.log(x)
-// })
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+export default process

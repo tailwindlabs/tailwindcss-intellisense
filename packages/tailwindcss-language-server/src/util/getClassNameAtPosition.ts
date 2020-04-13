@@ -49,7 +49,8 @@ export function getClassNameParts(state: State, className: string): string[] {
   let parts: string[] = className.split(separator)
 
   if (parts.length === 1) {
-    return dlv(state.classNames.classNames, [className, '__rule']) === true
+    return dlv(state.classNames.classNames, [className, '__rule']) === true ||
+      Array.isArray(dlv(state.classNames.classNames, [className]))
       ? [className]
       : null
   }
@@ -73,7 +74,10 @@ export function getClassNameParts(state: State, className: string): string[] {
   ]
 
   return possibilities.find((key) => {
-    if (dlv(state.classNames.classNames, [...key, '__rule']) === true) {
+    if (
+      dlv(state.classNames.classNames, [...key, '__rule']) === true ||
+      Array.isArray(dlv(state.classNames.classNames, [...key]))
+    ) {
       return true
     }
     return false

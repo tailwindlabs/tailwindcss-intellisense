@@ -6,7 +6,6 @@ import {
 } from '../util/getClassNameAtPosition'
 import { stringifyCss, stringifyConfigValue } from '../util/stringify'
 const dlv = require('dlv')
-import escapeClassName from 'css.escape'
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
 
@@ -90,21 +89,11 @@ function provideClassNameHover(
   return {
     contents: {
       language: 'css',
-      value: stringifyCss(dlv(state.classNames.classNames, parts), {
-        selector: augmentClassName(parts, state),
-      }),
+      value: stringifyCss(
+        hovered.className,
+        dlv(state.classNames.classNames, parts)
+      ),
     },
     range: hovered.range,
   }
-}
-
-// TODO
-function augmentClassName(className: string | string[], state: State): string {
-  const parts = Array.isArray(className)
-    ? className
-    : getClassNameParts(state, className)
-  const obj = dlv(state.classNames.classNames, parts)
-  const pseudo = obj.__pseudo ? obj.__pseudo.join('') : ''
-  const scope = obj.__scope ? `${obj.__scope} ` : ''
-  return `${scope}.${escapeClassName(parts.join(state.separator))}${pseudo}`
 }

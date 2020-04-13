@@ -1,4 +1,6 @@
 import removeMeta from './removeMeta'
+const dlv = require('dlv')
+import escapeClassName from 'css.escape'
 
 export function stringifyConfigValue(x: any): string {
   if (typeof x === 'string') return x
@@ -12,34 +14,45 @@ export function stringifyConfigValue(x: any): string {
   return null
 }
 
-export function stringifyCss(
-  obj: any,
-  { indent = 0, selector }: { indent?: number; selector?: string } = {}
-): string {
-  let indentStr = '\t'.repeat(indent)
-  if (obj.__decls === true) {
-    let before = ''
-    let after = ''
-    if (selector) {
-      before = `${indentStr}${selector} {\n`
-      after = `\n${indentStr}}`
-      indentStr += '\t'
-    }
-    return (
-      before +
-      Object.keys(removeMeta(obj)).reduce((acc, curr, i) => {
-        return `${acc}${i === 0 ? '' : '\n'}${indentStr}${curr}: ${obj[curr]};`
-      }, '') +
-      after
-    )
+export function stringifyCss(className: string, obj: any): string {
+  if (obj.__rule !== true && !Array.isArray(obj)) return null
+
+  if (Array.isArray(obj)) {
+    const rules = obj.map((x) => stringifyCss(className, x)).filter(Boolean)
+    if (rules.length === 0) return null
+    return rules.join('\n\n')
   }
-  return Object.keys(removeMeta(obj)).reduce((acc, curr, i) => {
-    return `${acc}${i === 0 ? '' : '\n'}${indentStr}${curr} {\n${stringifyCss(
-      obj[curr],
-      {
-        indent: indent + 1,
-        selector,
-      }
-    )}\n${indentStr}}`
+
+  let css = ``
+
+  const context = dlv(obj, '__context', [])
+  const props = Object.keys(removeMeta(obj))
+  if (props.length === 0) return null
+
+  for (let i = 0; i < context.length; i++) {
+    css += `${'\t'.repeat(i)}${context[i]} {\n`
+  }
+
+  const indentStr = '\t'.repeat(context.length)
+  const decls = props.reduce((acc, curr, i) => {
+    return `${acc}${i === 0 ? '' : '\n'}${indentStr + '\t'}${curr}: ${
+      obj[curr]
+    };`
   }, '')
+  css += `${indentStr}${augmentClassName(
+    className,
+    obj
+  )} {\n${decls}\n${indentStr}}`
+
+  for (let i = context.length - 1; i >= 0; i--) {
+    css += `${'\t'.repeat(i)}\n}`
+  }
+
+  return css
+}
+
+function augmentClassName(className: string, obj: any): string {
+  const pseudo = obj.__pseudo ? obj.__pseudo.join('') : ''
+  const scope = obj.__scope ? `${obj.__scope} ` : ''
+  return `${scope}.${escapeClassName(className)}${pseudo}`
 }

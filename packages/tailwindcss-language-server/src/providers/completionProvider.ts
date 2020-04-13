@@ -27,6 +27,7 @@ function completionsFromClassList(
   let sep = ':'
   let parts = partialClassName.split(sep)
   let subset: any
+  let subsetKey: string[] = []
   let isSubset: boolean = false
 
   let replacementRange = {
@@ -42,6 +43,7 @@ function completionsFromClassList(
     subset = dlv(state.classNames.classNames, keys)
     if (typeof subset !== 'undefined' && typeof subset.__rule === 'undefined') {
       isSubset = true
+      subsetKey = keys
       replacementRange = {
         ...replacementRange,
         start: {
@@ -62,7 +64,7 @@ function completionsFromClassList(
       (className) => {
         let kind: CompletionItemKind = CompletionItemKind.Constant
         let documentation: string = null
-        if (isContextItem(state, [className])) {
+        if (isContextItem(state, [...subsetKey, className])) {
           kind = CompletionItemKind.Module
         } else {
           const color = getColor(state, [className])
@@ -76,6 +78,7 @@ function completionsFromClassList(
           label: className,
           kind,
           documentation,
+          data: [...subsetKey, className],
           textEdit: {
             newText: className,
             range: replacementRange,
@@ -514,20 +517,20 @@ export function resolveCompletionItem(
     return item
   }
 
-  const className = state.classNames.classNames[item.label]
-  if (isContextItem(state, [item.label])) {
-    item.detail = state.classNames.context[item.label].join(', ')
+  const className = dlv(state.classNames.classNames, item.data)
+  if (isContextItem(state, item.data)) {
+    item.detail = state.classNames.context[
+      item.data[item.data.length - 1]
+    ].join(', ')
   } else {
     item.detail = getCssDetail(state, className)
     if (!item.documentation) {
-      item.documentation = stringifyCss(className)
-      if (item.detail === item.documentation) {
-        item.documentation = null
-      } else {
-        // item.documentation = {
-        //   kind: MarkupKind.Markdown,
-        //   value: ['```css', item.documentation, '```'].join('\n')
-        // }
+      const css = stringifyCss(item.data.join(':'), className)
+      if (css) {
+        item.documentation = {
+          kind: MarkupKind.Markdown,
+          value: ['```css', css, '```'].join('\n'),
+        }
       }
     }
   }
@@ -537,7 +540,8 @@ export function resolveCompletionItem(
 function isContextItem(state: State, keys: string[]): boolean {
   const item = dlv(state.classNames.classNames, keys)
   return Boolean(
-    !item.__rule &&
+    isObject(item) &&
+      !item.__rule &&
       !Array.isArray(item) &&
       state.classNames.context[keys[keys.length - 1]]
   )
@@ -555,13 +559,8 @@ function getCssDetail(state: State, className: any): string {
   if (Array.isArray(className)) {
     return `${className.length} rules`
   }
-  let withoutMeta = removeMeta(className)
-  if (className.__decls === true) {
-    return stringifyDecls(withoutMeta)
+  if (className.__rule === true) {
+    return stringifyDecls(removeMeta(className))
   }
-  let keys = Object.keys(withoutMeta)
-  if (keys.length === 1) {
-    return getCssDetail(state, className[keys[0]])
-  }
-  return `${keys.length} rules`
+  return null
 }
