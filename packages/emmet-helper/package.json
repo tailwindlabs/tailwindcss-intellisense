@@ -1,0 +1,13 @@
+{
+  "name": "emmet-helper",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist --minify && replace-in-files --string='e(\"./format\")' --string='e(\"./edit\")' --replacement='undefined' dist/index.js"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.1",
+    "replace-in-files-cli": "^0.3.1",
+    "vscode-emmet-helper": "^1.2.17"
+  }
+}

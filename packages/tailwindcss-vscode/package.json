@@ -34,7 +34,17 @@
           "source.svelte"
         ]
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Tailwind CSS IntelliSense",
+      "properties": {
+        "tailwindCSS.emmetCompletions": {
+          "type": "boolean",
+          "default": false,
+          "description": ""
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",

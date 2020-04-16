@@ -1,5 +1,5 @@
 import { TextDocument, Position } from 'vscode-languageserver'
-import { isMixedDoc, isInsideTag } from './html'
+import { isInsideTag, isVueDoc, isSvelteDoc } from './html'
 
 export const CSS_LANGUAGES = [
   'css',
@@ -19,7 +19,7 @@ export function isCssContext(doc: TextDocument, position: Position): boolean {
     return true
   }
 
-  if (isMixedDoc(doc)) {
+  if (isVueDoc(doc) || isSvelteDoc(doc)) {
     let str = doc.getText({
       start: { line: 0, character: 0 },
       end: position,

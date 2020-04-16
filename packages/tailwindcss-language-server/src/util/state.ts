@@ -16,6 +16,15 @@ export type ClassNames = {
 export type EditorState = {
   connection: Connection
   documents: TextDocuments
+  documentSettings: Map<string, Settings>
+  globalSettings: Settings
+  capabilities: {
+    configuration: boolean
+  }
+}
+
+export type Settings = {
+  emmetCompletions: boolean
 }
 
 export type State = null | {

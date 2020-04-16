@@ -15,6 +15,10 @@ import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
 import { stringifyConfigValue, stringifyCss } from '../util/stringify'
 import isObject from '../util/isObject'
+import * as emmetHelper from 'emmet-helper'
+import { isValidLocationForEmmetAbbreviation } from '../util/isValidLocationForEmmetAbbreviation'
+import { getDocumentSettings } from '../util/getDocumentSettings'
+import { isJsContext } from '../util/js'
 
 function completionsFromClassList(
   state: State,
@@ -174,7 +178,10 @@ function provideClassNameCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(params.textDocument.uri)
 
-  if (isHtmlContext(doc, params.position)) {
+  if (
+    isHtmlContext(doc, params.position) ||
+    isJsContext(doc, params.position)
+  ) {
     return provideClassAttributeCompletions(state, params)
   }
 
@@ -490,19 +497,88 @@ function provideCssDirectiveCompletions(
   }
 }
 
-export function provideCompletions(
+async function provideEmmetCompletions(
+  state: State,
+  { position, textDocument }: CompletionParams
+): Promise<CompletionList> {
+  let settings = await getDocumentSettings(state, textDocument.uri)
+  if (settings.emmetCompletions !== true) return null
+
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  const syntax = isHtmlContext(doc, position)
+    ? 'html'
+    : isJsContext(doc, position)
+    ? 'jsx'
+    : null
+
+  if (syntax === null) {
+    return null
+  }
+
+  const extractAbbreviationResults = emmetHelper.extractAbbreviation(
+    doc,
+    position,
+    true
+  )
+  if (
+    !extractAbbreviationResults ||
+    !emmetHelper.isAbbreviationValid(
+      syntax,
+      extractAbbreviationResults.abbreviation
+    )
+  ) {
+    return null
+  }
+
+  if (
+    !isValidLocationForEmmetAbbreviation(
+      doc,
+      extractAbbreviationResults.abbreviationRange
+    )
+  ) {
+    return null
+  }
+
+  const emmetItems = emmetHelper.doComplete(doc, position, syntax, {})
+
+  if (!emmetItems || !emmetItems.items || emmetItems.items.length !== 1) {
+    return null
+  }
+
+  // https://github.com/microsoft/vscode/issues/86941
+  if (emmetItems.items[0].label === 'widows: ;') {
+    return null
+  }
+
+  const parts = emmetItems.items[0].label.split('.')
+  if (parts.length < 2) return null
+
+  return completionsFromClassList(state, parts[parts.length - 1], {
+    start: {
+      line: position.line,
+      character: position.character - parts[parts.length - 1].length,
+    },
+    end: position,
+  })
+}
+
+export async function provideCompletions(
   state: State,
   params: CompletionParams
-): CompletionList {
+): Promise<CompletionList> {
   if (state === null) return { items: [], isIncomplete: false }
 
-  return (
+  const result =
     provideClassNameCompletions(state, params) ||
     provideCssHelperCompletions(state, params) ||
     provideCssDirectiveCompletions(state, params) ||
     provideScreenDirectiveCompletions(state, params) ||
     provideVariantsDirectiveCompletions(state, params)
-  )
+
+  if (result) return result
+
+  return provideEmmetCompletions(state, params)
 }
 
 export function resolveCompletionItem(

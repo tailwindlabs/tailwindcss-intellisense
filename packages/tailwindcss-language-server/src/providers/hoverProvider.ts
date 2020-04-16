@@ -8,6 +8,7 @@ import { stringifyCss, stringifyConfigValue } from '../util/stringify'
 const dlv = require('dlv')
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
+import { isJsContext } from '../util/js'
 
 export function provideHover(
   state: State,
@@ -78,7 +79,7 @@ function provideClassNameHover(
 ): Hover {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isHtmlContext(doc, position)) return null
+  if (!isHtmlContext(doc, position) && !isJsContext(doc, position)) return null
 
   let hovered = getClassNameAtPosition(doc, position)
   if (!hovered) return null

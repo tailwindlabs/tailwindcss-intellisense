@@ -15,25 +15,32 @@ import {
   CompletionList,
   Hover,
   TextDocumentPositionParams,
+  DidChangeConfigurationNotification,
 } from 'vscode-languageserver'
 import getTailwindState from 'tailwindcss-class-names'
-import { State } from './util/state'
+import { State, Settings } from './util/state'
 import {
   provideCompletions,
   resolveCompletionItem,
 } from './providers/completionProvider'
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
+import { getDocumentSettings } from './util/getDocumentSettings'
 
 let state: State = null
 let connection = createConnection(ProposedFeatures.all)
 let documents = new TextDocuments()
 let workspaceFolder: string | null
 
+const defaultSettings: Settings = { emmetCompletions: false }
+let globalSettings: Settings = defaultSettings
+let documentSettings: Map<string, Settings> = new Map()
+
 documents.onDidOpen((event) => {
-  connection.console.log(
-    `[Server(${process.pid}) ${workspaceFolder}] Document opened: ${event.document.uri}`
-  )
+  getDocumentSettings(state, event.document.uri)
+})
+documents.onDidClose((event) => {
+  documentSettings.delete(event.document.uri)
 })
 documents.listen(connection)
 
@@ -52,7 +59,16 @@ connection.onInitialize(
         },
       }
     )
-    state.editor = { connection, documents }
+
+    const capabilities = params.capabilities
+
+    state.editor = {
+      connection,
+      documents,
+      documentSettings,
+      globalSettings,
+      capabilities: { configuration: capabilities.workspace && !!capabilities.workspace.configuration },
+    }
 
     return {
       capabilities: {
@@ -73,6 +89,13 @@ connection.onInitialize(
 
 connection.onInitialized &&
   connection.onInitialized(async () => {
+    if (state.editor.capabilities.configuration) {
+      connection.client.register(
+        DidChangeConfigurationNotification.type,
+        undefined
+      )
+    }
+
     connection.sendNotification('tailwindcss/configUpdated', [
       state.dependencies[0],
       state.config,
@@ -80,8 +103,23 @@ connection.onInitialized &&
     ])
   })
 
+connection.onDidChangeConfiguration((change) => {
+  if (state.editor.capabilities.configuration) {
+    // Reset all cached document settings
+    state.editor.documentSettings.clear()
+  } else {
+    state.editor.globalSettings = <Settings>(
+      (change.settings.tailwindCSS || defaultSettings)
+    )
+  }
+
+  state.editor.documents
+    .all()
+    .forEach((doc) => getDocumentSettings(state, doc.uri))
+})
+
 connection.onCompletion(
-  (params: CompletionParams): CompletionList => {
+  (params: CompletionParams): Promise<CompletionList> => {
     return provideCompletions(state, params)
   }
 )
