@@ -319,36 +319,11 @@ function provideVariantsDirectiveCompletions(
 
   if (/\s+/.test(parts[parts.length - 1])) return null
 
-  // TODO: move this to tailwindcss-class-names?
-  let variants = dlv(
-    state.config,
-    ['variants'],
-    dlv(state.config, ['modules'], {})
-  )
-  if (!isObject(variants) && !Array.isArray(variants)) {
-    variants = []
-  }
-  let enabledVariants: string[]
-  if (Array.isArray(variants)) {
-    enabledVariants = variants
-  } else {
-    const uniqueVariants: Set<string> = new Set()
-    for (const mod in variants) {
-      if (!Array.isArray(variants[mod])) continue
-      variants[mod].forEach((v: string) => uniqueVariants.add(v))
-    }
-    enabledVariants = [...uniqueVariants]
-  }
-
-  enabledVariants = state.variants.filter(
-    (x) => enabledVariants.indexOf(x) !== -1 || x === 'default'
-  )
-
   const existingVariants = parts.slice(0, parts.length - 1)
 
   return {
     isIncomplete: false,
-    items: enabledVariants
+    items: state.variants
       .filter((v) => existingVariants.indexOf(v) === -1)
       .map((variant) => ({
         // TODO: detail
