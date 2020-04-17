@@ -1,4 +1,4 @@
-import { TextDocuments, Connection } from 'vscode-languageserver'
+import { TextDocuments, Connection, Range } from 'vscode-languageserver'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -35,4 +35,14 @@ export type State = null | {
   classNames: ClassNames
   dependencies: string[]
   editor: EditorState
+}
+
+export type DocumentClassList = {
+  classList: string
+  range: Range
+}
+
+export type DocumentClassName = {
+  className: string
+  range: Range
 }

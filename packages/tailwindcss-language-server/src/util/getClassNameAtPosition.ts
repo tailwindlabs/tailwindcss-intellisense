@@ -1,11 +1,11 @@
 import { TextDocument, Range, Position } from 'vscode-languageserver'
-import { State } from './state'
+import { State, DocumentClassName } from './state'
 const dlv = require('dlv')
 
 export function getClassNameAtPosition(
   document: TextDocument,
   position: Position
-): { className: string; range: Range } {
+): DocumentClassName {
   const range1: Range = {
     start: { line: Math.max(position.line - 5, 0), character: 0 },
     end: position,

@@ -1,4 +1,4 @@
-import { State } from '../util/state'
+import { State, DocumentClassName } from '../util/state'
 import { Hover, TextDocumentPositionParams } from 'vscode-languageserver'
 import {
   getClassNameAtPosition,
@@ -9,6 +9,8 @@ const dlv = require('dlv')
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
 import { isJsContext } from '../util/js'
+import { isWithinRange } from '../util/isWithinRange'
+import { findClassNamesInRange } from '../util/find'
 
 export function provideHover(
   state: State,
@@ -73,7 +75,7 @@ function provideCssHelperHover(
   }
 }
 
-function provideClassNameHover(
+function provideClassAttributeHover(
   state: State,
   { textDocument, position }: TextDocumentPositionParams
 ): Hover {
@@ -84,17 +86,53 @@ function provideClassNameHover(
   let hovered = getClassNameAtPosition(doc, position)
   if (!hovered) return null
 
-  const parts = getClassNameParts(state, hovered.className)
+  return classNameToHover(state, hovered)
+}
+
+function classNameToHover(
+  state: State,
+  { className, range }: DocumentClassName
+): Hover {
+  const parts = getClassNameParts(state, className)
   if (parts === null) return null
 
   return {
     contents: {
       language: 'css',
-      value: stringifyCss(
-        hovered.className,
-        dlv(state.classNames.classNames, parts)
-      ),
+      value: stringifyCss(className, dlv(state.classNames.classNames, parts)),
     },
-    range: hovered.range,
+    range,
   }
+}
+
+function provideAtApplyHover(
+  state: State,
+  { textDocument, position }: TextDocumentPositionParams
+): Hover {
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  if (!isCssContext(doc, position)) return null
+
+  const classNames = findClassNamesInRange(doc, {
+    start: { line: Math.max(position.line - 10, 0), character: 0 },
+    end: { line: position.line + 10, character: 0 },
+  })
+
+  const className = classNames.find(({ range }) =>
+    isWithinRange(position, range)
+  )
+
+  if (!className) return null
+
+  return classNameToHover(state, className)
+}
+
+function provideClassNameHover(
+  state: State,
+  params: TextDocumentPositionParams
+): Hover {
+  return (
+    provideClassAttributeHover(state, params) ||
+    provideAtApplyHover(state, params)
+  )
 }
