@@ -32,7 +32,10 @@ function glob(pattern, options = {}) {
 }
 
 function arraysEqual(arr1, arr2) {
-  return JSON.stringify(arr1.sort()) === JSON.stringify(arr2.sort())
+  return (
+    JSON.stringify(arr1.concat([]).sort()) ===
+    JSON.stringify(arr2.concat([]).sort())
+  )
 }
 
 export default async function getClassNames(
