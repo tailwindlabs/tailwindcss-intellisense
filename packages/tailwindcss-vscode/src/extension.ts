@@ -19,6 +19,10 @@ import {
   TransportKind,
 } from 'vscode-languageclient'
 
+import {
+  registerConfigExplorer,
+} from './configExplorer/configExplorer'
+
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()
 
@@ -137,6 +141,10 @@ export function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
       )
+
+      client.onReady().then(() => {
+        registerConfigExplorer({ client, context })
+      })
 
       client.start()
       clients.set(folder.uri.toString(), client)

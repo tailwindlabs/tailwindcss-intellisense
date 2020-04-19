@@ -129,3 +129,5 @@ export default async function getClassNames(
 
   return result
 }
+
+export { resolveConfig }

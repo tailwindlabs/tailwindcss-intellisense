@@ -44,7 +44,48 @@
           "description": ""
         }
       }
-    }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "tailwindcssConfigExplorer",
+          "name": "Tailwind CSS",
+          "when": "tailwindcssConfigExplorerEnabled"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "tailwindcss.openConfigFile",
+          "when": "view == tailwindcssConfigExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "tailwindcss.openDocs",
+          "when": "view == tailwindcssConfigExplorer && viewItem == documented",
+          "group": "inline"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tailwindcss.openConfigFile",
+        "title": "Open Configuration",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "tailwindcss.openDocs",
+        "title": "View Documentation",
+        "icon": "$(book)"
+      },
+      {
+        "command": "tailwindcss.jumpToConfig",
+        "title": "Jump to config"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -64,6 +105,7 @@
     "concurrently": "^5.1.0",
     "dlv": "^1.1.3",
     "glob-exec": "^0.1.1",
+    "mitt": "^1.2.0",
     "mkdirp": "^1.0.3",
     "tailwindcss-language-server": "0.0.1",
     "tslint": "^5.16.0",

@@ -26,6 +26,7 @@ import {
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
+import getConfigLocation from './util/getConfigLocation'
 
 let state: State = null
 let connection = createConnection(ProposedFeatures.all)
@@ -101,6 +102,12 @@ connection.onInitialized &&
       state.config,
       state.plugins,
     ])
+
+    connection.onNotification('tailwindcss/findDefinition', async (key) => {
+      // TODO: handle errors
+      let location = await getConfigLocation(state, key)
+      connection.sendNotification('tailwindcss/foundDefinition', [key, location])
+    })
   })
 
 connection.onDidChangeConfiguration((change) => {
