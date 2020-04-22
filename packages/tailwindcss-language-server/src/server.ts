@@ -18,7 +18,7 @@ import {
   DidChangeConfigurationNotification,
 } from 'vscode-languageserver'
 import getTailwindState from 'tailwindcss-class-names'
-import { State, Settings } from './util/state'
+import { State, Settings, EditorState } from './util/state'
 import {
   provideCompletions,
   resolveCompletionItem,
@@ -27,7 +27,7 @@ import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
 
-let state: State = null
+let state: State = { enabled: false }
 let connection = createConnection(ProposedFeatures.all)
 let documents = new TextDocuments()
 let workspaceFolder: string | null
@@ -46,28 +46,43 @@ documents.listen(connection)
 
 connection.onInitialize(
   async (params: InitializeParams): Promise<InitializeResult> => {
-    state = await getTailwindState(
-      params.rootPath || URI.parse(params.rootUri).path,
-      {
-        onChange: (newState: State): void => {
-          state = { ...newState, editor: state.editor }
-          connection.sendNotification('tailwindcss/configUpdated', [
-            state.dependencies[0],
-            state.config,
-            state.plugins,
-          ])
-        },
-      }
-    )
-
     const capabilities = params.capabilities
 
-    state.editor = {
+    const editorState: EditorState = {
       connection,
       documents,
       documentSettings,
       globalSettings,
-      capabilities: { configuration: capabilities.workspace && !!capabilities.workspace.configuration },
+      capabilities: {
+        configuration:
+          capabilities.workspace && !!capabilities.workspace.configuration,
+      },
+    }
+
+    const tailwindState = await getTailwindState(
+      params.rootPath || URI.parse(params.rootUri).path,
+      {
+        onChange: (newState: State): void => {
+          if (newState) {
+            state = { ...newState, enabled: true, editor: editorState }
+            connection.sendNotification('tailwindcss/configUpdated', [
+              state.configPath,
+              state.config,
+              state.plugins,
+            ])
+          } else {
+            state = { enabled: false, editor: editorState }
+            // TODO
+            // connection.sendNotification('tailwindcss/configUpdated', [null])
+          }
+        },
+      }
+    )
+
+    if (tailwindState) {
+      state = { enabled: true, editor: editorState, ...tailwindState }
+    } else {
+      state = { enabled: false, editor: editorState }
     }
 
     return {
@@ -79,7 +94,20 @@ connection.onInitialize(
         textDocumentSync: documents.syncKind,
         completionProvider: {
           resolveProvider: true,
-          triggerCharacters: ['"', "'", '`', ' ', '.', '[', state.separator],
+          triggerCharacters: [
+            // class attributes
+            '"',
+            "'",
+            '`',
+            // between class names
+            ' ',
+            // @apply and emmet-style
+            '.',
+            // config/theme helper
+            '[',
+            // TODO: restart server if separater changes?
+            typeof state.separator === 'undefined' ? ':' : state.separator,
+          ],
         },
         hoverProvider: true,
       },
@@ -97,7 +125,7 @@ connection.onInitialized &&
     }
 
     connection.sendNotification('tailwindcss/configUpdated', [
-      state.dependencies[0],
+      state.configPath,
       state.config,
       state.plugins,
     ])
@@ -120,18 +148,21 @@ connection.onDidChangeConfiguration((change) => {
 
 connection.onCompletion(
   (params: CompletionParams): Promise<CompletionList> => {
+    if (!state.enabled) return null
     return provideCompletions(state, params)
   }
 )
 
 connection.onCompletionResolve(
   (item: CompletionItem): CompletionItem => {
+    if (!state.enabled) return null
     return resolveCompletionItem(state, item)
   }
 )
 
 connection.onHover(
   (params: TextDocumentPositionParams): Hover => {
+    if (!state.enabled) return null
     return provideHover(state, params)
   }
 )
