@@ -12,12 +12,12 @@ import {
   WorkspaceFolder,
   Uri,
 } from 'vscode'
-
 import {
   LanguageClient,
   LanguageClientOptions,
   TransportKind,
 } from 'vscode-languageclient'
+import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
 
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()
@@ -137,6 +137,10 @@ export function activate(context: ExtensionContext) {
         serverOptions,
         clientOptions
       )
+
+      client.onReady().then(() => {
+        registerConfigErrorHandler(client)
+      })
 
       client.start()
       clients.set(folder.uri.toString(), client)

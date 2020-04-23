@@ -63,7 +63,7 @@ connection.onInitialize(
       params.rootPath || URI.parse(params.rootUri).path,
       {
         onChange: (newState: State): void => {
-          if (newState) {
+          if (newState && !newState.error) {
             state = { ...newState, enabled: true, editor: editorState }
             connection.sendNotification('tailwindcss/configUpdated', [
               state.configPath,
@@ -72,6 +72,20 @@ connection.onInitialize(
             ])
           } else {
             state = { enabled: false, editor: editorState }
+            if (newState && newState.error) {
+              const payload: {
+                message: string
+                file?: string
+                line?: number
+              } = { message: newState.error.message }
+              const lines = newState.error.stack.toString().split('\n')
+              const match = /^(?<file>.*?):(?<line>[0-9]+)$/.exec(lines[0])
+              if (match) {
+                payload.file = match.groups.file
+                payload.line = parseInt(match.groups.line, 10)
+              }
+              connection.sendNotification('tailwindcss/configError', [payload])
+            }
             // TODO
             // connection.sendNotification('tailwindcss/configUpdated', [null])
           }

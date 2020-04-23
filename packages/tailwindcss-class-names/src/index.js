@@ -11,6 +11,18 @@ import invariant from 'tiny-invariant'
 import getPlugins from './getPlugins'
 import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
+import * as util from 'util'
+
+function TailwindConfigError(error) {
+  Error.call(this)
+  Error.captureStackTrace(this, this.constructor)
+
+  this.name = this.constructor.name
+  this.message = error.message
+  this.stack = error.stack
+}
+
+util.inherits(TailwindConfigError, Error)
 
 function glob(pattern, options = {}) {
   return new Promise((resolve, reject) => {
@@ -73,7 +85,12 @@ export default async function getClassNames(
     })
 
     hook.watch()
-    const config = __non_webpack_require__(configPath)
+    let config
+    try {
+      config = __non_webpack_require__(configPath)
+    } catch (error) {
+      throw new TailwindConfigError(error)
+    }
     hook.unwatch()
 
     const ast = await postcss([tailwindcss(configPath)]).process(
@@ -116,8 +133,12 @@ export default async function getClassNames(
     const prevDeps = result ? result.dependencies : []
     try {
       result = await run()
-    } catch (_) {
-      onChange(null)
+    } catch (error) {
+      if (error instanceof TailwindConfigError) {
+        onChange({ error })
+      } else {
+        onChange(null)
+      }
       return
     }
     if (!arraysEqual(prevDeps, result.dependencies)) {

@@ -37,6 +37,7 @@ export type State = null | {
   classNames?: ClassNames
   dependencies?: string[]
   editor?: EditorState
+  error?: Error
 }
 
 export type DocumentClassList = {
