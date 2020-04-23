@@ -31,9 +31,7 @@ export default function getVariants({ config, version, postcss }) {
         config: (path, defaultValue) => dlv(config, path, defaultValue),
         postcss,
       })
-    } catch (_) {
-      console.error(_)
-    }
+    } catch (_) {}
   })
 
   return variants
