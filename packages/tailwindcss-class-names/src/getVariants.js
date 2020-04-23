@@ -9,6 +9,7 @@ export default function getVariants({ config, version, postcss }) {
   semver.gte(version, '1.0.0-beta.1') && variants.push('default')
   semver.gte(version, '1.1.0') &&
     variants.push('first', 'last', 'odd', 'even', 'disabled', 'visited')
+  semver.gte(version, '1.3.0') && variants.push('group-focus')
 
   let plugins = config.plugins
   if (!Array.isArray(plugins)) {
