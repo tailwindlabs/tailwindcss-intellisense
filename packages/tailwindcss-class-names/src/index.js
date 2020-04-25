@@ -3,8 +3,6 @@ import Hook from './hook.mjs'
 import dlv from 'dlv'
 import dset from 'dset'
 import importFrom from 'import-from'
-import nodeGlob from 'glob'
-import * as path from 'path'
 import chokidar from 'chokidar'
 import semver from 'semver'
 import invariant from 'tiny-invariant'
@@ -12,6 +10,8 @@ import getPlugins from './getPlugins'
 import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
+import { glob } from './glob'
+import { getUtilityConfigMap } from './getUtilityConfigMap'
 
 function TailwindConfigError(error) {
   Error.call(this)
@@ -23,25 +23,6 @@ function TailwindConfigError(error) {
 }
 
 util.inherits(TailwindConfigError, Error)
-
-function glob(pattern, options = {}) {
-  return new Promise((resolve, reject) => {
-    let g = new nodeGlob.Glob(pattern, options)
-    let matches = []
-    let max = dlv(options, 'max', Infinity)
-    g.on('match', (match) => {
-      matches.push(path.resolve(options.cwd || process.cwd(), match))
-      if (matches.length === max) {
-        g.abort()
-        resolve(matches)
-      }
-    })
-    g.on('end', () => {
-      resolve(matches)
-    })
-    g.on('error', reject)
-  })
-}
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -109,14 +90,21 @@ export default async function getClassNames(
       delete config[sepLocation]
     }
 
+    const resolvedConfig = resolveConfig({ cwd, config })
+
     return {
       configPath,
-      config: resolveConfig({ cwd, config }),
+      config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,
       classNames: await extractClassNames(ast),
       dependencies: hook.deps,
       plugins: getPlugins(config),
       variants: getVariants({ config, version, postcss }),
+      utilityConfigMap: await getUtilityConfigMap({
+        cwd,
+        resolvedConfig,
+        postcss,
+      }),
     }
   }
 
