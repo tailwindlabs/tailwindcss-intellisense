@@ -10,10 +10,8 @@ import {
   Uri,
   ExtensionContext,
   workspace,
-  TextEditor,
-  TextEditorRevealType,
-  Selection,
-  TextDocument,
+  Range,
+  Position
 } from 'vscode'
 const dlv = require('dlv')
 const mkdirp = require('mkdirp')
@@ -310,16 +308,11 @@ export function registerConfigExplorer({
       if (JSON.stringify(result.key) !== JSON.stringify(key)) return
       emitter.off('tailwindcss/foundDefinition', handle)
 
-      workspace.openTextDocument(result.file).then((doc: TextDocument) => {
-        window.showTextDocument(doc).then((editor: TextEditor) => {
-          editor.revealRange(result.range, TextEditorRevealType.InCenter)
-          editor.selection = new Selection(
-            result.range.start.line,
-            result.range.start.character,
-            result.range.end.line,
-            result.range.end.character
-          )
-        })
+      window.showTextDocument(Uri.file(result.file), {
+        selection: new Range(
+          new Position(result.range.start.line, result.range.start.character),
+          new Position(result.range.end.line, result.range.end.character),
+        ),
       })
     }
     emitter.on('tailwindcss/foundDefinition', handle)
