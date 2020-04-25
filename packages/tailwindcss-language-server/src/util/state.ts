@@ -28,13 +28,16 @@ export type Settings = {
 }
 
 export type State = null | {
-  config: any
-  separator: string
-  plugins: any[]
-  variants: string[]
-  classNames: ClassNames
-  dependencies: string[]
-  editor: EditorState
+  enabled: boolean
+  configPath?: string
+  config?: any
+  separator?: string
+  plugins?: any[]
+  variants?: string[]
+  classNames?: ClassNames
+  dependencies?: string[]
+  editor?: EditorState
+  error?: Error
 }
 
 export type DocumentClassList = {

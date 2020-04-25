@@ -1,5 +1,5 @@
 import semver from 'semver'
-import dlv from 'dlv'
+import { runPlugin } from './runPlugin'
 
 export default function getVariants({ config, version, postcss }) {
   let variants = ['responsive', 'hover']
@@ -9,31 +9,18 @@ export default function getVariants({ config, version, postcss }) {
   semver.gte(version, '1.0.0-beta.1') && variants.push('default')
   semver.gte(version, '1.1.0') &&
     variants.push('first', 'last', 'odd', 'even', 'disabled', 'visited')
+  semver.gte(version, '1.3.0') && variants.push('group-focus')
 
-  let plugins = config.plugins
-  if (!Array.isArray(plugins)) {
-    plugins = []
-  }
+  let plugins = Array.isArray(config.plugins) ? config.plugins : []
+
   plugins.forEach((plugin) => {
-    try {
-      ;(plugin.handler || plugin)({
-        addUtilities: () => {},
-        addComponents: () => {},
-        addBase: () => {},
-        addVariant: (name) => {
-          variants.push(name)
-        },
-        e: (x) => x,
-        prefix: (x) => x,
-        theme: (path, defaultValue) =>
-          dlv(config, `theme.${path}`, defaultValue),
-        variants: () => [],
-        config: (path, defaultValue) => dlv(config, path, defaultValue),
-        postcss,
-      })
-    } catch (_) {
-      console.error(_)
-    }
+    runPlugin(plugin, {
+      postcss,
+      config,
+      addVariant: (name) => {
+        variants.push(name)
+      },
+    })
   })
 
   return variants

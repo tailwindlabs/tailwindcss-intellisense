@@ -94,7 +94,7 @@ function classNameToHover(
   { className, range }: DocumentClassName
 ): Hover {
   const parts = getClassNameParts(state, className)
-  if (parts === null) return null
+  if (!parts) return null
 
   return {
     contents: {

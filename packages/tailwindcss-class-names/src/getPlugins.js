@@ -1,9 +1,24 @@
 import * as path from 'path'
 import stackTrace from 'stack-trace'
 import pkgUp from 'pkg-up'
+import { glob } from './glob'
+import { isObject } from './isObject'
 
-function isObject(variable) {
-  return Object.prototype.toString.call(variable) === '[object Object]'
+export async function getBuiltInPlugins(cwd) {
+  try {
+    return (
+      await glob(path.resolve(cwd, 'node_modules/tailwindcss/lib/plugins/*.js'))
+    )
+      .map((x) => {
+        try {
+          const mod = __non_webpack_require__(x)
+          return mod.default ? mod.default() : mod()
+        } catch (_) {}
+      })
+      .filter(Boolean)
+  } catch (_) {
+    return []
+  }
 }
 
 export default function getPlugins(config) {
@@ -13,7 +28,7 @@ export default function getPlugins(config) {
     return []
   }
 
-  return plugins.map(plugin => {
+  return plugins.map((plugin) => {
     let pluginConfig = plugin.config
     if (!isObject(pluginConfig)) {
       pluginConfig = {}
@@ -25,7 +40,7 @@ export default function getPlugins(config) {
         : [],
       variants: isObject(pluginConfig.variants)
         ? Object.keys(pluginConfig.variants)
-        : []
+        : [],
     }
 
     const fn = plugin.handler || plugin
@@ -40,32 +55,32 @@ export default function getPlugins(config) {
       const trace = stackTrace.parse(e)
       if (trace.length === 0)
         return {
-          name: fnName
+          name: fnName,
         }
       const file = trace[0].fileName
       const dir = path.dirname(file)
       let pkg = pkgUp.sync({ cwd: dir })
       if (!pkg)
         return {
-          name: fnName
+          name: fnName,
         }
       try {
         pkg = __non_webpack_require__(pkg)
       } catch (_) {
         return {
-          name: fnName
+          name: fnName,
         }
       }
       if (pkg.name && path.resolve(dir, pkg.main || 'index.js') === file) {
         return {
           name: pkg.name,
           homepage: pkg.homepage,
-          contributes
+          contributes,
         }
       }
     }
     return {
-      name: fnName
+      name: fnName,
     }
   })
 }

@@ -12,12 +12,12 @@ import {
   WorkspaceFolder,
   Uri,
 } from 'vscode'
-
 import {
   LanguageClient,
   LanguageClientOptions,
   TransportKind,
 } from 'vscode-languageclient'
+import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
 
 import {
   registerConfigExplorer,
@@ -143,6 +143,7 @@ export function activate(context: ExtensionContext) {
       )
 
       client.onReady().then(() => {
+        registerConfigErrorHandler(client)
         registerConfigExplorer({ client, context })
       })
 
