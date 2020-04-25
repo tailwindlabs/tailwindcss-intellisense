@@ -28,7 +28,7 @@ export default function getConfigLocation(
     }
 
     fork.on('message', callback)
-    fork.send([state.dependencies[0], key])
+    fork.send([state.configPath, key])
   })
 }
 
