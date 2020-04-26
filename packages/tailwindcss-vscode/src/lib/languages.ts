@@ -1,0 +1,36 @@
+export const LANGUAGES = [
+  // html
+  'blade',
+  'django-html',
+  'edge',
+  'ejs',
+  'erb',
+  'haml',
+  'handlebars',
+  'html',
+  'HTML (Eex)',
+  'jade',
+  'leaf',
+  'markdown',
+  'njk',
+  'nunjucks',
+  'php',
+  'razor',
+  'slim',
+  'twig',
+  // css
+  'css',
+  'less',
+  'postcss',
+  'sass',
+  'scss',
+  'stylus',
+  // js
+  'javascript',
+  'javascriptreact',
+  'reason',
+  'typescriptreact',
+  // mixed
+  'vue',
+  'svelte',
+]

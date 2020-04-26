@@ -18,11 +18,10 @@ import {
   TransportKind,
 } from 'vscode-languageclient'
 import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
+import { LANGUAGES } from './lib/languages'
 
 let defaultClient: LanguageClient
 let clients: Map<string, LanguageClient> = new Map()
-
-const LANGS = ['css', 'javascript', 'html', 'vue', 'svelte']
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {
@@ -72,7 +71,7 @@ export function activate(context: ExtensionContext) {
   function didOpenTextDocument(document: TextDocument): void {
     // We are only interested in language mode text
     if (
-      LANGS.indexOf(document.languageId) === -1 ||
+      LANGUAGES.indexOf(document.languageId) === -1 ||
       (document.uri.scheme !== 'file' && document.uri.scheme !== 'untitled')
     ) {
       return
@@ -87,7 +86,7 @@ export function activate(context: ExtensionContext) {
         debug: { module, transport: TransportKind.ipc, options: debugOptions },
       }
       let clientOptions: LanguageClientOptions = {
-        documentSelector: LANGS.map((language) => ({
+        documentSelector: LANGUAGES.map((language) => ({
           scheme: 'untitled',
           language,
         })),
@@ -121,7 +120,7 @@ export function activate(context: ExtensionContext) {
         debug: { module, transport: TransportKind.ipc, options: debugOptions },
       }
       let clientOptions: LanguageClientOptions = {
-        documentSelector: LANGS.map((language) => ({
+        documentSelector: LANGUAGES.map((language) => ({
           scheme: 'file',
           language,
           pattern: `${folder.uri.fsPath}/**/*`,
