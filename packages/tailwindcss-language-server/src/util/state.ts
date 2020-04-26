@@ -36,6 +36,7 @@ export type State = null | {
   variants?: string[]
   classNames?: ClassNames
   dependencies?: string[]
+  utilityConfigMap?: Record<string, string>
   editor?: EditorState
   error?: Error
 }

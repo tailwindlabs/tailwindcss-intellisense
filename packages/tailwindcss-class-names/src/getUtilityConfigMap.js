@@ -33,19 +33,33 @@ export async function getUtilityConfigMap({ cwd, resolvedConfig, postcss }) {
         postcss,
         config: proxiedConfig,
         addUtilities: (utilities) => {
-          Object.keys(utilities).forEach((util) => {
-            let props = Object.keys(utilities[util])
-            if (
-              props.length === 1 &&
-              /^\.[^\s]+$/.test(util) &&
-              typeof utilities[util][props[0]] === 'string' &&
-              utilities[util][props[0]].substr(0, 5) === '$dep$'
-            ) {
-              classNameConfigMap[util.substr(1)] = utilities[util][
-                props[0]
-              ].substr(5)
+          ;(Array.isArray(utilities) ? utilities : [utilities]).forEach(
+            (utils) => {
+              Object.keys(utils).forEach((util) => {
+                if (!/^\.[^\s]+$/.test(util)) {
+                  return
+                }
+                let props = Object.keys(utils[util])
+                let values = props.map((prop) => utils[util][prop])
+                if (values.some((val) => typeof val !== 'string')) {
+                  return
+                }
+                let deps = values
+                  .filter((val) => val.substr(0, 5) === '$dep$')
+                  // unique
+                  .filter((val, index, self) => self.indexOf(val) === index)
+                  .map((dep) => dep.substr(5))
+                if (deps.length === 1) {
+                  let className = util.substr(1)
+                  let match = className.match(/[^\\]::?/)
+                  if (match !== null) {
+                    className = className.substr(0, match.index + 1)
+                  }
+                  classNameConfigMap[className] = deps[0]
+                }
+              })
             }
-          })
+          )
         },
       })
     })

@@ -16,6 +16,7 @@ import {
   Hover,
   TextDocumentPositionParams,
   DidChangeConfigurationNotification,
+  DefinitionLink,
 } from 'vscode-languageserver'
 import getTailwindState from 'tailwindcss-class-names'
 import { State, Settings, EditorState } from './util/state'
@@ -27,6 +28,7 @@ import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
 import getConfigLocation from './util/getConfigLocation'
+import { provideDefinition } from './providers/definitionProvider'
 
 let state: State = { enabled: false }
 let connection = createConnection(ProposedFeatures.all)
@@ -125,6 +127,7 @@ connection.onInitialize(
           ],
         },
         hoverProvider: true,
+        definitionProvider: true,
       },
     }
   }
@@ -185,6 +188,13 @@ connection.onHover(
   (params: TextDocumentPositionParams): Hover => {
     if (!state.enabled) return null
     return provideHover(state, params)
+  }
+)
+
+connection.onDefinition(
+  (params: TextDocumentPositionParams): Promise<DefinitionLink[]> => {
+    if (!state.enabled) return null
+    return provideDefinition(state, params)
   }
 )
 
