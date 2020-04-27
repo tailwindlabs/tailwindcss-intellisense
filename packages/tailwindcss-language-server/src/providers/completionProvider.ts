@@ -273,6 +273,7 @@ function provideCssHelperCompletions(
       const insertClosingBrace: boolean =
         text.charAt(text.length - 1) !== ']' &&
         (replaceDot || (separator && separator.endsWith('[')))
+      const detail = stringifyConfigValue(obj[item])
 
       return {
         label: item,
@@ -283,7 +284,8 @@ function provideCssHelperCompletions(
           : isObject(obj[item])
           ? CompletionItemKind.Module
           : CompletionItemKind.Property,
-        detail: stringifyConfigValue(obj[item]),
+        // VS Code bug causes '0' to not display in some cases
+        detail: detail === '0' ? '0 ' : detail,
         documentation: color,
         textEdit: {
           newText: `${replaceDot ? '[' : ''}${item}${
