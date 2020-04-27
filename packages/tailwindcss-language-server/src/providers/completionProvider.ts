@@ -27,8 +27,7 @@ function completionsFromClassList(
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
-  // TODO
-  let sep = ':'
+  let sep = state.separator
   let parts = partialClassName.split(sep)
   let subset: any
   let subsetKey: string[] = []
@@ -73,7 +72,7 @@ function completionsFromClassList(
         if (isContextItem(state, [...subsetKey, className])) {
           kind = CompletionItemKind.Module
           command = { title: '', command: 'editor.action.triggerSuggest' }
-          label += state.separator
+          label += sep
         } else {
           const color = getColor(state, [className])
           if (color) {
