@@ -66,10 +66,14 @@ function completionsFromClassList(
     isIncomplete: false,
     items: Object.keys(isSubset ? subset : state.classNames.classNames).map(
       (className) => {
+        let label = className
         let kind: CompletionItemKind = CompletionItemKind.Constant
         let documentation: string = null
+        let command: any
         if (isContextItem(state, [...subsetKey, className])) {
           kind = CompletionItemKind.Module
+          command = { title: '', command: 'editor.action.triggerSuggest' }
+          label += state.separator
         } else {
           const color = getColor(state, [className])
           if (color) {
@@ -79,12 +83,13 @@ function completionsFromClassList(
         }
 
         return {
-          label: className,
+          label,
           kind,
           documentation,
+          command,
           data: [...subsetKey, className],
           textEdit: {
-            newText: className,
+            newText: label,
             range: replacementRange,
           },
         }
