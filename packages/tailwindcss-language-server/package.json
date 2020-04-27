@@ -22,6 +22,7 @@
     "emmet-helper": "0.0.1",
     "glob-exec": "^0.1.1",
     "line-column": "^1.0.2",
+    "semver": "^7.3.2",
     "tailwindcss-class-names": "0.0.1",
     "typescript": "^3.8.3",
     "vscode-languageserver": "^5.2.1",

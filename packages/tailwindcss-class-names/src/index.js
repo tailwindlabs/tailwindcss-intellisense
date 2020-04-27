@@ -93,6 +93,7 @@ export default async function getClassNames(
     const resolvedConfig = resolveConfig({ cwd, config })
 
     return {
+      version,
       configPath,
       config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,

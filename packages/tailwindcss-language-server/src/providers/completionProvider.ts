@@ -21,6 +21,7 @@ import { isValidLocationForEmmetAbbreviation } from '../util/isValidLocationForE
 import { getDocumentSettings } from '../util/getDocumentSettings'
 import { isJsContext } from '../util/js'
 import { naturalExpand } from '../util/naturalExpand'
+import semver from 'semver'
 
 function completionsFromClassList(
   state: State,
@@ -306,7 +307,7 @@ function provideCssHelperCompletions(
   }
 }
 
-// TODO: vary items based on Tailwind version
+// TODO: vary docs links based on Tailwind version
 function provideTailwindDirectiveCompletions(
   state: State,
   { position, textDocument }: CompletionParams
@@ -329,14 +330,23 @@ function provideTailwindDirectiveCompletions(
   return {
     isIncomplete: false,
     items: [
-      {
-        label: 'base',
-        documentation: {
-          kind: MarkupKind.Markdown,
-          value:
-            'This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
-        },
-      },
+      semver.gte(state.version, '1.0.0-beta.1')
+        ? {
+            label: 'base',
+            documentation: {
+              kind: MarkupKind.Markdown,
+              value:
+                'This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+            },
+          }
+        : {
+            label: 'preflight',
+            documentation: {
+              kind: MarkupKind.Markdown,
+              value:
+                'This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](https://v0.tailwindcss.com/docs/functions-and-directives/#tailwind)',
+            },
+          },
       {
         label: 'components',
         documentation: {
