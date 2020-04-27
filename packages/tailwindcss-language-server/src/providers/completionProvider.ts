@@ -20,6 +20,7 @@ import * as emmetHelper from 'emmet-helper'
 import { isValidLocationForEmmetAbbreviation } from '../util/isValidLocationForEmmetAbbreviation'
 import { getDocumentSettings } from '../util/getDocumentSettings'
 import { isJsContext } from '../util/js'
+import { naturalExpand } from '../util/naturalExpand'
 
 function completionsFromClassList(
   state: State,
@@ -65,15 +66,17 @@ function completionsFromClassList(
   return {
     isIncomplete: false,
     items: Object.keys(isSubset ? subset : state.classNames.classNames).map(
-      (className) => {
+      (className, index) => {
         let label = className
         let kind: CompletionItemKind = CompletionItemKind.Constant
         let documentation: string = null
         let command: any
+        let sortText = naturalExpand(index)
         if (isContextItem(state, [...subsetKey, className])) {
           kind = CompletionItemKind.Module
           command = { title: '', command: 'editor.action.triggerSuggest' }
           label += sep
+          sortText = '-' + sortText // move to top
         } else {
           const color = getColor(state, [className])
           if (color) {
@@ -87,6 +90,7 @@ function completionsFromClassList(
           kind,
           documentation,
           command,
+          sortText,
           data: [...subsetKey, className],
           textEdit: {
             newText: label,
@@ -261,7 +265,7 @@ function provideCssHelperCompletions(
 
   return {
     isIncomplete: false,
-    items: Object.keys(obj).map((item) => {
+    items: Object.keys(obj).map((item, index) => {
       let color = getColorFromString(obj[item])
       const replaceDot: boolean =
         item.indexOf('.') !== -1 && separator && separator.endsWith('.')
@@ -272,6 +276,7 @@ function provideCssHelperCompletions(
       return {
         label: item,
         filterText: `${replaceDot ? '.' : ''}${item}`,
+        sortText: naturalExpand(index),
         kind: color
           ? CompletionItemKind.Color
           : isObject(obj[item])
@@ -378,10 +383,11 @@ function provideScreenDirectiveCompletions(
 
   return {
     isIncomplete: false,
-    items: Object.keys(screens).map((screen) => ({
+    items: Object.keys(screens).map((screen, index) => ({
       label: screen,
       kind: CompletionItemKind.Constant,
       data: 'screen',
+      sortText: naturalExpand(index),
       textEdit: {
         newText: screen,
         range: {
