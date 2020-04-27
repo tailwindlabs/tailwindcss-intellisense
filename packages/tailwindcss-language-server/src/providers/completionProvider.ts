@@ -14,6 +14,7 @@ import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
 import { stringifyConfigValue, stringifyCss } from '../util/stringify'
+import { stringifyScreen, Screen } from '../util/screens'
 import isObject from '../util/isObject'
 import * as emmetHelper from 'emmet-helper'
 import { isValidLocationForEmmetAbbreviation } from '../util/isValidLocationForEmmetAbbreviation'
@@ -380,6 +381,7 @@ function provideScreenDirectiveCompletions(
     items: Object.keys(screens).map((screen) => ({
       label: screen,
       kind: CompletionItemKind.Constant,
+      data: 'screen',
       textEdit: {
         newText: screen,
         range: {
@@ -564,11 +566,18 @@ export function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): CompletionItem {
-  if (
-    item.data === 'helper' ||
-    item.data === 'directive' ||
-    item.data === 'variant'
-  ) {
+  if (['helper', 'directive', 'variant'].includes(item.data)) {
+    return item
+  }
+
+  if (item.data === 'screen') {
+    let screens = dlv(
+      state.config,
+      ['theme', 'screens'],
+      dlv(state.config, ['screens'], {})
+    )
+    if (!isObject(screens)) screens = {}
+    item.detail = stringifyScreen(screens[item.label] as Screen)
     return item
   }
 
