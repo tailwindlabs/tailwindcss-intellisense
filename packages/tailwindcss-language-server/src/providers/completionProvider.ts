@@ -306,6 +306,78 @@ function provideCssHelperCompletions(
   }
 }
 
+// TODO: vary items based on Tailwind version
+function provideTailwindDirectiveCompletions(
+  state: State,
+  { position, textDocument }: CompletionParams
+): CompletionList {
+  let doc = state.editor.documents.get(textDocument.uri)
+
+  if (!isCssContext(doc, position)) {
+    return null
+  }
+
+  let text = doc.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  const match = text.match(/^\s*@tailwind\s+(?<partial>[^\s]*)$/i)
+
+  if (match === null) return null
+
+  return {
+    isIncomplete: false,
+    items: [
+      {
+        label: 'base',
+        documentation: {
+          kind: MarkupKind.Markdown,
+          value:
+            'This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+        },
+      },
+      {
+        label: 'components',
+        documentation: {
+          kind: MarkupKind.Markdown,
+          value:
+            'This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+        },
+      },
+      {
+        label: 'utilities',
+        documentation: {
+          kind: MarkupKind.Markdown,
+          value:
+            'This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+        },
+      },
+      {
+        label: 'screens',
+        documentation: {
+          kind: MarkupKind.Markdown,
+          value:
+            'Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+        },
+      },
+    ].map((item) => ({
+      ...item,
+      kind: CompletionItemKind.Constant,
+      textEdit: {
+        newText: item.label,
+        range: {
+          start: {
+            line: position.line,
+            character: position.character - match.groups.partial.length,
+          },
+          end: position,
+        },
+      },
+    })),
+  }
+}
+
 function provideVariantsDirectiveCompletions(
   state: State,
   { position, textDocument }: CompletionParams
@@ -561,7 +633,8 @@ export async function provideCompletions(
     provideCssHelperCompletions(state, params) ||
     provideCssDirectiveCompletions(state, params) ||
     provideScreenDirectiveCompletions(state, params) ||
-    provideVariantsDirectiveCompletions(state, params)
+    provideVariantsDirectiveCompletions(state, params) ||
+    provideTailwindDirectiveCompletions(state, params)
 
   if (result) return result
 
