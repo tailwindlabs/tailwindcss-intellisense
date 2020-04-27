@@ -374,6 +374,7 @@ function provideTailwindDirectiveCompletions(
     ].map((item) => ({
       ...item,
       kind: CompletionItemKind.Constant,
+      data: '@tailwind',
       textEdit: {
         newText: item.label,
         range: {
@@ -655,7 +656,7 @@ export function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): CompletionItem {
-  if (['helper', 'directive', 'variant'].includes(item.data)) {
+  if (['helper', 'directive', 'variant', '@tailwind'].includes(item.data)) {
     return item
   }
 
