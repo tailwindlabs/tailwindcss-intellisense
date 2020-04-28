@@ -6,7 +6,8 @@
   "scripts": {
     "dev1": "ncc build src/server.ts --watch -o dist/foo.js",
     "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/\\.ts$/, '')}}\"",
-    "build": "ncc build src/server.ts --minify"
+    "build": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/\\.ts$/, '')}}\"",
+    "minify": "glob-exec --foreach --parallel \"dist/src/**/index.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\""
   },
   "keywords": [],
   "author": "Brad Cornes <hello@bradley.dev",
@@ -24,6 +25,7 @@
     "line-column": "^1.0.2",
     "semver": "^7.3.2",
     "tailwindcss-class-names": "0.0.1",
+    "terser": "^4.6.12",
     "typescript": "^3.8.3",
     "vscode-languageserver": "^5.2.1",
     "vscode-uri": "^2.1.1"

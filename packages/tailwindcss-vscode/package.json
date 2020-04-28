@@ -5,7 +5,7 @@
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.3.0-alpha.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/bradlc/"
@@ -60,14 +60,11 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run build",
-    "devOld": "concurrently \"npm:devOld:*\"",
-    "devOld:client": "ncc build src/extension.ts --watch -o dist/client",
-    "devOld:server": "ncc build src/server.ts --watch -o dist/server",
+    "vscode:prepublish": "npm run build && npm run minify",
     "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/\\.ts$/, '')}}\"",
-    "build": "npm run build:client && npm run build:server",
-    "build:client": "ncc build src/extension.ts --minify -o dist/client",
-    "build:server": "ncc build src/server.ts --minify -o dist/server"
+    "build": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/\\.ts$/, '')}}\"",
+    "minify": "glob-exec --foreach --parallel \"dist/src/**/index.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\"",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.0",
@@ -79,8 +76,10 @@
     "glob-exec": "^0.1.1",
     "mkdirp": "^1.0.3",
     "tailwindcss-language-server": "0.0.1",
+    "terser": "^4.6.12",
     "tslint": "^5.16.0",
     "typescript": "^3.8.3",
+    "vsce": "^1.75.0",
     "vscode-languageclient": "^5.2.1"
   }
 }
