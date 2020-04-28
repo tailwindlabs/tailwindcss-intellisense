@@ -1,6 +1,7 @@
 import { TextDocument, Position } from 'vscode-languageserver'
 
 export const HTML_LANGUAGES = [
+  'aspnetcorerazor',
   'blade',
   'django-html',
   'edge',
@@ -8,10 +9,12 @@ export const HTML_LANGUAGES = [
   'erb',
   'haml',
   'handlebars',
+  'hbs',
   'html',
   'HTML (Eex)',
   'jade',
   'leaf',
+  'liquid',
   'markdown',
   'njk',
   'nunjucks',

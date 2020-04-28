@@ -1,5 +1,6 @@
 export const LANGUAGES = [
   // html
+  'aspnetcorerazor',
   'blade',
   'django-html',
   'edge',
@@ -7,10 +8,12 @@ export const LANGUAGES = [
   'erb',
   'haml',
   'handlebars',
+  'hbs',
   'html',
   'HTML (Eex)',
   'jade',
   'leaf',
+  'liquid',
   'markdown',
   'njk',
   'nunjucks',
