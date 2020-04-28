@@ -22,6 +22,7 @@ import { getDocumentSettings } from '../util/getDocumentSettings'
 import { isJsContext } from '../util/js'
 import { naturalExpand } from '../util/naturalExpand'
 import semver from 'semver'
+import { docsUrl } from '../util/docsUrl'
 
 function completionsFromClassList(
   state: State,
@@ -337,40 +338,50 @@ function provideTailwindDirectiveCompletions(
             label: 'base',
             documentation: {
               kind: MarkupKind.Markdown,
-              value:
-                'This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+              value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#tailwind'
+              )})`,
             },
           }
         : {
             label: 'preflight',
             documentation: {
               kind: MarkupKind.Markdown,
-              value:
-                'This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](https://v0.tailwindcss.com/docs/functions-and-directives/#tailwind)',
+              value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#tailwind'
+              )})`,
             },
           },
       {
         label: 'components',
         documentation: {
           kind: MarkupKind.Markdown,
-          value:
-            'This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+          value: `This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
         },
       },
       {
         label: 'utilities',
         documentation: {
           kind: MarkupKind.Markdown,
-          value:
-            'This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+          value: `This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
         },
       },
       {
         label: 'screens',
         documentation: {
           kind: MarkupKind.Markdown,
-          value:
-            'Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives/#tailwind)',
+          value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
         },
       },
     ].map((item) => ({
@@ -511,40 +522,50 @@ function provideCssDirectiveCompletions(
       label: '@tailwind',
       documentation: {
         kind: MarkupKind.Markdown,
-        value:
-          'Use the `@tailwind` directive to insert Tailwind’s `base`, `components`, `utilities` and `screens` styles into your CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#tailwind)',
+        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`screens\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#tailwind'
+        )})`,
       },
     },
     {
       label: '@variants',
       documentation: {
         kind: MarkupKind.Markdown,
-        value:
-          'You can generate `responsive`, `hover`, `focus`, `active`, and `group-hover` versions of your own utilities by wrapping their definitions in the `@variants` directive.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#variants)',
+        value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and \`group-hover\` versions of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#variants'
+        )})`,
       },
     },
     {
       label: '@responsive',
       documentation: {
         kind: MarkupKind.Markdown,
-        value:
-          'You can generate responsive variants of your own classes by wrapping their definitions in the `@responsive` directive.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#responsive)',
+        value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#responsive'
+        )})`,
       },
     },
     {
       label: '@screen',
       documentation: {
         kind: MarkupKind.Markdown,
-        value:
-          'The `@screen` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#screen)',
+        value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#screen'
+        )})`,
       },
     },
     {
       label: '@apply',
       documentation: {
         kind: MarkupKind.Markdown,
-        value:
-          'Use `@apply` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](https://tailwindcss.com/docs/functions-and-directives#apply)',
+        value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#apply'
+        )})`,
       },
     },
   ]
