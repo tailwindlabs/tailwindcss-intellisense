@@ -3,21 +3,14 @@ import stackTrace from 'stack-trace'
 import pkgUp from 'pkg-up'
 import { glob } from './glob'
 import { isObject } from './isObject'
+import importFrom from 'import-from'
 
-export async function getBuiltInPlugins(cwd) {
+export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
   try {
-    // TODO: just require('tailwindcss/lib/corePlugins.js') instead of globbing
     // TODO: add v0 support ("generators")
-    return (
-      await glob(path.resolve(cwd, 'node_modules/tailwindcss/lib/plugins/*.js'))
-    )
-      .map((x) => {
-        try {
-          const mod = __non_webpack_require__(x)
-          return mod.default ? mod.default() : mod()
-        } catch (_) {}
-      })
-      .filter(Boolean)
+    return importFrom(cwd, 'tailwindcss/lib/corePlugins.js').default({
+      corePlugins: resolvedConfig.corePlugins,
+    })
   } catch (_) {
     return []
   }
