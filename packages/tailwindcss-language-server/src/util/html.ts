@@ -12,6 +12,7 @@ export const HTML_LANGUAGES = [
   'hbs',
   'html',
   'HTML (Eex)',
+  'HTML (EEx)',
   'jade',
   'leaf',
   'liquid',

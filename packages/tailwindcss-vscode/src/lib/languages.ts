@@ -11,6 +11,7 @@ export const LANGUAGES = [
   'hbs',
   'html',
   'HTML (Eex)',
+  'HTML (EEx)',
   'jade',
   'leaf',
   'liquid',
