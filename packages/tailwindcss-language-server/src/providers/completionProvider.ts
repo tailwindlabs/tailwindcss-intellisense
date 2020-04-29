@@ -83,7 +83,7 @@ function completionsFromClassList(
           const color = getColor(state, [className])
           if (color) {
             kind = CompletionItemKind.Color
-            documentation = color
+            documentation = color.documentation
           }
         }
 

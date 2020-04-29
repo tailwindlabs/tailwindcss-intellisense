@@ -172,14 +172,35 @@ const COLOR_NAMES = {
   yellowgreen: '#9acd32',
 }
 
-export function getColor(state: State, keys: string[]): string {
+export function getColor(
+  state: State,
+  keys: string[]
+): { documentation?: string } {
   const item = dlv(state.classNames.classNames, keys)
   if (!item.__rule) return null
   const props = Object.keys(removeMeta(item))
-  if (props.length === 0 || props.length > 1) return null
-  const prop = props[0]
+  const nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
+  if (nonCustomProps.length !== 1) return null
+  const prop = nonCustomProps[0]
   if (COLOR_PROPS.indexOf(prop) === -1) return null
-  return COLOR_NAMES[item[prop].toLowerCase()] || item[prop]
+
+  const namedColor = COLOR_NAMES[item[prop].toLowerCase()]
+  if (namedColor) {
+    return { documentation: namedColor }
+  }
+
+  // matches: rgba(<r>, <g>, <b>, var(--bg-opacity))
+  // TODO: support other formats? e.g. hsla, css level 4
+  const match = item[prop].match(
+    /^\s*rgba\(\s*(?<r>[0-9]{1,3})\s*,\s*(?<g>[0-9]{1,3})\s*,\s*(?<b>[0-9]{1,3})\s*,\s*var/
+  )
+  if (match) {
+    return {
+      documentation: `rgb(${match.groups.r}, ${match.groups.g}, ${match.groups.b})`,
+    }
+  }
+
+  return {}
 }
 
 export function isColor(str: any): boolean {
