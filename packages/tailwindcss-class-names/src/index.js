@@ -10,6 +10,7 @@ import getPlugins from './getPlugins'
 import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
+import * as path from 'path'
 import { glob } from './glob'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 
@@ -51,9 +52,10 @@ export default async function getClassNames(
     })
     invariant(configPath.length === 1, 'No Tailwind CSS config found.')
     configPath = configPath[0]
-    postcss = importFrom(cwd, 'postcss')
-    tailwindcss = importFrom(cwd, 'tailwindcss')
-    version = importFrom(cwd, 'tailwindcss/package.json').version
+    const configDir = path.dirname(configPath)
+    postcss = importFrom(configDir, 'postcss')
+    tailwindcss = importFrom(configDir, 'tailwindcss')
+    version = importFrom(configDir, 'tailwindcss/package.json').version
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
@@ -90,7 +92,7 @@ export default async function getClassNames(
       delete config[sepLocation]
     }
 
-    const resolvedConfig = resolveConfig({ cwd, config })
+    const resolvedConfig = resolveConfig({ cwd: configDir, config })
 
     return {
       version,
@@ -102,7 +104,7 @@ export default async function getClassNames(
       plugins: getPlugins(config),
       variants: getVariants({ config, version, postcss }),
       utilityConfigMap: await getUtilityConfigMap({
-        cwd,
+        cwd: configDir,
         resolvedConfig,
         postcss,
       }),
