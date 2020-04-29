@@ -6,6 +6,8 @@ import { isObject } from './isObject'
 
 export async function getBuiltInPlugins(cwd) {
   try {
+    // TODO: just require('tailwindcss/lib/corePlugins.js') instead of globbing
+    // TODO: add v0 support ("generators")
     return (
       await glob(path.resolve(cwd, 'node_modules/tailwindcss/lib/plugins/*.js'))
     )
