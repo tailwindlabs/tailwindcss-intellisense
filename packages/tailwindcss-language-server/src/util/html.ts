@@ -16,6 +16,7 @@ export const HTML_LANGUAGES = [
   'leaf',
   'liquid',
   'markdown',
+  'mustache',
   'njk',
   'nunjucks',
   'php',

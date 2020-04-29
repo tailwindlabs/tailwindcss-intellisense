@@ -15,6 +15,7 @@ export const LANGUAGES = [
   'leaf',
   'liquid',
   'markdown',
+  'mustache',
   'njk',
   'nunjucks',
   'php',
