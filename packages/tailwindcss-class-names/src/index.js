@@ -113,7 +113,7 @@ export default async function getClassNames(
   function watch(files = []) {
     if (watcher) watcher.close()
     watcher = chokidar
-      .watch([CONFIG_GLOB, ...files])
+      .watch([CONFIG_GLOB, ...files], { cwd })
       .on('change', handleChange)
       .on('unlink', handleChange)
   }
