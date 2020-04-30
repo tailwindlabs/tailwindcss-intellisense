@@ -121,9 +121,9 @@ test('foo', async () => {
   })
 })
 
-test.only('processes basic css', async () => {
+test('processes basic css', async () => {
   const result = await processCss(`
-    .bg-red\\:foo {
+    .bg-red {
       background-color: red;
     }
   `)

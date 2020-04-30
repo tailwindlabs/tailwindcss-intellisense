@@ -27,6 +27,7 @@
   "devDependencies": {
     "@zeit/ncc": "^0.21.1",
     "esm": "^3.2.25",
-    "jest": "^25.1.0"
+    "jest": "^25.1.0",
+    "postcss": "^7.0.27"
   }
 }
