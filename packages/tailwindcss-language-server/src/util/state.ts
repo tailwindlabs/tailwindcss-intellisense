@@ -18,6 +18,7 @@ export type EditorState = {
   documents: TextDocuments
   documentSettings: Map<string, Settings>
   globalSettings: Settings
+  userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
   }
@@ -25,6 +26,7 @@ export type EditorState = {
 
 export type Settings = {
   emmetCompletions: boolean
+  includeLanguages: Record<string, string>
 }
 
 export type State = null | {

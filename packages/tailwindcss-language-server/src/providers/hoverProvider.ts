@@ -27,7 +27,7 @@ function provideCssHelperHover(
 ): Hover {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) return null
+  if (!isCssContext(state, doc, position)) return null
 
   const line = doc.getText({
     start: { line: position.line, character: 0 },
@@ -81,7 +81,11 @@ function provideClassAttributeHover(
 ): Hover {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isHtmlContext(doc, position) && !isJsContext(doc, position)) return null
+  if (
+    !isHtmlContext(state, doc, position) &&
+    !isJsContext(state, doc, position)
+  )
+    return null
 
   let hovered = getClassNameAtPosition(doc, position)
   if (!hovered) return null
@@ -111,7 +115,7 @@ function provideAtApplyHover(
 ): Hover {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) return null
+  if (!isCssContext(state, doc, position)) return null
 
   const classNames = findClassNamesInRange(doc, {
     start: { line: Math.max(position.line - 10, 0), character: 0 },
