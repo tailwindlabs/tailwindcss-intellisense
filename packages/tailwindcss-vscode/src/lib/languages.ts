@@ -12,6 +12,7 @@ export const LANGUAGES = [
   'html',
   'HTML (Eex)',
   'HTML (EEx)',
+  'html-eex',
   'jade',
   'leaf',
   'liquid',
