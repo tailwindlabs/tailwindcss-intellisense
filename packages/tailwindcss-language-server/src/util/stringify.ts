@@ -1,6 +1,7 @@
 import removeMeta from './removeMeta'
 const dlv = require('dlv')
 import escapeClassName from 'css.escape'
+import { ensureArray } from './array'
 
 export function stringifyConfigValue(x: any): string {
   if (typeof x === 'string') return x
@@ -35,9 +36,10 @@ export function stringifyCss(className: string, obj: any): string {
 
   const indentStr = '\t'.repeat(context.length)
   const decls = props.reduce((acc, curr, i) => {
-    return `${acc}${i === 0 ? '' : '\n'}${indentStr + '\t'}${curr}: ${
-      obj[curr]
-    };`
+    const propStr = ensureArray(obj[curr])
+      .map((val) => `${indentStr + '\t'}${curr}: ${val};`)
+      .join('\n')
+    return `${acc}${i === 0 ? '' : '\n'}${propStr}`
   }, '')
   css += `${indentStr}${augmentClassName(
     className,

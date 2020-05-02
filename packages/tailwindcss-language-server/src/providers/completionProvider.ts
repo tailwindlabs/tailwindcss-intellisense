@@ -23,6 +23,7 @@ import { isJsContext } from '../util/js'
 import { naturalExpand } from '../util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from '../util/docsUrl'
+import { ensureArray } from '../util/array'
 
 function completionsFromClassList(
   state: State,
@@ -725,10 +726,19 @@ function isContextItem(state: State, keys: string[]): boolean {
 }
 
 function stringifyDecls(obj: any): string {
-  return Object.keys(obj)
-    .map((prop) => {
-      return `${prop}: ${obj[prop]};`
-    })
+  let props = Object.keys(obj)
+  let nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
+
+  if (props.length !== nonCustomProps.length && nonCustomProps.length !== 0) {
+    props = nonCustomProps
+  }
+
+  return props
+    .map((prop) =>
+      ensureArray(obj[prop])
+        .map((value) => `${prop}: ${value};`)
+        .join(' ')
+    )
     .join(' ')
 }
 

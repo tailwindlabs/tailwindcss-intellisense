@@ -55,7 +55,16 @@ async function process(ast) {
 
     const decls = {}
     rule.walkDecls((decl) => {
-      decls[decl.prop] = decl.value
+      if (decls[decl.prop]) {
+        decls[decl.prop] = [
+          ...(Array.isArray(decls[decl.prop])
+            ? decls[decl.prop]
+            : [decls[decl.prop]]),
+          decl.value,
+        ]
+      } else {
+        decls[decl.prop] = decl.value
+      }
     })
 
     let p = rule
