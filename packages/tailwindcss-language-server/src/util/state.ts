@@ -29,6 +29,7 @@ export type Settings = {
 
 export type State = null | {
   enabled: boolean
+  version?: string
   configPath?: string
   config?: any
   separator?: string

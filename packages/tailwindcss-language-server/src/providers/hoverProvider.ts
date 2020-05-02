@@ -40,7 +40,7 @@ function provideCssHelperHover(
 
   if (match === null) return null
 
-  const startChar = match.index + 7
+  const startChar = match.index + match.groups.helper.length + 2
   const endChar = startChar + match.groups.key.length
 
   if (position.character < startChar || position.character >= endChar) {

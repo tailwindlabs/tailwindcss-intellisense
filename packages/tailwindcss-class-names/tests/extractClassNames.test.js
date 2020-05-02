@@ -121,9 +121,9 @@ test('foo', async () => {
   })
 })
 
-test.only('processes basic css', async () => {
+test('processes basic css', async () => {
   const result = await processCss(`
-    .bg-red\\:foo {
+    .bg-red {
       background-color: red;
     }
   `)
@@ -347,6 +347,27 @@ test('processes multiple scopes for the same class name', async () => {
           'background-color': 'red',
         },
       ],
+    },
+  })
+})
+
+test('processes multiple properties of the same name', async () => {
+  const result = await processCss(`
+    .bg-red {
+      background-color: blue;
+      background-color: red;
+    }
+  `)
+
+  expect(result).toEqual({
+    context: {},
+    classNames: {
+      'bg-red': {
+        __rule: true,
+        __context: [],
+        __scope: null,
+        'background-color': ['blue', 'red'],
+      },
     },
   })
 })
