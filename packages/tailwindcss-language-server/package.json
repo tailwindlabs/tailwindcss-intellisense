@@ -16,6 +16,7 @@
     "node": "*"
   },
   "devDependencies": {
+    "@ctrl/tinycolor": "^3.1.0",
     "@types/node": "^13.9.3",
     "@zeit/ncc": "^0.22.0",
     "css.escape": "^1.5.1",
