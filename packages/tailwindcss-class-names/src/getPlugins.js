@@ -1,7 +1,6 @@
 import * as path from 'path'
 import stackTrace from 'stack-trace'
 import pkgUp from 'pkg-up'
-import { glob } from './glob'
 import { isObject } from './isObject'
 import importFrom from 'import-from'
 

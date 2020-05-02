@@ -11,7 +11,7 @@ import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
 import * as path from 'path'
-import { glob } from './glob'
+import { globSingle } from './globSingle'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 
 function TailwindConfigError(error) {
@@ -45,10 +45,11 @@ export default async function getClassNames(
     let tailwindcss
     let version
 
-    configPath = await glob(CONFIG_GLOB, {
+    configPath = await globSingle(CONFIG_GLOB, {
       cwd,
-      ignore: '**/node_modules/**',
-      max: 1,
+      filesOnly: true,
+      absolute: true,
+      flush: true,
     })
     invariant(configPath.length === 1, 'No Tailwind CSS config found.')
     configPath = configPath[0]
