@@ -114,27 +114,34 @@ export default async function getClassNames(
 
   let watcher
   function watch(files = []) {
-    if (watcher) watcher.close()
+    unwatch()
     watcher = chokidar
-      .watch([CONFIG_GLOB, ...files], { cwd })
+      .watch(files, { cwd })
       .on('change', handleChange)
       .on('unlink', handleChange)
   }
+  function unwatch() {
+    if (watcher) {
+      watcher.close()
+    }
+  }
 
   async function handleChange() {
-    const prevDeps = result ? result.dependencies : []
+    const prevDeps = result ? [result.configPath, ...result.dependencies] : []
     try {
       result = await run()
     } catch (error) {
       if (error instanceof TailwindConfigError) {
         onChange({ error })
       } else {
+        unwatch()
         onChange(null)
       }
       return
     }
-    if (!arraysEqual(prevDeps, result.dependencies)) {
-      watch(result.dependencies)
+    const newDeps = [result.configPath, ...result.dependencies]
+    if (!arraysEqual(prevDeps, newDeps)) {
+      watch(newDeps)
     }
     onChange(result)
   }
@@ -143,11 +150,10 @@ export default async function getClassNames(
   try {
     result = await run()
   } catch (_) {
-    watch()
     return null
   }
 
-  watch(result.dependencies)
+  watch([result.configPath, ...result.dependencies])
 
   return result
 }
