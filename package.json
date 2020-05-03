@@ -55,6 +55,10 @@
           "type": "boolean",
           "default": false,
           "description": ""
+        },
+        "tailwindCSS.includeLanguages": {
+          "type": "object",
+          "default": {}
         }
       }
     }

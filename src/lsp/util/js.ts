@@ -1,5 +1,6 @@
 import { TextDocument, Position } from 'vscode-languageserver'
 import { isHtmlDoc, isInsideTag, isVueDoc, isSvelteDoc } from './html'
+import { State } from './state'
 
 export const JS_LANGUAGES = [
   'javascript',
@@ -8,12 +9,20 @@ export const JS_LANGUAGES = [
   'typescriptreact',
 ]
 
-export function isJsDoc(doc: TextDocument): boolean {
-  return JS_LANGUAGES.indexOf(doc.languageId) !== -1
+export function isJsDoc(state: State, doc: TextDocument): boolean {
+  const userJsLanguages = Object.keys(
+    state.editor.userLanguages
+  ).filter((lang) => JS_LANGUAGES.includes(state.editor.userLanguages[lang]))
+
+  return [...JS_LANGUAGES, ...userJsLanguages].indexOf(doc.languageId) !== -1
 }
 
-export function isJsContext(doc: TextDocument, position: Position): boolean {
-  if (isJsDoc(doc)) {
+export function isJsContext(
+  state: State,
+  doc: TextDocument,
+  position: Position
+): boolean {
+  if (isJsDoc(state, doc)) {
     return true
   }
 
@@ -22,7 +31,7 @@ export function isJsContext(doc: TextDocument, position: Position): boolean {
     end: position,
   })
 
-  if (isHtmlDoc(doc) && isInsideTag(str, ['script'])) {
+  if (isHtmlDoc(state, doc) && isInsideTag(str, ['script'])) {
     return true
   }
 

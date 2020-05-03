@@ -1,4 +1,4 @@
-export const LANGUAGES = [
+export const DEFAULT_LANGUAGES = [
   // html
   'aspnetcorerazor',
   'blade',

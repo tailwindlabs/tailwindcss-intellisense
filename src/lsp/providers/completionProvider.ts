@@ -191,13 +191,13 @@ function provideClassNameCompletions(
   let doc = state.editor.documents.get(params.textDocument.uri)
 
   if (
-    isHtmlContext(doc, params.position) ||
-    isJsContext(doc, params.position)
+    isHtmlContext(state, doc, params.position) ||
+    isJsContext(state, doc, params.position)
   ) {
     return provideClassAttributeCompletions(state, params)
   }
 
-  if (isCssContext(doc, params.position)) {
+  if (isCssContext(state, doc, params.position)) {
     return provideAtApplyCompletions(state, params)
   }
 
@@ -210,7 +210,7 @@ function provideCssHelperCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) {
+  if (!isCssContext(state, doc, position)) {
     return null
   }
 
@@ -318,7 +318,7 @@ function provideTailwindDirectiveCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) {
+  if (!isCssContext(state, doc, position)) {
     return null
   }
 
@@ -409,7 +409,7 @@ function provideVariantsDirectiveCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) {
+  if (!isCssContext(state, doc, position)) {
     return null
   }
 
@@ -457,7 +457,7 @@ function provideScreenDirectiveCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) {
+  if (!isCssContext(state, doc, position)) {
     return null
   }
 
@@ -505,7 +505,7 @@ function provideCssDirectiveCompletions(
 ): CompletionList {
   let doc = state.editor.documents.get(textDocument.uri)
 
-  if (!isCssContext(doc, position)) {
+  if (!isCssContext(state, doc, position)) {
     return null
   }
 
@@ -600,9 +600,9 @@ async function provideEmmetCompletions(
 
   let doc = state.editor.documents.get(textDocument.uri)
 
-  const syntax = isHtmlContext(doc, position)
+  const syntax = isHtmlContext(state, doc, position)
     ? 'html'
-    : isJsContext(doc, position)
+    : isJsContext(state, doc, position)
     ? 'jsx'
     : null
 

@@ -18,10 +18,15 @@ import {
   TransportKind,
 } from 'vscode-languageclient'
 import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
-import { LANGUAGES } from './lib/languages'
+import { DEFAULT_LANGUAGES } from './lib/languages'
+import isObject from './util/isObject'
+import { dedupe, equal } from './util/array'
 
-let defaultClient: LanguageClient
+const CLIENT_ID = 'tailwindcss-intellisense'
+const CLIENT_NAME = 'Tailwind CSS IntelliSense'
+
 let clients: Map<string, LanguageClient> = new Map()
+let languages: Map<string, string[]> = new Map()
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {
@@ -60,48 +65,102 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
   return folder
 }
 
+function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
+  const langs = Workspace.getConfiguration('tailwindCSS', folder)
+    .includeLanguages
+  return isObject(langs) ? langs : {}
+}
+
 export function activate(context: ExtensionContext) {
-  let module = context.asAbsolutePath(
-    path.join('dist', 'server', 'index.js')
-  )
-  let outputChannel: OutputChannel = Window.createOutputChannel(
-    'lsp-multi-server-example'
-  )
+  let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
+  let outputChannel: OutputChannel = Window.createOutputChannel(CLIENT_ID)
+
+  // TODO: check if the actual language MAPPING changed
+  // not just the language IDs
+  // e.g. "plaintext" already exists but you change it from "html" to "css"
+  Workspace.onDidChangeConfiguration((event) => {
+    clients.forEach((client, key) => {
+      const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
+
+      if (event.affectsConfiguration('tailwindCSS', folder)) {
+        const userLanguages = getUserLanguages(folder)
+        if (userLanguages) {
+          const userLanguageIds = Object.keys(userLanguages)
+          const newLanguages = dedupe([
+            ...DEFAULT_LANGUAGES,
+            ...userLanguageIds,
+          ])
+          if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
+            languages.set(folder.uri.toString(), newLanguages)
+
+            if (client) {
+              clients.delete(folder.uri.toString())
+              client.stop()
+              bootWorkspaceClient(folder)
+            }
+          }
+        }
+      }
+    })
+  })
+
+  function bootWorkspaceClient(folder: WorkspaceFolder) {
+    if (clients.has(folder.uri.toString())) {
+      return
+    }
+
+    // placeholder so we don't boot another server before this one is ready
+    clients.set(folder.uri.toString(), null)
+
+    let debugOptions = {
+      execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
+    }
+    let serverOptions = {
+      run: { module, transport: TransportKind.ipc },
+      debug: {
+        module,
+        transport: TransportKind.ipc,
+        options: debugOptions,
+      },
+    }
+    let clientOptions: LanguageClientOptions = {
+      documentSelector: languages
+        .get(folder.uri.toString())
+        .map((language) => ({
+          scheme: 'file',
+          language,
+          pattern: `${folder.uri.fsPath}/**/*`,
+        })),
+      diagnosticCollectionName: CLIENT_ID,
+      workspaceFolder: folder,
+      outputChannel: outputChannel,
+      middleware: {},
+      initializationOptions: {
+        userLanguages: getUserLanguages(folder),
+      },
+    }
+    let client = new LanguageClient(
+      CLIENT_ID,
+      CLIENT_NAME,
+      serverOptions,
+      clientOptions
+    )
+
+    client.onReady().then(() => {
+      registerConfigErrorHandler(client)
+    })
+
+    client.start()
+    clients.set(folder.uri.toString(), client)
+  }
 
   function didOpenTextDocument(document: TextDocument): void {
     // We are only interested in language mode text
-    if (
-      LANGUAGES.indexOf(document.languageId) === -1 ||
-      (document.uri.scheme !== 'file' && document.uri.scheme !== 'untitled')
-    ) {
+    if (document.uri.scheme !== 'file') {
       return
     }
 
     let uri = document.uri
-    // Untitled files go to a default client.
-    if (uri.scheme === 'untitled' && !defaultClient) {
-      let debugOptions = { execArgv: ['--nolazy', '--inspect=6010'] }
-      let serverOptions = {
-        run: { module, transport: TransportKind.ipc },
-        debug: { module, transport: TransportKind.ipc, options: debugOptions },
-      }
-      let clientOptions: LanguageClientOptions = {
-        documentSelector: LANGUAGES.map((language) => ({
-          scheme: 'untitled',
-          language,
-        })),
-        diagnosticCollectionName: 'lsp-multi-server-example',
-        outputChannel: outputChannel,
-      }
-      defaultClient = new LanguageClient(
-        'lsp-multi-server-example',
-        'LSP Multi Server Example',
-        serverOptions,
-        clientOptions
-      )
-      defaultClient.start()
-      return
-    }
     let folder = Workspace.getWorkspaceFolder(uri)
     // Files outside a folder can't be handled. This might depend on the language.
     // Single file languages like JSON might handle files outside the workspace folders.
@@ -111,39 +170,14 @@ export function activate(context: ExtensionContext) {
     // If we have nested workspace folders we only start a server on the outer most workspace folder.
     folder = getOuterMostWorkspaceFolder(folder)
 
-    if (!clients.has(folder.uri.toString())) {
-      let debugOptions = {
-        execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
-      }
-      let serverOptions = {
-        run: { module, transport: TransportKind.ipc },
-        debug: { module, transport: TransportKind.ipc, options: debugOptions },
-      }
-      let clientOptions: LanguageClientOptions = {
-        documentSelector: LANGUAGES.map((language) => ({
-          scheme: 'file',
-          language,
-          pattern: `${folder.uri.fsPath}/**/*`,
-        })),
-        diagnosticCollectionName: 'lsp-multi-server-example',
-        workspaceFolder: folder,
-        outputChannel: outputChannel,
-        middleware: {},
-      }
-      let client = new LanguageClient(
-        'lsp-multi-server-example',
-        'LSP Multi Server Example',
-        serverOptions,
-        clientOptions
+    if (!languages.has(folder.uri.toString())) {
+      languages.set(
+        folder.uri.toString(),
+        dedupe([...DEFAULT_LANGUAGES, ...Object.keys(getUserLanguages())])
       )
-
-      client.onReady().then(() => {
-        registerConfigErrorHandler(client)
-      })
-
-      client.start()
-      clients.set(folder.uri.toString(), client)
     }
+
+    bootWorkspaceClient(folder)
   }
 
   Workspace.onDidOpenTextDocument(didOpenTextDocument)
@@ -161,9 +195,6 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate(): Thenable<void> {
   let promises: Thenable<void>[] = []
-  if (defaultClient) {
-    promises.push(defaultClient.stop())
-  }
   for (let client of clients.values()) {
     promises.push(client.stop())
   }

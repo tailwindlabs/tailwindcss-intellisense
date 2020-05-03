@@ -32,7 +32,10 @@ let connection = createConnection(ProposedFeatures.all)
 let documents = new TextDocuments()
 let workspaceFolder: string | null
 
-const defaultSettings: Settings = { emmetCompletions: false }
+const defaultSettings: Settings = {
+  emmetCompletions: false,
+  includeLanguages: {},
+}
 let globalSettings: Settings = defaultSettings
 let documentSettings: Map<string, Settings> = new Map()
 
@@ -53,6 +56,11 @@ connection.onInitialize(
       documents,
       documentSettings,
       globalSettings,
+      userLanguages:
+        params.initializationOptions &&
+        params.initializationOptions.userLanguages
+          ? params.initializationOptions.userLanguages
+          : {},
       capabilities: {
         configuration:
           capabilities.workspace && !!capabilities.workspace.configuration,
