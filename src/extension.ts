@@ -21,6 +21,7 @@ import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
 import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
 import { dedupe, equal } from './util/array'
+import { registerConfigExplorer } from './lib/configExplorer'
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
@@ -148,6 +149,7 @@ export function activate(context: ExtensionContext) {
 
     client.onReady().then(() => {
       registerConfigErrorHandler(client)
+      registerConfigExplorer({ client, context })
     })
 
     client.start()

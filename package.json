@@ -61,7 +61,48 @@
           "default": {}
         }
       }
-    }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "tailwindcssConfigExplorer",
+          "name": "Tailwind CSS",
+          "when": "tailwindcssConfigExplorerEnabled"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "tailwindcss.openConfigFile",
+          "when": "view == tailwindcssConfigExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "tailwindcss.openDocs",
+          "when": "view == tailwindcssConfigExplorer && viewItem == documented",
+          "group": "inline"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "tailwindcss.openConfigFile",
+        "title": "Open Configuration",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "tailwindcss.openDocs",
+        "title": "View Documentation",
+        "icon": "$(book)"
+      },
+      {
+        "command": "tailwindcss.jumpToConfig",
+        "title": "Jump to config"
+      }
+    ]
   },
   "scripts": {
     "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
@@ -73,6 +114,9 @@
     "test": "jest"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/parser": "^7.9.6",
+    "@babel/register": "^7.9.0",
     "@ctrl/tinycolor": "^3.1.0",
     "@types/mocha": "^5.2.0",
     "@types/node": "^13.9.3",
@@ -91,6 +135,7 @@
     "import-from": "^3.0.0",
     "jest": "^25.5.4",
     "line-column": "^1.0.2",
+    "mitt": "^1.2.0",
     "mkdirp": "^1.0.3",
     "pkg-up": "^3.1.0",
     "postcss": "^7.0.27",
