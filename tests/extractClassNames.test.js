@@ -1,6 +1,6 @@
 let postcss = require('postcss')
 const esmImport = require('esm')(module)
-const process = esmImport('../src/extractClassNames.mjs').default
+const process = esmImport('../src/class-names/extractClassNames.js')
 postcss = postcss([postcss.plugin('no-op', () => () => {})])
 
 const processCss = async (css) =>

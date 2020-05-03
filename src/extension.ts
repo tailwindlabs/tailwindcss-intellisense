@@ -62,7 +62,7 @@ function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
 
 export function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(
-    path.join('dist', 'src', 'server', 'index.js')
+    path.join('dist', 'server', 'index.js')
   )
   let outputChannel: OutputChannel = Window.createOutputChannel(
     'lsp-multi-server-example'

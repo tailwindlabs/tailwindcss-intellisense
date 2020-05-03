@@ -17,7 +17,7 @@ import {
   TextDocumentPositionParams,
   DidChangeConfigurationNotification,
 } from 'vscode-languageserver'
-import getTailwindState from 'tailwindcss-class-names'
+import getTailwindState from '../class-names/index'
 import { State, Settings, EditorState } from './util/state'
 import {
   provideCompletions,
@@ -62,6 +62,7 @@ connection.onInitialize(
     const tailwindState = await getTailwindState(
       params.rootPath || URI.parse(params.rootUri).path,
       {
+        // @ts-ignore
         onChange: (newState: State): void => {
           if (newState && !newState.error) {
             state = { ...newState, enabled: true, editor: editorState }

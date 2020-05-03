@@ -6,3 +6,4 @@
 **/tsconfig.base.json
 contributing.md
 node_modules/**
+src/**

@@ -1,5 +1,5 @@
-import extractClassNames from './extractClassNames.mjs'
-import Hook from './hook.mjs'
+import extractClassNames from './extractClassNames'
+import Hook from './hook'
 import dlv from 'dlv'
 import dset from 'dset'
 import importFrom from 'import-from'
