@@ -9,7 +9,7 @@ import {
 } from 'vscode-languageserver'
 const dlv = require('dlv')
 import removeMeta from '../util/removeMeta'
-import { getColor, getColorFromString } from '../util/color'
+import { getColor, getColorFromValue } from '../util/color'
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
@@ -269,7 +269,7 @@ function provideCssHelperCompletions(
   return {
     isIncomplete: false,
     items: Object.keys(obj).map((item, index) => {
-      let color = getColorFromString(obj[item])
+      let color = getColorFromValue(obj[item])
       const replaceDot: boolean =
         item.indexOf('.') !== -1 && separator && separator.endsWith('.')
       const insertClosingBrace: boolean =

@@ -61,11 +61,12 @@ export function getColor(
   return { documentation: colorStrings[0] }
 }
 
-export function getColorFromString(str: string): string {
-  if (str === 'transparent') {
+export function getColorFromValue(value: unknown): string {
+  if (typeof value !== 'string') return null
+  if (value === 'transparent') {
     return 'rgba(0, 0, 0, 0.01)'
   }
-  const color = new TinyColor(str)
+  const color = new TinyColor(value)
   if (color.isValid) {
     return color.toRgbString()
   }
