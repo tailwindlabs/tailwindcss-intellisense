@@ -43,6 +43,7 @@ export default async function getClassNames(
     let configPath
     let postcss
     let tailwindcss
+    let browserslist
     let version
 
     configPath = await globSingle(CONFIG_GLOB, {
@@ -57,6 +58,11 @@ export default async function getClassNames(
     postcss = importFrom(configDir, 'postcss')
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
+
+    try {
+      // this is not required
+      browserslist = importFrom(configDir, 'browserslist')
+    } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
@@ -103,11 +109,12 @@ export default async function getClassNames(
       classNames: await extractClassNames(ast),
       dependencies: hook.deps,
       plugins: getPlugins(config),
-      variants: getVariants({ config, version, postcss }),
+      variants: getVariants({ config, version, postcss, browserslist }),
       utilityConfigMap: await getUtilityConfigMap({
         cwd: configDir,
         resolvedConfig,
         postcss,
+        browserslist,
       }),
     }
   }
