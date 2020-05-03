@@ -43,7 +43,7 @@ export default async function getClassNames(
     let configPath
     let postcss
     let tailwindcss
-    let browserslist
+    let browserslistModule
     let version
 
     configPath = await globSingle(CONFIG_GLOB, {
@@ -61,7 +61,7 @@ export default async function getClassNames(
 
     try {
       // this is not required
-      browserslist = importFrom(configDir, 'browserslist')
+      browserslistModule = importFrom(configDir, 'browserslist')
     } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
@@ -100,6 +100,11 @@ export default async function getClassNames(
     }
 
     const resolvedConfig = resolveConfig({ cwd: configDir, config })
+    const browserslist = browserslistModule
+      ? browserslistModule(undefined, {
+          path: configDir,
+        })
+      : []
 
     return {
       version,

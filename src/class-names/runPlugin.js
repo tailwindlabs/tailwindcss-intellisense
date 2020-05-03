@@ -4,7 +4,7 @@ export function runPlugin(plugin, params = {}) {
   const { config, browserslist, ...rest } = params
 
   const browserslistTarget =
-    browserslist && browserslist().includes('ie 11') ? 'ie11' : 'relaxed'
+    browserslist && browserslist.includes('ie 11') ? 'ie11' : 'relaxed'
 
   try {
     ;(plugin.handler || plugin)({
