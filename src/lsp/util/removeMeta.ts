@@ -1,4 +1,4 @@
-import isObject from './isObject'
+import isObject from '../../util/isObject'
 
 export default function removeMeta(obj: any): any {
   let result = {}

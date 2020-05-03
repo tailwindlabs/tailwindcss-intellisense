@@ -9,3 +9,10 @@ export function ensureArray<T>(value: T | T[]): T[] {
 export function flatten<T>(arrays: T[][]): T[] {
   return [].concat.apply([], arrays)
 }
+
+export function equal(arr1: any[], arr2: any[]): boolean {
+  return (
+    JSON.stringify(arr1.concat([]).sort()) ===
+    JSON.stringify(arr2.concat([]).sort())
+  )
+}

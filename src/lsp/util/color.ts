@@ -2,7 +2,7 @@ const dlv = require('dlv')
 import { State } from './state'
 import removeMeta from './removeMeta'
 import { TinyColor } from '@ctrl/tinycolor'
-import { ensureArray, dedupe, flatten } from './array'
+import { ensureArray, dedupe, flatten } from '../../util/array'
 
 const COLOR_PROPS = [
   'caret-color',

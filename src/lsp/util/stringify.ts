@@ -1,7 +1,7 @@
 import removeMeta from './removeMeta'
 const dlv = require('dlv')
 import escapeClassName from 'css.escape'
-import { ensureArray } from './array'
+import { ensureArray } from '../../util/array'
 
 export function stringifyConfigValue(x: any): string {
   if (typeof x === 'string') return x

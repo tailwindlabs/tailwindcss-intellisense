@@ -15,7 +15,7 @@ import { isCssContext } from '../util/css'
 import { findLast, findJsxStrings, arrFindLast } from '../util/find'
 import { stringifyConfigValue, stringifyCss } from '../util/stringify'
 import { stringifyScreen, Screen } from '../util/screens'
-import isObject from '../util/isObject'
+import isObject from '../../util/isObject'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from '../util/isValidLocationForEmmetAbbreviation'
 import { getDocumentSettings } from '../util/getDocumentSettings'
@@ -23,7 +23,7 @@ import { isJsContext } from '../util/js'
 import { naturalExpand } from '../util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from '../util/docsUrl'
-import { ensureArray } from '../util/array'
+import { ensureArray } from '../../util/array'
 
 function completionsFromClassList(
   state: State,
