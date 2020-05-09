@@ -51,4 +51,6 @@ After:
 
 ## Requirements
 
-This extension requires a `tailwind.config.js` file to be [present in your project folder](https://github.com/bradlc/vscode-tailwindcss/blob/master/package.json#L26). You can create it with `npx tailwind init`.
+This extension requires:
+* a `tailwind.config.js` file to be [present in your project folder](https://github.com/bradlc/vscode-tailwindcss/blob/master/package.json#L26). You can create it with `npx tailwind init`.
+* `tailwindcss` to be installed (present in project `node_modules/`)
