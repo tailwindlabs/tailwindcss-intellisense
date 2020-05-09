@@ -26,6 +26,7 @@ import {
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
+import { provideDiagnostics } from './providers/diagnosticsProvider'
 
 let state: State = { enabled: false }
 let connection = createConnection(ProposedFeatures.all)
@@ -44,6 +45,9 @@ documents.onDidOpen((event) => {
 })
 documents.onDidClose((event) => {
   documentSettings.delete(event.document.uri)
+})
+documents.onDidChangeContent((change) => {
+  provideDiagnostics(state, change.document)
 })
 documents.listen(connection)
 
@@ -64,6 +68,10 @@ connection.onInitialize(
       capabilities: {
         configuration:
           capabilities.workspace && !!capabilities.workspace.configuration,
+        diagnosticRelatedInformation:
+          capabilities.textDocument &&
+          capabilities.textDocument.publishDiagnostics &&
+          capabilities.textDocument.publishDiagnostics.relatedInformation,
       },
     }
 

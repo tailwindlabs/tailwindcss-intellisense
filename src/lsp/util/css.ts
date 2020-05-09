@@ -11,7 +11,7 @@ export const CSS_LANGUAGES = [
   'stylus',
 ]
 
-function isCssDoc(state: State, doc: TextDocument): boolean {
+export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(
     state.editor.userLanguages
   ).filter((lang) => CSS_LANGUAGES.includes(state.editor.userLanguages[lang]))

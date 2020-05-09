@@ -72,7 +72,7 @@ export function findJsxStrings(str: string): StringInfo[] {
 
 export function findClassNamesInRange(
   doc: TextDocument,
-  range: Range
+  range?: Range
 ): DocumentClassName[] {
   const classLists = findClassListsInRange(doc, range)
   return [].concat.apply(
@@ -111,10 +111,11 @@ export function findClassNamesInRange(
 
 export function findClassListsInRange(
   doc: TextDocument,
-  range: Range
+  range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
   const matches = findAll(/(@apply\s+)(?<classList>[^;}]+)[;}]/g, text)
+  const globalStart: Position = range ? range.start : { line: 0, character: 0 }
 
   return matches.map((match) => {
     const start = indexToPosition(text, match.index + match[1].length)
@@ -126,12 +127,12 @@ export function findClassListsInRange(
       classList: match.groups.classList,
       range: {
         start: {
-          line: range.start.line + start.line,
-          character: range.start.character + start.character,
+          line: globalStart.line + start.line,
+          character: globalStart.character + start.character,
         },
         end: {
-          line: range.start.line + end.line,
-          character: range.start.character + end.character,
+          line: globalStart.line + end.line,
+          character: globalStart.character + end.character,
         },
       },
     }

@@ -21,6 +21,7 @@ export type EditorState = {
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
+    diagnosticRelatedInformation: boolean
   }
 }
 
