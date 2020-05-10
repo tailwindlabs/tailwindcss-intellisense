@@ -16,9 +16,15 @@ function provideCssDiagnostics(state: State, document: TextDocument): void {
     .map(({ className, range }) => {
       const parts = getClassNameParts(state, className)
       if (!parts) return null
+
       const info = dlv(state.classNames.classNames, parts)
       let message: string
-      if (info.__context && info.__context.length > 0) {
+
+      if (Array.isArray(info)) {
+        message = `\`@apply\` cannot be used with \`.${className}\` because it is included in multiple rulesets.`
+      } else if (info.__source !== 'utilities') {
+        message = `\`@apply\` cannot be used with \`.${className}\` because it is not a utility.`
+      } else if (info.__context && info.__context.length > 0) {
         if (info.__context.length === 1) {
           message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of an at-rule (${info.__context[0]}).`
         } else {
