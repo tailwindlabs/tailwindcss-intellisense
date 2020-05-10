@@ -83,12 +83,12 @@ export default async function getClassNames(
     }
     hook.unwatch()
 
-    const ast = await postcss([tailwindcss(configPath)]).process(
-      `
-        @tailwind components;
-        @tailwind utilities;
-      `,
-      { from: undefined }
+    const [components, utilities] = await Promise.all(
+      ['components', 'utilities'].map((group) =>
+        postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
+          from: undefined,
+        })
+      )
     )
 
     hook.unhook()
@@ -111,7 +111,10 @@ export default async function getClassNames(
       configPath,
       config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,
-      classNames: await extractClassNames(ast),
+      classNames: await extractClassNames([
+        { root: components.root, source: 'components' },
+        { root: utilities.root, source: 'utilities' },
+      ]),
       dependencies: hook.deps,
       plugins: getPlugins(config),
       variants: getVariants({ config, version, postcss, browserslist }),

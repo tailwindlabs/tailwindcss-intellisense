@@ -28,7 +28,8 @@ import { ensureArray } from '../../util/array'
 function completionsFromClassList(
   state: State,
   classList: string,
-  classListRange: Range
+  classListRange: Range,
+  filter?: (item: CompletionItem) => boolean
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
@@ -68,8 +69,8 @@ function completionsFromClassList(
 
   return {
     isIncomplete: false,
-    items: Object.keys(isSubset ? subset : state.classNames.classNames).map(
-      (className, index) => {
+    items: Object.keys(isSubset ? subset : state.classNames.classNames)
+      .map((className, index) => {
         let label = className
         let kind: CompletionItemKind = CompletionItemKind.Constant
         let documentation: string = null
@@ -88,7 +89,7 @@ function completionsFromClassList(
           }
         }
 
-        return {
+        const item = {
           label,
           kind,
           documentation,
@@ -100,8 +101,14 @@ function completionsFromClassList(
             range: replacementRange,
           },
         }
-      }
-    ),
+
+        if (filter && !filter(item)) {
+          return null
+        }
+
+        return item
+      })
+      .filter((item) => item !== null),
   }
 }
 
@@ -175,13 +182,29 @@ function provideAtApplyCompletions(
 
   const classList = match.groups.classList
 
-  return completionsFromClassList(state, classList, {
-    start: {
-      line: position.line,
-      character: position.character - classList.length,
+  return completionsFromClassList(
+    state,
+    classList,
+    {
+      start: {
+        line: position.line,
+        character: position.character - classList.length,
+      },
+      end: position,
     },
-    end: position,
-  })
+    (item) => {
+      // TODO: first line excludes all subtrees but there could _technically_ be
+      // valid apply-able class names in there. Will be correct in 99% of cases
+      if (item.kind === CompletionItemKind.Module) return false
+      let info = dlv(state.classNames.classNames, item.data)
+      return (
+        !Array.isArray(info) &&
+        info.__source === 'utilities' &&
+        (info.__context || []).length === 0 &&
+        (info.__pseudo || []).length === 0
+      )
+    }
+  )
 }
 
 function provideClassNameCompletions(
