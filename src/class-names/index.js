@@ -83,8 +83,12 @@ export default async function getClassNames(
     }
     hook.unwatch()
 
-    const [components, utilities] = await Promise.all(
-      ['components', 'utilities'].map((group) =>
+    const [base, components, utilities] = await Promise.all(
+      [
+        semver.gte(version, '0.99.0') ? 'base' : 'preflight',
+        'components',
+        'utilities',
+      ].map((group) =>
         postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
           from: undefined,
         })
@@ -112,6 +116,7 @@ export default async function getClassNames(
       config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,
       classNames: await extractClassNames([
+        { root: base.root, source: 'base' },
         { root: components.root, source: 'components' },
         { root: utilities.root, source: 'utilities' },
       ]),
