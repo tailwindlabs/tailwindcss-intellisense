@@ -75,6 +75,7 @@
   "devDependencies": {
     "@ctrl/tinycolor": "^3.1.0",
     "@types/mocha": "^5.2.0",
+    "@types/moo": "^0.5.3",
     "@types/node": "^13.9.3",
     "@types/vscode": "^1.32.0",
     "@zeit/ncc": "^0.22.0",
@@ -93,6 +94,7 @@
     "line-column": "^1.0.2",
     "mitt": "^1.2.0",
     "mkdirp": "^1.0.3",
+    "moo": "^0.5.1",
     "pkg-up": "^3.1.0",
     "postcss": "^7.0.27",
     "postcss-selector-parser": "^6.0.2",
