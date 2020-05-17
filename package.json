@@ -44,7 +44,8 @@
           "source.css.less",
           "source.css.postcss",
           "source.vue",
-          "source.svelte"
+          "source.svelte",
+          "text.html"
         ]
       }
     ],
