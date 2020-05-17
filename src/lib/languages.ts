@@ -31,10 +31,12 @@ export const DEFAULT_LANGUAGES = [
   'sass',
   'scss',
   'stylus',
+  'sugarss',
   // js
   'javascript',
   'javascriptreact',
   'reason',
+  'typescript',
   'typescriptreact',
   // mixed
   'vue',

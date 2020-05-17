@@ -12,7 +12,7 @@ import removeMeta from '../util/removeMeta'
 import { getColor, getColorFromValue } from '../util/color'
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
-import { findLast, findJsxStrings, arrFindLast } from '../util/find'
+import { findLast } from '../util/find'
 import { stringifyConfigValue, stringifyCss } from '../util/stringify'
 import { stringifyScreen, Screen } from '../util/screens'
 import isObject from '../../util/isObject'
@@ -24,6 +24,10 @@ import { naturalExpand } from '../util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from '../util/docsUrl'
 import { ensureArray } from '../../util/array'
+import {
+  getClassAttributeLexer,
+  getComputedClassAttributeLexer,
+} from '../util/lexers'
 
 function completionsFromClassList(
   state: State,
@@ -122,24 +126,31 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(/\bclass(?:Name)?=(?<initial>['"`{])/gi, str)
+  const match = findLast(/[\s:]class(?:Name)?=['"`{]/gi, str)
 
   if (match === null) {
     return null
   }
 
-  const rest = str.substr(match.index + match[0].length)
+  const lexer =
+    match[0][0] === ':'
+      ? getComputedClassAttributeLexer()
+      : getClassAttributeLexer()
+  lexer.reset(str.substr(match.index + match[0].length - 1))
 
-  if (match.groups.initial === '{') {
-    const strings = findJsxStrings('{' + rest)
-    const lastOpenString = arrFindLast(
-      strings,
-      (string) => typeof string.end === 'undefined'
-    )
-    if (lastOpenString) {
-      const classList = str.substr(
-        str.length - rest.length + lastOpenString.start - 1
-      )
+  try {
+    let tokens = Array.from(lexer)
+    let last = tokens[tokens.length - 1]
+    if (last.type.startsWith('start') || last.type === 'classlist') {
+      let classList = ''
+      for (let i = tokens.length - 1; i >= 0; i--) {
+        if (tokens[i].type === 'classlist') {
+          classList = tokens[i].value + classList
+        } else {
+          break
+        }
+      }
+
       return completionsFromClassList(state, classList, {
         start: {
           line: position.line,
@@ -148,20 +159,9 @@ function provideClassAttributeCompletions(
         end: position,
       })
     }
-    return null
-  }
+  } catch (_) {}
 
-  if (rest.indexOf(match.groups.initial) !== -1) {
-    return null
-  }
-
-  return completionsFromClassList(state, rest, {
-    start: {
-      line: position.line,
-      character: position.character - rest.length,
-    },
-    end: position,
-  })
+  return null
 }
 
 function provideAtApplyCompletions(

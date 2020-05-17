@@ -10,7 +10,7 @@ import { getClassNameParts } from '../util/getClassNameAtPosition'
 const dlv = require('dlv')
 
 function provideCssDiagnostics(state: State, document: TextDocument): void {
-  const classNames = findClassNamesInRange(document)
+  const classNames = findClassNamesInRange(document, undefined, 'css')
 
   let diagnostics: Diagnostic[] = classNames
     .map(({ className, range }) => {
