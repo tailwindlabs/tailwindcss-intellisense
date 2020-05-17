@@ -9,6 +9,7 @@ export const CSS_LANGUAGES = [
   'sass',
   'scss',
   'stylus',
+  'sugarss',
 ]
 
 function isCssDoc(state: State, doc: TextDocument): boolean {
