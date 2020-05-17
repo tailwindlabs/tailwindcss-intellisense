@@ -35,6 +35,7 @@ export const DEFAULT_LANGUAGES = [
   'javascript',
   'javascriptreact',
   'reason',
+  'typescript',
   'typescriptreact',
   // mixed
   'vue',

@@ -6,6 +6,7 @@ export const JS_LANGUAGES = [
   'javascript',
   'javascriptreact',
   'reason',
+  'typescript',
   'typescriptreact',
 ]
 
