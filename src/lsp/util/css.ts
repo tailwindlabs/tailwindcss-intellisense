@@ -12,7 +12,7 @@ export const CSS_LANGUAGES = [
   'sugarss',
 ]
 
-function isCssDoc(state: State, doc: TextDocument): boolean {
+export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(
     state.editor.userLanguages
   ).filter((lang) => CSS_LANGUAGES.includes(state.editor.userLanguages[lang]))
