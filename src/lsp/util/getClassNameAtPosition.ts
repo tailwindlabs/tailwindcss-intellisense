@@ -12,7 +12,7 @@ export function getClassNameAtPosition(
   }
   const text1: string = document.getText(range1)
 
-  if (!/\bclass(Name)?=['"][^'"]*$/.test(text1)) return null
+  if (!/\bclass(Name)?=(?:\[%tw )?['"][^'"]*$/.test(text1)) return null
 
   const range2: Range = {
     start: { line: Math.max(position.line - 5, 0), character: 0 },
@@ -21,7 +21,7 @@ export function getClassNameAtPosition(
   const text2: string = document.getText(range2)
 
   let str: string = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
-  let matches: RegExpMatchArray = str.match(/\bclass(Name)?=["']([^"']+)$/)
+  let matches: RegExpMatchArray = str.match(/\bclass(Name)?=(?:\[%tw )?["']([^"']+)$/)
 
   if (!matches) return null
 
