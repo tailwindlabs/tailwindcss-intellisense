@@ -8,6 +8,8 @@ export const HTML_LANGUAGES = [
   'edge',
   'ejs',
   'erb',
+  'gohtml',
+  'GoHTML',
   'haml',
   'handlebars',
   'hbs',

@@ -6,6 +6,8 @@ export const DEFAULT_LANGUAGES = [
   'edge',
   'ejs',
   'erb',
+  'gohtml',
+  'GoHTML',
   'haml',
   'handlebars',
   'hbs',
