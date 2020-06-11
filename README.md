@@ -66,7 +66,7 @@ This setting allows you to add additional language support. The key of each entr
 
 ### `tailwindcss.emmetCompletions`
 
-Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. Default: `false`
+Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. **Default: `false`**
 
 ```json
 {
