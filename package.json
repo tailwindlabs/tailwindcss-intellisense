@@ -112,7 +112,7 @@
     "tiny-invariant": "^1.1.0",
     "tslint": "^5.16.0",
     "typescript": "^3.8.3",
-    "vsce": "^1.75.0",
+    "vsce": "^1.76.1",
     "vscode-emmet-helper-bundled": "0.0.1",
     "vscode-languageclient": "^5.2.1",
     "vscode-languageserver": "^5.2.1",
