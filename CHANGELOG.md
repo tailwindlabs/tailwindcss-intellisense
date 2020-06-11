@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.3.0
+
+### General
+
+- Added support for string values in Tailwind's `important` option (#96)
+- Removed all unnecessary logs (#91)
+- Added support for components in addition to utilities (#67)
+- Added description to custom variant completion items where possible
+- Config parsing errors are now displayed in the VS Code UI
+- Class names from `@tailwind base` are now included (by default `@tailwind base` does not include any class names but plugins may contribute them)
+- Color swatches can now be displayed for rules with multiple properties and/or colors with variable alpha (#113)
+- Added `tailwindCSS.includeLanguages` setting:
+  ```json
+  {
+    "tailwindCSS.includeLanguages": {
+      "plaintext": "html"
+    }
+  }
+  ```
+  This setting allows you to add additional language support. The key of each entry is the new language ID and the value is any one of the extensions built-in languages, depending on how you want the new language to be treated (e.g. `html`, `css`, or `javascript`)
+
+### HTML
+
+- Added built-in support for `liquid`, `aspnetcorerazor`, `mustache`, `HTML (EEx)`, `html-eex`, `gohtml`, `GoHTML`, and `hbs` languages
+- Added syntax definition to embedded stylesheets in HTML files
+
+### CSS
+
+- Added built-in support for `sugarss` language
+- Added `theme` (and `config`) helper hovers
+- Added `@apply` class name hovers
+- Added directive completion items with links to documentation
+- Added `@tailwind` completion items (`preflight`/`base`, `utilities`, `components`, `screens`) with links to documentation
+- Helper completion items that contain the `.` character will now insert square brackets when selected
+- `@apply` completion list now excludes class names that are not compatible
+- Added CSS syntax highlighting in `.vue` files (#15)
+
+### JS(X)
+
+- Completions now trigger when using backticks (#50, #93):
+  ```js
+  const App = () => <div className={`_
+  ```
+
 ## 0.2.0
 
 - Support for Tailwind v1 via LSP 🎉

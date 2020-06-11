@@ -21,9 +21,10 @@ It also includes features that improve the overall Tailwind experience, includin
 
 ### CSS
 
-- [Suggestions when using `@apply` and `config()`](#suggestions-when-using-apply-and-config)
+- [Suggestions when using `@apply` and config helpers](#suggestions-when-using-apply-and-config)
 - Suggestions when using the `@screen` directive
-- [Improves syntax highlighting when using `@apply` and `config()`](#improves-syntax-highlighting-when-using-apply-and-config)
+- Suggestions when using the `@variants` directive
+- [Improves syntax highlighting when using `@apply` and config helpers](#improves-syntax-highlighting-when-using-apply-and-config-helpers)
 
 ## Examples
 
@@ -35,11 +36,11 @@ It also includes features that improve the overall Tailwind experience, includin
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html-hover.gif" alt="HTML hover preview" width="750">
 
-#### Suggestions when using `@apply` and `config()`
+#### Suggestions when using `@apply` and config helpers
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css.gif" alt="CSS autocompletion" width="750">
 
-#### Improves syntax highlighting when using `@apply` and `config()`
+#### Improves syntax highlighting when using `@apply` and config helpers
 
 Before:
 
@@ -48,3 +49,27 @@ Before:
 After:
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="400">
+
+## Settings
+
+### `tailwindCSS.includeLanguages`
+
+This setting allows you to add additional language support. The key of each entry is the new language ID and the value is any one of the extensions built-in languages, depending on how you want the new language to be treated (e.g. `html`, `css`, or `javascript`):
+
+```json
+{
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  }
+}
+```
+
+### `tailwindcss.emmetCompletions`
+
+Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. Default: `false`
+
+```json
+{
+  "tailwindCSS.emmetCompletions": true
+}
+```
