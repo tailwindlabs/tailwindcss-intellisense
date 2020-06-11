@@ -6,9 +6,14 @@
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
   "version": "0.3.0-alpha.3",
+  "homepage": "https://github.com/bradlc/vscode-tailwindcss",
+  "bugs": {
+    "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
+    "email": "hello@bradley.dev"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bradlc/"
+    "url": "https://github.com/bradlc/vscode-tailwindcss.git"
   },
   "publisher": "bradlc",
   "keywords": [
