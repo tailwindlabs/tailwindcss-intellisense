@@ -12,7 +12,6 @@
 - Class names from `@tailwind base` are now included (by default `@tailwind base` does not include any class names but plugins may contribute them)
 - Color swatches can now be displayed for rules with multiple properties and/or colors with variable alpha (#113)
 - Added `tailwindCSS.includeLanguages` setting:
-
   ```json
   {
     "tailwindCSS.includeLanguages": {
@@ -41,7 +40,6 @@
 ### JS(X)
 
 - Completions now trigger when using backticks (#50, #93):
-
   ```js
   const App = () => <div className={`_
   ```
