@@ -19,7 +19,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as util from 'util'
 import * as crypto from 'crypto'
-import { getColorFromString } from '../lsp/util/color'
+import { getColorFromValue } from '../lsp/util/color'
 import isObject from '../util/isObject'
 import { LanguageClient } from 'vscode-languageclient'
 import mitt from 'mitt'
@@ -208,7 +208,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
             : undefined,
         })
 
-        if (getColorFromString(item[key])) {
+        if (getColorFromValue(item[key])) {
           return this.createColorIcon(item[key].trim()).then((iconPath) => {
             child.iconPath = iconPath
             return child
