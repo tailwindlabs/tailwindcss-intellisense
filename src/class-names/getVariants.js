@@ -1,7 +1,12 @@
 import semver from 'semver'
 import { runPlugin } from './runPlugin'
 
-export default function getVariants({ config, version, postcss }) {
+export default function getVariants({
+  config,
+  version,
+  postcss,
+  browserslist,
+}) {
   let variants = ['responsive', 'hover']
   semver.gte(version, '0.3.0') && variants.push('focus', 'group-hover')
   semver.gte(version, '0.5.0') && variants.push('active')
@@ -16,6 +21,7 @@ export default function getVariants({ config, version, postcss }) {
   plugins.forEach((plugin) => {
     runPlugin(plugin, {
       postcss,
+      browserslist,
       config,
       addVariant: (name) => {
         variants.push(name)

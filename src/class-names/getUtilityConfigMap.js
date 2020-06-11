@@ -18,7 +18,12 @@ const proxyHandler = (base = []) => ({
   },
 })
 
-export async function getUtilityConfigMap({ cwd, resolvedConfig, postcss }) {
+export async function getUtilityConfigMap({
+  cwd,
+  resolvedConfig,
+  postcss,
+  browserslist,
+}) {
   const builtInPlugins = await getBuiltInPlugins({ cwd, resolvedConfig })
   const userPlugins = Array.isArray(resolvedConfig.plugins)
     ? resolvedConfig.plugins
@@ -31,6 +36,7 @@ export async function getUtilityConfigMap({ cwd, resolvedConfig, postcss }) {
     ;[...builtInPlugins, ...userPlugins].forEach((plugin) => {
       runPlugin(plugin, {
         postcss,
+        browserslist,
         config: proxiedConfig,
         addUtilities: (utilities) => {
           Object.keys(utilities).forEach((util) => {

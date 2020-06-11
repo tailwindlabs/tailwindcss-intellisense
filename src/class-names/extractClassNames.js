@@ -46,99 +46,102 @@ function getClassNamesFromSelector(selector) {
   return classNames
 }
 
-async function process(ast) {
+async function process(groups) {
   const tree = {}
   const commonContext = {}
 
-  ast.root.walkRules((rule) => {
-    const classNames = getClassNamesFromSelector(rule.selector)
+  groups.forEach((group) => {
+    group.root.walkRules((rule) => {
+      const classNames = getClassNamesFromSelector(rule.selector)
 
-    const decls = {}
-    rule.walkDecls((decl) => {
-      if (decls[decl.prop]) {
-        decls[decl.prop] = [
-          ...(Array.isArray(decls[decl.prop])
-            ? decls[decl.prop]
-            : [decls[decl.prop]]),
-          decl.value,
-        ]
-      } else {
-        decls[decl.prop] = decl.value
+      const decls = {}
+      rule.walkDecls((decl) => {
+        if (decls[decl.prop]) {
+          decls[decl.prop] = [
+            ...(Array.isArray(decls[decl.prop])
+              ? decls[decl.prop]
+              : [decls[decl.prop]]),
+            decl.value,
+          ]
+        } else {
+          decls[decl.prop] = decl.value
+        }
+      })
+
+      let p = rule
+      const keys = []
+      while (p.parent.type !== 'root') {
+        p = p.parent
+        if (p.type === 'atrule') {
+          keys.push(`@${p.name} ${p.params}`)
+        }
+      }
+
+      for (let i = 0; i < classNames.length; i++) {
+        const context = keys.concat([])
+        const baseKeys = classNames[i].className.split('__TAILWIND_SEPARATOR__')
+        const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
+        const index = []
+
+        const existing = dlv(tree, baseKeys)
+        if (typeof existing !== 'undefined') {
+          if (Array.isArray(existing)) {
+            const scopeIndex = existing.findIndex(
+              (x) =>
+                x.__scope === classNames[i].scope &&
+                arraysEqual(existing.__context, context)
+            )
+            if (scopeIndex > -1) {
+              keys.unshift(scopeIndex)
+              index.push(scopeIndex)
+            } else {
+              keys.unshift(existing.length)
+              index.push(existing.length)
+            }
+          } else {
+            if (
+              existing.__scope !== classNames[i].scope ||
+              !arraysEqual(existing.__context, context)
+            ) {
+              dset(tree, baseKeys, [existing])
+              keys.unshift(1)
+              index.push(1)
+            }
+          }
+        }
+        if (classNames[i].__rule) {
+          dset(tree, [...baseKeys, ...index, '__rule'], true)
+          dset(tree, [...baseKeys, ...index, '__source'], group.source)
+
+          dsetEach(tree, [...baseKeys, ...index], decls)
+        }
+        if (classNames[i].__pseudo) {
+          dset(tree, [...baseKeys, '__pseudo'], classNames[i].__pseudo)
+        }
+        dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
+        dset(
+          tree,
+          [...baseKeys, ...index, '__context'],
+          context.concat([]).reverse()
+        )
+
+        // common context
+        if (classNames[i].__pseudo) {
+          context.push(...classNames[i].__pseudo)
+        }
+
+        for (let i = 0; i < contextKeys.length; i++) {
+          if (typeof commonContext[contextKeys[i]] === 'undefined') {
+            commonContext[contextKeys[i]] = context
+          } else {
+            commonContext[contextKeys[i]] = intersection(
+              commonContext[contextKeys[i]],
+              context
+            )
+          }
+        }
       }
     })
-
-    let p = rule
-    const keys = []
-    while (p.parent.type !== 'root') {
-      p = p.parent
-      if (p.type === 'atrule') {
-        keys.push(`@${p.name} ${p.params}`)
-      }
-    }
-
-    for (let i = 0; i < classNames.length; i++) {
-      const context = keys.concat([])
-      const baseKeys = classNames[i].className.split('__TAILWIND_SEPARATOR__')
-      const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
-      const index = []
-
-      const existing = dlv(tree, baseKeys)
-      if (typeof existing !== 'undefined') {
-        if (Array.isArray(existing)) {
-          const scopeIndex = existing.findIndex(
-            (x) =>
-              x.__scope === classNames[i].scope &&
-              arraysEqual(existing.__context, context)
-          )
-          if (scopeIndex > -1) {
-            keys.unshift(scopeIndex)
-            index.push(scopeIndex)
-          } else {
-            keys.unshift(existing.length)
-            index.push(existing.length)
-          }
-        } else {
-          if (
-            existing.__scope !== classNames[i].scope ||
-            !arraysEqual(existing.__context, context)
-          ) {
-            dset(tree, baseKeys, [existing])
-            keys.unshift(1)
-            index.push(1)
-          }
-        }
-      }
-      if (classNames[i].__rule) {
-        dset(tree, [...baseKeys, ...index, '__rule'], true)
-
-        dsetEach(tree, [...baseKeys, ...index], decls)
-      }
-      if (classNames[i].__pseudo) {
-        dset(tree, [...baseKeys, '__pseudo'], classNames[i].__pseudo)
-      }
-      dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
-      dset(
-        tree,
-        [...baseKeys, ...index, '__context'],
-        context.concat([]).reverse()
-      )
-
-      // common context
-      if (classNames[i].__pseudo) {
-        context.push(...classNames[i].__pseudo)
-      }
-
-      for (let i = 0; i < contextKeys.length; i++) {
-        if (typeof commonContext[contextKeys[i]] === 'undefined') {
-          commonContext[contextKeys[i]] = context
-        } else {
-          commonContext[contextKeys[i]] = intersection(
-            commonContext[contextKeys[i]],
-            context
-          )
-        }
-      }
-    }
   })
 
   return { classNames: tree, context: commonContext }

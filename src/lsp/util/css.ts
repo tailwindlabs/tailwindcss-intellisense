@@ -1,5 +1,5 @@
 import { TextDocument, Position } from 'vscode-languageserver'
-import { isInsideTag, isVueDoc, isSvelteDoc } from './html'
+import { isInsideTag, isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
 import { State } from './state'
 
 export const CSS_LANGUAGES = [
@@ -9,9 +9,10 @@ export const CSS_LANGUAGES = [
   'sass',
   'scss',
   'stylus',
+  'sugarss',
 ]
 
-function isCssDoc(state: State, doc: TextDocument): boolean {
+export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(
     state.editor.userLanguages
   ).filter((lang) => CSS_LANGUAGES.includes(state.editor.userLanguages[lang]))
@@ -28,7 +29,7 @@ export function isCssContext(
     return true
   }
 
-  if (isVueDoc(doc) || isSvelteDoc(doc)) {
+  if (isHtmlDoc(state, doc) || isVueDoc(doc) || isSvelteDoc(doc)) {
     let str = doc.getText({
       start: { line: 0, character: 0 },
       end: position,

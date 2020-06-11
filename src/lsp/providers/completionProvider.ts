@@ -9,10 +9,10 @@ import {
 } from 'vscode-languageserver'
 const dlv = require('dlv')
 import removeMeta from '../util/removeMeta'
-import { getColor, getColorFromString } from '../util/color'
+import { getColor, getColorFromValue } from '../util/color'
 import { isHtmlContext } from '../util/html'
 import { isCssContext } from '../util/css'
-import { findLast, findJsxStrings, arrFindLast } from '../util/find'
+import { findLast } from '../util/find'
 import { stringifyConfigValue, stringifyCss } from '../util/stringify'
 import { stringifyScreen, Screen } from '../util/screens'
 import isObject from '../../util/isObject'
@@ -24,11 +24,16 @@ import { naturalExpand } from '../util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from '../util/docsUrl'
 import { ensureArray } from '../../util/array'
+import {
+  getClassAttributeLexer,
+  getComputedClassAttributeLexer,
+} from '../util/lexers'
 
 function completionsFromClassList(
   state: State,
   classList: string,
-  classListRange: Range
+  classListRange: Range,
+  filter?: (item: CompletionItem) => boolean
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
@@ -68,8 +73,8 @@ function completionsFromClassList(
 
   return {
     isIncomplete: false,
-    items: Object.keys(isSubset ? subset : state.classNames.classNames).map(
-      (className, index) => {
+    items: Object.keys(isSubset ? subset : state.classNames.classNames)
+      .map((className, index) => {
         let label = className
         let kind: CompletionItemKind = CompletionItemKind.Constant
         let documentation: string = null
@@ -88,7 +93,7 @@ function completionsFromClassList(
           }
         }
 
-        return {
+        const item = {
           label,
           kind,
           documentation,
@@ -100,8 +105,14 @@ function completionsFromClassList(
             range: replacementRange,
           },
         }
-      }
-    ),
+
+        if (filter && !filter(item)) {
+          return null
+        }
+
+        return item
+      })
+      .filter((item) => item !== null),
   }
 }
 
@@ -115,24 +126,31 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(/\bclass(?:Name)?=(?<initial>['"`{])/gi, str)
+  const match = findLast(/[\s:]class(?:Name)?=['"`{]/gi, str)
 
   if (match === null) {
     return null
   }
 
-  const rest = str.substr(match.index + match[0].length)
+  const lexer =
+    match[0][0] === ':'
+      ? getComputedClassAttributeLexer()
+      : getClassAttributeLexer()
+  lexer.reset(str.substr(match.index + match[0].length - 1))
 
-  if (match.groups.initial === '{') {
-    const strings = findJsxStrings('{' + rest)
-    const lastOpenString = arrFindLast(
-      strings,
-      (string) => typeof string.end === 'undefined'
-    )
-    if (lastOpenString) {
-      const classList = str.substr(
-        str.length - rest.length + lastOpenString.start - 1
-      )
+  try {
+    let tokens = Array.from(lexer)
+    let last = tokens[tokens.length - 1]
+    if (last.type.startsWith('start') || last.type === 'classlist') {
+      let classList = ''
+      for (let i = tokens.length - 1; i >= 0; i--) {
+        if (tokens[i].type === 'classlist') {
+          classList = tokens[i].value + classList
+        } else {
+          break
+        }
+      }
+
       return completionsFromClassList(state, classList, {
         start: {
           line: position.line,
@@ -141,20 +159,9 @@ function provideClassAttributeCompletions(
         end: position,
       })
     }
-    return null
-  }
+  } catch (_) {}
 
-  if (rest.indexOf(match.groups.initial) !== -1) {
-    return null
-  }
-
-  return completionsFromClassList(state, rest, {
-    start: {
-      line: position.line,
-      character: position.character - rest.length,
-    },
-    end: position,
-  })
+  return null
 }
 
 function provideAtApplyCompletions(
@@ -175,13 +182,29 @@ function provideAtApplyCompletions(
 
   const classList = match.groups.classList
 
-  return completionsFromClassList(state, classList, {
-    start: {
-      line: position.line,
-      character: position.character - classList.length,
+  return completionsFromClassList(
+    state,
+    classList,
+    {
+      start: {
+        line: position.line,
+        character: position.character - classList.length,
+      },
+      end: position,
     },
-    end: position,
-  })
+    (item) => {
+      // TODO: first line excludes all subtrees but there could _technically_ be
+      // valid apply-able class names in there. Will be correct in 99% of cases
+      if (item.kind === CompletionItemKind.Module) return false
+      let info = dlv(state.classNames.classNames, item.data)
+      return (
+        !Array.isArray(info) &&
+        info.__source === 'utilities' &&
+        (info.__context || []).length === 0 &&
+        (info.__pseudo || []).length === 0
+      )
+    }
+  )
 }
 
 function provideClassNameCompletions(
@@ -269,7 +292,7 @@ function provideCssHelperCompletions(
   return {
     isIncomplete: false,
     items: Object.keys(obj).map((item, index) => {
-      let color = getColorFromString(obj[item])
+      let color = getColorFromValue(obj[item])
       const replaceDot: boolean =
         item.indexOf('.') !== -1 && separator && separator.endsWith('.')
       const insertClosingBrace: boolean =

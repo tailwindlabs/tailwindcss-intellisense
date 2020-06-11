@@ -43,6 +43,7 @@ export default async function getClassNames(
     let configPath
     let postcss
     let tailwindcss
+    let browserslistModule
     let version
 
     configPath = await globSingle(CONFIG_GLOB, {
@@ -57,6 +58,11 @@ export default async function getClassNames(
     postcss = importFrom(configDir, 'postcss')
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
+
+    try {
+      // this is not required
+      browserslistModule = importFrom(configDir, 'browserslist')
+    } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
@@ -77,12 +83,16 @@ export default async function getClassNames(
     }
     hook.unwatch()
 
-    const ast = await postcss([tailwindcss(configPath)]).process(
-      `
-        @tailwind components;
-        @tailwind utilities;
-      `,
-      { from: undefined }
+    const [base, components, utilities] = await Promise.all(
+      [
+        semver.gte(version, '0.99.0') ? 'base' : 'preflight',
+        'components',
+        'utilities',
+      ].map((group) =>
+        postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
+          from: undefined,
+        })
+      )
     )
 
     hook.unhook()
@@ -94,20 +104,30 @@ export default async function getClassNames(
     }
 
     const resolvedConfig = resolveConfig({ cwd: configDir, config })
+    const browserslist = browserslistModule
+      ? browserslistModule(undefined, {
+          path: configDir,
+        })
+      : []
 
     return {
       version,
       configPath,
       config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,
-      classNames: await extractClassNames(ast),
+      classNames: await extractClassNames([
+        { root: base.root, source: 'base' },
+        { root: components.root, source: 'components' },
+        { root: utilities.root, source: 'utilities' },
+      ]),
       dependencies: hook.deps,
       plugins: getPlugins(config),
-      variants: getVariants({ config, version, postcss }),
+      variants: getVariants({ config, version, postcss, browserslist }),
       utilityConfigMap: await getUtilityConfigMap({
         cwd: configDir,
         resolvedConfig,
         postcss,
+        browserslist,
       }),
     }
   }

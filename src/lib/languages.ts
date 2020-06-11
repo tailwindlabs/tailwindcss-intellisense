@@ -6,6 +6,8 @@ export const DEFAULT_LANGUAGES = [
   'edge',
   'ejs',
   'erb',
+  'gohtml',
+  'GoHTML',
   'haml',
   'handlebars',
   'hbs',
@@ -31,10 +33,12 @@ export const DEFAULT_LANGUAGES = [
   'sass',
   'scss',
   'stylus',
+  'sugarss',
   // js
   'javascript',
   'javascriptreact',
   'reason',
+  'typescript',
   'typescriptreact',
   // mixed
   'vue',
