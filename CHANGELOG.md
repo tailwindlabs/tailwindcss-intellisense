@@ -20,7 +20,6 @@
     }
   }
   ```
-
   This setting allows you to add additional language support. The key of each entry is the new language ID and the value is any one of the extensions built-in languages, depending on how you want the new language to be treated (e.g. `html`, `css`, or `javascript`)
 
 ### HTML
