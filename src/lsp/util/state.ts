@@ -53,3 +53,10 @@ export type DocumentClassName = {
   className: string
   range: Range
 }
+
+export type ClassNameMeta = {
+  source: 'base' | 'components' | 'utilities'
+  pseudo: string[]
+  scope: string[]
+  context: string[]
+}

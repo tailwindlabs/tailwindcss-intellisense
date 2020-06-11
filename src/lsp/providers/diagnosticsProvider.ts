@@ -6,37 +6,35 @@ import {
 import { State } from '../util/state'
 import { isCssDoc } from '../util/css'
 import { findClassNamesInRange } from '../util/find'
-import { getClassNameParts } from '../util/getClassNameAtPosition'
-const dlv = require('dlv')
+import { getClassNameMeta } from '../util/getClassNameMeta'
 
 function provideCssDiagnostics(state: State, document: TextDocument): void {
   const classNames = findClassNamesInRange(document, undefined, 'css')
 
   let diagnostics: Diagnostic[] = classNames
     .map(({ className, range }) => {
-      const parts = getClassNameParts(state, className)
-      if (!parts) return null
+      const meta = getClassNameMeta(state, className)
+      if (!meta) return null
 
-      const info = dlv(state.classNames.classNames, parts)
       let message: string
 
-      if (Array.isArray(info)) {
+      if (Array.isArray(meta)) {
         message = `\`@apply\` cannot be used with \`.${className}\` because it is included in multiple rulesets.`
-      } else if (info.__source !== 'utilities') {
+      } else if (meta.source !== 'utilities') {
         message = `\`@apply\` cannot be used with \`.${className}\` because it is not a utility.`
-      } else if (info.__context && info.__context.length > 0) {
-        if (info.__context.length === 1) {
-          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of an at-rule (${info.__context[0]}).`
+      } else if (meta.context && meta.context.length > 0) {
+        if (meta.context.length === 1) {
+          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of an at-rule (${meta.context[0]}).`
         } else {
-          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of at-rules (${info.__context.join(
+          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of at-rules (${meta.context.join(
             ', '
           )}).`
         }
-      } else if (info.__pseudo && info.__pseudo.length > 0) {
-        if (info.__pseudo.length === 1) {
-          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes a pseudo-selector (${info.__pseudo[0]})`
+      } else if (meta.pseudo && meta.pseudo.length > 0) {
+        if (meta.pseudo.length === 1) {
+          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes a pseudo-selector (${meta.pseudo[0]})`
         } else {
-          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes pseudo-selectors (${info.__pseudo.join(
+          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes pseudo-selectors (${meta.pseudo.join(
             ', '
           )})`
         }
