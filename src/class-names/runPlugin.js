@@ -17,6 +17,12 @@ export function runPlugin(plugin, params = {}) {
       theme: (path, defaultValue) => dlv(config, `theme.${path}`, defaultValue),
       variants: () => [],
       config: (path, defaultValue) => dlv(config, path, defaultValue),
+      corePlugins: (path) => {
+        if (Array.isArray(config.corePlugins)) {
+          return config.corePlugins.includes(path)
+        }
+        return dlv(config, `corePlugins.${path}`, true)
+      },
       target: (path) => {
         if (typeof config.target === 'string') {
           return config.target === 'browserslist'
