@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  // List of configurations. Add new configurations or edit existing ones.
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch Client",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+      "stopOnEntry": false,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceRoot}/dist/extension/**/*.js"],
+      // "preLaunchTask": "npm: dev"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server 6011",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6011,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceRoot}/dist/server/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server 6012",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6012,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceRoot}/dist/server/**/*.js"]
+    }
+  ]
+}

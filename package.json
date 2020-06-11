@@ -5,10 +5,15 @@
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
-  "version": "0.3.0-alpha.2",
+  "version": "0.3.0",
+  "homepage": "https://github.com/bradlc/vscode-tailwindcss",
+  "bugs": {
+    "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
+    "email": "hello@bradley.dev"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bradlc/"
+    "url": "https://github.com/bradlc/vscode-tailwindcss.git"
   },
   "publisher": "bradlc",
   "keywords": [
@@ -55,11 +60,12 @@
         "tailwindCSS.emmetCompletions": {
           "type": "boolean",
           "default": false,
-          "description": ""
+          "description": "Enable class name completions when using Emmet-style syntax, for example `div.bg-red-500.uppercase`."
         },
         "tailwindCSS.includeLanguages": {
           "type": "object",
-          "default": {}
+          "default": {},
+          "description": "Enable features in languages that are not supported by default. Add a mapping here between the new language and an already supported language.\n E.g.: `{\"plaintext\": \"html\"}`"
         }
       }
     }
@@ -106,7 +112,7 @@
     "tiny-invariant": "^1.1.0",
     "tslint": "^5.16.0",
     "typescript": "^3.8.3",
-    "vsce": "^1.75.0",
+    "vsce": "^1.76.1",
     "vscode-emmet-helper-bundled": "0.0.1",
     "vscode-languageclient": "^5.2.1",
     "vscode-languageserver": "^5.2.1",
