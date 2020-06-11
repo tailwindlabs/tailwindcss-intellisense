@@ -67,7 +67,8 @@
         {
           "id": "tailwindcssConfigExplorer",
           "name": "Tailwind CSS",
-          "when": "tailwindcssConfigExplorerEnabled"
+          "when": "tailwindcssConfigExplorerEnabled",
+          "icon": "media/explorer-icon.svg"
         }
       ]
     },
