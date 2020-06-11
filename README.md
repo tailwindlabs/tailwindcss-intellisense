@@ -6,6 +6,12 @@
 
 <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html.gif" alt="HTML autocompletion" width="750">
 
+## Requirements
+
+This extension requires:
+- a `tailwind.config.js` file to be [present in your project folder](https://github.com/bradlc/vscode-tailwindcss/blob/master/package.json#L38). You can create it with `npx tailwind init`.
+- `tailwindcss` to be installed (present in project `node_modules/`)
+
 ## Features
 
 Tailwind CSS IntelliSense uses your projects Tailwind installation and configuration to provide suggestions as you type.
