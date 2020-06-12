@@ -200,8 +200,8 @@ function provideAtApplyCompletions(
       return (
         !Array.isArray(info) &&
         info.__source === 'utilities' &&
-        (info.__context || []).length === 0 &&
-        (info.__pseudo || []).length === 0
+        info.__context.length === 0 &&
+        info.__pseudo.length === 0
       )
     }
   )

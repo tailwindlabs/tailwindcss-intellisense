@@ -36,7 +36,7 @@ function getClassNamesFromSelector(selector) {
           className: node.value.trim(),
           scope: createSelectorFromNodes(scope),
           __rule: j === subSelectors[i].nodes.length - 1,
-          __pseudo: pseudo.length === 0 ? null : pseudo.map(String),
+          __pseudo: pseudo.map(String),
         })
       }
       scope.push(node, ...pseudo)
@@ -115,9 +115,7 @@ async function process(groups) {
 
           dsetEach(tree, [...baseKeys, ...index], decls)
         }
-        if (classNames[i].__pseudo) {
-          dset(tree, [...baseKeys, '__pseudo'], classNames[i].__pseudo)
-        }
+        dset(tree, [...baseKeys, ...index, '__pseudo'], classNames[i].__pseudo)
         dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
         dset(
           tree,
@@ -126,9 +124,7 @@ async function process(groups) {
         )
 
         // common context
-        if (classNames[i].__pseudo) {
-          context.push(...classNames[i].__pseudo)
-        }
+        context.push(...classNames[i].__pseudo)
 
         for (let i = 0; i < contextKeys.length; i++) {
           if (typeof commonContext[contextKeys[i]] === 'undefined') {
