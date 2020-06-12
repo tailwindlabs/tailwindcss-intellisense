@@ -69,6 +69,41 @@
           },
           "default": {},
           "markdownDescription": "Enable features in languages that are not supported by default. Add a mapping here between the new language and an already supported language.\n E.g.: `{\"plaintext\": \"html\"}`"
+        },
+        "tailwindCSS.validate": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": ""
+        },
+        "tailwindCSS.lint.utilityConflicts": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
+        },
+        "tailwindCSS.lint.unsupportedApply": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "error",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
         }
       }
     }

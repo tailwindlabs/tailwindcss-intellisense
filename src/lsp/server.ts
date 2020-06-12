@@ -36,6 +36,11 @@ let workspaceFolder: string | null
 const defaultSettings: Settings = {
   emmetCompletions: false,
   includeLanguages: {},
+  validate: true,
+  lint: {
+    utilityConflicts: 'warning',
+    unsupportedApply: 'error',
+  },
 }
 let globalSettings: Settings = defaultSettings
 let documentSettings: Map<string, Settings> = new Map()
@@ -172,9 +177,9 @@ connection.onDidChangeConfiguration((change) => {
     )
   }
 
-  state.editor.documents
-    .all()
-    .forEach((doc) => getDocumentSettings(state, doc.uri))
+  state.editor.documents.all().forEach((doc) => {
+    provideDiagnostics(state, doc)
+  })
 })
 
 connection.onCompletion(

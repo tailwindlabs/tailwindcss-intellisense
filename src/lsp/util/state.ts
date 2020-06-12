@@ -25,9 +25,16 @@ export type EditorState = {
   }
 }
 
+type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
+
 export type Settings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
+  validate: boolean
+  lint: {
+    utilityConflicts: DiagnosticSeveritySetting
+    unsupportedApply: DiagnosticSeveritySetting
+  }
 }
 
 export type State = null | {

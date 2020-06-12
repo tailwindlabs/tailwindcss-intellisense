@@ -3,7 +3,7 @@ import {
   Diagnostic,
   DiagnosticSeverity,
 } from 'vscode-languageserver'
-import { State } from '../util/state'
+import { State, Settings } from '../util/state'
 import { isCssDoc } from '../util/css'
 import {
   findClassNamesInRange,
@@ -13,8 +13,16 @@ import {
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { getClassNameDecls } from '../util/getClassNameDecls'
 import { equal } from '../../util/array'
+import { getDocumentSettings } from '../util/getDocumentSettings'
 
-function getCssDiagnostics(state: State, document: TextDocument): Diagnostic[] {
+function getCssDiagnostics(
+  state: State,
+  document: TextDocument,
+  settings: Settings
+): Diagnostic[] {
+  let severity = settings.lint.unsupportedApply
+  if (severity === 'ignore') return []
+
   const classNames = findClassNamesInRange(document, undefined, 'css')
 
   let diagnostics: Diagnostic[] = classNames
@@ -49,7 +57,10 @@ function getCssDiagnostics(state: State, document: TextDocument): Diagnostic[] {
       if (!message) return null
 
       return {
-        severity: DiagnosticSeverity.Error,
+        severity:
+          severity === 'error'
+            ? DiagnosticSeverity.Error
+            : DiagnosticSeverity.Warning,
         range,
         message,
       }
@@ -59,10 +70,14 @@ function getCssDiagnostics(state: State, document: TextDocument): Diagnostic[] {
   return diagnostics
 }
 
-function getConflictDiagnostics(
+function getUtilityConflictDiagnostics(
   state: State,
-  document: TextDocument
+  document: TextDocument,
+  settings: Settings
 ): Diagnostic[] {
+  let severity = settings.lint.utilityConflicts
+  if (severity === 'ignore') return []
+
   let diagnostics: Diagnostic[] = []
   const classLists = findClassListsInDocument(state, document)
 
@@ -90,7 +105,10 @@ function getConflictDiagnostics(
         ) {
           diagnostics.push({
             range: className.range,
-            severity: DiagnosticSeverity.Warning,
+            severity:
+              severity === 'error'
+                ? DiagnosticSeverity.Error
+                : DiagnosticSeverity.Warning,
             message: `You can’t use \`${className.className}\` and \`${otherClassName.className}\` together`,
             relatedInformation: [
               {
@@ -114,11 +132,19 @@ export async function provideDiagnostics(
   state: State,
   document: TextDocument
 ): Promise<void> {
+  const settings = await getDocumentSettings(state, document.uri)
+
+  const diagnostics: Diagnostic[] = settings.validate
+    ? [
+        ...getUtilityConflictDiagnostics(state, document, settings),
+        ...(isCssDoc(state, document)
+          ? getCssDiagnostics(state, document, settings)
+          : []),
+      ]
+    : []
+
   state.editor.connection.sendDiagnostics({
     uri: document.uri,
-    diagnostics: [
-      ...getConflictDiagnostics(state, document),
-      ...(isCssDoc(state, document) ? getCssDiagnostics(state, document) : []),
-    ],
+    diagnostics,
   })
 }
