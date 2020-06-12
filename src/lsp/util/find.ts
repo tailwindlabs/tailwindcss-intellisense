@@ -5,8 +5,11 @@ import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext, isHtmlDoc, isSvelteDoc, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
 import { isJsContext, isJsDoc } from './js'
-import { getClassAttributeLexer } from './lexers'
 import { flatten } from '../../util/array'
+import {
+  getClassAttributeLexer,
+  getComputedClassAttributeLexer,
+} from './lexers'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -111,13 +114,16 @@ export function findClassListsInHtmlRange(
   range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/[\s:]class(?:Name)?=['"`{]/g, text)
+  const matches = findAll(/(?:\b|:)class(?:Name)?=['"`{]/g, text)
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1, 200)
 
-    let lexer = getClassAttributeLexer()
+    let lexer =
+      match[0][0] === ':'
+        ? getComputedClassAttributeLexer()
+        : getClassAttributeLexer()
     lexer.reset(subtext)
 
     let classLists: { value: string; offset: number }[] = []

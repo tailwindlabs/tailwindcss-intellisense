@@ -126,7 +126,7 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(/[\s:]class(?:Name)?=['"`{]/gi, str)
+  const match = findLast(/(?:\b|:)class(?:Name)?=['"`{]/gi, str)
 
   if (match === null) {
     return null
