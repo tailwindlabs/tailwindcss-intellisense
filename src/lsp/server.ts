@@ -42,6 +42,7 @@ const defaultSettings: Settings = {
     unsupportedApply: 'error',
     unknownScreen: 'error',
     unknownVariant: 'error',
+    unknownConfigKey: 'error',
   },
 }
 let globalSettings: Settings = defaultSettings

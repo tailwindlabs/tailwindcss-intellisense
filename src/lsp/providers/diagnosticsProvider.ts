@@ -217,6 +217,54 @@ function getUnknownVariantDiagnostics(
   )
 }
 
+function getUnknownConfigKeyDiagnostics(
+  state: State,
+  document: TextDocument,
+  settings: Settings
+): Diagnostic[] {
+  let severity = settings.lint.unknownConfigKey
+  if (severity === 'ignore') return []
+
+  let text = document.getText()
+  let matches = findAll(
+    /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/g,
+    text
+  )
+
+  return matches
+    .map((match) => {
+      let base = match.groups.helper === 'theme' ? ['theme'] : []
+      let keys = match.groups.key.split(/[.\[\]]/).filter(Boolean)
+      let value = dlv(state.config, [...base, ...keys])
+
+      // TODO: check that the type is valid
+      // e.g. objects are not valid
+      if (typeof value !== 'undefined') {
+        return null
+      }
+
+      let startIndex =
+        match.index +
+        match.groups.prefix.length +
+        match.groups.helper.length +
+        1 + // open paren
+        match.groups.quote.length
+
+      return {
+        range: {
+          start: indexToPosition(text, startIndex),
+          end: indexToPosition(text, startIndex + match.groups.key.length),
+        },
+        severity:
+          severity === 'error'
+            ? DiagnosticSeverity.Error
+            : DiagnosticSeverity.Warning,
+        message: `Unknown ${match.groups.helper} key: ${match.groups.key}`,
+      }
+    })
+    .filter(Boolean)
+}
+
 export async function provideDiagnostics(
   state: State,
   document: TextDocument
@@ -231,6 +279,7 @@ export async function provideDiagnostics(
               ...getUnsupportedApplyDiagnostics(state, document, settings),
               ...getUnknownScreenDiagnostics(state, document, settings),
               ...getUnknownVariantDiagnostics(state, document, settings),
+              ...getUnknownConfigKeyDiagnostics(state, document, settings),
             ]
           : []),
       ]

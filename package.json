@@ -134,6 +134,21 @@
             "",
             ""
           ]
+        },
+        "tailwindCSS.lint.unknownConfigKey": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "error",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
         }
       }
     }
