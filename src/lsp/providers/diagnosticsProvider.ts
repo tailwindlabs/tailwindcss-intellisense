@@ -14,7 +14,7 @@ import {
 } from '../util/find'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { getClassNameDecls } from '../util/getClassNameDecls'
-import { equal } from '../../util/array'
+import { equal, flatten } from '../../util/array'
 import { getDocumentSettings } from '../util/getDocumentSettings'
 const dlv = require('dlv')
 
@@ -131,7 +131,7 @@ function getUtilityConflictDiagnostics(
   return diagnostics
 }
 
-function getScreenDirectiveDiagnostics(
+function getUnknownScreenDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
@@ -170,6 +170,53 @@ function getScreenDirectiveDiagnostics(
     .filter(Boolean)
 }
 
+function getUnknownVariantDiagnostics(
+  state: State,
+  document: TextDocument,
+  settings: Settings
+): Diagnostic[] {
+  let severity = settings.lint.unknownVariant
+  if (severity === 'ignore') return []
+
+  let text = document.getText()
+  let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
+
+  return flatten(
+    matches
+      .map((match) => {
+        let diagnostics: Diagnostic[] = []
+        let variants = match.groups.variants.split(/(\s*,\s*)/)
+        let listStartIndex =
+          match.index + match[0].length - match.groups.variants.length
+
+        for (let i = 0; i < variants.length; i += 2) {
+          let variant = variants[i].trim()
+          if (state.variants.includes(variant)) {
+            continue
+          }
+
+          let variantStartIndex =
+            listStartIndex + variants.slice(0, i).join('').length
+
+          diagnostics.push({
+            range: {
+              start: indexToPosition(text, variantStartIndex),
+              end: indexToPosition(text, variantStartIndex + variant.length),
+            },
+            severity:
+              severity === 'error'
+                ? DiagnosticSeverity.Error
+                : DiagnosticSeverity.Warning,
+            message: `Unknown variant: ${variant}`,
+          })
+        }
+
+        return diagnostics
+      })
+      .filter(Boolean)
+  )
+}
+
 export async function provideDiagnostics(
   state: State,
   document: TextDocument
@@ -182,7 +229,8 @@ export async function provideDiagnostics(
         ...(isCssDoc(state, document)
           ? [
               ...getUnsupportedApplyDiagnostics(state, document, settings),
-              ...getScreenDirectiveDiagnostics(state, document, settings),
+              ...getUnknownScreenDiagnostics(state, document, settings),
+              ...getUnknownVariantDiagnostics(state, document, settings),
             ]
           : []),
       ]

@@ -119,6 +119,21 @@
             "",
             ""
           ]
+        },
+        "tailwindCSS.lint.unknownVariant": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "error",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
         }
       }
     }

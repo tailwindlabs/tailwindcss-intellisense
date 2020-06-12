@@ -41,6 +41,7 @@ const defaultSettings: Settings = {
     utilityConflicts: 'warning',
     unsupportedApply: 'error',
     unknownScreen: 'error',
+    unknownVariant: 'error',
   },
 }
 let globalSettings: Settings = defaultSettings

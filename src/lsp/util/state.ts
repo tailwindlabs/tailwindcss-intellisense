@@ -35,6 +35,7 @@ export type Settings = {
     utilityConflicts: DiagnosticSeveritySetting
     unsupportedApply: DiagnosticSeveritySetting
     unknownScreen: DiagnosticSeveritySetting
+    unknownVariant: DiagnosticSeveritySetting
   }
 }
 
