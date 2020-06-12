@@ -43,6 +43,7 @@ const defaultSettings: Settings = {
     unknownScreen: 'error',
     unknownVariant: 'error',
     unknownConfigKey: 'error',
+    unsupportedTailwindDirective: 'error',
   },
 }
 let globalSettings: Settings = defaultSettings

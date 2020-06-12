@@ -37,6 +37,7 @@ export type Settings = {
     unknownScreen: DiagnosticSeveritySetting
     unknownVariant: DiagnosticSeveritySetting
     unknownConfigKey: DiagnosticSeveritySetting
+    unsupportedTailwindDirective: DiagnosticSeveritySetting
   }
 }
 

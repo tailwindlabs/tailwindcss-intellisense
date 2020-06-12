@@ -17,6 +17,7 @@ import { getClassNameDecls } from '../util/getClassNameDecls'
 import { equal, flatten } from '../../util/array'
 import { getDocumentSettings } from '../util/getDocumentSettings'
 const dlv = require('dlv')
+import semver from 'semver'
 
 function getUnsupportedApplyDiagnostics(
   state: State,
@@ -265,6 +266,50 @@ function getUnknownConfigKeyDiagnostics(
     .filter(Boolean)
 }
 
+function getUnsupportedTailwindDirectiveDiagnostics(
+  state: State,
+  document: TextDocument,
+  settings: Settings
+): Diagnostic[] {
+  let severity = settings.lint.unsupportedTailwindDirective
+  if (severity === 'ignore') return []
+
+  let text = document.getText()
+  let matches = findAll(/(?:\s|^)@tailwind\s+(?<value>[^;]+)/g, text)
+
+  let allowed = [
+    'utilities',
+    'components',
+    'screens',
+    semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
+  ]
+
+  return matches
+    .map((match) => {
+      if (allowed.includes(match.groups.value)) {
+        return null
+      }
+
+      return {
+        range: {
+          start: indexToPosition(
+            text,
+            match.index + match[0].length - match.groups.value.length
+          ),
+          end: indexToPosition(text, match.index + match[0].length),
+        },
+        severity:
+          severity === 'error'
+            ? DiagnosticSeverity.Error
+            : DiagnosticSeverity.Warning,
+        message: `Unsupported value: ${match.groups.value}${
+          match.groups.value === 'preflight' ? '. Use base instead.' : ''
+        }`,
+      }
+    })
+    .filter(Boolean)
+}
+
 export async function provideDiagnostics(
   state: State,
   document: TextDocument
@@ -280,6 +325,11 @@ export async function provideDiagnostics(
               ...getUnknownScreenDiagnostics(state, document, settings),
               ...getUnknownVariantDiagnostics(state, document, settings),
               ...getUnknownConfigKeyDiagnostics(state, document, settings),
+              ...getUnsupportedTailwindDirectiveDiagnostics(
+                state,
+                document,
+                settings
+              ),
             ]
           : []),
       ]

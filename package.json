@@ -149,6 +149,21 @@
             "",
             ""
           ]
+        },
+        "tailwindCSS.lint.unsupportedTailwindDirective": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "error",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
         }
       }
     }
