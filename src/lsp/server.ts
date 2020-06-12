@@ -40,6 +40,7 @@ const defaultSettings: Settings = {
   lint: {
     utilityConflicts: 'warning',
     unsupportedApply: 'error',
+    unknownScreen: 'error',
   },
 }
 let globalSettings: Settings = defaultSettings

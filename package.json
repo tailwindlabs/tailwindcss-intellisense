@@ -104,6 +104,21 @@
             "",
             ""
           ]
+        },
+        "tailwindCSS.lint.unknownScreen": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "error",
+          "markdownDescription": "",
+          "markdownEnumDescriptions": [
+            "",
+            "",
+            ""
+          ]
         }
       }
     }

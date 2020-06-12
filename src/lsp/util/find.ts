@@ -296,7 +296,7 @@ export function findClassListsInDocument(
   return []
 }
 
-function indexToPosition(str: string, index: number): Position {
+export function indexToPosition(str: string, index: number): Position {
   const { line, col } = lineColumn(str + '\n', index)
   return { line: line - 1, character: col - 1 }
 }

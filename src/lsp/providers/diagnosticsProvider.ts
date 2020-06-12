@@ -9,13 +9,16 @@ import {
   findClassNamesInRange,
   findClassListsInDocument,
   getClassNamesInClassList,
+  findAll,
+  indexToPosition,
 } from '../util/find'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { getClassNameDecls } from '../util/getClassNameDecls'
 import { equal } from '../../util/array'
 import { getDocumentSettings } from '../util/getDocumentSettings'
+const dlv = require('dlv')
 
-function getCssDiagnostics(
+function getUnsupportedApplyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
@@ -128,6 +131,45 @@ function getUtilityConflictDiagnostics(
   return diagnostics
 }
 
+function getScreenDirectiveDiagnostics(
+  state: State,
+  document: TextDocument,
+  settings: Settings
+): Diagnostic[] {
+  let severity = settings.lint.unknownScreen
+  if (severity === 'ignore') return []
+
+  let text = document.getText()
+  let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
+
+  let screens = Object.keys(
+    dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
+  )
+
+  return matches
+    .map((match) => {
+      if (screens.includes(match.groups.screen)) {
+        return null
+      }
+
+      return {
+        range: {
+          start: indexToPosition(
+            text,
+            match.index + match[0].length - match.groups.screen.length
+          ),
+          end: indexToPosition(text, match.index + match[0].length),
+        },
+        severity:
+          severity === 'error'
+            ? DiagnosticSeverity.Error
+            : DiagnosticSeverity.Warning,
+        message: 'Unknown screen',
+      }
+    })
+    .filter(Boolean)
+}
+
 export async function provideDiagnostics(
   state: State,
   document: TextDocument
@@ -138,7 +180,10 @@ export async function provideDiagnostics(
     ? [
         ...getUtilityConflictDiagnostics(state, document, settings),
         ...(isCssDoc(state, document)
-          ? getCssDiagnostics(state, document, settings)
+          ? [
+              ...getUnsupportedApplyDiagnostics(state, document, settings),
+              ...getScreenDirectiveDiagnostics(state, document, settings),
+            ]
           : []),
       ]
     : []

@@ -34,6 +34,7 @@ export type Settings = {
   lint: {
     utilityConflicts: DiagnosticSeveritySetting
     unsupportedApply: DiagnosticSeveritySetting
+    unknownScreen: DiagnosticSeveritySetting
   }
 }
 
