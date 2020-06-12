@@ -101,7 +101,7 @@ export function findClassListsInHtmlRange(
   range: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/[\s:]class(?:Name)?=['"`{]/g, text)
+  const matches = findAll(/(?:\b|:)class(?:Name)?=['"`{]/g, text)
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
