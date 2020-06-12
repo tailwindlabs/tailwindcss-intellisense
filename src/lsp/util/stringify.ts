@@ -54,7 +54,7 @@ export function stringifyCss(className: string, obj: any): string {
 }
 
 function augmentClassName(className: string, obj: any): string {
-  const pseudo = obj.__pseudo ? obj.__pseudo.join('') : ''
+  const pseudo = obj.__pseudo.join('')
   const scope = obj.__scope ? `${obj.__scope} ` : ''
   return `${scope}.${escapeClassName(className)}${pseudo}`
 }
