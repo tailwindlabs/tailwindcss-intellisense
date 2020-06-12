@@ -5,10 +5,16 @@ import {
 } from 'vscode-languageserver'
 import { State } from '../util/state'
 import { isCssDoc } from '../util/css'
-import { findClassNamesInRange } from '../util/find'
+import {
+  findClassNamesInRange,
+  findClassListsInDocument,
+  getClassNamesInClassList,
+} from '../util/find'
 import { getClassNameMeta } from '../util/getClassNameMeta'
+import { getClassNameDecls } from '../util/getClassNameDecls'
+import { equal } from '../../util/array'
 
-function provideCssDiagnostics(state: State, document: TextDocument): void {
+function getCssDiagnostics(state: State, document: TextDocument): Diagnostic[] {
   const classNames = findClassNamesInRange(document, undefined, 'css')
 
   let diagnostics: Diagnostic[] = classNames
@@ -46,38 +52,73 @@ function provideCssDiagnostics(state: State, document: TextDocument): void {
         severity: DiagnosticSeverity.Error,
         range,
         message,
-        // source: 'ex',
       }
     })
     .filter(Boolean)
 
-  // if (state.editor.capabilities.diagnosticRelatedInformation) {
-  //   diagnostic.relatedInformation = [
-  //     {
-  //       location: {
-  //         uri: document.uri,
-  //         range: Object.assign({}, diagnostic.range),
-  //       },
-  //       message: '',
-  //     },
-  //     {
-  //       location: {
-  //         uri: document.uri,
-  //         range: Object.assign({}, diagnostic.range),
-  //       },
-  //       message: '',
-  //     },
-  //   ]
-  // }
+  return diagnostics
+}
 
-  state.editor.connection.sendDiagnostics({ uri: document.uri, diagnostics })
+function getConflictDiagnostics(
+  state: State,
+  document: TextDocument
+): Diagnostic[] {
+  let diagnostics: Diagnostic[] = []
+  const classLists = findClassListsInDocument(state, document)
+
+  classLists.forEach((classList) => {
+    const classNames = getClassNamesInClassList(classList)
+
+    classNames.forEach((className, index) => {
+      let otherClassNames = classNames.filter((_className, i) => i !== index)
+      otherClassNames.forEach((otherClassName) => {
+        let decls = getClassNameDecls(state, className.className)
+        if (!decls) return
+
+        let otherDecls = getClassNameDecls(state, otherClassName.className)
+        if (!otherDecls) return
+
+        let meta = getClassNameMeta(state, className.className)
+        let otherMeta = getClassNameMeta(state, otherClassName.className)
+
+        if (
+          equal(Object.keys(decls), Object.keys(otherDecls)) &&
+          !Array.isArray(meta) &&
+          !Array.isArray(otherMeta) &&
+          equal(meta.context, otherMeta.context) &&
+          equal(meta.pseudo, otherMeta.pseudo)
+        ) {
+          diagnostics.push({
+            range: className.range,
+            severity: DiagnosticSeverity.Warning,
+            message: `You can’t use \`${className.className}\` and \`${otherClassName.className}\` together`,
+            relatedInformation: [
+              {
+                message: otherClassName.className,
+                location: {
+                  uri: document.uri,
+                  range: otherClassName.range,
+                },
+              },
+            ],
+          })
+        }
+      })
+    })
+  })
+
+  return diagnostics
 }
 
 export async function provideDiagnostics(
   state: State,
   document: TextDocument
 ): Promise<void> {
-  if (isCssDoc(state, document)) {
-    return provideCssDiagnostics(state, document)
-  }
+  state.editor.connection.sendDiagnostics({
+    uri: document.uri,
+    diagnostics: [
+      ...getConflictDiagnostics(state, document),
+      ...(isCssDoc(state, document) ? getCssDiagnostics(state, document) : []),
+    ],
+  })
 }
