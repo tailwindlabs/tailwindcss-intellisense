@@ -279,9 +279,13 @@ function getUnknownConfigKeyDiagnostics(
       let keys = match.groups.key.split(/[.\[\]]/).filter(Boolean)
       let value = dlv(state.config, [...base, ...keys])
 
-      // TODO: check that the type is valid
-      // e.g. objects are not valid
-      if (typeof value !== 'undefined') {
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        value instanceof String ||
+        value instanceof Number ||
+        Array.isArray(value)
+      ) {
         return null
       }
 
@@ -304,7 +308,10 @@ function getUnknownConfigKeyDiagnostics(
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
-        message: `Unknown ${match.groups.helper} key: ${match.groups.key}`,
+        message:
+          typeof value === 'undefined'
+            ? `'${match.groups.key}' does not exist in your theme config.`
+            : `'${match.groups.key}' was found but does not resolve to a string.`,
       })
     })
   })
