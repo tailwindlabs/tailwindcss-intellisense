@@ -10,6 +10,7 @@ import {
   getClassAttributeLexer,
   getComputedClassAttributeLexer,
 } from './lexers'
+import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -230,70 +231,13 @@ export function findClassListsInDocument(
     return findClassListsInCssRange(doc)
   }
 
-  if (isVueDoc(doc)) {
-    let text = doc.getText()
-    let blocks = findAll(
-      /<(?<type>template|style|script)\b[^>]*>.*?(<\/\k<type>>|$)/gis,
-      text
-    )
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    for (let i = 0; i < blocks.length; i++) {
-      let range = {
-        start: indexToPosition(text, blocks[i].index),
-        end: indexToPosition(text, blocks[i].index + blocks[i][0].length),
-      }
-      if (blocks[i].groups.type === 'style') {
-        cssRanges.push(range)
-      } else {
-        htmlRanges.push(range)
-      }
-    }
-    return [].concat.apply(
-      [],
-      [
-        ...htmlRanges.map((range) => findClassListsInHtmlRange(doc, range)),
-        ...cssRanges.map((range) => findClassListsInCssRange(doc, range)),
-      ]
-    )
-  }
+  let boundaries = getLanguageBoundaries(state, doc)
+  if (!boundaries) return []
 
-  if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
-    let text = doc.getText()
-    let styleBlocks = findAll(/<style(?:\s[^>]*>|>).*?(<\/style>|$)/gis, text)
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    let currentIndex = 0
-
-    for (let i = 0; i < styleBlocks.length; i++) {
-      htmlRanges.push({
-        start: indexToPosition(text, currentIndex),
-        end: indexToPosition(text, styleBlocks[i].index),
-      })
-      cssRanges.push({
-        start: indexToPosition(text, styleBlocks[i].index),
-        end: indexToPosition(
-          text,
-          styleBlocks[i].index + styleBlocks[i][0].length
-        ),
-      })
-      currentIndex = styleBlocks[i].index + styleBlocks[i][0].length
-    }
-    htmlRanges.push({
-      start: indexToPosition(text, currentIndex),
-      end: indexToPosition(text, text.length),
-    })
-
-    return [].concat.apply(
-      [],
-      [
-        ...htmlRanges.map((range) => findClassListsInHtmlRange(doc, range)),
-        ...cssRanges.map((range) => findClassListsInCssRange(doc, range)),
-      ]
-    )
-  }
-
-  return []
+  return flatten([
+    ...boundaries.html.map((range) => findClassListsInHtmlRange(doc, range)),
+    ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
+  ])
 }
 
 export function indexToPosition(str: string, index: number): Position {

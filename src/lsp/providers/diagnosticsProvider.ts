@@ -2,6 +2,7 @@ import {
   TextDocument,
   Diagnostic,
   DiagnosticSeverity,
+  Range,
 } from 'vscode-languageserver'
 import { State, Settings } from '../util/state'
 import { isCssDoc } from '../util/css'
@@ -18,6 +19,8 @@ import { equal, flatten } from '../../util/array'
 import { getDocumentSettings } from '../util/getDocumentSettings'
 const dlv = require('dlv')
 import semver from 'semver'
+import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
+import { absoluteRange } from '../util/absoluteRange'
 
 function getUnsupportedApplyDiagnostics(
   state: State,
@@ -140,35 +143,51 @@ function getUnknownScreenDiagnostics(
   let severity = settings.lint.unknownScreen
   if (severity === 'ignore') return []
 
-  let text = document.getText()
-  let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
+  let diagnostics: Diagnostic[] = []
+  let ranges: Range[] = []
 
-  let screens = Object.keys(
-    dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
-  )
+  if (isCssDoc(state, document)) {
+    ranges.push(undefined)
+  } else {
+    let boundaries = getLanguageBoundaries(state, document)
+    if (!boundaries) return []
+    ranges.push(...boundaries.css)
+  }
 
-  return matches
-    .map((match) => {
+  ranges.forEach((range) => {
+    let text = document.getText(range)
+    let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
+
+    let screens = Object.keys(
+      dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
+    )
+
+    matches.forEach((match) => {
       if (screens.includes(match.groups.screen)) {
         return null
       }
 
-      return {
-        range: {
-          start: indexToPosition(
-            text,
-            match.index + match[0].length - match.groups.screen.length
-          ),
-          end: indexToPosition(text, match.index + match[0].length),
-        },
+      diagnostics.push({
+        range: absoluteRange(
+          {
+            start: indexToPosition(
+              text,
+              match.index + match[0].length - match.groups.screen.length
+            ),
+            end: indexToPosition(text, match.index + match[0].length),
+          },
+          range
+        ),
         severity:
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
         message: 'Unknown screen',
-      }
+      })
     })
-    .filter(Boolean)
+  })
+
+  return diagnostics
 }
 
 function getUnknownVariantDiagnostics(
@@ -179,43 +198,54 @@ function getUnknownVariantDiagnostics(
   let severity = settings.lint.unknownVariant
   if (severity === 'ignore') return []
 
-  let text = document.getText()
-  let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
+  let diagnostics: Diagnostic[] = []
+  let ranges: Range[] = []
 
-  return flatten(
-    matches
-      .map((match) => {
-        let diagnostics: Diagnostic[] = []
-        let variants = match.groups.variants.split(/(\s*,\s*)/)
-        let listStartIndex =
-          match.index + match[0].length - match.groups.variants.length
+  if (isCssDoc(state, document)) {
+    ranges.push(undefined)
+  } else {
+    let boundaries = getLanguageBoundaries(state, document)
+    if (!boundaries) return []
+    ranges.push(...boundaries.css)
+  }
 
-        for (let i = 0; i < variants.length; i += 2) {
-          let variant = variants[i].trim()
-          if (state.variants.includes(variant)) {
-            continue
-          }
+  ranges.forEach((range) => {
+    let text = document.getText(range)
+    let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
 
-          let variantStartIndex =
-            listStartIndex + variants.slice(0, i).join('').length
+    matches.forEach((match) => {
+      let variants = match.groups.variants.split(/(\s*,\s*)/)
+      let listStartIndex =
+        match.index + match[0].length - match.groups.variants.length
 
-          diagnostics.push({
-            range: {
+      for (let i = 0; i < variants.length; i += 2) {
+        let variant = variants[i].trim()
+        if (state.variants.includes(variant)) {
+          continue
+        }
+
+        let variantStartIndex =
+          listStartIndex + variants.slice(0, i).join('').length
+
+        diagnostics.push({
+          range: absoluteRange(
+            {
               start: indexToPosition(text, variantStartIndex),
               end: indexToPosition(text, variantStartIndex + variant.length),
             },
-            severity:
-              severity === 'error'
-                ? DiagnosticSeverity.Error
-                : DiagnosticSeverity.Warning,
-            message: `Unknown variant: ${variant}`,
-          })
-        }
+            range
+          ),
+          severity:
+            severity === 'error'
+              ? DiagnosticSeverity.Error
+              : DiagnosticSeverity.Warning,
+          message: `Unknown variant: ${variant}`,
+        })
+      }
+    })
+  })
 
-        return diagnostics
-      })
-      .filter(Boolean)
-  )
+  return diagnostics
 }
 
 function getUnknownConfigKeyDiagnostics(
@@ -226,14 +256,25 @@ function getUnknownConfigKeyDiagnostics(
   let severity = settings.lint.unknownConfigKey
   if (severity === 'ignore') return []
 
-  let text = document.getText()
-  let matches = findAll(
-    /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/g,
-    text
-  )
+  let diagnostics: Diagnostic[] = []
+  let ranges: Range[] = []
 
-  return matches
-    .map((match) => {
+  if (isCssDoc(state, document)) {
+    ranges.push(undefined)
+  } else {
+    let boundaries = getLanguageBoundaries(state, document)
+    if (!boundaries) return []
+    ranges.push(...boundaries.css)
+  }
+
+  ranges.forEach((range) => {
+    let text = document.getText(range)
+    let matches = findAll(
+      /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/g,
+      text
+    )
+
+    matches.forEach((match) => {
       let base = match.groups.helper === 'theme' ? ['theme'] : []
       let keys = match.groups.key.split(/[.\[\]]/).filter(Boolean)
       let value = dlv(state.config, [...base, ...keys])
@@ -251,19 +292,24 @@ function getUnknownConfigKeyDiagnostics(
         1 + // open paren
         match.groups.quote.length
 
-      return {
-        range: {
-          start: indexToPosition(text, startIndex),
-          end: indexToPosition(text, startIndex + match.groups.key.length),
-        },
+      diagnostics.push({
+        range: absoluteRange(
+          {
+            start: indexToPosition(text, startIndex),
+            end: indexToPosition(text, startIndex + match.groups.key.length),
+          },
+          range
+        ),
         severity:
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
         message: `Unknown ${match.groups.helper} key: ${match.groups.key}`,
-      }
+      })
     })
-    .filter(Boolean)
+  })
+
+  return diagnostics
 }
 
 function getUnsupportedTailwindDirectiveDiagnostics(
@@ -274,30 +320,44 @@ function getUnsupportedTailwindDirectiveDiagnostics(
   let severity = settings.lint.unsupportedTailwindDirective
   if (severity === 'ignore') return []
 
-  let text = document.getText()
-  let matches = findAll(/(?:\s|^)@tailwind\s+(?<value>[^;]+)/g, text)
+  let diagnostics: Diagnostic[] = []
+  let ranges: Range[] = []
 
-  let allowed = [
-    'utilities',
-    'components',
-    'screens',
-    semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
-  ]
+  if (isCssDoc(state, document)) {
+    ranges.push(undefined)
+  } else {
+    let boundaries = getLanguageBoundaries(state, document)
+    if (!boundaries) return []
+    ranges.push(...boundaries.css)
+  }
 
-  return matches
-    .map((match) => {
-      if (allowed.includes(match.groups.value)) {
+  ranges.forEach((range) => {
+    let text = document.getText(range)
+    let matches = findAll(/(?:\s|^)@tailwind\s+(?<value>[^;]+)/g, text)
+
+    let valid = [
+      'utilities',
+      'components',
+      'screens',
+      semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
+    ]
+
+    matches.forEach((match) => {
+      if (valid.includes(match.groups.value)) {
         return null
       }
 
-      return {
-        range: {
-          start: indexToPosition(
-            text,
-            match.index + match[0].length - match.groups.value.length
-          ),
-          end: indexToPosition(text, match.index + match[0].length),
-        },
+      diagnostics.push({
+        range: absoluteRange(
+          {
+            start: indexToPosition(
+              text,
+              match.index + match[0].length - match.groups.value.length
+            ),
+            end: indexToPosition(text, match.index + match[0].length),
+          },
+          range
+        ),
         severity:
           severity === 'error'
             ? DiagnosticSeverity.Error
@@ -305,9 +365,11 @@ function getUnsupportedTailwindDirectiveDiagnostics(
         message: `Unsupported value: ${match.groups.value}${
           match.groups.value === 'preflight' ? '. Use base instead.' : ''
         }`,
-      }
+      })
     })
-    .filter(Boolean)
+  })
+
+  return diagnostics
 }
 
 export async function provideDiagnostics(
@@ -319,19 +381,15 @@ export async function provideDiagnostics(
   const diagnostics: Diagnostic[] = settings.validate
     ? [
         ...getUtilityConflictDiagnostics(state, document, settings),
-        ...(isCssDoc(state, document)
-          ? [
-              ...getUnsupportedApplyDiagnostics(state, document, settings),
-              ...getUnknownScreenDiagnostics(state, document, settings),
-              ...getUnknownVariantDiagnostics(state, document, settings),
-              ...getUnknownConfigKeyDiagnostics(state, document, settings),
-              ...getUnsupportedTailwindDirectiveDiagnostics(
-                state,
-                document,
-                settings
-              ),
-            ]
-          : []),
+        ...getUnsupportedApplyDiagnostics(state, document, settings),
+        ...getUnknownScreenDiagnostics(state, document, settings),
+        ...getUnknownVariantDiagnostics(state, document, settings),
+        ...getUnknownConfigKeyDiagnostics(state, document, settings),
+        ...getUnsupportedTailwindDirectiveDiagnostics(
+          state,
+          document,
+          settings
+        ),
       ]
     : []
 
