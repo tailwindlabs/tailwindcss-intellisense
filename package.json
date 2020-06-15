@@ -83,12 +83,7 @@
             "error"
           ],
           "default": "warning",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         },
         "tailwindCSS.lint.unsupportedApply": {
           "type": "string",
@@ -98,12 +93,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         },
         "tailwindCSS.lint.unknownScreen": {
           "type": "string",
@@ -113,12 +103,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         },
         "tailwindCSS.lint.unknownVariant": {
           "type": "string",
@@ -128,12 +113,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         },
         "tailwindCSS.lint.unknownConfigKey": {
           "type": "string",
@@ -143,12 +123,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         },
         "tailwindCSS.lint.unsupportedTailwindDirective": {
           "type": "string",
@@ -158,12 +133,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
-          "markdownEnumDescriptions": [
-            "",
-            "",
-            ""
-          ]
+          "markdownDescription": ""
         }
       }
     }
