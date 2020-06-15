@@ -376,7 +376,7 @@ export async function provideDiagnostics(
   state: State,
   document: TextDocument
 ): Promise<void> {
-  const settings = await getDocumentSettings(state, document.uri)
+  const settings = await getDocumentSettings(state, document)
 
   const diagnostics: Diagnostic[] = settings.validate
     ? [

@@ -1,4 +1,5 @@
 import { TextDocuments, Connection, Range } from 'vscode-languageserver'
+import { NotificationEmitter } from '../../lib/emitter'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -43,6 +44,7 @@ export type Settings = {
 
 export type State = null | {
   enabled: boolean
+  emitter: NotificationEmitter
   version?: string
   configPath?: string
   config?: any

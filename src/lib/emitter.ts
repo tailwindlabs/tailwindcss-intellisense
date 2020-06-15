@@ -1,6 +1,7 @@
 import mitt from 'mitt'
 import { LanguageClient } from 'vscode-languageclient'
 import crypto from 'crypto'
+import { Connection } from 'vscode-languageserver'
 
 export interface NotificationEmitter {
   on: (name: string, handler: (args: any) => void) => void
@@ -8,7 +9,9 @@ export interface NotificationEmitter {
   emit: (name: string, args: any) => Promise<any>
 }
 
-export function createEmitter(client: LanguageClient): NotificationEmitter {
+export function createEmitter(
+  client: LanguageClient | Connection
+): NotificationEmitter {
   const emitter = mitt()
   const registered: string[] = []
 
@@ -26,7 +29,7 @@ export function createEmitter(client: LanguageClient): NotificationEmitter {
     emitter.off(name, handler)
   }
 
-  const emit = (name: string, params: any) => {
+  const emit = (name: string, params: Record<string, any> = {}) => {
     return new Promise((resolve, _reject) => {
       const id = crypto.randomBytes(16).toString('hex')
       on(`${name}Response`, (result) => {

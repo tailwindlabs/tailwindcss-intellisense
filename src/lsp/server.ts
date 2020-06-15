@@ -27,9 +27,10 @@ import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
 import { provideDiagnostics } from './providers/diagnosticsProvider'
+import { createEmitter } from '../lib/emitter'
 
-let state: State = { enabled: false }
 let connection = createConnection(ProposedFeatures.all)
+let state: State = { enabled: false, emitter: createEmitter(connection) }
 let documents = new TextDocuments()
 let workspaceFolder: string | null
 
@@ -50,7 +51,7 @@ let globalSettings: Settings = defaultSettings
 let documentSettings: Map<string, Settings> = new Map()
 
 documents.onDidOpen((event) => {
-  getDocumentSettings(state, event.document.uri)
+  getDocumentSettings(state, event.document)
 })
 documents.onDidClose((event) => {
   documentSettings.delete(event.document.uri)
@@ -90,14 +91,23 @@ connection.onInitialize(
         // @ts-ignore
         onChange: (newState: State): void => {
           if (newState && !newState.error) {
-            state = { ...newState, enabled: true, editor: editorState }
+            state = {
+              ...newState,
+              enabled: true,
+              emitter: state.emitter,
+              editor: editorState,
+            }
             connection.sendNotification('tailwindcss/configUpdated', [
               state.configPath,
               state.config,
               state.plugins,
             ])
           } else {
-            state = { enabled: false, editor: editorState }
+            state = {
+              enabled: false,
+              emitter: state.emitter,
+              editor: editorState,
+            }
             if (newState && newState.error) {
               const payload: {
                 message: string
@@ -120,9 +130,14 @@ connection.onInitialize(
     )
 
     if (tailwindState) {
-      state = { enabled: true, editor: editorState, ...tailwindState }
+      state = {
+        enabled: true,
+        emitter: state.emitter,
+        editor: editorState,
+        ...tailwindState,
+      }
     } else {
-      state = { enabled: false, editor: editorState }
+      state = { enabled: false, emitter: state.emitter, editor: editorState }
     }
 
     return {

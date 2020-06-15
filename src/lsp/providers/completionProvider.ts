@@ -618,10 +618,10 @@ async function provideEmmetCompletions(
   state: State,
   { position, textDocument }: CompletionParams
 ): Promise<CompletionList> {
-  let settings = await getDocumentSettings(state, textDocument.uri)
-  if (settings.emmetCompletions !== true) return null
-
   let doc = state.editor.documents.get(textDocument.uri)
+
+  let settings = await getDocumentSettings(state, doc)
+  if (settings.emmetCompletions !== true) return null
 
   const syntax = isHtmlContext(state, doc, position)
     ? 'html'

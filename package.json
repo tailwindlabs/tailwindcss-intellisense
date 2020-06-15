@@ -73,7 +73,8 @@
         "tailwindCSS.validate": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.utilityConflicts": {
           "type": "string",
@@ -83,7 +84,8 @@
             "error"
           ],
           "default": "warning",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.unsupportedApply": {
           "type": "string",
@@ -93,7 +95,8 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.unknownScreen": {
           "type": "string",
@@ -103,7 +106,8 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.unknownVariant": {
           "type": "string",
@@ -113,7 +117,8 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.unknownConfigKey": {
           "type": "string",
@@ -123,7 +128,8 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         },
         "tailwindCSS.lint.unsupportedTailwindDirective": {
           "type": "string",
@@ -133,7 +139,8 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": ""
+          "markdownDescription": "",
+          "scope": "language-overridable"
         }
       }
     }

@@ -1,9 +1,10 @@
 import { Connection } from 'vscode-languageserver'
+import { LanguageClient } from 'vscode-languageclient'
 
 export function onMessage(
-  connection: Connection,
+  connection: LanguageClient | Connection,
   name: string,
-  handler: (params: any) => any
+  handler: (params: any) => Thenable<Record<string, any>>
 ): void {
   connection.onNotification(`tailwindcss/${name}`, async (params: any) => {
     const { _id, ...rest } = params
