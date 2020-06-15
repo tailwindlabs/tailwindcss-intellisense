@@ -120,7 +120,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.unknownConfigKey": {
+        "tailwindCSS.lint.invalidHelperKey": {
           "type": "string",
           "enum": [
             "ignore",

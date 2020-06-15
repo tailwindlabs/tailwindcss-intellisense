@@ -248,12 +248,12 @@ function getUnknownVariantDiagnostics(
   return diagnostics
 }
 
-function getUnknownConfigKeyDiagnostics(
+function getInvalidHelperKeyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.unknownConfigKey
+  let severity = settings.lint.invalidHelperKey
   if (severity === 'ignore') return []
 
   let diagnostics: Diagnostic[] = []
@@ -391,7 +391,7 @@ export async function provideDiagnostics(
         ...getUnsupportedApplyDiagnostics(state, document, settings),
         ...getUnknownScreenDiagnostics(state, document, settings),
         ...getUnknownVariantDiagnostics(state, document, settings),
-        ...getUnknownConfigKeyDiagnostics(state, document, settings),
+        ...getInvalidHelperKeyDiagnostics(state, document, settings),
         ...getUnsupportedTailwindDirectiveDiagnostics(
           state,
           document,

@@ -43,7 +43,7 @@ const defaultSettings: Settings = {
     unsupportedApply: 'error',
     unknownScreen: 'error',
     unknownVariant: 'error',
-    unknownConfigKey: 'error',
+    invalidHelperKey: 'error',
     unsupportedTailwindDirective: 'error',
   },
 }
