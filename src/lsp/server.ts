@@ -26,7 +26,11 @@ import {
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
-import { provideDiagnostics } from './providers/diagnosticsProvider'
+import {
+  provideDiagnostics,
+  updateAllDiagnostics,
+  clearAllDiagnostics,
+} from './providers/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
 
 let connection = createConnection(ProposedFeatures.all)
@@ -102,6 +106,7 @@ connection.onInitialize(
               state.config,
               state.plugins,
             ])
+            updateAllDiagnostics(state)
           } else {
             state = {
               enabled: false,
@@ -122,6 +127,7 @@ connection.onInitialize(
               }
               connection.sendNotification('tailwindcss/configError', [payload])
             }
+            clearAllDiagnostics(state)
             // TODO
             // connection.sendNotification('tailwindcss/configUpdated', [null])
           }
@@ -196,9 +202,7 @@ connection.onDidChangeConfiguration((change) => {
     )
   }
 
-  state.editor.documents.all().forEach((doc) => {
-    provideDiagnostics(state, doc)
-  })
+  updateAllDiagnostics(state)
 })
 
 connection.onCompletion(
