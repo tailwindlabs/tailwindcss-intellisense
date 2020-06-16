@@ -360,7 +360,10 @@ function getInvalidConfigPathDiagnostics(
             isValid(value[key])
           )
           if (firstValidKey) {
-            message += ` Did you mean '${stitch([...keys, firstValidKey])}'?`
+            message += ` Did you mean something like '${stitch([
+              ...keys,
+              firstValidKey,
+            ])}'?`
           }
         }
       }
