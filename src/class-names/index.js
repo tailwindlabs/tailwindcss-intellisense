@@ -2,6 +2,7 @@ import extractClassNames from './extractClassNames'
 import Hook from './hook'
 import dlv from 'dlv'
 import dset from 'dset'
+import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 import chokidar from 'chokidar'
 import semver from 'semver'
@@ -55,13 +56,16 @@ export default async function getClassNames(
     invariant(configPath.length === 1, 'No Tailwind CSS config found.')
     configPath = configPath[0]
     const configDir = path.dirname(configPath)
-    postcss = importFrom(configDir, 'postcss')
+    const tailwindBase = path.dirname(
+      resolveFrom(configDir, 'tailwindcss/package.json')
+    )
+    postcss = importFrom(tailwindBase, 'postcss')
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
 
     try {
       // this is not required
-      browserslistModule = importFrom(configDir, 'browserslist')
+      browserslistModule = importFrom(tailwindBase, 'browserslist')
     } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
