@@ -1,9 +1,13 @@
+import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 import * as path from 'path'
 import decache from './decache'
 
 export default function resolveConfig({ cwd, config }) {
-  let resolve = x => x
+  const tailwindBase = path.dirname(
+    resolveFrom(cwd, 'tailwindcss/package.json')
+  )
+  let resolve = (x) => x
 
   if (typeof config === 'string') {
     if (!cwd) {
@@ -14,18 +18,18 @@ export default function resolveConfig({ cwd, config }) {
   }
 
   try {
-    resolve = importFrom(cwd, 'tailwindcss/resolveConfig.js')
+    resolve = importFrom(tailwindBase, './resolveConfig.js')
   } catch (_) {
     try {
       const resolveConfig = importFrom(
-        cwd,
-        'tailwindcss/lib/util/resolveConfig.js'
+        tailwindBase,
+        './lib/util/resolveConfig.js'
       )
       const defaultConfig = importFrom(
-        cwd,
-        'tailwindcss/stubs/defaultConfig.stub.js'
+        tailwindBase,
+        './stubs/defaultConfig.stub.js'
       )
-      resolve = config => resolveConfig([config, defaultConfig])
+      resolve = (config) => resolveConfig([config, defaultConfig])
     } catch (_) {}
   }
 
