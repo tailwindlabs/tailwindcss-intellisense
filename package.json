@@ -173,6 +173,7 @@
     "globrex": "^0.1.2",
     "import-from": "^3.0.0",
     "jest": "^25.5.4",
+    "js-levenshtein": "^1.1.6",
     "line-column": "^1.0.2",
     "mitt": "^1.2.0",
     "mkdirp": "^1.0.3",

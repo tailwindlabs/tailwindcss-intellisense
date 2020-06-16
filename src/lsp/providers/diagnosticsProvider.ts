@@ -15,12 +15,15 @@ import {
 } from '../util/find'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { getClassNameDecls } from '../util/getClassNameDecls'
-import { equal, flatten } from '../../util/array'
+import { equal } from '../../util/array'
 import { getDocumentSettings } from '../util/getDocumentSettings'
 const dlv = require('dlv')
 import semver from 'semver'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { absoluteRange } from '../util/absoluteRange'
+import { isObject } from '../../class-names/isObject'
+import levenshtein from 'js-levenshtein'
+import { stringToPath } from '../util/stringToPath'
 
 function getUnsupportedApplyDiagnostics(
   state: State,
@@ -276,16 +279,84 @@ function getInvalidHelperKeyDiagnostics(
 
     matches.forEach((match) => {
       let base = match.groups.helper === 'theme' ? ['theme'] : []
-      let keys = match.groups.key.split(/[.\[\]]/).filter(Boolean)
+      let keys = stringToPath(match.groups.key)
       let value = dlv(state.config, [...base, ...keys])
 
-      if (
-        typeof value === 'string' ||
-        typeof value === 'number' ||
-        value instanceof String ||
-        value instanceof Number ||
-        Array.isArray(value)
-      ) {
+      const isValid = (val: unknown): boolean =>
+        typeof val === 'string' ||
+        typeof val === 'number' ||
+        val instanceof String ||
+        val instanceof Number ||
+        Array.isArray(val)
+
+      const stitch = (keys: string[]): string =>
+        keys.reduce((acc, cur, i) => {
+          if (i === 0) return cur
+          if (cur.includes('.')) return `${acc}[${cur}]`
+          return `${acc}.${cur}`
+        }, '')
+
+      let message: string
+
+      if (isValid(value)) {
+        // The value resolves successfully, but we need to check that there
+        // wasn't any funny business. If you have a theme object:
+        // { msg: 'hello' } and do theme('msg.0')
+        // this will resolve to 'h', which is probably not intentional, so we
+        // check that all of the keys are object or array keys (i.e. not string
+        // indexes)
+        let valid = true
+        for (let i = keys.length - 1; i >= 0; i--) {
+          let key = keys[i]
+          let parentValue = dlv(state.config, [...base, ...keys.slice(0, i)])
+          if (/^[0-9]+$/.test(key)) {
+            if (!isObject(parentValue) && !Array.isArray(parentValue)) {
+              valid = false
+              break
+            }
+          } else if (!isObject(parentValue)) {
+            valid = false
+            break
+          }
+        }
+        if (!valid) {
+          message = `'${match.groups.key}' does not exist in your theme config.`
+        }
+      } else if (typeof value === 'undefined') {
+        message = `'${match.groups.key}' does not exist in your theme config.`
+        let parentValue = dlv(state.config, [
+          ...base,
+          ...keys.slice(0, keys.length - 1),
+        ])
+        if (isObject(parentValue)) {
+          let validKeys = Object.keys(parentValue)
+            .filter((key) => isValid(parentValue[key]))
+            .sort(
+              (a, b) =>
+                levenshtein(keys[keys.length - 1], a) -
+                levenshtein(keys[keys.length - 1], b)
+            )
+          if (validKeys.length) {
+            message += ` Did you mean '${stitch([
+              ...keys.slice(0, keys.length - 1),
+              validKeys[0],
+            ])}'?`
+          }
+        }
+      } else {
+        message = `'${match.groups.key}' was found but does not resolve to a string.`
+
+        if (isObject(value)) {
+          let firstValidKey = Object.keys(value).find((key) =>
+            isValid(value[key])
+          )
+          if (firstValidKey) {
+            message += ` Did you mean '${stitch([...keys, firstValidKey])}'?`
+          }
+        }
+      }
+
+      if (!message) {
         return null
       }
 
@@ -308,10 +379,7 @@ function getInvalidHelperKeyDiagnostics(
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
-        message:
-          typeof value === 'undefined'
-            ? `'${match.groups.key}' does not exist in your theme config.`
-            : `'${match.groups.key}' was found but does not resolve to a string.`,
+        message,
       })
     })
   })
