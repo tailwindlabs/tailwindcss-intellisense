@@ -44,11 +44,11 @@ const defaultSettings: Settings = {
   validate: true,
   lint: {
     utilityConflicts: 'warning',
-    unsupportedApply: 'error',
-    unknownScreen: 'error',
-    unknownVariant: 'error',
-    invalidHelperKey: 'error',
-    unsupportedTailwindDirective: 'error',
+    invalidApply: 'error',
+    invalidScreen: 'error',
+    invalidVariant: 'error',
+    invalidConfigPath: 'error',
+    invalidTailwindDirective: 'error',
   },
 }
 let globalSettings: Settings = defaultSettings

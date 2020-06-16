@@ -87,7 +87,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.unsupportedApply": {
+        "tailwindCSS.lint.invalidApply": {
           "type": "string",
           "enum": [
             "ignore",
@@ -98,7 +98,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.unknownScreen": {
+        "tailwindCSS.lint.invalidScreen": {
           "type": "string",
           "enum": [
             "ignore",
@@ -109,7 +109,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.unknownVariant": {
+        "tailwindCSS.lint.invalidVariant": {
           "type": "string",
           "enum": [
             "ignore",
@@ -120,7 +120,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.invalidHelperKey": {
+        "tailwindCSS.lint.invalidConfigPath": {
           "type": "string",
           "enum": [
             "ignore",
@@ -131,7 +131,7 @@
           "markdownDescription": "",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.unsupportedTailwindDirective": {
+        "tailwindCSS.lint.invalidTailwindDirective": {
           "type": "string",
           "enum": [
             "ignore",

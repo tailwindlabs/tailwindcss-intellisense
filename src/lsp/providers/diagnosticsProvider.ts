@@ -25,12 +25,12 @@ import { isObject } from '../../class-names/isObject'
 import { stringToPath } from '../util/stringToPath'
 import { closest } from '../util/closest'
 
-function getUnsupportedApplyDiagnostics(
+function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.unsupportedApply
+  let severity = settings.lint.invalidApply
   if (severity === 'ignore') return []
 
   const classNames = findClassNamesInRange(document, undefined, 'css')
@@ -138,12 +138,12 @@ function getUtilityConflictDiagnostics(
   return diagnostics
 }
 
-function getUnknownScreenDiagnostics(
+function getInvalidScreenDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.unknownScreen
+  let severity = settings.lint.invalidScreen
   if (severity === 'ignore') return []
 
   let diagnostics: Diagnostic[] = []
@@ -199,12 +199,12 @@ function getUnknownScreenDiagnostics(
   return diagnostics
 }
 
-function getUnknownVariantDiagnostics(
+function getInvalidVariantDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.unknownVariant
+  let severity = settings.lint.invalidVariant
   if (severity === 'ignore') return []
 
   let diagnostics: Diagnostic[] = []
@@ -263,12 +263,12 @@ function getUnknownVariantDiagnostics(
   return diagnostics
 }
 
-function getInvalidHelperKeyDiagnostics(
+function getInvalidConfigPathDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.invalidHelperKey
+  let severity = settings.lint.invalidConfigPath
   if (severity === 'ignore') return []
 
   let diagnostics: Diagnostic[] = []
@@ -396,12 +396,12 @@ function getInvalidHelperKeyDiagnostics(
   return diagnostics
 }
 
-function getUnsupportedTailwindDirectiveDiagnostics(
+function getInvalidTailwindDirectiveDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
 ): Diagnostic[] {
-  let severity = settings.lint.unsupportedTailwindDirective
+  let severity = settings.lint.invalidTailwindDirective
   if (severity === 'ignore') return []
 
   let diagnostics: Diagnostic[] = []
@@ -473,15 +473,11 @@ export async function provideDiagnostics(
   const diagnostics: Diagnostic[] = settings.validate
     ? [
         ...getUtilityConflictDiagnostics(state, document, settings),
-        ...getUnsupportedApplyDiagnostics(state, document, settings),
-        ...getUnknownScreenDiagnostics(state, document, settings),
-        ...getUnknownVariantDiagnostics(state, document, settings),
-        ...getInvalidHelperKeyDiagnostics(state, document, settings),
-        ...getUnsupportedTailwindDirectiveDiagnostics(
-          state,
-          document,
-          settings
-        ),
+        ...getInvalidApplyDiagnostics(state, document, settings),
+        ...getInvalidScreenDiagnostics(state, document, settings),
+        ...getInvalidVariantDiagnostics(state, document, settings),
+        ...getInvalidConfigPathDiagnostics(state, document, settings),
+        ...getInvalidTailwindDirectiveDiagnostics(state, document, settings),
       ]
     : []
 

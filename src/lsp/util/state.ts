@@ -34,11 +34,11 @@ export type Settings = {
   validate: boolean
   lint: {
     utilityConflicts: DiagnosticSeveritySetting
-    unsupportedApply: DiagnosticSeveritySetting
-    unknownScreen: DiagnosticSeveritySetting
-    unknownVariant: DiagnosticSeveritySetting
-    invalidHelperKey: DiagnosticSeveritySetting
-    unsupportedTailwindDirective: DiagnosticSeveritySetting
+    invalidApply: DiagnosticSeveritySetting
+    invalidScreen: DiagnosticSeveritySetting
+    invalidVariant: DiagnosticSeveritySetting
+    invalidConfigPath: DiagnosticSeveritySetting
+    invalidTailwindDirective: DiagnosticSeveritySetting
   }
 }
 
