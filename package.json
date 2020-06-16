@@ -156,6 +156,7 @@
   },
   "devDependencies": {
     "@ctrl/tinycolor": "^3.1.0",
+    "@types/js-levenshtein": "^1.1.0",
     "@types/mocha": "^5.2.0",
     "@types/moo": "^0.5.3",
     "@types/node": "^13.9.3",
