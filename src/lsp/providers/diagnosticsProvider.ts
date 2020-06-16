@@ -22,8 +22,8 @@ import semver from 'semver'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { absoluteRange } from '../util/absoluteRange'
 import { isObject } from '../../class-names/isObject'
-import levenshtein from 'js-levenshtein'
 import { stringToPath } from '../util/stringToPath'
+import { closest } from '../util/closest'
 
 function getUnsupportedApplyDiagnostics(
   state: State,
@@ -170,6 +170,12 @@ function getUnknownScreenDiagnostics(
         return null
       }
 
+      let message = `The screen '${match.groups.screen}' does not exist in your theme config.`
+      let suggestion = closest(match.groups.screen, screens)
+      if (suggestion) {
+        message += ` Did you mean '${suggestion}'?`
+      }
+
       diagnostics.push({
         range: absoluteRange(
           {
@@ -185,7 +191,7 @@ function getUnknownScreenDiagnostics(
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
-        message: 'Unknown screen',
+        message,
       })
     })
   })
@@ -227,6 +233,12 @@ function getUnknownVariantDiagnostics(
           continue
         }
 
+        let message = `The variant '${variant}' does not exist.`
+        let suggestion = closest(variant, state.variants)
+        if (suggestion) {
+          message += ` Did you mean '${suggestion}'?`
+        }
+
         let variantStartIndex =
           listStartIndex + variants.slice(0, i).join('').length
 
@@ -242,7 +254,7 @@ function getUnknownVariantDiagnostics(
             severity === 'error'
               ? DiagnosticSeverity.Error
               : DiagnosticSeverity.Warning,
-          message: `Unknown variant: ${variant}`,
+          message,
         })
       }
     })
@@ -329,17 +341,14 @@ function getInvalidHelperKeyDiagnostics(
           ...keys.slice(0, keys.length - 1),
         ])
         if (isObject(parentValue)) {
-          let validKeys = Object.keys(parentValue)
-            .filter((key) => isValid(parentValue[key]))
-            .sort(
-              (a, b) =>
-                levenshtein(keys[keys.length - 1], a) -
-                levenshtein(keys[keys.length - 1], b)
-            )
-          if (validKeys.length) {
+          let closestValidKey = closest(
+            keys[keys.length - 1],
+            Object.keys(parentValue).filter((key) => isValid(parentValue[key]))
+          )
+          if (closestValidKey) {
             message += ` Did you mean '${stitch([
               ...keys.slice(0, keys.length - 1),
-              validKeys[0],
+              closestValidKey,
             ])}'?`
           }
         }
@@ -422,6 +431,16 @@ function getUnsupportedTailwindDirectiveDiagnostics(
         return null
       }
 
+      let message = `'${match.groups.value}' is not a valid group.`
+      if (match.groups.value === 'preflight') {
+        message += ` Did you mean 'base'?`
+      } else {
+        let suggestion = closest(match.groups.value, valid)
+        if (suggestion) {
+          message += ` Did you mean '${suggestion}'?`
+        }
+      }
+
       diagnostics.push({
         range: absoluteRange(
           {
@@ -437,9 +456,7 @@ function getUnsupportedTailwindDirectiveDiagnostics(
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
-        message: `Unsupported value: ${match.groups.value}${
-          match.groups.value === 'preflight' ? '. Use base instead.' : ''
-        }`,
+        message,
       })
     })
   })
