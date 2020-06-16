@@ -177,7 +177,7 @@ export function findClassListsInHtmlRange(
           )
 
           return {
-            classList: value,
+            classList: value.substr(beforeOffset, value.length + afterOffset),
             range: {
               start: {
                 line: range.start.line + start.line,
