@@ -16,6 +16,8 @@ import {
   Hover,
   TextDocumentPositionParams,
   DidChangeConfigurationNotification,
+  CodeActionParams,
+  CodeAction,
 } from 'vscode-languageserver'
 import getTailwindState from '../class-names/index'
 import { State, Settings, EditorState } from './util/state'
@@ -32,6 +34,7 @@ import {
   clearAllDiagnostics,
 } from './providers/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
+import { provideCodeActions } from './providers/codeActionProvider'
 
 let connection = createConnection(ProposedFeatures.all)
 let state: State = { enabled: false, emitter: createEmitter(connection) }
@@ -171,6 +174,7 @@ connection.onInitialize(
           ],
         },
         hoverProvider: true,
+        codeActionProvider: true,
       },
     }
   }
@@ -225,5 +229,10 @@ connection.onHover(
     return provideHover(state, params)
   }
 )
+
+connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
+  if (!state.enabled) return null
+  return provideCodeActions(state, params)
+})
 
 connection.listen()
