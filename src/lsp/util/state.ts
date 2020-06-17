@@ -48,6 +48,10 @@ export type State = null | {
   version?: string
   configPath?: string
   config?: any
+  modules?: {
+    tailwindcss: any
+    postcss: any
+  }
   separator?: string
   plugins?: any[]
   variants?: string[]
@@ -60,11 +64,14 @@ export type State = null | {
 export type DocumentClassList = {
   classList: string
   range: Range
+  important?: boolean
 }
 
 export type DocumentClassName = {
   className: string
   range: Range
+  relativeRange: Range
+  classList: DocumentClassList
 }
 
 export type ClassNameMeta = {

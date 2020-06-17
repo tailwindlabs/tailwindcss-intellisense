@@ -1,0 +1,266 @@
+import {
+  CodeAction,
+  CodeActionParams,
+  CodeActionKind,
+  Range,
+  TextEdit,
+  Diagnostic,
+} from 'vscode-languageserver'
+import { State } from '../../util/state'
+import { findLast, findClassNamesInRange } from '../../util/find'
+import { isWithinRange } from '../../util/isWithinRange'
+import { getClassNameParts } from '../../util/getClassNameAtPosition'
+const dlv = require('dlv')
+import dset from 'dset'
+import { removeRangeFromString } from '../../util/removeRangeFromString'
+import detectIndent from 'detect-indent'
+import { cssObjToAst } from '../../util/cssObjToAst'
+import isObject from '../../../util/isObject'
+
+export function provideCodeActions(
+  state: State,
+  params: CodeActionParams
+): Promise<CodeAction[]> {
+  if (params.context.diagnostics.length === 0) {
+    return null
+  }
+
+  return Promise.all(
+    params.context.diagnostics
+      .map((diagnostic) => {
+        if (diagnostic.code === 'invalidApply') {
+          return provideInvalidApplyCodeAction(state, params, diagnostic)
+        }
+
+        let match = findLast(
+          / Did you mean (?:something like )?'(?<replacement>[^']+)'\?$/g,
+          diagnostic.message
+        )
+
+        if (!match) {
+          return null
+        }
+
+        return {
+          title: `Replace with '${match.groups.replacement}'`,
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [params.textDocument.uri]: [
+                {
+                  range: diagnostic.range,
+                  newText: match.groups.replacement,
+                },
+              ],
+            },
+          },
+        }
+      })
+      .filter(Boolean)
+  )
+}
+
+function classNameToAst(
+  state: State,
+  className: string,
+  selector: string = `.${className}`,
+  important: boolean = false
+) {
+  const parts = getClassNameParts(state, className)
+  if (!parts) {
+    return null
+  }
+  const baseClassName = dlv(
+    state.classNames.classNames,
+    parts[parts.length - 1]
+  )
+  if (!baseClassName) {
+    return null
+  }
+  const info = dlv(state.classNames.classNames, parts)
+  let context = info.__context || []
+  let pseudo = info.__pseudo || []
+  const globalContexts = state.classNames.context
+  let screens = dlv(
+    state.config,
+    'theme.screens',
+    dlv(state.config, 'screens', {})
+  )
+  if (!isObject(screens)) screens = {}
+  screens = Object.keys(screens)
+  const path = []
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    let part = parts[i]
+    let common = globalContexts[part]
+    if (!common) return null
+    if (screens.includes(part)) {
+      path.push(`@screen ${part}`)
+      context = context.filter((con) => !common.includes(con))
+    }
+  }
+
+  path.push(...context)
+
+  let obj = {}
+  for (let i = 1; i <= path.length; i++) {
+    dset(obj, path.slice(0, i), {})
+  }
+  let rule = {
+    // TODO: use proper selector parser
+    [selector + pseudo.join('')]: {
+      [`@apply ${parts[parts.length - 1]}${
+        important ? ' !important' : ''
+      }`]: '',
+    },
+  }
+  if (path.length) {
+    dset(obj, path, rule)
+  } else {
+    obj = rule
+  }
+
+  return cssObjToAst(obj, state.modules.postcss)
+}
+
+async function provideInvalidApplyCodeAction(
+  state: State,
+  params: CodeActionParams,
+  diagnostic: Diagnostic
+): Promise<CodeAction> {
+  let document = state.editor.documents.get(params.textDocument.uri)
+  let documentText = document.getText()
+  const { postcss } = state.modules
+  let change: TextEdit
+
+  let documentClassNames = findClassNamesInRange(
+    document,
+    {
+      start: {
+        line: Math.max(0, diagnostic.range.start.line - 10),
+        character: 0,
+      },
+      end: { line: diagnostic.range.start.line + 10, character: 0 },
+    },
+    'css'
+  )
+  let documentClassName = documentClassNames.find((className) =>
+    isWithinRange(diagnostic.range.start, className.range)
+  )
+  if (!documentClassName) {
+    return null
+  }
+  let totalClassNamesInClassList = documentClassName.classList.classList.split(
+    /\s+/
+  ).length
+
+  await postcss([
+    postcss.plugin('', (_options = {}) => {
+      return (root) => {
+        root.walkRules((rule) => {
+          if (change) return false
+
+          rule.walkAtRules('apply', (atRule) => {
+            let { start, end } = atRule.source
+            let range: Range = {
+              start: {
+                line: start.line - 1,
+                character: start.column - 1,
+              },
+              end: {
+                line: end.line - 1,
+                character: end.column - 1,
+              },
+            }
+
+            if (!isWithinRange(diagnostic.range.start, range)) {
+              // keep looking
+              return true
+            }
+
+            let className = document.getText(diagnostic.range)
+            let ast = classNameToAst(
+              state,
+              className,
+              rule.selector,
+              documentClassName.classList.important
+            )
+
+            if (!ast) {
+              return false
+            }
+
+            rule.after(ast.nodes)
+            let insertedRule = rule.next()
+
+            if (totalClassNamesInClassList === 1) {
+              atRule.remove()
+            }
+
+            let outputIndent: string
+            let documentIndent = detectIndent(documentText)
+
+            change = {
+              range: {
+                start: {
+                  line: rule.source.start.line - 1,
+                  character: rule.source.start.column - 1,
+                },
+                end: {
+                  line: rule.source.end.line - 1,
+                  character: rule.source.end.column,
+                },
+              },
+              newText:
+                rule.toString() +
+                (insertedRule.raws.before || '\n\n') +
+                insertedRule
+                  .toString()
+                  .replace(/\n\s*\n/g, '\n')
+                  .replace(/(@apply [^;\n]+)$/gm, '$1;')
+                  .replace(/([^\s^]){$/gm, '$1 {')
+                  .replace(/^\s+/gm, (m: string) => {
+                    if (typeof outputIndent === 'undefined') outputIndent = m
+                    return m.replace(
+                      new RegExp(outputIndent, 'g'),
+                      documentIndent.indent
+                    )
+                  }),
+            }
+
+            return false
+          })
+        })
+      }
+    }),
+  ]).process(documentText, { from: undefined })
+
+  if (!change) {
+    return null
+  }
+
+  return {
+    title: 'Extract to new rule.',
+    kind: CodeActionKind.QuickFix,
+    diagnostics: [diagnostic],
+    edit: {
+      changes: {
+        [params.textDocument.uri]: [
+          ...(totalClassNamesInClassList > 1
+            ? [
+                {
+                  range: documentClassName.classList.range,
+                  newText: removeRangeFromString(
+                    documentClassName.classList.classList,
+                    documentClassName.relativeRange
+                  ),
+                },
+              ]
+            : []),
+          change,
+        ],
+      },
+    },
+  }
+}

@@ -1,47 +1,5 @@
-import { TextDocument, Range, Position } from 'vscode-languageserver'
-import { State, DocumentClassName } from './state'
+import { State } from './state'
 const dlv = require('dlv')
-
-export function getClassNameAtPosition(
-  document: TextDocument,
-  position: Position
-): DocumentClassName {
-  const range1: Range = {
-    start: { line: Math.max(position.line - 5, 0), character: 0 },
-    end: position,
-  }
-  const text1: string = document.getText(range1)
-
-  if (!/\bclass(Name)?=['"][^'"]*$/.test(text1)) return null
-
-  const range2: Range = {
-    start: { line: Math.max(position.line - 5, 0), character: 0 },
-    end: { line: position.line + 1, character: position.character },
-  }
-  const text2: string = document.getText(range2)
-
-  let str: string = text1 + text2.substr(text1.length).match(/^([^"' ]*)/)[0]
-  let matches: RegExpMatchArray = str.match(/\bclass(Name)?=["']([^"']+)$/)
-
-  if (!matches) return null
-
-  let className: string = matches[2].split(' ').pop()
-  if (!className) return null
-
-  let range: Range = {
-    start: {
-      line: position.line,
-      character:
-        position.character + str.length - text1.length - className.length,
-    },
-    end: {
-      line: position.line,
-      character: position.character + str.length - text1.length,
-    },
-  }
-
-  return { className, range }
-}
 
 export function getClassNameParts(state: State, className: string): string[] {
   let separator = state.separator

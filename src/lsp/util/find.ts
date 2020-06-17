@@ -32,6 +32,7 @@ export function findLast(re: RegExp, str: string): RegExpMatchArray {
 export function getClassNamesInClassList({
   classList,
   range,
+  important,
 }: DocumentClassList): DocumentClassName[] {
   const parts = classList.split(/(\s+)/)
   const names: DocumentClassName[] = []
@@ -42,6 +43,15 @@ export function getClassNamesInClassList({
       const end = indexToPosition(classList, index + parts[i].length)
       names.push({
         className: parts[i],
+        classList: {
+          classList,
+          range,
+          important,
+        },
+        relativeRange: {
+          start,
+          end,
+        },
         range: {
           start: {
             line: range.start.line + start.line,
@@ -83,7 +93,10 @@ export function findClassListsInCssRange(
   range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/(@apply\s+)(?<classList>[^;}]+)[;}]/g, text)
+  const matches = findAll(
+    /(@apply\s+)(?<classList>[^;}]+?)(?<important>\s*!important)?\s*[;}]/g,
+    text
+  )
   const globalStart: Position = range ? range.start : { line: 0, character: 0 }
 
   return matches.map((match) => {
@@ -94,6 +107,7 @@ export function findClassListsInCssRange(
     )
     return {
       classList: match.groups.classList,
+      important: Boolean(match.groups.important),
       range: {
         start: {
           line: globalStart.line + start.line,

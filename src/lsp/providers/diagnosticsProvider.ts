@@ -73,6 +73,7 @@ function getInvalidApplyDiagnostics(
             : DiagnosticSeverity.Warning,
         range,
         message,
+        code: 'invalidApply',
       }
     })
     .filter(Boolean)

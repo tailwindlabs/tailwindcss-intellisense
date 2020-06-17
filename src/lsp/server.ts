@@ -230,9 +230,11 @@ connection.onHover(
   }
 )
 
-connection.onCodeAction((params: CodeActionParams): CodeAction[] => {
-  if (!state.enabled) return null
-  return provideCodeActions(state, params)
-})
+connection.onCodeAction(
+  (params: CodeActionParams): Promise<CodeAction[]> => {
+    if (!state.enabled) return null
+    return provideCodeActions(state, params)
+  }
+)
 
 connection.listen()
