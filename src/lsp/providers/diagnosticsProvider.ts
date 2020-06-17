@@ -43,24 +43,24 @@ function getInvalidApplyDiagnostics(
       let message: string
 
       if (Array.isArray(meta)) {
-        message = `\`@apply\` cannot be used with \`.${className}\` because it is included in multiple rulesets.`
+        message = `'@apply' cannot be used with '${className}' because it is included in multiple rulesets.`
       } else if (meta.source !== 'utilities') {
-        message = `\`@apply\` cannot be used with \`.${className}\` because it is not a utility.`
+        message = `'@apply' cannot be used with '${className}' because it is not a utility.`
       } else if (meta.context && meta.context.length > 0) {
         if (meta.context.length === 1) {
-          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of an at-rule (${meta.context[0]}).`
+          message = `'@apply' cannot be used with '${className}' because it is nested inside of an at-rule ('${meta.context[0]}').`
         } else {
-          message = `\`@apply\` cannot be used with \`.${className}\` because it is nested inside of at-rules (${meta.context.join(
-            ', '
-          )}).`
+          message = `'@apply' cannot be used with '${className}' because it is nested inside of at-rules (${meta.context
+            .map((c) => `'${c}'`)
+            .join(', ')}).`
         }
       } else if (meta.pseudo && meta.pseudo.length > 0) {
         if (meta.pseudo.length === 1) {
-          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes a pseudo-selector (${meta.pseudo[0]})`
+          message = `'@apply' cannot be used with '${className}' because its definition includes a pseudo-selector ('${meta.pseudo[0]}')`
         } else {
-          message = `\`@apply\` cannot be used with \`.${className}\` because its definition includes pseudo-selectors (${meta.pseudo.join(
-            ', '
-          )})`
+          message = `'@apply' cannot be used with '${className}' because its definition includes pseudo-selectors (${meta.pseudo
+            .map((p) => `'${p}'`)
+            .join(', ')}).`
         }
       }
 
@@ -119,7 +119,7 @@ function getUtilityConflictDiagnostics(
               severity === 'error'
                 ? DiagnosticSeverity.Error
                 : DiagnosticSeverity.Warning,
-            message: `You can’t use \`${className.className}\` and \`${otherClassName.className}\` together`,
+            message: `'${className.className}' and '${otherClassName.className}' apply the same CSS properties.`,
             relatedInformation: [
               {
                 message: otherClassName.className,
