@@ -6,7 +6,6 @@ import {
   TextEdit,
 } from 'vscode-languageserver'
 import { State } from '../../util/state'
-import { findLast } from '../../util/find'
 import { isWithinRange } from '../../util/isWithinRange'
 import { getClassNameParts } from '../../util/getClassNameAtPosition'
 const dlv = require('dlv')
@@ -31,6 +30,9 @@ import {
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../../../util/array'
 import { joinWithAnd } from '../../util/joinWithAnd'
+import { getLanguageBoundaries } from '../../util/getLanguageBoundaries'
+import { isCssDoc } from '../../util/css'
+import { absoluteRange } from '../../util/absoluteRange'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
@@ -210,6 +212,8 @@ async function provideInvalidApplyCodeActions(
 ): Promise<CodeAction[]> {
   let document = state.editor.documents.get(params.textDocument.uri)
   let documentText = document.getText()
+  let cssRange: Range
+  let cssText = documentText
   const { postcss } = state.modules
   let change: TextEdit
 
@@ -217,54 +221,67 @@ async function provideInvalidApplyCodeActions(
     /\s+/
   ).length
 
-  await postcss([
-    postcss.plugin('', (_options = {}) => {
-      return (root) => {
-        root.walkRules((rule) => {
-          if (change) return false
+  if (!isCssDoc(state, document)) {
+    let languageBoundaries = getLanguageBoundaries(state, document)
+    if (!languageBoundaries) return []
+    cssRange = languageBoundaries.css.find((range) =>
+      isWithinRange(diagnostic.range.start, range)
+    )
+    if (!cssRange) return []
+    cssText = document.getText(cssRange)
+  }
 
-          rule.walkAtRules('apply', (atRule) => {
-            let { start, end } = atRule.source
-            let range: Range = {
-              start: {
-                line: start.line - 1,
-                character: start.column - 1,
-              },
-              end: {
-                line: end.line - 1,
-                character: end.column - 1,
-              },
-            }
+  try {
+    await postcss([
+      postcss.plugin('', (_options = {}) => {
+        return (root) => {
+          root.walkRules((rule) => {
+            if (change) return false
 
-            if (!isWithinRange(diagnostic.range.start, range)) {
-              // keep looking
-              return true
-            }
+            rule.walkAtRules('apply', (atRule) => {
+              let { start, end } = atRule.source
+              let atRuleRange: Range = {
+                start: {
+                  line: start.line - 1,
+                  character: start.column - 1,
+                },
+                end: {
+                  line: end.line - 1,
+                  character: end.column - 1,
+                },
+              }
+              if (cssRange) {
+                atRuleRange = absoluteRange(atRuleRange, cssRange)
+              }
 
-            let className = document.getText(diagnostic.range)
-            let ast = classNameToAst(
-              state,
-              className,
-              rule.selector,
-              diagnostic.className.classList.important
-            )
+              if (!isWithinRange(diagnostic.range.start, atRuleRange)) {
+                // keep looking
+                return true
+              }
 
-            if (!ast) {
-              return false
-            }
+              let className = diagnostic.className.className
+              let ast = classNameToAst(
+                state,
+                className,
+                rule.selector,
+                diagnostic.className.classList.important
+              )
 
-            rule.after(ast.nodes)
-            let insertedRule = rule.next()
+              if (!ast) {
+                return false
+              }
 
-            if (totalClassNamesInClassList === 1) {
-              atRule.remove()
-            }
+              rule.after(ast.nodes)
+              let insertedRule = rule.next()
 
-            let outputIndent: string
-            let documentIndent = detectIndent(documentText)
+              if (totalClassNamesInClassList === 1) {
+                atRule.remove()
+              }
 
-            change = {
-              range: {
+              let outputIndent: string
+              let documentIndent = detectIndent(documentText)
+
+              let ruleRange: Range = {
                 start: {
                   line: rule.source.start.line - 1,
                   character: rule.source.start.column - 1,
@@ -273,30 +290,39 @@ async function provideInvalidApplyCodeActions(
                   line: rule.source.end.line - 1,
                   character: rule.source.end.column,
                 },
-              },
-              newText:
-                rule.toString() +
-                (insertedRule.raws.before || '\n\n') +
-                insertedRule
-                  .toString()
-                  .replace(/\n\s*\n/g, '\n')
-                  .replace(/(@apply [^;\n]+)$/gm, '$1;')
-                  .replace(/([^\s^]){$/gm, '$1 {')
-                  .replace(/^\s+/gm, (m: string) => {
-                    if (typeof outputIndent === 'undefined') outputIndent = m
-                    return m.replace(
-                      new RegExp(outputIndent, 'g'),
-                      documentIndent.indent
-                    )
-                  }),
-            }
+              }
+              if (cssRange) {
+                ruleRange = absoluteRange(ruleRange, cssRange)
+              }
 
-            return false
+              change = {
+                range: ruleRange,
+                newText:
+                  rule.toString() +
+                  (insertedRule.raws.before || '\n\n') +
+                  insertedRule
+                    .toString()
+                    .replace(/\n\s*\n/g, '\n')
+                    .replace(/(@apply [^;\n]+)$/gm, '$1;')
+                    .replace(/([^\s^]){$/gm, '$1 {')
+                    .replace(/^\s+/gm, (m: string) => {
+                      if (typeof outputIndent === 'undefined') outputIndent = m
+                      return m.replace(
+                        new RegExp(outputIndent, 'g'),
+                        documentIndent.indent
+                      )
+                    }),
+              }
+
+              return false
+            })
           })
-        })
-      }
-    }),
-  ]).process(documentText, { from: undefined })
+        }
+      }),
+    ]).process(cssText, { from: undefined })
+  } catch (_) {
+    return []
+  }
 
   if (!change) {
     return []
