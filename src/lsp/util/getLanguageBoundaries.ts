@@ -16,15 +16,21 @@ export function getLanguageBoundaries(
   if (isVueDoc(doc)) {
     let text = doc.getText()
     let blocks = findAll(
-      /<(?<type>template|style|script)\b[^>]*>.*?(<\/\k<type>>|$)/gis,
+      /(?<open><(?<type>template|style|script)\b[^>]*>).*?(?<close><\/\k<type>>|$)/gis,
       text
     )
     let htmlRanges: Range[] = []
     let cssRanges: Range[] = []
     for (let i = 0; i < blocks.length; i++) {
       let range = {
-        start: indexToPosition(text, blocks[i].index),
-        end: indexToPosition(text, blocks[i].index + blocks[i][0].length),
+        start: indexToPosition(
+          text,
+          blocks[i].index + blocks[i].groups.open.length
+        ),
+        end: indexToPosition(
+          text,
+          blocks[i].index + blocks[i][0].length - blocks[i].groups.close.length
+        ),
       }
       if (blocks[i].groups.type === 'style') {
         cssRanges.push(range)
@@ -41,7 +47,10 @@ export function getLanguageBoundaries(
 
   if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
     let text = doc.getText()
-    let styleBlocks = findAll(/<style(?:\s[^>]*>|>).*?(<\/style>|$)/gis, text)
+    let styleBlocks = findAll(
+      /(?<open><style(?:\s[^>]*>|>)).*?(?<close><\/style>|$)/gis,
+      text
+    )
     let htmlRanges: Range[] = []
     let cssRanges: Range[] = []
     let currentIndex = 0
@@ -52,10 +61,15 @@ export function getLanguageBoundaries(
         end: indexToPosition(text, styleBlocks[i].index),
       })
       cssRanges.push({
-        start: indexToPosition(text, styleBlocks[i].index),
+        start: indexToPosition(
+          text,
+          styleBlocks[i].index + styleBlocks[i].groups.open.length
+        ),
         end: indexToPosition(
           text,
-          styleBlocks[i].index + styleBlocks[i][0].length
+          styleBlocks[i].index +
+            styleBlocks[i][0].length -
+            styleBlocks[i].groups.close.length
         ),
       })
       currentIndex = styleBlocks[i].index + styleBlocks[i][0].length
