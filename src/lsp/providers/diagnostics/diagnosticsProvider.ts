@@ -1,95 +1,103 @@
-import {
-  TextDocument,
-  Diagnostic,
-  DiagnosticSeverity,
-  Range,
-} from 'vscode-languageserver'
-import { State, Settings } from '../util/state'
-import { isCssDoc } from '../util/css'
+import { TextDocument, DiagnosticSeverity, Range } from 'vscode-languageserver'
+import { State, Settings } from '../../util/state'
+import { isCssDoc } from '../../util/css'
 import {
   findClassNamesInRange,
   findClassListsInDocument,
   getClassNamesInClassList,
   findAll,
   indexToPosition,
-} from '../util/find'
-import { getClassNameMeta } from '../util/getClassNameMeta'
-import { getClassNameDecls } from '../util/getClassNameDecls'
-import { equal } from '../../util/array'
-import { getDocumentSettings } from '../util/getDocumentSettings'
+} from '../../util/find'
+import { getClassNameMeta } from '../../util/getClassNameMeta'
+import { getClassNameDecls } from '../../util/getClassNameDecls'
+import { equal } from '../../../util/array'
+import { getDocumentSettings } from '../../util/getDocumentSettings'
 const dlv = require('dlv')
 import semver from 'semver'
-import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
-import { absoluteRange } from '../util/absoluteRange'
-import { isObject } from '../../class-names/isObject'
-import { stringToPath } from '../util/stringToPath'
-import { closest } from '../util/closest'
+import { getLanguageBoundaries } from '../../util/getLanguageBoundaries'
+import { absoluteRange } from '../../util/absoluteRange'
+import { isObject } from '../../../class-names/isObject'
+import { stringToPath } from '../../util/stringToPath'
+import { closest } from '../../util/closest'
+import {
+  InvalidApplyDiagnostic,
+  DiagnosticKind,
+  UtilityConflictsDiagnostic,
+  InvalidScreenDiagnostic,
+  InvalidVariantDiagnostic,
+  InvalidConfigPathDiagnostic,
+  InvalidTailwindDirectiveDiagnostic,
+  AugmentedDiagnostic,
+} from './types'
 
 function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): InvalidApplyDiagnostic[] {
   let severity = settings.lint.invalidApply
   if (severity === 'ignore') return []
 
   const classNames = findClassNamesInRange(document, undefined, 'css')
 
-  let diagnostics: Diagnostic[] = classNames
-    .map(({ className, range }) => {
-      const meta = getClassNameMeta(state, className)
-      if (!meta) return null
+  let diagnostics: InvalidApplyDiagnostic[] = classNames.map((className) => {
+    const meta = getClassNameMeta(state, className.className)
+    if (!meta) return null
 
-      let message: string
+    let message: string
 
-      if (Array.isArray(meta)) {
-        message = `'@apply' cannot be used with '${className}' because it is included in multiple rulesets.`
-      } else if (meta.source !== 'utilities') {
-        message = `'@apply' cannot be used with '${className}' because it is not a utility.`
-      } else if (meta.context && meta.context.length > 0) {
-        if (meta.context.length === 1) {
-          message = `'@apply' cannot be used with '${className}' because it is nested inside of an at-rule ('${meta.context[0]}').`
-        } else {
-          message = `'@apply' cannot be used with '${className}' because it is nested inside of at-rules (${meta.context
-            .map((c) => `'${c}'`)
-            .join(', ')}).`
-        }
-      } else if (meta.pseudo && meta.pseudo.length > 0) {
-        if (meta.pseudo.length === 1) {
-          message = `'@apply' cannot be used with '${className}' because its definition includes a pseudo-selector ('${meta.pseudo[0]}')`
-        } else {
-          message = `'@apply' cannot be used with '${className}' because its definition includes pseudo-selectors (${meta.pseudo
-            .map((p) => `'${p}'`)
-            .join(', ')}).`
-        }
+    if (Array.isArray(meta)) {
+      message = `'@apply' cannot be used with '${className.className}' because it is included in multiple rulesets.`
+    } else if (meta.source !== 'utilities') {
+      message = `'@apply' cannot be used with '${className.className}' because it is not a utility.`
+    } else if (meta.context && meta.context.length > 0) {
+      if (meta.context.length === 1) {
+        message = `'@apply' cannot be used with '${className.className}' because it is nested inside of an at-rule ('${meta.context[0]}').`
+      } else {
+        message = `'@apply' cannot be used with '${
+          className.className
+        }' because it is nested inside of at-rules (${meta.context
+          .map((c) => `'${c}'`)
+          .join(', ')}).`
       }
-
-      if (!message) return null
-
-      return {
-        severity:
-          severity === 'error'
-            ? DiagnosticSeverity.Error
-            : DiagnosticSeverity.Warning,
-        range,
-        message,
-        code: 'invalidApply',
+    } else if (meta.pseudo && meta.pseudo.length > 0) {
+      if (meta.pseudo.length === 1) {
+        message = `'@apply' cannot be used with '${className.className}' because its definition includes a pseudo-selector ('${meta.pseudo[0]}')`
+      } else {
+        message = `'@apply' cannot be used with '${
+          className.className
+        }' because its definition includes pseudo-selectors (${meta.pseudo
+          .map((p) => `'${p}'`)
+          .join(', ')}).`
       }
-    })
-    .filter(Boolean)
+    }
 
-  return diagnostics
+    if (!message) return null
+
+    return {
+      code: DiagnosticKind.InvalidApply,
+      severity:
+        severity === 'error'
+          ? DiagnosticSeverity.Error
+          : DiagnosticSeverity.Warning,
+      range: className.range,
+      message,
+      className,
+    }
+  })
+
+  return diagnostics.filter(Boolean)
 }
 
 function getUtilityConflictDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): UtilityConflictsDiagnostic[] {
   let severity = settings.lint.utilityConflicts
   if (severity === 'ignore') return []
 
-  let diagnostics: Diagnostic[] = []
+  let diagnostics: UtilityConflictsDiagnostic[] = []
   const classLists = findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
@@ -115,6 +123,9 @@ function getUtilityConflictDiagnostics(
           equal(meta.pseudo, otherMeta.pseudo)
         ) {
           diagnostics.push({
+            code: DiagnosticKind.UtilityConflicts,
+            className,
+            otherClassName,
             range: className.range,
             severity:
               severity === 'error'
@@ -143,11 +154,11 @@ function getInvalidScreenDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): InvalidScreenDiagnostic[] {
   let severity = settings.lint.invalidScreen
   if (severity === 'ignore') return []
 
-  let diagnostics: Diagnostic[] = []
+  let diagnostics: InvalidScreenDiagnostic[] = []
   let ranges: Range[] = []
 
   if (isCssDoc(state, document)) {
@@ -178,6 +189,7 @@ function getInvalidScreenDiagnostics(
       }
 
       diagnostics.push({
+        code: DiagnosticKind.InvalidScreen,
         range: absoluteRange(
           {
             start: indexToPosition(
@@ -204,11 +216,11 @@ function getInvalidVariantDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): InvalidVariantDiagnostic[] {
   let severity = settings.lint.invalidVariant
   if (severity === 'ignore') return []
 
-  let diagnostics: Diagnostic[] = []
+  let diagnostics: InvalidVariantDiagnostic[] = []
   let ranges: Range[] = []
 
   if (isCssDoc(state, document)) {
@@ -244,6 +256,7 @@ function getInvalidVariantDiagnostics(
           listStartIndex + variants.slice(0, i).join('').length
 
         diagnostics.push({
+          code: DiagnosticKind.InvalidVariant,
           range: absoluteRange(
             {
               start: indexToPosition(text, variantStartIndex),
@@ -268,11 +281,11 @@ function getInvalidConfigPathDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): InvalidConfigPathDiagnostic[] {
   let severity = settings.lint.invalidConfigPath
   if (severity === 'ignore') return []
 
-  let diagnostics: Diagnostic[] = []
+  let diagnostics: InvalidConfigPathDiagnostic[] = []
   let ranges: Range[] = []
 
   if (isCssDoc(state, document)) {
@@ -381,6 +394,7 @@ function getInvalidConfigPathDiagnostics(
         match.groups.quote.length
 
       diagnostics.push({
+        code: DiagnosticKind.InvalidConfigPath,
         range: absoluteRange(
           {
             start: indexToPosition(text, startIndex),
@@ -404,11 +418,11 @@ function getInvalidTailwindDirectiveDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Diagnostic[] {
+): InvalidTailwindDirectiveDiagnostic[] {
   let severity = settings.lint.invalidTailwindDirective
   if (severity === 'ignore') return []
 
-  let diagnostics: Diagnostic[] = []
+  let diagnostics: InvalidTailwindDirectiveDiagnostic[] = []
   let ranges: Range[] = []
 
   if (isCssDoc(state, document)) {
@@ -446,6 +460,7 @@ function getInvalidTailwindDirectiveDiagnostics(
       }
 
       diagnostics.push({
+        code: DiagnosticKind.InvalidTailwindDirective,
         range: absoluteRange(
           {
             start: indexToPosition(
@@ -468,26 +483,48 @@ function getInvalidTailwindDirectiveDiagnostics(
   return diagnostics
 }
 
-export async function provideDiagnostics(
+export async function getDiagnostics(
   state: State,
-  document: TextDocument
-): Promise<void> {
+  document: TextDocument,
+  only: DiagnosticKind[] = [
+    DiagnosticKind.UtilityConflicts,
+    DiagnosticKind.InvalidApply,
+    DiagnosticKind.InvalidScreen,
+    DiagnosticKind.InvalidVariant,
+    DiagnosticKind.InvalidConfigPath,
+    DiagnosticKind.InvalidTailwindDirective,
+  ]
+): Promise<AugmentedDiagnostic[]> {
   const settings = await getDocumentSettings(state, document)
 
-  const diagnostics: Diagnostic[] = settings.validate
+  return settings.validate
     ? [
-        ...getUtilityConflictDiagnostics(state, document, settings),
-        ...getInvalidApplyDiagnostics(state, document, settings),
-        ...getInvalidScreenDiagnostics(state, document, settings),
-        ...getInvalidVariantDiagnostics(state, document, settings),
-        ...getInvalidConfigPathDiagnostics(state, document, settings),
-        ...getInvalidTailwindDirectiveDiagnostics(state, document, settings),
+        ...(only.includes(DiagnosticKind.UtilityConflicts)
+          ? getUtilityConflictDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidApply)
+          ? getInvalidApplyDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidScreen)
+          ? getInvalidScreenDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidVariant)
+          ? getInvalidVariantDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidConfigPath)
+          ? getInvalidConfigPathDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidTailwindDirective)
+          ? getInvalidTailwindDirectiveDiagnostics(state, document, settings)
+          : []),
       ]
     : []
+}
 
+export async function provideDiagnostics(state: State, document: TextDocument) {
   state.editor.connection.sendDiagnostics({
     uri: document.uri,
-    diagnostics,
+    diagnostics: await getDiagnostics(state, document),
   })
 }
 

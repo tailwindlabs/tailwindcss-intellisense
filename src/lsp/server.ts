@@ -32,7 +32,7 @@ import {
   provideDiagnostics,
   updateAllDiagnostics,
   clearAllDiagnostics,
-} from './providers/diagnosticsProvider'
+} from './providers/diagnostics/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
 import { provideCodeActions } from './providers/codeActionProvider'
 

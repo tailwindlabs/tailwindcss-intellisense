@@ -4,10 +4,9 @@ import {
   CodeActionKind,
   Range,
   TextEdit,
-  Diagnostic,
 } from 'vscode-languageserver'
 import { State } from '../../util/state'
-import { findLast, findClassNamesInRange } from '../../util/find'
+import { findLast } from '../../util/find'
 import { isWithinRange } from '../../util/isWithinRange'
 import { getClassNameParts } from '../../util/getClassNameAtPosition'
 const dlv = require('dlv')
@@ -16,19 +15,50 @@ import { removeRangeFromString } from '../../util/removeRangeFromString'
 import detectIndent from 'detect-indent'
 import { cssObjToAst } from '../../util/cssObjToAst'
 import isObject from '../../../util/isObject'
+import { getDiagnostics } from '../diagnostics/diagnosticsProvider'
+import { rangesEqual } from '../../util/rangesEqual'
+import {
+  DiagnosticKind,
+  isInvalidApplyDiagnostic,
+  AugmentedDiagnostic,
+  InvalidApplyDiagnostic,
+} from '../diagnostics/types'
 
-export function provideCodeActions(
+async function getDiagnosticsFromCodeActionParams(
+  state: State,
+  params: CodeActionParams,
+  only?: DiagnosticKind[]
+): Promise<AugmentedDiagnostic[]> {
+  let document = state.editor.documents.get(params.textDocument.uri)
+  let diagnostics = await getDiagnostics(state, document, only)
+
+  return params.context.diagnostics
+    .map((diagnostic) => {
+      return diagnostics.find((d) => {
+        return rangesEqual(d.range, diagnostic.range)
+      })
+    })
+    .filter(Boolean)
+}
+
+export async function provideCodeActions(
   state: State,
   params: CodeActionParams
 ): Promise<CodeAction[]> {
-  if (params.context.diagnostics.length === 0) {
-    return null
-  }
+  let codes = params.context.diagnostics
+    .map((diagnostic) => diagnostic.code)
+    .filter(Boolean) as DiagnosticKind[]
+
+  let diagnostics = await getDiagnosticsFromCodeActionParams(
+    state,
+    params,
+    codes
+  )
 
   return Promise.all(
-    params.context.diagnostics
+    diagnostics
       .map((diagnostic) => {
-        if (diagnostic.code === 'invalidApply') {
+        if (isInvalidApplyDiagnostic(diagnostic)) {
           return provideInvalidApplyCodeAction(state, params, diagnostic)
         }
 
@@ -127,31 +157,14 @@ function classNameToAst(
 async function provideInvalidApplyCodeAction(
   state: State,
   params: CodeActionParams,
-  diagnostic: Diagnostic
+  diagnostic: InvalidApplyDiagnostic
 ): Promise<CodeAction> {
   let document = state.editor.documents.get(params.textDocument.uri)
   let documentText = document.getText()
   const { postcss } = state.modules
   let change: TextEdit
 
-  let documentClassNames = findClassNamesInRange(
-    document,
-    {
-      start: {
-        line: Math.max(0, diagnostic.range.start.line - 10),
-        character: 0,
-      },
-      end: { line: diagnostic.range.start.line + 10, character: 0 },
-    },
-    'css'
-  )
-  let documentClassName = documentClassNames.find((className) =>
-    isWithinRange(diagnostic.range.start, className.range)
-  )
-  if (!documentClassName) {
-    return null
-  }
-  let totalClassNamesInClassList = documentClassName.classList.classList.split(
+  let totalClassNamesInClassList = diagnostic.className.classList.classList.split(
     /\s+/
   ).length
 
@@ -184,7 +197,7 @@ async function provideInvalidApplyCodeAction(
               state,
               className,
               rule.selector,
-              documentClassName.classList.important
+              diagnostic.className.classList.important
             )
 
             if (!ast) {
@@ -250,10 +263,10 @@ async function provideInvalidApplyCodeAction(
           ...(totalClassNamesInClassList > 1
             ? [
                 {
-                  range: documentClassName.classList.range,
+                  range: diagnostic.className.classList.range,
                   newText: removeRangeFromString(
-                    documentClassName.classList.classList,
-                    documentClassName.relativeRange
+                    diagnostic.className.classList.classList,
+                    diagnostic.className.relativeRange
                   ),
                 },
               ]
