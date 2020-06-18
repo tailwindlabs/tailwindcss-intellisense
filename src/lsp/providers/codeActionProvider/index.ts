@@ -111,22 +111,18 @@ export async function provideCodeActions(
 
 function classNameToAst(
   state: State,
-  className: string,
-  selector: string = `.${className}`,
+  classNameParts: string[],
+  selector: string,
   important: boolean = false
 ) {
-  const parts = getClassNameParts(state, className)
-  if (!parts) {
-    return null
-  }
   const baseClassName = dlv(
     state.classNames.classNames,
-    parts[parts.length - 1]
+    classNameParts[classNameParts.length - 1]
   )
   if (!baseClassName) {
     return null
   }
-  const info = dlv(state.classNames.classNames, parts)
+  const info = dlv(state.classNames.classNames, classNameParts)
   let context = info.__context || []
   let pseudo = info.__pseudo || []
   const globalContexts = state.classNames.context
@@ -139,8 +135,8 @@ function classNameToAst(
   screens = Object.keys(screens)
   const path = []
 
-  for (let i = 0; i < parts.length - 1; i++) {
-    let part = parts[i]
+  for (let i = 0; i < classNameParts.length - 1; i++) {
+    let part = classNameParts[i]
     let common = globalContexts[part]
     if (!common) return null
     if (screens.includes(part)) {
@@ -158,7 +154,7 @@ function classNameToAst(
   let rule = {
     // TODO: use proper selector parser
     [selector + pseudo.join('')]: {
-      [`@apply ${parts[parts.length - 1]}${
+      [`@apply ${classNameParts[classNameParts.length - 1]}${
         important ? ' !important' : ''
       }`]: '',
     },
@@ -221,6 +217,14 @@ async function provideInvalidApplyCodeActions(
     /\s+/
   ).length
 
+  let className = diagnostic.className.className
+  let classNameParts = getClassNameParts(state, className)
+  let classNameInfo = dlv(state.classNames.classNames, classNameParts)
+
+  if (Array.isArray(classNameInfo)) {
+    return []
+  }
+
   if (!isCssDoc(state, document)) {
     let languageBoundaries = getLanguageBoundaries(state, document)
     if (!languageBoundaries) return []
@@ -259,10 +263,9 @@ async function provideInvalidApplyCodeActions(
                 return true
               }
 
-              let className = diagnostic.className.className
               let ast = classNameToAst(
                 state,
-                className,
+                classNameParts,
                 rule.selector,
                 diagnostic.className.classList.important
               )
