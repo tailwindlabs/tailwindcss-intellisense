@@ -11,7 +11,7 @@ import { isWithinRange } from '../../util/isWithinRange'
 import { getClassNameParts } from '../../util/getClassNameAtPosition'
 const dlv = require('dlv')
 import dset from 'dset'
-import { removeRangeFromString } from '../../util/removeRangeFromString'
+import { removeRangesFromString } from '../../util/removeRangesFromString'
 import detectIndent from 'detect-indent'
 import { cssObjToAst } from '../../util/cssObjToAst'
 import isObject from '../../../util/isObject'
@@ -26,6 +26,7 @@ import {
   UtilityConflictsDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../../../util/array'
+import { joinWithAnd } from '../../util/joinWithAnd'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
@@ -174,7 +175,11 @@ async function provideUtilityConflictsCodeActions(
 ): Promise<CodeAction[]> {
   return [
     {
-      title: `Delete '${diagnostic.className.className}'`,
+      title: `Delete ${joinWithAnd(
+        diagnostic.otherClassNames.map(
+          (otherClassName) => `'${otherClassName.className}'`
+        )
+      )}`,
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit: {
@@ -182,27 +187,11 @@ async function provideUtilityConflictsCodeActions(
           [params.textDocument.uri]: [
             {
               range: diagnostic.className.classList.range,
-              newText: removeRangeFromString(
+              newText: removeRangesFromString(
                 diagnostic.className.classList.classList,
-                diagnostic.className.relativeRange
-              ),
-            },
-          ],
-        },
-      },
-    },
-    {
-      title: `Delete '${diagnostic.otherClassName.className}'`,
-      kind: CodeActionKind.QuickFix,
-      diagnostics: [diagnostic],
-      edit: {
-        changes: {
-          [params.textDocument.uri]: [
-            {
-              range: diagnostic.className.classList.range,
-              newText: removeRangeFromString(
-                diagnostic.className.classList.classList,
-                diagnostic.otherClassName.relativeRange
+                diagnostic.otherClassNames.map(
+                  (otherClassName) => otherClassName.relativeRange
+                )
               ),
             },
           ],
@@ -323,7 +312,7 @@ async function provideInvalidApplyCodeActions(
               ? [
                   {
                     range: diagnostic.className.classList.range,
-                    newText: removeRangeFromString(
+                    newText: removeRangesFromString(
                       diagnostic.className.classList.classList,
                       diagnostic.className.relativeRange
                     ),

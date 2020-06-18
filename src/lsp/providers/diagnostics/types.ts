@@ -13,7 +13,7 @@ export enum DiagnosticKind {
 export type UtilityConflictsDiagnostic = Diagnostic & {
   code: DiagnosticKind.UtilityConflicts
   className: DocumentClassName
-  otherClassName: DocumentClassName
+  otherClassNames: DocumentClassName[]
 }
 
 export function isUtilityConflictsDiagnostic(
