@@ -35,6 +35,7 @@ export function isInvalidApplyDiagnostic(
 
 export type InvalidScreenDiagnostic = Diagnostic & {
   code: DiagnosticKind.InvalidScreen
+  suggestions: string[]
 }
 
 export function isInvalidScreenDiagnostic(
@@ -45,6 +46,7 @@ export function isInvalidScreenDiagnostic(
 
 export type InvalidVariantDiagnostic = Diagnostic & {
   code: DiagnosticKind.InvalidVariant
+  suggestions: string[]
 }
 
 export function isInvalidVariantDiagnostic(
@@ -55,6 +57,7 @@ export function isInvalidVariantDiagnostic(
 
 export type InvalidConfigPathDiagnostic = Diagnostic & {
   code: DiagnosticKind.InvalidConfigPath
+  suggestions: string[]
 }
 
 export function isInvalidConfigPathDiagnostic(
@@ -65,6 +68,7 @@ export function isInvalidConfigPathDiagnostic(
 
 export type InvalidTailwindDirectiveDiagnostic = Diagnostic & {
   code: DiagnosticKind.InvalidTailwindDirective
+  suggestions: string[]
 }
 
 export function isInvalidTailwindDirectiveDiagnostic(

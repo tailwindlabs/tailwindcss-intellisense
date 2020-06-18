@@ -197,8 +197,11 @@ function getInvalidScreenDiagnostics(
       }
 
       let message = `The screen '${match.groups.screen}' does not exist in your theme config.`
+      let suggestions: string[] = []
       let suggestion = closest(match.groups.screen, screens)
+
       if (suggestion) {
+        suggestions.push(suggestion)
         message += ` Did you mean '${suggestion}'?`
       }
 
@@ -219,6 +222,7 @@ function getInvalidScreenDiagnostics(
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
         message,
+        suggestions,
       })
     })
   })
@@ -261,8 +265,11 @@ function getInvalidVariantDiagnostics(
         }
 
         let message = `The variant '${variant}' does not exist.`
+        let suggestions: string[] = []
         let suggestion = closest(variant, state.variants)
+
         if (suggestion) {
+          suggestions.push(suggestion)
           message += ` Did you mean '${suggestion}'?`
         }
 
@@ -283,6 +290,7 @@ function getInvalidVariantDiagnostics(
               ? DiagnosticSeverity.Error
               : DiagnosticSeverity.Warning,
           message,
+          suggestions,
         })
       }
     })
@@ -337,6 +345,7 @@ function getInvalidConfigPathDiagnostics(
         }, '')
 
       let message: string
+      let suggestions: string[] = []
 
       if (isValid(value)) {
         // The value resolves successfully, but we need to check that there
@@ -374,24 +383,24 @@ function getInvalidConfigPathDiagnostics(
             Object.keys(parentValue).filter((key) => isValid(parentValue[key]))
           )
           if (closestValidKey) {
-            message += ` Did you mean '${stitch([
-              ...keys.slice(0, keys.length - 1),
-              closestValidKey,
-            ])}'?`
+            suggestions.push(
+              stitch([...keys.slice(0, keys.length - 1), closestValidKey])
+            )
+            message += ` Did you mean '${suggestions[0]}'?`
           }
         }
       } else {
         message = `'${match.groups.key}' was found but does not resolve to a string.`
 
         if (isObject(value)) {
-          let firstValidKey = Object.keys(value).find((key) =>
+          let validKeys = Object.keys(value).filter((key) =>
             isValid(value[key])
           )
-          if (firstValidKey) {
-            message += ` Did you mean something like '${stitch([
-              ...keys,
-              firstValidKey,
-            ])}'?`
+          if (validKeys.length) {
+            suggestions.push(
+              ...validKeys.map((validKey) => stitch([...keys, validKey]))
+            )
+            message += ` Did you mean something like '${suggestions[0]}'?`
           }
         }
       }
@@ -421,6 +430,7 @@ function getInvalidConfigPathDiagnostics(
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
         message,
+        suggestions,
       })
     })
   })
@@ -464,11 +474,15 @@ function getInvalidTailwindDirectiveDiagnostics(
       }
 
       let message = `'${match.groups.value}' is not a valid group.`
+      let suggestions: string[] = []
+
       if (match.groups.value === 'preflight') {
+        suggestions.push('base')
         message += ` Did you mean 'base'?`
       } else {
         let suggestion = closest(match.groups.value, valid)
         if (suggestion) {
+          suggestions.push(suggestion)
           message += ` Did you mean '${suggestion}'?`
         }
       }
@@ -490,6 +504,7 @@ function getInvalidTailwindDirectiveDiagnostics(
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
         message,
+        suggestions,
       })
     })
   })

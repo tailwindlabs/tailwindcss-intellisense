@@ -24,6 +24,10 @@ import {
   InvalidApplyDiagnostic,
   isUtilityConflictsDiagnostic,
   UtilityConflictsDiagnostic,
+  isInvalidConfigPathDiagnostic,
+  isInvalidTailwindDirectiveDiagnostic,
+  isInvalidScreenDiagnostic,
+  isInvalidVariantDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../../../util/array'
 import { joinWithAnd } from '../../util/joinWithAnd'
@@ -72,18 +76,14 @@ export async function provideCodeActions(
       return provideUtilityConflictsCodeActions(state, params, diagnostic)
     }
 
-    let match = findLast(
-      / Did you mean (?:something like )?'(?<replacement>[^']+)'\?$/g,
-      diagnostic.message
-    )
-
-    if (!match) {
-      return []
-    }
-
-    return [
-      {
-        title: `Replace with '${match.groups.replacement}'`,
+    if (
+      isInvalidConfigPathDiagnostic(diagnostic) ||
+      isInvalidTailwindDirectiveDiagnostic(diagnostic) ||
+      isInvalidScreenDiagnostic(diagnostic) ||
+      isInvalidVariantDiagnostic(diagnostic)
+    ) {
+      return diagnostic.suggestions.map((suggestion) => ({
+        title: `Replace with '${suggestion}'`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diagnostic],
         edit: {
@@ -91,13 +91,15 @@ export async function provideCodeActions(
             [params.textDocument.uri]: [
               {
                 range: diagnostic.range,
-                newText: match.groups.replacement,
+                newText: suggestion,
               },
             ],
           },
         },
-      },
-    ]
+      }))
+    }
+
+    return []
   })
 
   return Promise.all(actions)
