@@ -1,7 +1,5 @@
-import levenshtein from 'js-levenshtein'
+import sift from 'sift-string'
 
 export function closest(input: string, options: string[]): string | undefined {
-  return options.sort(
-    (a, b) => levenshtein(input, a) - levenshtein(input, b)
-  )[0]
+  return options.concat([]).sort((a, b) => sift(input, a) - sift(input, b))[0]
 }
