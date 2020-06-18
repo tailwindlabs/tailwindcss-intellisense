@@ -22,7 +22,10 @@ import {
   isInvalidApplyDiagnostic,
   AugmentedDiagnostic,
   InvalidApplyDiagnostic,
+  isUtilityConflictsDiagnostic,
+  UtilityConflictsDiagnostic,
 } from '../diagnostics/types'
+import { flatten, dedupeBy } from '../../../util/array'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
@@ -35,7 +38,11 @@ async function getDiagnosticsFromCodeActionParams(
   return params.context.diagnostics
     .map((diagnostic) => {
       return diagnostics.find((d) => {
-        return rangesEqual(d.range, diagnostic.range)
+        return (
+          d.code === diagnostic.code &&
+          d.message === diagnostic.message &&
+          rangesEqual(d.range, diagnostic.range)
+        )
       })
     })
     .filter(Boolean)
@@ -55,40 +62,46 @@ export async function provideCodeActions(
     codes
   )
 
-  return Promise.all(
-    diagnostics
-      .map((diagnostic) => {
-        if (isInvalidApplyDiagnostic(diagnostic)) {
-          return provideInvalidApplyCodeAction(state, params, diagnostic)
-        }
+  let actions = diagnostics.map((diagnostic) => {
+    if (isInvalidApplyDiagnostic(diagnostic)) {
+      return provideInvalidApplyCodeActions(state, params, diagnostic)
+    }
 
-        let match = findLast(
-          / Did you mean (?:something like )?'(?<replacement>[^']+)'\?$/g,
-          diagnostic.message
-        )
+    if (isUtilityConflictsDiagnostic(diagnostic)) {
+      return provideUtilityConflictsCodeActions(state, params, diagnostic)
+    }
 
-        if (!match) {
-          return null
-        }
+    let match = findLast(
+      / Did you mean (?:something like )?'(?<replacement>[^']+)'\?$/g,
+      diagnostic.message
+    )
 
-        return {
-          title: `Replace with '${match.groups.replacement}'`,
-          kind: CodeActionKind.QuickFix,
-          diagnostics: [diagnostic],
-          edit: {
-            changes: {
-              [params.textDocument.uri]: [
-                {
-                  range: diagnostic.range,
-                  newText: match.groups.replacement,
-                },
-              ],
-            },
+    if (!match) {
+      return []
+    }
+
+    return [
+      {
+        title: `Replace with '${match.groups.replacement}'`,
+        kind: CodeActionKind.QuickFix,
+        diagnostics: [diagnostic],
+        edit: {
+          changes: {
+            [params.textDocument.uri]: [
+              {
+                range: diagnostic.range,
+                newText: match.groups.replacement,
+              },
+            ],
           },
-        }
-      })
-      .filter(Boolean)
-  )
+        },
+      },
+    ]
+  })
+
+  return Promise.all(actions)
+    .then(flatten)
+    .then((x) => dedupeBy(x, (item) => JSON.stringify(item.edit)))
 }
 
 function classNameToAst(
@@ -154,11 +167,56 @@ function classNameToAst(
   return cssObjToAst(obj, state.modules.postcss)
 }
 
-async function provideInvalidApplyCodeAction(
+async function provideUtilityConflictsCodeActions(
+  state: State,
+  params: CodeActionParams,
+  diagnostic: UtilityConflictsDiagnostic
+): Promise<CodeAction[]> {
+  return [
+    {
+      title: `Delete '${diagnostic.className.className}'`,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit: {
+        changes: {
+          [params.textDocument.uri]: [
+            {
+              range: diagnostic.className.classList.range,
+              newText: removeRangeFromString(
+                diagnostic.className.classList.classList,
+                diagnostic.className.relativeRange
+              ),
+            },
+          ],
+        },
+      },
+    },
+    {
+      title: `Delete '${diagnostic.otherClassName.className}'`,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit: {
+        changes: {
+          [params.textDocument.uri]: [
+            {
+              range: diagnostic.className.classList.range,
+              newText: removeRangeFromString(
+                diagnostic.className.classList.classList,
+                diagnostic.otherClassName.relativeRange
+              ),
+            },
+          ],
+        },
+      },
+    },
+  ]
+}
+
+async function provideInvalidApplyCodeActions(
   state: State,
   params: CodeActionParams,
   diagnostic: InvalidApplyDiagnostic
-): Promise<CodeAction> {
+): Promise<CodeAction[]> {
   let document = state.editor.documents.get(params.textDocument.uri)
   let documentText = document.getText()
   const { postcss } = state.modules
@@ -250,30 +308,32 @@ async function provideInvalidApplyCodeAction(
   ]).process(documentText, { from: undefined })
 
   if (!change) {
-    return null
+    return []
   }
 
-  return {
-    title: 'Extract to new rule.',
-    kind: CodeActionKind.QuickFix,
-    diagnostics: [diagnostic],
-    edit: {
-      changes: {
-        [params.textDocument.uri]: [
-          ...(totalClassNamesInClassList > 1
-            ? [
-                {
-                  range: diagnostic.className.classList.range,
-                  newText: removeRangeFromString(
-                    diagnostic.className.classList.classList,
-                    diagnostic.className.relativeRange
-                  ),
-                },
-              ]
-            : []),
-          change,
-        ],
+  return [
+    {
+      title: 'Extract to new rule',
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit: {
+        changes: {
+          [params.textDocument.uri]: [
+            ...(totalClassNamesInClassList > 1
+              ? [
+                  {
+                    range: diagnostic.className.classList.range,
+                    newText: removeRangeFromString(
+                      diagnostic.className.classList.classList,
+                      diagnostic.className.relativeRange
+                    ),
+                  },
+                ]
+              : []),
+            change,
+          ],
+        },
       },
     },
-  }
+  ]
 }
