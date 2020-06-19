@@ -20,8 +20,8 @@ import isObject from '../../../util/isObject'
 import { cssObjToAst } from '../../util/cssObjToAst'
 import dset from 'dset'
 import selectorParser from 'postcss-selector-parser'
-import { logFull } from '../../util/logFull'
 import { flatten } from '../../../util/array'
+import { getClassNameMeta } from '../../util/getClassNameMeta'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
@@ -180,9 +180,10 @@ function classNameToAst(
   if (!baseClassName) {
     return null
   }
-  const info = dlv(state.classNames.classNames, classNameParts)
-  let context = info.__context || []
-  let pseudo = info.__pseudo || []
+  const meta = getClassNameMeta(state, classNameParts)
+  if (Array.isArray(meta)) return null
+  let context = meta.context
+  let pseudo = meta.pseudo
   const globalContexts = state.classNames.context
   let screens = dlv(
     state.config,

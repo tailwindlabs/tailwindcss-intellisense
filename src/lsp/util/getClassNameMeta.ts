@@ -4,9 +4,11 @@ const dlv = require('dlv')
 
 export function getClassNameMeta(
   state: State,
-  className: string
+  classNameOrParts: string | string[]
 ): ClassNameMeta | ClassNameMeta[] {
-  const parts = getClassNameParts(state, className)
+  const parts = Array.isArray(classNameOrParts)
+    ? classNameOrParts
+    : getClassNameParts(state, classNameOrParts)
   if (!parts) return null
   const info = dlv(state.classNames.classNames, parts)
 
