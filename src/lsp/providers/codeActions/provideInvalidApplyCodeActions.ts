@@ -19,6 +19,9 @@ import detectIndent from 'detect-indent'
 import isObject from '../../../util/isObject'
 import { cssObjToAst } from '../../util/cssObjToAst'
 import dset from 'dset'
+import selectorParser from 'postcss-selector-parser'
+import { logFull } from '../../util/logFull'
+import { flatten } from '../../../util/array'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
@@ -119,7 +122,8 @@ export async function provideInvalidApplyCodeActions(
                         new RegExp(outputIndent, 'g'),
                         documentIndent.indent
                       )
-                    }),
+                    })
+                    .replace(/^(\s+)(.*?[^{}]\n)(\S)/gm, '$1$2$1$3'),
               })
 
               return false
@@ -205,9 +209,12 @@ function classNameToAst(
   for (let i = 1; i <= path.length; i++) {
     dset(obj, path.slice(0, i), {})
   }
+
+  selector = appendPseudosToSelector(selector, pseudo)
+  if (selector === null) return null
+
   let rule = {
-    // TODO: use proper selector parser
-    [selector + pseudo.join('')]: {
+    [selector]: {
       [`@apply ${classNameParts[classNameParts.length - 1]}${
         important ? ' !important' : ''
       }`]: '',
@@ -220,4 +227,39 @@ function classNameToAst(
   }
 
   return cssObjToAst(obj, state.modules.postcss)
+}
+
+function appendPseudosToSelector(
+  selector: string,
+  pseudos: string[]
+): string | null {
+  if (pseudos.length === 0) return selector
+
+  let canTransform = true
+
+  let transformedSelector = selectorParser((selectors) => {
+    flatten(selectors.split((_) => true)).forEach((sel) => {
+      // @ts-ignore
+      for (let i = sel.nodes.length - 1; i >= 0; i--) {
+        // @ts-ignore
+        if (sel.nodes[i].type !== 'pseudo') {
+          break
+          // @ts-ignore
+        } else if (pseudos.includes(sel.nodes[i].value)) {
+          canTransform = false
+          break
+        }
+      }
+      if (canTransform) {
+        pseudos.forEach((p) => {
+          // @ts-ignore
+          sel.append(selectorParser.pseudo({ value: p }))
+        })
+      }
+    })
+  }).processSync(selector)
+
+  if (!canTransform) return null
+
+  return transformedSelector
 }
