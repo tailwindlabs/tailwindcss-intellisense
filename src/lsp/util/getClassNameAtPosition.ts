@@ -1,4 +1,5 @@
 import { State } from './state'
+import { combinations } from './combinations'
 const dlv = require('dlv')
 
 export function getClassNameParts(state: State, className: string): string[] {
@@ -40,18 +41,4 @@ export function getClassNameParts(state: State, className: string): string[] {
     }
     return false
   })
-}
-
-function combinations(str: string): string[] {
-  let fn = function (active: string, rest: string, a: string[]) {
-    if (!active && !rest) return
-    if (!rest) {
-      a.push(active)
-    } else {
-      fn(active + rest[0], rest.slice(1), a)
-      fn(active, rest.slice(1), a)
-    }
-    return a
-  }
-  return fn('', str, [])
 }

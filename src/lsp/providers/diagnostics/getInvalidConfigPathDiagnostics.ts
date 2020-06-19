@@ -8,7 +8,163 @@ import { stringToPath } from '../../util/stringToPath'
 import isObject from '../../../util/isObject'
 import { closest } from '../../util/closest'
 import { absoluteRange } from '../../util/absoluteRange'
+import { combinations } from '../../util/combinations'
 const dlv = require('dlv')
+
+function pathToString(path: string | string[]): string {
+  if (typeof path === 'string') return path
+  return path.reduce((acc, cur, i) => {
+    if (i === 0) return cur
+    if (cur.includes('.')) return `${acc}[${cur}]`
+    return `${acc}.${cur}`
+  }, '')
+}
+
+function validateConfigPath(
+  state: State,
+  path: string | string[],
+  base: string[] = []
+):
+  | { isValid: true; value: any }
+  | { isValid: false; reason: string; suggestions: string[] } {
+  let keys = Array.isArray(path) ? path : stringToPath(path)
+  let value = dlv(state.config, [...base, ...keys])
+  let suggestions: string[] = []
+
+  function findAlternativePath(): string[] {
+    let points = combinations('123456789'.substr(0, keys.length - 1)).map((x) =>
+      x.split('').map((x) => parseInt(x, 10))
+    )
+
+    let possibilities: string[][] = points
+      .map((p) => {
+        let result = []
+        let i = 0
+        p.forEach((x) => {
+          result.push(keys.slice(i, x).join('.'))
+          i = x
+        })
+        result.push(keys.slice(i).join('.'))
+        return result
+      })
+      .slice(1) // skip original path
+
+    return possibilities.find(
+      (possibility) => validateConfigPath(state, possibility, base).isValid
+    )
+  }
+
+  if (typeof value === 'undefined') {
+    let reason = `'${pathToString(path)}' does not exist in your theme config.`
+    let parentPath = [...base, ...keys.slice(0, keys.length - 1)]
+    let parentValue = dlv(state.config, parentPath)
+
+    if (isObject(parentValue)) {
+      let closestValidKey = closest(
+        keys[keys.length - 1],
+        Object.keys(parentValue).filter(
+          (key) => validateConfigPath(state, [...parentPath, key]).isValid
+        )
+      )
+      if (closestValidKey) {
+        suggestions.push(
+          pathToString([...keys.slice(0, keys.length - 1), closestValidKey])
+        )
+        reason += ` Did you mean '${suggestions[0]}'?`
+      }
+    } else {
+      let altPath = findAlternativePath()
+      if (altPath) {
+        return {
+          isValid: false,
+          reason: `${reason} Did you mean '${pathToString(altPath)}'?`,
+          suggestions: [pathToString(altPath)],
+        }
+      }
+    }
+
+    return {
+      isValid: false,
+      reason,
+      suggestions,
+    }
+  }
+
+  if (
+    !(
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      value instanceof String ||
+      value instanceof Number ||
+      Array.isArray(value)
+    )
+  ) {
+    let reason = `'${pathToString(
+      path
+    )}' was found but does not resolve to a string.`
+
+    if (isObject(value)) {
+      let validKeys = Object.keys(value).filter(
+        (key) => validateConfigPath(state, [...keys, key], base).isValid
+      )
+      if (validKeys.length) {
+        suggestions.push(
+          ...validKeys.map((validKey) => pathToString([...keys, validKey]))
+        )
+        reason += ` Did you mean something like '${suggestions[0]}'?`
+      }
+    }
+    return {
+      isValid: false,
+      reason,
+      suggestions,
+    }
+  }
+
+  // The value resolves successfully, but we need to check that there
+  // wasn't any funny business. If you have a theme object:
+  // { msg: 'hello' } and do theme('msg.0')
+  // this will resolve to 'h', which is probably not intentional, so we
+  // check that all of the keys are object or array keys (i.e. not string
+  // indexes)
+  let isValid = true
+  for (let i = keys.length - 1; i >= 0; i--) {
+    let key = keys[i]
+    let parentValue = dlv(state.config, [...base, ...keys.slice(0, i)])
+    if (/^[0-9]+$/.test(key)) {
+      if (!isObject(parentValue) && !Array.isArray(parentValue)) {
+        isValid = false
+        break
+      }
+    } else if (!isObject(parentValue)) {
+      isValid = false
+      break
+    }
+  }
+  if (!isValid) {
+    let reason = `'${pathToString(path)}' does not exist in your theme config.`
+
+    let altPath = findAlternativePath()
+    if (altPath) {
+      return {
+        isValid: false,
+        reason: `${reason} Did you mean '${pathToString(altPath)}'?`,
+        suggestions: [pathToString(altPath)],
+      }
+    }
+
+    return {
+      isValid: false,
+      reason,
+      suggestions: [],
+    }
+  }
+
+  return {
+    isValid: true,
+    value,
+  }
+}
 
 export function getInvalidConfigPathDiagnostics(
   state: State,
@@ -38,85 +194,9 @@ export function getInvalidConfigPathDiagnostics(
 
     matches.forEach((match) => {
       let base = match.groups.helper === 'theme' ? ['theme'] : []
-      let keys = stringToPath(match.groups.key)
-      let value = dlv(state.config, [...base, ...keys])
+      let result = validateConfigPath(state, match.groups.key, base)
 
-      const isValid = (val: unknown): boolean =>
-        typeof val === 'string' ||
-        typeof val === 'number' ||
-        val instanceof String ||
-        val instanceof Number ||
-        Array.isArray(val)
-
-      const stitch = (keys: string[]): string =>
-        keys.reduce((acc, cur, i) => {
-          if (i === 0) return cur
-          if (cur.includes('.')) return `${acc}[${cur}]`
-          return `${acc}.${cur}`
-        }, '')
-
-      let message: string
-      let suggestions: string[] = []
-
-      if (isValid(value)) {
-        // The value resolves successfully, but we need to check that there
-        // wasn't any funny business. If you have a theme object:
-        // { msg: 'hello' } and do theme('msg.0')
-        // this will resolve to 'h', which is probably not intentional, so we
-        // check that all of the keys are object or array keys (i.e. not string
-        // indexes)
-        let valid = true
-        for (let i = keys.length - 1; i >= 0; i--) {
-          let key = keys[i]
-          let parentValue = dlv(state.config, [...base, ...keys.slice(0, i)])
-          if (/^[0-9]+$/.test(key)) {
-            if (!isObject(parentValue) && !Array.isArray(parentValue)) {
-              valid = false
-              break
-            }
-          } else if (!isObject(parentValue)) {
-            valid = false
-            break
-          }
-        }
-        if (!valid) {
-          message = `'${match.groups.key}' does not exist in your theme config.`
-        }
-      } else if (typeof value === 'undefined') {
-        message = `'${match.groups.key}' does not exist in your theme config.`
-        let parentValue = dlv(state.config, [
-          ...base,
-          ...keys.slice(0, keys.length - 1),
-        ])
-        if (isObject(parentValue)) {
-          let closestValidKey = closest(
-            keys[keys.length - 1],
-            Object.keys(parentValue).filter((key) => isValid(parentValue[key]))
-          )
-          if (closestValidKey) {
-            suggestions.push(
-              stitch([...keys.slice(0, keys.length - 1), closestValidKey])
-            )
-            message += ` Did you mean '${suggestions[0]}'?`
-          }
-        }
-      } else {
-        message = `'${match.groups.key}' was found but does not resolve to a string.`
-
-        if (isObject(value)) {
-          let validKeys = Object.keys(value).filter((key) =>
-            isValid(value[key])
-          )
-          if (validKeys.length) {
-            suggestions.push(
-              ...validKeys.map((validKey) => stitch([...keys, validKey]))
-            )
-            message += ` Did you mean something like '${suggestions[0]}'?`
-          }
-        }
-      }
-
-      if (!message) {
+      if (result.isValid === true) {
         return null
       }
 
@@ -140,8 +220,8 @@ export function getInvalidConfigPathDiagnostics(
           severity === 'error'
             ? DiagnosticSeverity.Error
             : DiagnosticSeverity.Warning,
-        message,
-        suggestions,
+        message: result.reason,
+        suggestions: result.suggestions,
       })
     })
   })
