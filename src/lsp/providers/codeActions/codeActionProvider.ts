@@ -33,6 +33,7 @@ import { joinWithAnd } from '../../util/joinWithAnd'
 import { getLanguageBoundaries } from '../../util/getLanguageBoundaries'
 import { isCssDoc } from '../../util/css'
 import { absoluteRange } from '../../util/absoluteRange'
+import type { NodeSource, Root } from 'postcss'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
@@ -201,6 +202,19 @@ async function provideUtilityConflictsCodeActions(
   ]
 }
 
+function postcssSourceToRange(source: NodeSource): Range {
+  return {
+    start: {
+      line: source.start.line - 1,
+      character: source.start.column - 1,
+    },
+    end: {
+      line: source.end.line - 1,
+      character: source.end.column,
+    },
+  }
+}
+
 async function provideInvalidApplyCodeActions(
   state: State,
   params: CodeActionParams,
@@ -211,7 +225,7 @@ async function provideInvalidApplyCodeActions(
   let cssRange: Range
   let cssText = documentText
   const { postcss } = state.modules
-  let change: TextEdit
+  let changes: TextEdit[] = []
 
   let totalClassNamesInClassList = diagnostic.className.classList.classList.split(
     /\s+/
@@ -238,30 +252,18 @@ async function provideInvalidApplyCodeActions(
   try {
     await postcss([
       postcss.plugin('', (_options = {}) => {
-        return (root) => {
+        return (root: Root) => {
           root.walkRules((rule) => {
-            if (change) return false
+            if (changes.length) return false
 
             rule.walkAtRules('apply', (atRule) => {
-              let { start, end } = atRule.source
-              let atRuleRange: Range = {
-                start: {
-                  line: start.line - 1,
-                  character: start.column - 1,
-                },
-                end: {
-                  line: end.line - 1,
-                  character: end.column - 1,
-                },
-              }
+              let atRuleRange = postcssSourceToRange(atRule.source)
               if (cssRange) {
                 atRuleRange = absoluteRange(atRuleRange, cssRange)
               }
 
-              if (!isWithinRange(diagnostic.range.start, atRuleRange)) {
-                // keep looking
+              if (!isWithinRange(diagnostic.range.start, atRuleRange))
                 return true
-              }
 
               let ast = classNameToAst(
                 state,
@@ -270,35 +272,33 @@ async function provideInvalidApplyCodeActions(
                 diagnostic.className.classList.important
               )
 
-              if (!ast) {
-                return false
-              }
+              if (!ast) return false
 
               rule.after(ast.nodes)
               let insertedRule = rule.next()
+              if (!insertedRule) return false
 
               if (totalClassNamesInClassList === 1) {
                 atRule.remove()
+              } else {
+                changes.push({
+                  range: diagnostic.className.classList.range,
+                  newText: removeRangesFromString(
+                    diagnostic.className.classList.classList,
+                    diagnostic.className.relativeRange
+                  ),
+                })
+              }
+
+              let ruleRange = postcssSourceToRange(rule.source)
+              if (cssRange) {
+                ruleRange = absoluteRange(ruleRange, cssRange)
               }
 
               let outputIndent: string
               let documentIndent = detectIndent(documentText)
 
-              let ruleRange: Range = {
-                start: {
-                  line: rule.source.start.line - 1,
-                  character: rule.source.start.column - 1,
-                },
-                end: {
-                  line: rule.source.end.line - 1,
-                  character: rule.source.end.column,
-                },
-              }
-              if (cssRange) {
-                ruleRange = absoluteRange(ruleRange, cssRange)
-              }
-
-              change = {
+              changes.push({
                 range: ruleRange,
                 newText:
                   rule.toString() +
@@ -315,7 +315,7 @@ async function provideInvalidApplyCodeActions(
                         documentIndent.indent
                       )
                     }),
-              }
+              })
 
               return false
             })
@@ -327,7 +327,7 @@ async function provideInvalidApplyCodeActions(
     return []
   }
 
-  if (!change) {
+  if (!changes.length) {
     return []
   }
 
@@ -338,20 +338,7 @@ async function provideInvalidApplyCodeActions(
       diagnostics: [diagnostic],
       edit: {
         changes: {
-          [params.textDocument.uri]: [
-            ...(totalClassNamesInClassList > 1
-              ? [
-                  {
-                    range: diagnostic.className.classList.range,
-                    newText: removeRangesFromString(
-                      diagnostic.className.classList.classList,
-                      diagnostic.className.relativeRange
-                    ),
-                  },
-                ]
-              : []),
-            change,
-          ],
+          [params.textDocument.uri]: changes,
         },
       },
     },

@@ -34,7 +34,7 @@ import {
   clearAllDiagnostics,
 } from './providers/diagnostics/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
-import { provideCodeActions } from './providers/codeActionProvider'
+import { provideCodeActions } from './providers/codeActions/codeActionProvider'
 
 let connection = createConnection(ProposedFeatures.all)
 let state: State = { enabled: false, emitter: createEmitter(connection) }
