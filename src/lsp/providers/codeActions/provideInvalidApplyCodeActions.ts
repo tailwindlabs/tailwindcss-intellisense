@@ -104,7 +104,7 @@ export async function provideInvalidApplyCodeActions(
               }
 
               let outputIndent: string
-              let documentIndent = detectIndent(documentText)
+              let documentIndent = detectIndent(cssText)
 
               changes.push({
                 range: ruleRange,
