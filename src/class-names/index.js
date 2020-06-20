@@ -72,9 +72,12 @@ export default async function getClassNames(
       ? ['separator']
       : ['options', 'separator']
     let userSeperator
+    let userPurge
     let hook = Hook(configPath, (exports) => {
       userSeperator = dlv(exports, sepLocation)
+      userPurge = exports.purge
       dset(exports, sepLocation, '__TAILWIND_SEPARATOR__')
+      exports.purge = {}
       return exports
     })
 
@@ -105,6 +108,11 @@ export default async function getClassNames(
       dset(config, sepLocation, userSeperator)
     } else {
       delete config[sepLocation]
+    }
+    if (typeof userPurge !== 'undefined') {
+      config.purge = userPurge
+    } else {
+      delete config.purge
     }
 
     const resolvedConfig = resolveConfig({ cwd: configDir, config })
