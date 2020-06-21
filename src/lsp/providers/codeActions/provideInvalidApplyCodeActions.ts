@@ -22,6 +22,7 @@ import dset from 'dset'
 import selectorParser from 'postcss-selector-parser'
 import { flatten } from '../../../util/array'
 import { getClassNameMeta } from '../../util/getClassNameMeta'
+import { validateApply } from '../../util/validateApply'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
@@ -173,11 +174,12 @@ function classNameToAst(
   selector: string,
   important: boolean = false
 ) {
-  const baseClassName = dlv(
-    state.classNames.classNames,
-    classNameParts[classNameParts.length - 1]
-  )
-  if (!baseClassName) {
+  const baseClassName = classNameParts[classNameParts.length - 1]
+  const validatedBaseClassName = validateApply(state, [baseClassName])
+  if (
+    validatedBaseClassName === null ||
+    validatedBaseClassName.isApplyable === false
+  ) {
     return null
   }
   const meta = getClassNameMeta(state, classNameParts)
@@ -216,9 +218,7 @@ function classNameToAst(
 
   let rule = {
     [selector]: {
-      [`@apply ${classNameParts[classNameParts.length - 1]}${
-        important ? ' !important' : ''
-      }`]: '',
+      [`@apply ${baseClassName}${important ? ' !important' : ''}`]: '',
     },
   }
   if (path.length) {
