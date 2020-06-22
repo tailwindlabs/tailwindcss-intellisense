@@ -6,16 +6,16 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 ## Features
 
-- **Autocomplete**
+- **Autocomplete**  
   Intelligent suggestions for class names, [CSS directives](https://tailwindcss.com/docs/functions-and-directives/), and the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme)
 
-- **Hover Preview**
+- **Hover Preview**  
   See the complete CSS for a Tailwind class name by hovering over it
 
-- **Linting**
+- **Linting**  
   Highlights errors and potential bugs in your HTML and CSS files
 
-- **CSS Syntax Highlighting**
+- **CSS Syntax Highlighting**  
   Provides syntax definitions so that use of Tailwind features doesn’t mess up your syntax highlighting
 
 ## Screenshots/Examples?
