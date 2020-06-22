@@ -1,4 +1,4 @@
-# Tailwind CSS IntelliSense
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/banner.png" alt="" />
 
 ## Installation
 
@@ -23,8 +23,6 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 - **CSS Syntax Highlighting**  
   Provides syntax definitions so that use of Tailwind features doesn’t mess up your syntax highlighting
-
-## Screenshots/Examples?
 
 ## Troubleshooting
 
