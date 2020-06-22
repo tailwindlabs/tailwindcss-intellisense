@@ -124,7 +124,7 @@ export async function provideInvalidApplyCodeActions(
                         documentIndent.indent
                       )
                     })
-                    .replace(/^(\s+)(.*?[^{}]\n)(\S)/gm, '$1$2$1$3'),
+                    .replace(/^(\s+)(.*?[^{}]\n)([^\s}])/gm, '$1$2$1$3'),
               })
 
               return false
