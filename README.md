@@ -2,6 +2,8 @@
 
 ## Installation
 
+**[Open in Visual Studio Code →](vscode:extension/bradlc.vscode-tailwindcss)**
+
 In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation/#1-install-tailwind-via-npm) and a [Tailwind config file](https://tailwindcss.com/docs/installation/#3-create-your-tailwind-config-file-optional) named `tailwind.config.js` or `tailwind.js` in your workspace.
 
 ## Features
