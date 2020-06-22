@@ -18,6 +18,12 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 - **CSS Syntax Highlighting**  
   Provides syntax definitions so that use of Tailwind features doesn’t mess up your syntax highlighting
 
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
+
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
+
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
+
 ## Screenshots/Examples?
 
 ## Troubleshooting
