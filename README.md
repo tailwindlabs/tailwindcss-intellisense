@@ -60,26 +60,26 @@ Enable linting. Rules can be configured individually using the `tailwindcss.lint
 - `warning`: rule violations will be considered "warnings," typically represented by a yellow underline
 - `error`: rule violations will be considered "errors," typically represented by a red underline
 
-### `tailwindCSS.lint.invalidScreen`
+#### `tailwindCSS.lint.invalidScreen`
 
 Unknown screen name used with the [`@screen` directive](https://tailwindcss.com/docs/functions-and-directives/#screen). **Default: `error`**
 
-### `tailwindCSS.lint.invalidVariant`
+#### `tailwindCSS.lint.invalidVariant`
 
 Unknown variant name used with the [`@variants` directive](https://tailwindcss.com/docs/functions-and-directives/#variants). **Default: `error`**
 
-### `tailwindCSS.lint.invalidTailwindDirective`
+#### `tailwindCSS.lint.invalidTailwindDirective`
 
 Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs/functions-and-directives/#tailwind). **Default: `error`**
 
-### `tailwindCSS.lint.invalidApply`
+#### `tailwindCSS.lint.invalidApply`
 
 Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functions-and-directives/#apply). For example class names which contain pseudo selectors cannot currently be used with `@apply`. **Default: `error`**
 
-### `tailwindCSS.lint.invalidConfigPath`
+#### `tailwindCSS.lint.invalidConfigPath`
 
 Unknown or invalid path used with the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme). **Default: `error`**
 
-### `tailwindCSS.lint.cssPropertyConflict`
+#### `tailwindCSS.lint.cssPropertyConflict`
 
 Class names on the same HTML element which apply the same CSS property or properties. **Default: `warning`**
