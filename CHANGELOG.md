@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0
+
+- Added linting and quick fixes for both CSS and markup
+- Updated module resolution for compatibility with pnpm (#128)
+- The extension now ignores the `purge` option when extracting class names (#131)
+- Fixed hover offsets for class names which appear after interpolations
+
+## 0.3.1
+
+- Fixed class attribute completions not showing when using the following Pug syntax (#125):
+  ```
+  div(class="")
+  ```
+- Fixed hover previews not showing when using a computed class attribute in Vue templates
+- Restore missing readme images
+- Update settings descriptions to use markdown
+
 ## 0.3.0
 
 ### General
