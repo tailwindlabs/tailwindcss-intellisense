@@ -44,7 +44,8 @@ export function getCssConflictDiagnostics(
           !Array.isArray(meta) &&
           !Array.isArray(otherMeta) &&
           equal(meta.context, otherMeta.context) &&
-          equal(meta.pseudo, otherMeta.pseudo)
+          equal(meta.pseudo, otherMeta.pseudo) &&
+          meta.scope === otherMeta.scope
         )
       })
 
