@@ -76,7 +76,7 @@
           "markdownDescription": "Enable linting",
           "scope": "language-overridable"
         },
-        "tailwindCSS.lint.utilityConflicts": {
+        "tailwindCSS.lint.cssConflict": {
           "type": "string",
           "enum": [
             "ignore",

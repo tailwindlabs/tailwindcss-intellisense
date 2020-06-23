@@ -46,7 +46,7 @@ const defaultSettings: Settings = {
   includeLanguages: {},
   validate: true,
   lint: {
-    utilityConflicts: 'warning',
+    cssConflict: 'warning',
     invalidApply: 'error',
     invalidScreen: 'error',
     invalidVariant: 'error',

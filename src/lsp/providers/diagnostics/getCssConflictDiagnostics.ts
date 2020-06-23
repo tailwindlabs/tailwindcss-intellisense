@@ -1,7 +1,7 @@
 import { joinWithAnd } from '../../util/joinWithAnd'
 import { State, Settings } from '../../util/state'
 import { TextDocument, DiagnosticSeverity } from 'vscode-languageserver'
-import { UtilityConflictsDiagnostic, DiagnosticKind } from './types'
+import { CssConflictDiagnostic, DiagnosticKind } from './types'
 import {
   findClassListsInDocument,
   getClassNamesInClassList,
@@ -10,15 +10,15 @@ import { getClassNameDecls } from '../../util/getClassNameDecls'
 import { getClassNameMeta } from '../../util/getClassNameMeta'
 import { equal } from '../../../util/array'
 
-export function getUtilityConflictDiagnostics(
+export function getCssConflictDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): UtilityConflictsDiagnostic[] {
-  let severity = settings.lint.utilityConflicts
+): CssConflictDiagnostic[] {
+  let severity = settings.lint.cssConflict
   if (severity === 'ignore') return []
 
-  let diagnostics: UtilityConflictsDiagnostic[] = []
+  let diagnostics: CssConflictDiagnostic[] = []
   const classLists = findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
@@ -51,7 +51,7 @@ export function getUtilityConflictDiagnostics(
       if (conflictingClassNames.length === 0) return
 
       diagnostics.push({
-        code: DiagnosticKind.UtilityConflicts,
+        code: DiagnosticKind.CssConflict,
         className,
         otherClassNames: conflictingClassNames,
         range: className.range,

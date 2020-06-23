@@ -4,14 +4,14 @@ import {
   CodeAction,
   CodeActionKind,
 } from 'vscode-languageserver'
-import { UtilityConflictsDiagnostic } from '../diagnostics/types'
+import { CssConflictDiagnostic } from '../diagnostics/types'
 import { joinWithAnd } from '../../util/joinWithAnd'
 import { removeRangesFromString } from '../../util/removeRangesFromString'
 
-export async function provideUtilityConflictsCodeActions(
+export async function provideCssConflictCodeActions(
   _state: State,
   params: CodeActionParams,
-  diagnostic: UtilityConflictsDiagnostic
+  diagnostic: CssConflictDiagnostic
 ): Promise<CodeAction[]> {
   return [
     {

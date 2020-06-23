@@ -6,14 +6,14 @@ import {
   DiagnosticKind,
   isInvalidApplyDiagnostic,
   AugmentedDiagnostic,
-  isUtilityConflictsDiagnostic,
+  isCssConflictDiagnostic,
   isInvalidConfigPathDiagnostic,
   isInvalidTailwindDirectiveDiagnostic,
   isInvalidScreenDiagnostic,
   isInvalidVariantDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../../../util/array'
-import { provideUtilityConflictsCodeActions } from './provideUtilityConflictsCodeActions'
+import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
 import { provideInvalidApplyCodeActions } from './provideInvalidApplyCodeActions'
 import { provideSuggestionCodeActions } from './provideSuggestionCodeActions'
 
@@ -56,8 +56,8 @@ export async function provideCodeActions(
         return provideInvalidApplyCodeActions(state, params, diagnostic)
       }
 
-      if (isUtilityConflictsDiagnostic(diagnostic)) {
-        return provideUtilityConflictsCodeActions(state, params, diagnostic)
+      if (isCssConflictDiagnostic(diagnostic)) {
+        return provideCssConflictCodeActions(state, params, diagnostic)
       }
 
       if (

@@ -2,7 +2,7 @@ import { Diagnostic } from 'vscode-languageserver'
 import { DocumentClassName, DocumentClassList } from '../../util/state'
 
 export enum DiagnosticKind {
-  UtilityConflicts = 'utilityConflicts',
+  CssConflict = 'cssConflict',
   InvalidApply = 'invalidApply',
   InvalidScreen = 'invalidScreen',
   InvalidVariant = 'invalidVariant',
@@ -10,16 +10,16 @@ export enum DiagnosticKind {
   InvalidTailwindDirective = 'invalidTailwindDirective',
 }
 
-export type UtilityConflictsDiagnostic = Diagnostic & {
-  code: DiagnosticKind.UtilityConflicts
+export type CssConflictDiagnostic = Diagnostic & {
+  code: DiagnosticKind.CssConflict
   className: DocumentClassName
   otherClassNames: DocumentClassName[]
 }
 
-export function isUtilityConflictsDiagnostic(
+export function isCssConflictDiagnostic(
   diagnostic: AugmentedDiagnostic
-): diagnostic is UtilityConflictsDiagnostic {
-  return diagnostic.code === DiagnosticKind.UtilityConflicts
+): diagnostic is CssConflictDiagnostic {
+  return diagnostic.code === DiagnosticKind.CssConflict
 }
 
 export type InvalidApplyDiagnostic = Diagnostic & {
@@ -78,7 +78,7 @@ export function isInvalidTailwindDirectiveDiagnostic(
 }
 
 export type AugmentedDiagnostic =
-  | UtilityConflictsDiagnostic
+  | CssConflictDiagnostic
   | InvalidApplyDiagnostic
   | InvalidScreenDiagnostic
   | InvalidVariantDiagnostic

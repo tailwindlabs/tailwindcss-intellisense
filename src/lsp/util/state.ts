@@ -33,7 +33,7 @@ export type Settings = {
   includeLanguages: Record<string, string>
   validate: boolean
   lint: {
-    utilityConflicts: DiagnosticSeveritySetting
+    cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
     invalidVariant: DiagnosticSeveritySetting

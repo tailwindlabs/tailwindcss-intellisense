@@ -2,7 +2,7 @@ import { TextDocument } from 'vscode-languageserver'
 import { State } from '../../util/state'
 import { getDocumentSettings } from '../../util/getDocumentSettings'
 import { DiagnosticKind, AugmentedDiagnostic } from './types'
-import { getUtilityConflictDiagnostics } from './getUtilityConflictDiagnostics'
+import { getCssConflictDiagnostics } from './getCssConflictDiagnostics'
 import { getInvalidApplyDiagnostics } from './getInvalidApplyDiagnostics'
 import { getInvalidScreenDiagnostics } from './getInvalidScreenDiagnostics'
 import { getInvalidVariantDiagnostics } from './getInvalidVariantDiagnostics'
@@ -13,7 +13,7 @@ export async function getDiagnostics(
   state: State,
   document: TextDocument,
   only: DiagnosticKind[] = [
-    DiagnosticKind.UtilityConflicts,
+    DiagnosticKind.CssConflict,
     DiagnosticKind.InvalidApply,
     DiagnosticKind.InvalidScreen,
     DiagnosticKind.InvalidVariant,
@@ -25,8 +25,8 @@ export async function getDiagnostics(
 
   return settings.validate
     ? [
-        ...(only.includes(DiagnosticKind.UtilityConflicts)
-          ? getUtilityConflictDiagnostics(state, document, settings)
+        ...(only.includes(DiagnosticKind.CssConflict)
+          ? getCssConflictDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidApply)
           ? getInvalidApplyDiagnostics(state, document, settings)
