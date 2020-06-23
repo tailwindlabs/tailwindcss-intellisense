@@ -5,15 +5,15 @@
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
-  "version": "0.4.0",
-  "homepage": "https://github.com/bradlc/vscode-tailwindcss",
+  "version": "0.3.1",
+  "homepage": "https://github.com/tailwindcss/intellisense",
   "bugs": {
-    "url": "https://github.com/bradlc/vscode-tailwindcss/issues",
+    "url": "https://github.com/tailwindcss/intellisense/issues",
     "email": "hello@bradley.dev"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bradlc/vscode-tailwindcss.git"
+    "url": "https://github.com/tailwindcss/intellisense.git"
   },
   "publisher": "bradlc",
   "keywords": [
@@ -28,6 +28,7 @@
     "vscode": "^1.33.0"
   },
   "categories": [
+    "Linters",
     "Other"
   ],
   "galleryBanner": {
