@@ -74,7 +74,7 @@
         "tailwindCSS.validate": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Enable linting",
+          "markdownDescription": "Enable linting. Rules can be configured individually using the `tailwindcss.lint.*` settings",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.cssConflict": {
