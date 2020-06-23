@@ -1,7 +1,7 @@
 {
   "name": "vscode-tailwindcss",
   "displayName": "Tailwind CSS IntelliSense",
-  "description": "Tailwind CSS class name completion",
+  "description": "Tailwind CSS tooling for Visual Studio Code",
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
