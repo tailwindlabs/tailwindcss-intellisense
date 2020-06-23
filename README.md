@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/intellisense-banner.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/banner-dark.png" alt="" />
 
 Tailwind CSS IntelliSense enhances the Tailwind development experience by providing Visual Studio Code users with advanced features such as autocomplete, syntax highlighting, and linting.
 
