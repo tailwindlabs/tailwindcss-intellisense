@@ -141,6 +141,10 @@ export default async function getClassNames(
         postcss,
         browserslist,
       }),
+      modules: {
+        tailwindcss,
+        postcss,
+      },
     }
   }
 

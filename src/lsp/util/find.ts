@@ -5,10 +5,12 @@ import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext, isHtmlDoc, isSvelteDoc, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
 import { isJsContext, isJsDoc } from './js'
+import { flatten } from '../../util/array'
 import {
   getClassAttributeLexer,
   getComputedClassAttributeLexer,
 } from './lexers'
+import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -27,44 +29,63 @@ export function findLast(re: RegExp, str: string): RegExpMatchArray {
   return matches[matches.length - 1]
 }
 
+export function getClassNamesInClassList({
+  classList,
+  range,
+  important,
+}: DocumentClassList): DocumentClassName[] {
+  const parts = classList.split(/(\s+)/)
+  const names: DocumentClassName[] = []
+  let index = 0
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      const start = indexToPosition(classList, index)
+      const end = indexToPosition(classList, index + parts[i].length)
+      names.push({
+        className: parts[i],
+        classList: {
+          classList,
+          range,
+          important,
+        },
+        relativeRange: {
+          start,
+          end,
+        },
+        range: {
+          start: {
+            line: range.start.line + start.line,
+            character:
+              (end.line === 0 ? range.start.character : 0) + start.character,
+          },
+          end: {
+            line: range.start.line + end.line,
+            character:
+              (end.line === 0 ? range.start.character : 0) + end.character,
+          },
+        },
+      })
+    }
+    index += parts[i].length
+  }
+  return names
+}
+
 export function findClassNamesInRange(
   doc: TextDocument,
   range?: Range,
   mode?: 'html' | 'css'
 ): DocumentClassName[] {
   const classLists = findClassListsInRange(doc, range, mode)
-  return [].concat.apply(
-    [],
-    classLists.map(({ classList, range }) => {
-      const parts = classList.split(/(\s+)/)
-      const names: DocumentClassName[] = []
-      let index = 0
-      for (let i = 0; i < parts.length; i++) {
-        if (i % 2 === 0) {
-          const start = indexToPosition(classList, index)
-          const end = indexToPosition(classList, index + parts[i].length)
-          names.push({
-            className: parts[i],
-            range: {
-              start: {
-                line: range.start.line + start.line,
-                character:
-                  (end.line === 0 ? range.start.character : 0) +
-                  start.character,
-              },
-              end: {
-                line: range.start.line + end.line,
-                character:
-                  (end.line === 0 ? range.start.character : 0) + end.character,
-              },
-            },
-          })
-        }
-        index += parts[i].length
-      }
-      return names
-    })
-  )
+  return flatten(classLists.map(getClassNamesInClassList))
+}
+
+export function findClassNamesInDocument(
+  state: State,
+  doc: TextDocument
+): DocumentClassName[] {
+  const classLists = findClassListsInDocument(state, doc)
+  return flatten(classLists.map(getClassNamesInClassList))
 }
 
 export function findClassListsInCssRange(
@@ -72,7 +93,10 @@ export function findClassListsInCssRange(
   range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/(@apply\s+)(?<classList>[^;}]+)[;}]/g, text)
+  const matches = findAll(
+    /(@apply\s+)(?<classList>[^;}]+?)(?<important>\s*!important)?\s*[;}]/g,
+    text
+  )
   const globalStart: Position = range ? range.start : { line: 0, character: 0 }
 
   return matches.map((match) => {
@@ -83,6 +107,7 @@ export function findClassListsInCssRange(
     )
     return {
       classList: match.groups.classList,
+      important: Boolean(match.groups.important),
       range: {
         start: {
           line: globalStart.line + start.line,
@@ -101,7 +126,7 @@ export function findClassListsInCssRange(
 
 export function findClassListsInHtmlRange(
   doc: TextDocument,
-  range: Range
+  range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
   const matches = findAll(/(?:\b|:)class(?:Name)?=['"`{]/g, text)
@@ -180,15 +205,16 @@ export function findClassListsInHtmlRange(
             classList: value.substr(beforeOffset, value.length + afterOffset),
             range: {
               start: {
-                line: range.start.line + start.line,
+                line: (range?.start.line || 0) + start.line,
                 character:
-                  (end.line === 0 ? range.start.character : 0) +
+                  (end.line === 0 ? range?.start.character || 0 : 0) +
                   start.character,
               },
               end: {
-                line: range.start.line + end.line,
+                line: (range?.start.line || 0) + end.line,
                 character:
-                  (end.line === 0 ? range.start.character : 0) + end.character,
+                  (end.line === 0 ? range?.start.character || 0 : 0) +
+                  end.character,
               },
             },
           }
@@ -202,8 +228,8 @@ export function findClassListsInHtmlRange(
 
 export function findClassListsInRange(
   doc: TextDocument,
-  range: Range,
-  mode: 'html' | 'css'
+  range?: Range,
+  mode?: 'html' | 'css'
 ): DocumentClassList[] {
   if (mode === 'css') {
     return findClassListsInCssRange(doc, range)
@@ -219,73 +245,16 @@ export function findClassListsInDocument(
     return findClassListsInCssRange(doc)
   }
 
-  if (isVueDoc(doc)) {
-    let text = doc.getText()
-    let blocks = findAll(
-      /<(?<type>template|style|script)\b[^>]*>.*?(<\/\k<type>>|$)/gis,
-      text
-    )
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    for (let i = 0; i < blocks.length; i++) {
-      let range = {
-        start: indexToPosition(text, blocks[i].index),
-        end: indexToPosition(text, blocks[i].index + blocks[i][0].length),
-      }
-      if (blocks[i].groups.type === 'style') {
-        cssRanges.push(range)
-      } else {
-        htmlRanges.push(range)
-      }
-    }
-    return [].concat.apply(
-      [],
-      [
-        ...htmlRanges.map((range) => findClassListsInHtmlRange(doc, range)),
-        ...cssRanges.map((range) => findClassListsInCssRange(doc, range)),
-      ]
-    )
-  }
+  let boundaries = getLanguageBoundaries(state, doc)
+  if (!boundaries) return []
 
-  if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
-    let text = doc.getText()
-    let styleBlocks = findAll(/<style(?:\s[^>]*>|>).*?(<\/style>|$)/gis, text)
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    let currentIndex = 0
-
-    for (let i = 0; i < styleBlocks.length; i++) {
-      htmlRanges.push({
-        start: indexToPosition(text, currentIndex),
-        end: indexToPosition(text, styleBlocks[i].index),
-      })
-      cssRanges.push({
-        start: indexToPosition(text, styleBlocks[i].index),
-        end: indexToPosition(
-          text,
-          styleBlocks[i].index + styleBlocks[i][0].length
-        ),
-      })
-      currentIndex = styleBlocks[i].index + styleBlocks[i][0].length
-    }
-    htmlRanges.push({
-      start: indexToPosition(text, currentIndex),
-      end: indexToPosition(text, text.length),
-    })
-
-    return [].concat.apply(
-      [],
-      [
-        ...htmlRanges.map((range) => findClassListsInHtmlRange(doc, range)),
-        ...cssRanges.map((range) => findClassListsInCssRange(doc, range)),
-      ]
-    )
-  }
-
-  return []
+  return flatten([
+    ...boundaries.html.map((range) => findClassListsInHtmlRange(doc, range)),
+    ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
+  ])
 }
 
-function indexToPosition(str: string, index: number): Position {
+export function indexToPosition(str: string, index: number): Position {
   const { line, col } = lineColumn(str + '\n', index)
   return { line: line - 1, character: col - 1 }
 }

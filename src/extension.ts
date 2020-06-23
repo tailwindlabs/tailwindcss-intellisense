@@ -11,6 +11,7 @@ import {
   OutputChannel,
   WorkspaceFolder,
   Uri,
+  ConfigurationScope,
 } from 'vscode'
 import {
   LanguageClient,
@@ -22,6 +23,7 @@ import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
 import { dedupe, equal } from './util/array'
 import { createEmitter } from './lib/emitter'
+import { onMessage } from './lsp/notifications'
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
@@ -150,6 +152,9 @@ export function activate(context: ExtensionContext) {
     client.onReady().then(() => {
       let emitter = createEmitter(client)
       registerConfigErrorHandler(emitter)
+      onMessage(client, 'getConfiguration', async (scope) => {
+        return Workspace.getConfiguration('tailwindCSS', scope)
+      })
     })
 
     client.start()

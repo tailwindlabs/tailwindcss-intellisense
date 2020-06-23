@@ -1,10 +1,11 @@
 import { State } from '../util/state'
 import { Hover, TextDocumentPositionParams } from 'vscode-languageserver'
-import { getClassNameParts } from '../util/getClassNameAtPosition'
 import { stringifyCss, stringifyConfigValue } from '../util/stringify'
 const dlv = require('dlv')
 import { isCssContext } from '../util/css'
 import { findClassNameAtPosition } from '../util/find'
+import { validateApply } from '../util/validateApply'
+import { getClassNameParts } from '../util/getClassNameAtPosition'
 
 export function provideHover(
   state: State,
@@ -80,6 +81,13 @@ function provideClassNameHover(
 
   const parts = getClassNameParts(state, className.className)
   if (!parts) return null
+
+  if (isCssContext(state, doc, position)) {
+    let validated = validateApply(state, parts)
+    if (validated === null || validated.isApplyable === false) {
+      return null
+    }
+  }
 
   return {
     contents: {

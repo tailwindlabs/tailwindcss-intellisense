@@ -16,6 +16,8 @@ import {
   Hover,
   TextDocumentPositionParams,
   DidChangeConfigurationNotification,
+  CodeActionParams,
+  CodeAction,
 } from 'vscode-languageserver'
 import getTailwindState from '../class-names/index'
 import { State, Settings, EditorState } from './util/state'
@@ -26,24 +28,43 @@ import {
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
+import {
+  provideDiagnostics,
+  updateAllDiagnostics,
+  clearAllDiagnostics,
+} from './providers/diagnostics/diagnosticsProvider'
+import { createEmitter } from '../lib/emitter'
+import { provideCodeActions } from './providers/codeActions/codeActionProvider'
 
-let state: State = { enabled: false }
 let connection = createConnection(ProposedFeatures.all)
+let state: State = { enabled: false, emitter: createEmitter(connection) }
 let documents = new TextDocuments()
 let workspaceFolder: string | null
 
 const defaultSettings: Settings = {
   emmetCompletions: false,
   includeLanguages: {},
+  validate: true,
+  lint: {
+    cssConflict: 'warning',
+    invalidApply: 'error',
+    invalidScreen: 'error',
+    invalidVariant: 'error',
+    invalidConfigPath: 'error',
+    invalidTailwindDirective: 'error',
+  },
 }
 let globalSettings: Settings = defaultSettings
 let documentSettings: Map<string, Settings> = new Map()
 
 documents.onDidOpen((event) => {
-  getDocumentSettings(state, event.document.uri)
+  getDocumentSettings(state, event.document)
 })
 documents.onDidClose((event) => {
   documentSettings.delete(event.document.uri)
+})
+documents.onDidChangeContent((change) => {
+  provideDiagnostics(state, change.document)
 })
 documents.listen(connection)
 
@@ -64,6 +85,10 @@ connection.onInitialize(
       capabilities: {
         configuration:
           capabilities.workspace && !!capabilities.workspace.configuration,
+        diagnosticRelatedInformation:
+          capabilities.textDocument &&
+          capabilities.textDocument.publishDiagnostics &&
+          capabilities.textDocument.publishDiagnostics.relatedInformation,
       },
     }
 
@@ -73,14 +98,24 @@ connection.onInitialize(
         // @ts-ignore
         onChange: (newState: State): void => {
           if (newState && !newState.error) {
-            state = { ...newState, enabled: true, editor: editorState }
+            state = {
+              ...newState,
+              enabled: true,
+              emitter: state.emitter,
+              editor: editorState,
+            }
             connection.sendNotification('tailwindcss/configUpdated', [
               state.configPath,
               state.config,
               state.plugins,
             ])
+            updateAllDiagnostics(state)
           } else {
-            state = { enabled: false, editor: editorState }
+            state = {
+              enabled: false,
+              emitter: state.emitter,
+              editor: editorState,
+            }
             if (newState && newState.error) {
               const payload: {
                 message: string
@@ -95,6 +130,7 @@ connection.onInitialize(
               }
               connection.sendNotification('tailwindcss/configError', [payload])
             }
+            clearAllDiagnostics(state)
             // TODO
             // connection.sendNotification('tailwindcss/configUpdated', [null])
           }
@@ -103,9 +139,14 @@ connection.onInitialize(
     )
 
     if (tailwindState) {
-      state = { enabled: true, editor: editorState, ...tailwindState }
+      state = {
+        enabled: true,
+        emitter: state.emitter,
+        editor: editorState,
+        ...tailwindState,
+      }
     } else {
-      state = { enabled: false, editor: editorState }
+      state = { enabled: false, emitter: state.emitter, editor: editorState }
     }
 
     return {
@@ -133,6 +174,7 @@ connection.onInitialize(
           ],
         },
         hoverProvider: true,
+        codeActionProvider: true,
       },
     }
   }
@@ -164,9 +206,7 @@ connection.onDidChangeConfiguration((change) => {
     )
   }
 
-  state.editor.documents
-    .all()
-    .forEach((doc) => getDocumentSettings(state, doc.uri))
+  updateAllDiagnostics(state)
 })
 
 connection.onCompletion(
@@ -187,6 +227,13 @@ connection.onHover(
   (params: TextDocumentPositionParams): Hover => {
     if (!state.enabled) return null
     return provideHover(state, params)
+  }
+)
+
+connection.onCodeAction(
+  (params: CodeActionParams): Promise<CodeAction[]> => {
+    if (!state.enabled) return null
+    return provideCodeActions(state, params)
   }
 )
 

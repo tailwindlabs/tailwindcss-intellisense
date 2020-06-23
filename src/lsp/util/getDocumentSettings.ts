@@ -1,19 +1,19 @@
 import { State, Settings } from './state'
+import { TextDocument } from 'vscode-languageserver'
 
 export async function getDocumentSettings(
   state: State,
-  resource: string
+  document: TextDocument
 ): Promise<Settings> {
   if (!state.editor.capabilities.configuration) {
     return Promise.resolve(state.editor.globalSettings)
   }
-  let result = state.editor.documentSettings.get(resource)
+  let result = state.editor.documentSettings.get(document.uri)
   if (!result) {
-    result = await state.editor.connection.workspace.getConfiguration({
-      scopeUri: resource,
-      section: 'tailwindCSS',
+    result = await state.emitter.emit('getConfiguration', {
+      languageId: document.languageId,
     })
-    state.editor.documentSettings.set(resource, result)
+    state.editor.documentSettings.set(document.uri, result)
   }
   return result
 }

@@ -1,60 +1,36 @@
-# Tailwind CSS IntelliSense
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/banner.png" alt="" />
 
-> [Tailwind CSS](https://tailwindcss.com/) class name completion for VS Code
+Tailwind CSS IntelliSense enhances the Tailwind development experience by providing Visual Studio Code users with advanced features such as autocomplete, syntax highlighting, and linting.
 
-**[Get it from the VS Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
+## Installation
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html.gif" alt="HTML autocompletion" width="750">
+**[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-## Requirements
-
-This extension requires:
-- a `tailwind.config.js` file to be [present in your project folder](https://github.com/bradlc/vscode-tailwindcss/blob/master/package.json#L38). You can create it with `npx tailwind init`.
-- `tailwindcss` to be installed (present in project `node_modules/`)
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation/#1-install-tailwind-via-npm) and a [Tailwind config file](https://tailwindcss.com/docs/installation/#3-create-your-tailwind-config-file-optional) named `tailwind.config.js` or `tailwind.js` in your workspace.
 
 ## Features
 
-Tailwind CSS IntelliSense uses your projects Tailwind installation and configuration to provide suggestions as you type.
+### Autocomplete
 
-It also includes features that improve the overall Tailwind experience, including improved syntax highlighting, and CSS previews.
+Intelligent suggestions for class names, as well as [CSS functions and directives](https://tailwindcss.com/docs/functions-and-directives/).
 
-### HTML (including Vue, JSX, PHP etc.)
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
 
-- [Class name suggestions, including support for Emmet syntax](#class-name-suggestions-including-support-for-emmet-syntax)
-  - Suggestions include color previews where applicable, for example for text and background colors
-  - They also include a preview of the actual CSS for that class name
-- [CSS preview when hovering over class names](#css-preview-when-hovering-over-class-names)
+### Linting
 
-### CSS
+Highlights errors and potential bugs in both your CSS and your markup.
 
-- [Suggestions when using `@apply` and config helpers](#suggestions-when-using-apply-and-config)
-- Suggestions when using the `@screen` directive
-- Suggestions when using the `@variants` directive
-- [Improves syntax highlighting when using `@apply` and config helpers](#improves-syntax-highlighting-when-using-apply-and-config-helpers)
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
 
-## Examples
+### Hover Preview
 
-#### Class name suggestions, including support for Emmet syntax
+See the complete CSS for a Tailwind class name by hovering over it.
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html.gif" alt="HTML autocompletion" width="750">
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
 
-#### CSS preview when hovering over class names
+### CSS Syntax Highlighting
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/html-hover.gif" alt="HTML hover preview" width="750">
-
-#### Suggestions when using `@apply` and config helpers
-
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css.gif" alt="CSS autocompletion" width="750">
-
-#### Improves syntax highlighting when using `@apply` and config helpers
-
-Before:
-
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-before.png" alt="CSS syntax highlighting before" width="400">
-
-After:
-
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/img/css-highlighting-after.png" alt="CSS syntax highlighting after" width="400">
+Provides syntax definitions so that Tailwind features are highlighted correctly.
 
 ## Settings
 
@@ -70,7 +46,7 @@ This setting allows you to add additional language support. The key of each entr
 }
 ```
 
-### `tailwindcss.emmetCompletions`
+### `tailwindCSS.emmetCompletions`
 
 Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. **Default: `false`**
 
@@ -79,3 +55,43 @@ Enable completions when using [Emmet](https://emmet.io/)-style syntax, for examp
   "tailwindCSS.emmetCompletions": true
 }
 ```
+
+### `tailwindCSS.validate`
+
+Enable linting. Rules can be configured individually using the `tailwindcss.lint` settings:
+
+- `ignore`: disable lint rule entirely
+- `warning`: rule violations will be considered "warnings," typically represented by a yellow underline
+- `error`: rule violations will be considered "errors," typically represented by a red underline
+
+#### `tailwindCSS.lint.invalidScreen`
+
+Unknown screen name used with the [`@screen` directive](https://tailwindcss.com/docs/functions-and-directives/#screen). **Default: `error`**
+
+#### `tailwindCSS.lint.invalidVariant`
+
+Unknown variant name used with the [`@variants` directive](https://tailwindcss.com/docs/functions-and-directives/#variants). **Default: `error`**
+
+#### `tailwindCSS.lint.invalidTailwindDirective`
+
+Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs/functions-and-directives/#tailwind). **Default: `error`**
+
+#### `tailwindCSS.lint.invalidApply`
+
+Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functions-and-directives/#apply). **Default: `error`**
+
+#### `tailwindCSS.lint.invalidConfigPath`
+
+Unknown or invalid path used with the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme). **Default: `error`**
+
+#### `tailwindCSS.lint.cssConflict`
+
+Class names on the same HTML element which apply the same CSS property or properties. **Default: `warning`**
+
+## Troubleshooting
+
+If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
+
+- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.js` or `tailwind.js`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation/#3-create-your-tailwind-config-file-optional).
+- Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`. Tailwind CSS IntelliSense does not currently support Yarn Plug'n'Play.
+- If you installed `tailwindcss` or created your config file while your project was already open in Visual Studio Code you may need to reload the editor. You can either restart VS Code entirely, or use the `Developer: Reload Window` command which can be found in the command palette.
