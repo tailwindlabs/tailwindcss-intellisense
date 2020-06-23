@@ -8,23 +8,27 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 ## Features
 
-- **Autocomplete**  
-  Intelligent suggestions for class names, [CSS directives](https://tailwindcss.com/docs/functions-and-directives/), and [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme).
+### Autocomplete
 
-  <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
+Intelligent suggestions for class names, as well as [CSS functions and directives](https://tailwindcss.com/docs/functions-and-directives/).
 
-- **Linting**  
-  Highlights errors and potential bugs in both your CSS and your markup.
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
 
-  <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
+### Linting
 
-- **Hover Preview**  
-  See the complete CSS for a Tailwind class name by hovering over it.
+Highlights errors and potential bugs in both your CSS and your markup.
 
-  <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
 
-- **CSS Syntax Highlighting**  
-  Provides syntax definitions so that Tailwind features are highlighted correctly.
+### Hover Preview
+
+See the complete CSS for a Tailwind class name by hovering over it.
+
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
+
+### CSS Syntax Highlighting
+
+Provides syntax definitions so that Tailwind features are highlighted correctly.
 
 ## Settings
 
