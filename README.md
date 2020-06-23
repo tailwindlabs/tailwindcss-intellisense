@@ -8,25 +8,23 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 ## Features
 
-- **Autocomplete**
-  Intelligent suggestions for class names, [CSS directives](https://tailwindcss.com/docs/functions-and-directives/), and the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme)
+- **Autocomplete**  
+  Intelligent suggestions for class names, [CSS directives](https://tailwindcss.com/docs/functions-and-directives/), and [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme).
 
   <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
 
-- **Hover Preview**
-  See the complete CSS for a Tailwind class name by hovering over it
-
-  <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
-
-- **Linting**
-  Highlights errors and potential bugs in your HTML and CSS files
+- **Linting**  
+  Highlights errors and potential bugs in both your CSS and your markup.
 
   <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
 
-- **CSS Syntax Highlighting**
-  Provides syntax definitions so that use of Tailwind features doesn’t mess up your syntax highlighting
+- **Hover Preview**  
+  See the complete CSS for a Tailwind class name by hovering over it.
 
-## Troubleshooting
+  <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
+
+- **CSS Syntax Highlighting**  
+  Provides syntax definitions so that Tailwind features are highlighted correctly.
 
 ## Settings
 
