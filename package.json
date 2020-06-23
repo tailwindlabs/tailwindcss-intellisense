@@ -73,7 +73,7 @@
         "tailwindCSS.validate": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "",
+          "markdownDescription": "Enable linting",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.utilityConflicts": {
@@ -84,7 +84,7 @@
             "error"
           ],
           "default": "warning",
-          "markdownDescription": "",
+          "markdownDescription": "Class names on the same HTML element which apply the same CSS property or properties",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.invalidApply": {
@@ -95,7 +95,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
+          "markdownDescription": "Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functions-and-directives/#apply)",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.invalidScreen": {
@@ -106,7 +106,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
+          "markdownDescription": "Unknown screen name used with the [`@screen` directive](https://tailwindcss.com/docs/functions-and-directives/#screen)",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.invalidVariant": {
@@ -117,7 +117,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
+          "markdownDescription": "Unknown variant name used with the [`@variants` directive](https://tailwindcss.com/docs/functions-and-directives/#variants)",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.invalidConfigPath": {
@@ -128,7 +128,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
+          "markdownDescription": "Unknown or invalid path used with the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme)",
           "scope": "language-overridable"
         },
         "tailwindCSS.lint.invalidTailwindDirective": {
@@ -139,7 +139,7 @@
             "error"
           ],
           "default": "error",
-          "markdownDescription": "",
+          "markdownDescription": "Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs/functions-and-directives/#tailwind)",
           "scope": "language-overridable"
         }
       }
