@@ -82,6 +82,6 @@ Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functio
 
 Unknown or invalid path used with the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme). **Default: `error`**
 
-#### `tailwindCSS.lint.cssPropertyConflict`
+#### `tailwindCSS.lint.cssConflict`
 
 Class names on the same HTML element which apply the same CSS property or properties. **Default: `warning`**
