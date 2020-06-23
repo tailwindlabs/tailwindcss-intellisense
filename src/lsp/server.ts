@@ -64,6 +64,7 @@ documents.onDidClose((event) => {
   documentSettings.delete(event.document.uri)
 })
 documents.onDidChangeContent((change) => {
+  if (!state.enabled) return
   provideDiagnostics(state, change.document)
 })
 documents.listen(connection)
