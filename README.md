@@ -8,22 +8,22 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 ## Features
 
-- **Autocomplete**  
+- **Autocomplete**
   Intelligent suggestions for class names, [CSS directives](https://tailwindcss.com/docs/functions-and-directives/), and the [`theme` helper](https://tailwindcss.com/docs/functions-and-directives/#theme)
 
   <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/autocomplete.png" alt="" />
 
-- **Hover Preview**  
+- **Hover Preview**
   See the complete CSS for a Tailwind class name by hovering over it
 
   <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/hover.png" alt="" />
 
-- **Linting**  
+- **Linting**
   Highlights errors and potential bugs in your HTML and CSS files
 
   <img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/diagnostics/.github/linting.png" alt="" />
 
-- **CSS Syntax Highlighting**  
+- **CSS Syntax Highlighting**
   Provides syntax definitions so that use of Tailwind features doesn’t mess up your syntax highlighting
 
 ## Troubleshooting
@@ -74,7 +74,7 @@ Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs
 
 #### `tailwindCSS.lint.invalidApply`
 
-Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functions-and-directives/#apply). For example class names which contain pseudo selectors cannot currently be used with `@apply`. **Default: `error`**
+Unsupported use of the [`@apply` directive](https://tailwindcss.com/docs/functions-and-directives/#apply). **Default: `error`**
 
 #### `tailwindCSS.lint.invalidConfigPath`
 
