@@ -12,6 +12,7 @@ import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
 import * as path from 'path'
+import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
@@ -79,7 +80,7 @@ export default async function getClassNames(
       : ['options', 'separator']
     let userSeperator
     let userPurge
-    let hook = Hook(configPath, (exports) => {
+    let hook = Hook(fs.realpathSync(configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
       userPurge = exports.purge
       dset(exports, sepLocation, '__TAILWIND_SEPARATOR__')
