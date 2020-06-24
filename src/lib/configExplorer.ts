@@ -152,7 +152,6 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
       `swatches/${crypto.createHash('sha1').update(color).digest('hex')}.svg`
     )
     if (await fileExists(fullPath)) {
-      console.log('exists')
       return fullPath
     }
     await writeFile(
