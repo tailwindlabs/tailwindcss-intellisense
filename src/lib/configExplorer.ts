@@ -156,7 +156,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     }
     await writeFile(
       fullPath,
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><rect x="3.45" y="3.45" width="9.1" height="9.1" fill="${color}" /><rect x="2.8" y="2.8" width="10.4" height="10.4" fill="none" stroke="black" stroke-width="1.3" /></svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="2" width="12" height="12" stroke="black" stroke-width="1" fill="${color}" /></svg>`,
       'utf8'
     )
     return fullPath
