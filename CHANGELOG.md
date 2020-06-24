@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Fixed `cssConflict` lint rule when classes apply the same properties but have different scopes (#134)
+- Fixed JS error when providing diagnostics in the case that IntelliSense is not enabled (#133)
+- Fixed config finder incorrectly determining that no config file can be found (#130)
+
 ## 0.4.0
 
 - Added linting and quick fixes for both CSS and markup
