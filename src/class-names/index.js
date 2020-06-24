@@ -12,8 +12,9 @@ import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
 import * as path from 'path'
-import { globSingle } from './globSingle'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
+import glob from 'fast-glob'
+import normalizePath from 'normalize-path'
 
 function TailwindConfigError(error) {
   Error.call(this)
@@ -41,20 +42,25 @@ export default async function getClassNames(
   { onChange = () => {} } = {}
 ) {
   async function run() {
-    let configPath
     let postcss
     let tailwindcss
     let browserslistModule
     let version
 
-    configPath = await globSingle(CONFIG_GLOB, {
-      cwd,
-      filesOnly: true,
-      absolute: true,
-      flush: true,
-    })
-    invariant(configPath.length === 1, 'No Tailwind CSS config found.')
-    configPath = configPath[0]
+    const configPaths = (
+      await glob(CONFIG_GLOB, {
+        cwd,
+        ignore: ['**/node_modules'],
+        onlyFiles: true,
+        absolute: true,
+      })
+    )
+      .map(normalizePath)
+      .sort((a, b) => a.split('/').length - b.split('/').length)
+      .map(path.normalize)
+
+    invariant(configPaths.length > 0, 'No Tailwind CSS config found.')
+    const configPath = configPaths[0]
     const configDir = path.dirname(configPath)
     const tailwindBase = path.dirname(
       resolveFrom(configDir, 'tailwindcss/package.json')
