@@ -2,6 +2,7 @@ import extractClassNames from './extractClassNames'
 import Hook from './hook'
 import dlv from 'dlv'
 import dset from 'dset'
+import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 import chokidar from 'chokidar'
 import semver from 'semver'
@@ -11,8 +12,10 @@ import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as util from 'util'
 import * as path from 'path'
-import { globSingle } from './globSingle'
+import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
+import glob from 'fast-glob'
+import normalizePath from 'normalize-path'
 
 function TailwindConfigError(error) {
   Error.call(this)
@@ -40,37 +43,48 @@ export default async function getClassNames(
   { onChange = () => {} } = {}
 ) {
   async function run() {
-    let configPath
     let postcss
     let tailwindcss
     let browserslistModule
     let version
 
-    configPath = await globSingle(CONFIG_GLOB, {
-      cwd,
-      filesOnly: true,
-      absolute: true,
-      flush: true,
-    })
-    invariant(configPath.length === 1, 'No Tailwind CSS config found.')
-    configPath = configPath[0]
+    const configPaths = (
+      await glob(CONFIG_GLOB, {
+        cwd,
+        ignore: ['**/node_modules'],
+        onlyFiles: true,
+        absolute: true,
+      })
+    )
+      .map(normalizePath)
+      .sort((a, b) => a.split('/').length - b.split('/').length)
+      .map(path.normalize)
+
+    invariant(configPaths.length > 0, 'No Tailwind CSS config found.')
+    const configPath = configPaths[0]
     const configDir = path.dirname(configPath)
-    postcss = importFrom(configDir, 'postcss')
+    const tailwindBase = path.dirname(
+      resolveFrom(configDir, 'tailwindcss/package.json')
+    )
+    postcss = importFrom(tailwindBase, 'postcss')
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
 
     try {
       // this is not required
-      browserslistModule = importFrom(configDir, 'browserslist')
+      browserslistModule = importFrom(tailwindBase, 'browserslist')
     } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
     let userSeperator
-    let hook = Hook(configPath, (exports) => {
+    let userPurge
+    let hook = Hook(fs.realpathSync(configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
+      userPurge = exports.purge
       dset(exports, sepLocation, '__TAILWIND_SEPARATOR__')
+      exports.purge = {}
       return exports
     })
 
@@ -102,6 +116,11 @@ export default async function getClassNames(
     } else {
       delete config[sepLocation]
     }
+    if (typeof userPurge !== 'undefined') {
+      config.purge = userPurge
+    } else {
+      delete config.purge
+    }
 
     const resolvedConfig = resolveConfig({ cwd: configDir, config })
     const browserslist = browserslistModule
@@ -129,6 +148,10 @@ export default async function getClassNames(
         postcss,
         browserslist,
       }),
+      modules: {
+        tailwindcss,
+        postcss,
+      },
     }
   }
 

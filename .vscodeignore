@@ -7,3 +7,5 @@
 contributing.md
 node_modules/**
 src/**
+tests/**
+.github/**

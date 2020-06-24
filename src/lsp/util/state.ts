@@ -1,4 +1,5 @@
 import { TextDocuments, Connection, Range } from 'vscode-languageserver'
+import { NotificationEmitter } from '../../lib/emitter'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -21,19 +22,36 @@ export type EditorState = {
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
+    diagnosticRelatedInformation: boolean
   }
 }
+
+type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
 
 export type Settings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
+  validate: boolean
+  lint: {
+    cssConflict: DiagnosticSeveritySetting
+    invalidApply: DiagnosticSeveritySetting
+    invalidScreen: DiagnosticSeveritySetting
+    invalidVariant: DiagnosticSeveritySetting
+    invalidConfigPath: DiagnosticSeveritySetting
+    invalidTailwindDirective: DiagnosticSeveritySetting
+  }
 }
 
 export type State = null | {
   enabled: boolean
+  emitter: NotificationEmitter
   version?: string
   configPath?: string
   config?: any
+  modules?: {
+    tailwindcss: any
+    postcss: any
+  }
   separator?: string
   plugins?: any[]
   variants?: string[]
@@ -46,9 +64,19 @@ export type State = null | {
 export type DocumentClassList = {
   classList: string
   range: Range
+  important?: boolean
 }
 
 export type DocumentClassName = {
   className: string
   range: Range
+  relativeRange: Range
+  classList: DocumentClassList
+}
+
+export type ClassNameMeta = {
+  source: 'base' | 'components' | 'utilities'
+  pseudo: string[]
+  scope: string[]
+  context: string[]
 }

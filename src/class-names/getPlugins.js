@@ -2,12 +2,17 @@ import * as path from 'path'
 import stackTrace from 'stack-trace'
 import pkgUp from 'pkg-up'
 import { isObject } from './isObject'
+import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 
 export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
+  const tailwindBase = path.dirname(
+    resolveFrom(cwd, 'tailwindcss/package.json')
+  )
+
   try {
     // TODO: add v0 support ("generators")
-    return importFrom(cwd, 'tailwindcss/lib/corePlugins.js').default({
+    return importFrom(tailwindBase, './lib/corePlugins.js').default({
       corePlugins: resolvedConfig.corePlugins,
     })
   } catch (_) {

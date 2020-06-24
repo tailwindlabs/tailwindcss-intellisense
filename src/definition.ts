@@ -1,3 +1,4 @@
+import { dirname } from 'path'
 import { parse } from '@babel/parser'
 require('@babel/register').default({
   plugins: [plugin],
@@ -49,6 +50,7 @@ process.on('message', ([configPath, requestedKey]: [string, string[]]) => {
   try {
     // @ts-ignore
     config = resolveConfig({
+      cwd: dirname(configPath),
       config: configPath,
     })
   } catch (_) {

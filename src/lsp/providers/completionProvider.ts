@@ -126,7 +126,7 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(/[\s:]class(?:Name)?=['"`{]/gi, str)
+  const match = findLast(/(?:\b|:)class(?:Name)?=['"`{]/gi, str)
 
   if (match === null) {
     return null
@@ -200,8 +200,8 @@ function provideAtApplyCompletions(
       return (
         !Array.isArray(info) &&
         info.__source === 'utilities' &&
-        (info.__context || []).length === 0 &&
-        (info.__pseudo || []).length === 0
+        info.__context.length === 0 &&
+        info.__pseudo.length === 0
       )
     }
   )
@@ -618,10 +618,10 @@ async function provideEmmetCompletions(
   state: State,
   { position, textDocument }: CompletionParams
 ): Promise<CompletionList> {
-  let settings = await getDocumentSettings(state, textDocument.uri)
-  if (settings.emmetCompletions !== true) return null
-
   let doc = state.editor.documents.get(textDocument.uri)
+
+  let settings = await getDocumentSettings(state, doc)
+  if (settings.emmetCompletions !== true) return null
 
   const syntax = isHtmlContext(state, doc, position)
     ? 'html'
