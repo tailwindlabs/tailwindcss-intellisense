@@ -133,7 +133,7 @@ export function findClassListsInHtmlRange(
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
-    const subtext = text.substr(match.index + match[0].length - 1, 200)
+    const subtext = text.substr(match.index + match[0].length - 1)
 
     let lexer =
       match[0][0] === ':'
