@@ -35,6 +35,7 @@ import {
 } from './providers/diagnostics/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
 import { provideCodeActions } from './providers/codeActions/codeActionProvider'
+import { registerDocumentColorProvider } from './providers/documentColorProvider'
 
 let connection = createConnection(ProposedFeatures.all)
 let state: State = { enabled: false, emitter: createEmitter(connection) }
@@ -195,6 +196,8 @@ connection.onInitialized &&
       state.config,
       state.plugins,
     ])
+
+    registerDocumentColorProvider(state)
   })
 
 connection.onDidChangeConfiguration((change) => {
