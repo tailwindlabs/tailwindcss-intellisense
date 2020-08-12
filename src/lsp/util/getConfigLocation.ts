@@ -1,6 +1,5 @@
 import { State } from './state'
 import * as childProcess from 'child_process'
-import * as path from 'path'
 import { Range } from 'vscode-languageserver'
 
 let fork: childProcess.ChildProcess
@@ -10,10 +9,7 @@ export default function getConfigLocation(
   key: string[]
 ): Promise<ConfigLocation> {
   if (!fork) {
-    fork = childProcess.fork(
-      path.resolve(__dirname, '../definition/index.js'),
-      []
-    )
+    fork = childProcess.fork(__filename, ['--definition'])
   }
 
   return new Promise((resolve, reject) => {

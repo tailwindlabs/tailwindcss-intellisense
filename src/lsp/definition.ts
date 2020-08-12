@@ -43,7 +43,7 @@ const extendFn = parse(`
 `).program.body[0]
 
 const dlv = require('dlv')
-import { resolveConfig } from './class-names/index'
+import { resolveConfig } from '../class-names/index'
 
 process.on('message', ([configPath, requestedKey]: [string, string[]]) => {
   let config
