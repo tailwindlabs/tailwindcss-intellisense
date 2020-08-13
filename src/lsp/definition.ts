@@ -1,8 +1,10 @@
 import { dirname } from 'path'
 import { resolveConfig } from '../class-names/index'
 const dlv = require('dlv')
+import * as crypto from 'crypto'
 import * as BabelTypes from '@babel/types'
 import { Visitor, NodePath } from '@babel/traverse'
+import isObject from '../util/isObject'
 require('@babel/register').default({
   plugins: [plugin],
   cache: false,
@@ -37,24 +39,29 @@ process.on('message', ([configPath, key]: [string, string[]]) => {
     return process.send({ key })
   }
 
-  let location = dlv(config, [
-    ...key.slice(0, key.length - 1),
-    LOCATION_PROP,
-    key[key.length - 1],
-  ])
+  let parent = dlv(config, key.slice(0, key.length - 1))
 
-  if (Array.isArray(location)) {
-    process.send({
-      key,
-      file: location[0],
-      range: {
-        start: { line: location[1], character: location[2] },
-        end: { line: location[3], character: location[4] },
-      },
-    })
-  } else {
-    process.send({ key })
+  if (isObject(parent)) {
+    let location: [string, number, number, number, number]
+    for (let k in parent) {
+      if (k.startsWith(LOCATION_PROP) && parent[k][key[key.length - 1]]) {
+        location = parent[k][key[key.length - 1]]
+      }
+    }
+    if (location) {
+      process.send({
+        key,
+        file: location[0],
+        range: {
+          start: { line: location[1], character: location[2] },
+          end: { line: location[3], character: location[4] },
+        },
+      })
+      return
+    }
   }
+
+  process.send({ key })
 })
 
 function isObjectPropertyPath(
@@ -73,7 +80,7 @@ function plugin({
     ObjectExpression(path, state) {
       if (
         isObjectPropertyPath(path.parentPath, t) &&
-        path.parentPath.node.key.name === LOCATION_PROP
+        path.parentPath.node.key.name.startsWith(LOCATION_PROP)
       ) {
         return
       }
@@ -97,7 +104,10 @@ function plugin({
       if (props.length === 0) return
       path.unshiftContainer(
         'properties',
-        t.objectProperty(t.identifier(LOCATION_PROP), t.objectExpression(props))
+        t.objectProperty(
+          t.identifier(LOCATION_PROP + crypto.randomBytes(16).toString('hex')),
+          t.objectExpression(props)
+        )
       )
     },
   }
