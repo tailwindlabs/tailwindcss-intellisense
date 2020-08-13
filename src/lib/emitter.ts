@@ -4,9 +4,9 @@ import crypto from 'crypto'
 import { Connection } from 'vscode-languageserver'
 
 export interface NotificationEmitter {
-  on: (name: string, handler: (args: any) => void) => void
-  off: (name: string, handler: (args: any) => void) => void
-  emit: (name: string, args: any) => Promise<any>
+  on: (name: string, handler: (args: Record<string, any>) => void) => void
+  off: (name: string, handler: (args: Record<string, any>) => void) => void
+  emit: (name: string, args: Record<string, any>) => Promise<any>
 }
 
 export function createEmitter(
@@ -15,7 +15,7 @@ export function createEmitter(
   const emitter = mitt()
   const registered: string[] = []
 
-  const on = (name: string, handler: (args: any) => void) => {
+  const on = (name: string, handler: (args: Record<string, any>) => void) => {
     if (!registered.includes(name)) {
       registered.push(name)
       client.onNotification(`tailwindcss/${name}`, (args) =>
@@ -25,7 +25,7 @@ export function createEmitter(
     emitter.on(name, handler)
   }
 
-  const off = (name: string, handler: (args: any) => void) => {
+  const off = (name: string, handler: (args: Record<string, any>) => void) => {
     emitter.off(name, handler)
   }
 

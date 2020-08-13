@@ -183,8 +183,8 @@
         "icon": "$(book)"
       },
       {
-        "command": "tailwindcss.jumpToConfig",
-        "title": "Jump to config"
+        "command": "tailwindcss.revealConfig",
+        "title": "Reveal config"
       }
     ]
   },
@@ -222,7 +222,6 @@
     "jest": "^25.5.4",
     "line-column": "^1.0.2",
     "mitt": "^1.2.0",
-    "mkdirp": "^1.0.3",
     "moo": "^0.5.1",
     "normalize-path": "^3.0.0",
     "pkg-up": "^3.1.0",

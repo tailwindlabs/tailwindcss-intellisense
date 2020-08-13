@@ -27,7 +27,7 @@ interface PluginOptions {
   }
 }
 
-process.on('message', ([configPath, key]: [string, string[]]) => {
+process.on('message', ([id, configPath, key]: [number, string, string[]]) => {
   let config
   try {
     // @ts-ignore
@@ -36,7 +36,7 @@ process.on('message', ([configPath, key]: [string, string[]]) => {
       config: configPath,
     })
   } catch (_) {
-    return process.send({ key })
+    return process.send({ id, error: 'Couldn’t find definition' })
   }
 
   let parent = dlv(config, key.slice(0, key.length - 1))
@@ -50,6 +50,7 @@ process.on('message', ([configPath, key]: [string, string[]]) => {
     }
     if (location) {
       process.send({
+        id,
         key,
         file: location[0],
         range: {
@@ -61,7 +62,7 @@ process.on('message', ([configPath, key]: [string, string[]]) => {
     }
   }
 
-  process.send({ key })
+  process.send({ id, error: 'Couldn’t find definition' })
 })
 
 function isObjectPropertyPath(

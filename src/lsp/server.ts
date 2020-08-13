@@ -36,6 +36,7 @@ import {
 } from './providers/diagnostics/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
 import { provideCodeActions } from './providers/codeActions/codeActionProvider'
+import { onMessage } from './notifications'
 
 let connection = createConnection(ProposedFeatures.all)
 let state: State = { enabled: false, emitter: createEmitter(connection) }
@@ -107,9 +108,11 @@ connection.onInitialize(
               editor: editorState,
             }
             connection.sendNotification('tailwindcss/configUpdated', [
-              state.configPath,
-              state.config,
-              state.plugins,
+              {
+                configPath: state.configPath,
+                config: state.config,
+                plugins: state.plugins,
+              },
             ])
             updateAllDiagnostics(state)
           } else {
@@ -192,18 +195,19 @@ connection.onInitialized &&
     }
 
     connection.sendNotification('tailwindcss/configUpdated', [
-      state.configPath,
-      state.config,
-      state.plugins,
+      {
+        configPath: state.configPath,
+        config: state.config,
+        plugins: state.plugins,
+      },
     ])
 
-    connection.onNotification('tailwindcss/findDefinition', async (key) => {
-      // TODO: handle errors
-      let location = await getConfigLocation(state, key)
-      connection.sendNotification('tailwindcss/foundDefinition', [
-        key,
-        location,
-      ])
+    onMessage(connection, 'findDefinition', async ({ key }) => {
+      try {
+        return getConfigLocation(state, key)
+      } catch (error) {
+        return { error }
+      }
     })
   })
 

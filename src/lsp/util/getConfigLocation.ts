@@ -3,6 +3,7 @@ import * as childProcess from 'child_process'
 import { Range } from 'vscode-languageserver'
 
 let fork: childProcess.ChildProcess
+let id = 0
 
 export default function getConfigLocation(
   state: State,
@@ -12,24 +13,29 @@ export default function getConfigLocation(
     fork = childProcess.fork(__filename, ['--definition'])
   }
 
+  let msgId = id++
+
   return new Promise((resolve, reject) => {
     function callback(msg: ConfigLocation) {
-      if (JSON.stringify(msg.key) !== JSON.stringify(key)) return
-      fork.off('message', callback)
-      if (msg.file) {
-        resolve(msg)
-      } else {
-        reject()
+      if (msg.id !== msgId) return
+      if ('error' in msg) {
+        fork.off('message', callback)
+        return reject(msg.error)
       }
+      fork.off('message', callback)
+      resolve(msg)
     }
 
     fork.on('message', callback)
-    fork.send([state.configPath, key])
+    fork.send([msgId, state.configPath, key])
   })
 }
 
-export type ConfigLocation = {
-  key: string[]
-  file: string
-  range: Range
-}
+export type ConfigLocation =
+  | {
+      id: number
+      key: string[]
+      file: string
+      range: Range
+    }
+  | { id: number; error: string }

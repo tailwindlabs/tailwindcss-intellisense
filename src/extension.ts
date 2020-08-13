@@ -151,8 +151,8 @@ export function activate(context: ExtensionContext) {
     )
 
     client.onReady().then(() => {
-      registerConfigExplorer({ client, context })
       let emitter = createEmitter(client)
+      registerConfigExplorer({ context, emitter })
       registerConfigErrorHandler(emitter)
       onMessage(client, 'getConfiguration', async (scope) => {
         return Workspace.getConfiguration('tailwindCSS', scope)

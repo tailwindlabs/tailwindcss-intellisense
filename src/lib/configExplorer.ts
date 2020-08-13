@@ -14,17 +14,14 @@ import {
   Position,
 } from 'vscode'
 const dlv = require('dlv')
-const mkdirp = require('mkdirp')
 import * as path from 'path'
 import * as fs from 'fs'
 import * as util from 'util'
 import * as crypto from 'crypto'
 import { getColorFromValue } from '../lsp/util/color'
 import isObject from '../util/isObject'
-import { LanguageClient } from 'vscode-languageclient'
-import mitt from 'mitt'
+import { NotificationEmitter } from './emitter'
 
-const writeFile = util.promisify(fs.writeFile)
 const fileExists = util.promisify(fs.exists)
 
 // TODO
@@ -144,9 +141,10 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     this.config = config
     this.plugins = plugins
   }
+
   private async createColorIcon(color: string) {
     const folder = path.resolve(this.context.storagePath, 'swatches')
-    await mkdirp(folder)
+    await fs.promises.mkdir(folder, { recursive: true })
     const fullPath = path.resolve(
       this.context.storagePath,
       `swatches/${crypto.createHash('sha1').update(color).digest('hex')}.svg`
@@ -154,13 +152,14 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     if (await fileExists(fullPath)) {
       return fullPath
     }
-    await writeFile(
+    await fs.promises.writeFile(
       fullPath,
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><rect x="2" y="2" width="12" height="12" stroke="black" stroke-width="1" fill="${color}" /></svg>`,
       'utf8'
     )
     return fullPath
   }
+
   public refresh({ path, context, config, plugins }: DataProviderParams): void {
     if (path) this.path = path
     if (context) this.context = context
@@ -168,14 +167,23 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     if (plugins) this.plugins = plugins
     this._onDidChangeTreeData.fire()
   }
+
+  public clear(): void {
+    this.config = null
+    this._onDidChangeTreeData.fire()
+  }
+
   getTreeItem(element: ConfigItem): ConfigItem {
     return element
   }
   async getChildren(element: ConfigItem): Promise<ConfigItem[]> {
+    if (!this.config) return []
+
     let command = {
-      command: 'tailwindcss.jumpToConfig',
-      title: 'Jump to config',
+      command: 'tailwindcss.revealConfig',
+      title: 'Reveal config',
     }
+
     if (element) {
       if (element.key.length === 1 && element.key[0] === 'plugins') {
         return this.plugins.map((plugin, i) => ({
@@ -188,35 +196,33 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
       }
 
       let item = dlv(this.config, element.key)
-      let children = Object.keys(item).map((key) => {
-        let isExpandable = isObject(item[key])
-        let child = new ConfigItem({
-          label: key,
-          key: element.key.concat(key),
-          collapsibleState: isExpandable
-            ? TreeItemCollapsibleState.Collapsed
-            : TreeItemCollapsibleState.None,
-          description: isExpandable
-            ? undefined
-            : configValueToString(item[key]),
-          command: isExpandable
-            ? undefined
-            : { ...command, arguments: [element.key.concat(key)] },
-          contextValue: getDocsUrl(element.key.concat(key), this.plugins)
-            ? 'documented'
-            : undefined,
-        })
-
-        if (getColorFromValue(item[key])) {
-          return this.createColorIcon(item[key].trim()).then((iconPath) => {
-            child.iconPath = iconPath
-            return child
+      return Promise.all(
+        Object.keys(item).map(async (key) => {
+          let isExpandable = isObject(item[key])
+          let child = new ConfigItem({
+            label: key,
+            key: element.key.concat(key),
+            collapsibleState: isExpandable
+              ? TreeItemCollapsibleState.Collapsed
+              : TreeItemCollapsibleState.None,
+            description: isExpandable
+              ? undefined
+              : configValueToString(item[key]),
+            command: isExpandable
+              ? undefined
+              : { ...command, arguments: [element.key.concat(key)] },
+            contextValue: getDocsUrl(element.key.concat(key), this.plugins)
+              ? 'documented'
+              : undefined,
           })
-        }
 
-        return child
-      })
-      return Promise.all(children)
+          if (getColorFromValue(item[key])) {
+            child.iconPath = await this.createColorIcon(item[key].trim())
+          }
+
+          return child
+        })
+      )
     }
 
     return Object.keys(this.config).map((key) => {
@@ -240,17 +246,25 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   }
 }
 
+interface ConfigExplorerInterface {
+  clear: (message?: string) => void
+  refresh: (params: DataProviderParams) => void
+}
+
 export function createConfigExplorer({
   path,
   context,
   config,
   plugins,
-}: DataProviderParams): (params: DataProviderParams) => void {
+}: DataProviderParams): ConfigExplorerInterface {
   let provider = new TailwindDataProvider({ path, context, config, plugins })
 
-  commands.registerCommand('tailwindcss.openConfigFile', async () => {
-    window.showTextDocument(await workspace.openTextDocument(path))
-  })
+  let openConfigCommand = commands.registerCommand(
+    'tailwindcss.openConfigFile',
+    async () => {
+      window.showTextDocument(await workspace.openTextDocument(path))
+    }
+  )
 
   commands.registerCommand('tailwindcss.openDocs', (item: ConfigItem) => {
     commands.executeCommand(
@@ -259,7 +273,7 @@ export function createConfigExplorer({
     )
   })
 
-  window.createTreeView('tailwindcssConfigExplorer', {
+  let treeView = window.createTreeView('tailwindcssConfigExplorer', {
     treeDataProvider: provider,
     showCollapseAll: true,
   })
@@ -270,43 +284,57 @@ export function createConfigExplorer({
     true
   )
 
-  return ({ path, context, config, plugins }) =>
-    provider.refresh({ path, context, config, plugins })
+  return {
+    clear: (message?: string) => {
+      provider.clear()
+      treeView.message = message
+    },
+    refresh: ({ path, context, config, plugins }) => {
+      treeView.message = undefined
+      provider.refresh({ path, context, config, plugins })
+      openConfigCommand.dispose()
+      openConfigCommand = commands.registerCommand(
+        'tailwindcss.openConfigFile',
+        async () => {
+          window.showTextDocument(await workspace.openTextDocument(path))
+        }
+      )
+    },
+  }
 }
 
 export function registerConfigExplorer({
-  client,
   context,
+  emitter,
 }: {
-  client: LanguageClient
   context: ExtensionContext
+  emitter: NotificationEmitter
 }): void {
-  let refreshConfigExplorer
+  let configExplorer: ConfigExplorerInterface
 
-  client.onNotification(
-    'tailwindcss/configUpdated',
-    (path, config, plugins) => {
-      if (refreshConfigExplorer) {
-        refreshConfigExplorer({ path, context, config, plugins })
-      } else {
-        refreshConfigExplorer = createConfigExplorer({
-          path,
-          context,
-          config,
-          plugins,
-        })
-      }
+  emitter.on('configUpdated', ({ configPath, config, plugins }) => {
+    if (configExplorer) {
+      configExplorer.refresh({ path: configPath, context, config, plugins })
+    } else {
+      configExplorer = createConfigExplorer({
+        path: configPath,
+        context,
+        config,
+        plugins,
+      })
     }
-  )
+  })
 
-  const emitter = mitt()
+  emitter.on('configError', async ({ message }) => {
+    if (configExplorer) {
+      configExplorer.clear(`Error loading configuration: ${message}`)
+    }
+  })
 
-  commands.registerCommand('tailwindcss.jumpToConfig', (key) => {
-    client.sendNotification('tailwindcss/findDefinition', [key])
-    function handle(result) {
-      if (JSON.stringify(result.key) !== JSON.stringify(key)) return
-      emitter.off('tailwindcss/foundDefinition', handle)
-
+  commands.registerCommand('tailwindcss.revealConfig', async (key) => {
+    let result = await emitter.emit('findDefinition', { key })
+    if (result.error) {
+    } else {
       window.showTextDocument(Uri.file(result.file), {
         selection: new Range(
           new Position(result.range.start.line, result.range.start.character),
@@ -314,13 +342,5 @@ export function registerConfigExplorer({
         ),
       })
     }
-    emitter.on('tailwindcss/foundDefinition', handle)
   })
-
-  client.onNotification(
-    'tailwindcss/foundDefinition',
-    (key, { file, range }) => {
-      emitter.emit('tailwindcss/foundDefinition', { key, file, range })
-    }
-  )
 }
