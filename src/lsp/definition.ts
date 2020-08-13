@@ -1,51 +1,31 @@
 import { dirname } from 'path'
-import { parse } from '@babel/parser'
+import { resolveConfig } from '../class-names/index'
+const dlv = require('dlv')
+import * as BabelTypes from '@babel/types'
+import { Visitor, NodePath } from '@babel/traverse'
 require('@babel/register').default({
   plugins: [plugin],
   cache: false,
   babelrc: false,
   ignore: [
-    function (filepath: string) {
+    (filepath: string) => {
       if (/node_modules\/@?tailwind/.test(filepath)) return false
       return /node_modules/.test(filepath)
     },
   ],
 })
 
-const FN_NAME = '__twcls_extend__'
-const PROP_NAME = '__twcls_location__'
+const LOCATION_PROP = '__twlsp_locations__'
 
-const extendFn = parse(`
-  function ${FN_NAME}(val, loc) {
-    if (typeof val === 'string') {
-      return Object.defineProperty(new String(val), '${PROP_NAME}', {
-        value: loc
-      })
+interface PluginOptions {
+  file: {
+    opts: {
+      filename: string
     }
-    if (typeof val === 'number') {
-      return Object.defineProperty(new Number(val), '${PROP_NAME}', {
-        value: loc
-      })
-    }
-    if (typeof val === 'boolean') {
-      return Object.defineProperty(new Boolean(val), '${PROP_NAME}', {
-        value: loc
-      })
-    }
-    if (typeof val === 'object') {
-      if (val.hasOwnProperty('${PROP_NAME}')) return val
-      return Object.defineProperty(val, '${PROP_NAME}', {
-        value: loc
-      })
-    }
-    return val
   }
-`).program.body[0]
+}
 
-const dlv = require('dlv')
-import { resolveConfig } from '../class-names/index'
-
-process.on('message', ([configPath, requestedKey]: [string, string[]]) => {
+process.on('message', ([configPath, key]: [string, string[]]) => {
   let config
   try {
     // @ts-ignore
@@ -54,70 +34,70 @@ process.on('message', ([configPath, requestedKey]: [string, string[]]) => {
       config: configPath,
     })
   } catch (_) {
-    return process.send({ key: requestedKey })
+    return process.send({ key })
   }
 
-  let key: string[][]
-  if (Array.isArray(requestedKey[0])) {
-    key = requestedKey[0].map((k) => {
-      return [k].concat(requestedKey.slice(1))
+  let location = dlv(config, [
+    ...key.slice(0, key.length - 1),
+    LOCATION_PROP,
+    key[key.length - 1],
+  ])
+
+  if (Array.isArray(location)) {
+    process.send({
+      key,
+      file: location[0],
+      range: {
+        start: { line: location[1], character: location[2] },
+        end: { line: location[3], character: location[4] },
+      },
     })
   } else {
-    key = [requestedKey]
-  }
-  for (var i = 0; i < key.length; i++) {
-    var k = key[i]
-    var value = dlv(config, k, dlv(config, ['theme'].concat(k)))
-    if (typeof value === 'undefined') {
-      var parts = k[k.length - 1].split('-')
-      if (parts.length === 2) {
-        k = k.slice(0, k.length - 1).concat(parts)
-        value = dlv(config, k, dlv(config, ['theme'].concat(k)))
-      }
-    }
-    if (typeof value !== 'undefined') break
-  }
-  if (typeof value === 'object' && Array.isArray(value[PROP_NAME])) {
-    var pos = value[PROP_NAME]
-    if (Array.isArray(pos) && pos.length === 5) {
-      process.send({
-        key: requestedKey,
-        file: pos[0],
-        range: {
-          start: { line: pos[1], character: pos[2] },
-          end: { line: pos[3], character: pos[4] },
-        },
-      })
-    } else {
-      process.send({ key: requestedKey })
-    }
-  } else {
-    process.send({ key: requestedKey })
+    process.send({ key })
   }
 })
 
-function plugin(babel) {
-  let { types: t } = babel
+function isObjectPropertyPath(
+  path: NodePath<any>,
+  t: typeof BabelTypes
+): path is NodePath<BabelTypes.ObjectProperty> {
+  return t.isObjectProperty(path)
+}
 
-  const propVisitor = {
-    ObjectProperty(path) {
-      if (!t.isObjectExpression(path.parent)) return
-
-      let value = path.get('value')
-      if (t.isCallExpression(value.node)) {
-        if (value.node.callee.name === this.fn.name) return
+function plugin({
+  types: t,
+}: {
+  types: typeof BabelTypes
+}): { visitor: Visitor<PluginOptions> } {
+  const objVisitor: Visitor<PluginOptions> = {
+    ObjectExpression(path, state) {
+      if (
+        isObjectPropertyPath(path.parentPath, t) &&
+        path.parentPath.node.key.name === LOCATION_PROP
+      ) {
+        return
       }
-      value.replaceWith(
-        t.callExpression(this.fn, [
-          t.cloneNode(value.node),
-          t.arrayExpression([
-            t.stringLiteral(this.filename),
-            t.numericLiteral(value.node.loc.start.line - 1),
-            t.numericLiteral(value.node.loc.start.column),
-            t.numericLiteral(value.node.loc.end.line - 1),
-            t.numericLiteral(value.node.loc.end.column),
-          ]),
-        ])
+      let props = path.node.properties
+        .filter(
+          (x): x is BabelTypes.ObjectProperty => x.type === 'ObjectProperty'
+        )
+        .map((prop) => {
+          return t.objectProperty(
+            prop.key,
+            t.arrayExpression([
+              t.stringLiteral(state.file.opts.filename),
+              t.numericLiteral(prop.key.loc.start.line - 1),
+              t.numericLiteral(prop.key.loc.start.column),
+              t.numericLiteral(prop.key.loc.end.line - 1),
+              t.numericLiteral(prop.key.loc.end.column),
+            ]),
+            prop.computed
+          )
+        })
+      if (props.length === 0) return
+      path.unshiftContainer(
+        'properties',
+        t.objectProperty(t.identifier(LOCATION_PROP), t.objectExpression(props))
       )
     },
   }
@@ -125,11 +105,13 @@ function plugin(babel) {
   return {
     visitor: {
       Program(path, state) {
-        path.traverse(propVisitor, {
-          fn: t.identifier(FN_NAME),
-          filename: state.file.opts.filename,
+        path.traverse(objVisitor, {
+          file: {
+            opts: {
+              filename: state.file.opts.filename,
+            },
+          },
         })
-        path.unshiftContainer('body', extendFn)
       },
     },
   }

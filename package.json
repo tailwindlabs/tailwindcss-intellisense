@@ -199,7 +199,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
-    "@babel/parser": "^7.9.6",
     "@babel/register": "^7.9.0",
     "@ctrl/tinycolor": "^3.1.0",
     "@types/mocha": "^5.2.0",
