@@ -51,12 +51,12 @@ export function registerColorDecorator(
       workspace.getConfiguration('tailwindCSS', editor.document)
         .colorDecorators || 'inherit'
 
-    let enabled =
+    let enabled: boolean =
       preference === 'inherit'
-        ? workspace.getConfiguration('editor').colorDecorators
+        ? Boolean(workspace.getConfiguration('editor').colorDecorators)
         : preference === 'on'
 
-    if (enabled !== true) {
+    if (!enabled) {
       editor.setDecorations(colorDecorationType, [])
       return
     }
@@ -120,7 +120,10 @@ export function registerColorDecorator(
   )
 
   workspace.onDidChangeConfiguration((e) => {
-    if (e.affectsConfiguration('tailwindCSS.colorDecorators')) {
+    if (
+      e.affectsConfiguration('editor.colorDecorators') ||
+      e.affectsConfiguration('tailwindCSS.colorDecorators')
+    ) {
       window.visibleTextEditors.forEach(updateDecorationsInEditor)
     }
   })
