@@ -24,62 +24,6 @@ import { NotificationEmitter } from './emitter'
 
 const fileExists = util.promisify(fs.exists)
 
-// TODO
-const DOCS = {
-  variants: 'v1/configuration/#variants',
-  plugins: 'v1/configuration/#plugins',
-  corePlugins: 'v1/configuration/#core-plugins',
-
-  prefix: 'v1/configuration/#prefix',
-  important: 'v1/configuration/#important',
-  separator: 'v1/configuration/#separator',
-  options: {
-    prefix: 'v0/configuration/#prefix',
-    important: 'v0/configuration/#important',
-    separator: 'v0/configuration/#separator',
-  },
-
-  screens: 'v0/responsive-design/',
-  colors: 'v0/colors/',
-  backgroundColors: 'v0/background-color/',
-  backgroundPosition: 'v0/background-position/',
-
-  theme: {
-    _: 'v1/configuration/#theme',
-    screens: 'v1/breakpoints/',
-    colors: 'v1/customizing-colors/',
-    spacing: 'v1/customizing-spacing/',
-    container: 'v1/container/',
-    backgroundColor: 'v1/background-color/',
-    backgroundPosition: 'v1/background-position/',
-  },
-}
-
-function getDocsUrl(key: string[], plugins: any) {
-  if (key.length === 2 && key[0] === 'plugins') {
-    return plugins[key[1]].homepage || null
-  }
-
-  const path = dlv(DOCS, [...key, '_'], dlv(DOCS, key))
-  if (typeof path !== 'string') {
-    for (let i = 0; i < plugins.length; i++) {
-      if (
-        plugins[i] &&
-        key.length === 2 &&
-        (key[0] === 'theme' || key[0] === 'variants') &&
-        plugins[i].homepage &&
-        dlv(plugins[i], ['contributes', key[0]], []).indexOf(key[1]) !== -1
-      ) {
-        return plugins[i].homepage
-      }
-    }
-    return null
-  }
-  return path
-    .replace(/^v0\//, 'https://v0.tailwindcss.com/docs/')
-    .replace(/^v1\//, 'https://tailwindcss.com/docs/')
-}
-
 function configValueToString(value: any): string {
   if (Array.isArray(value)) {
     return value.join(', ')
@@ -90,6 +34,10 @@ function configValueToString(value: any): string {
 type ConfigItemParams = {
   label: string
   key: string[]
+  location?: {
+    file: string
+    range: Range
+  }
   collapsibleState: TreeItemCollapsibleState
   description?: string
   iconPath?: string
@@ -99,11 +47,16 @@ type ConfigItemParams = {
 
 class ConfigItem extends TreeItem {
   public key: string[]
+  public location?: {
+    file: string
+    range: Range
+  }
 
   constructor({
     label,
     collapsibleState,
     key,
+    location,
     description,
     iconPath,
     command,
@@ -111,6 +64,7 @@ class ConfigItem extends TreeItem {
   }: ConfigItemParams) {
     super(label, collapsibleState)
     this.key = key
+    this.location = location
     this.description = description
     this.iconPath = iconPath
     this.command = command
@@ -123,6 +77,35 @@ export type DataProviderParams = {
   context: ExtensionContext
   config: any
   plugins: any[]
+}
+
+function isActualKey(key: string): boolean {
+  return !key.startsWith('__twlsp_locations__')
+}
+
+function getLocation(
+  config: any,
+  key: string[]
+): { file: string; range: Range } | undefined {
+  let location: [string, number, number, number, number]
+  let parent = dlv(config, key.slice(0, key.length - 1))
+  for (let k in parent) {
+    if (
+      k.startsWith('__twlsp_locations__') &&
+      parent[k][key[key.length - 1]] &&
+      !parent[k][key[key.length - 1]][0].includes('node_modules')
+    ) {
+      location = parent[k][key[key.length - 1]]
+    }
+  }
+  if (!location) return undefined
+  return {
+    file: location[0],
+    range: new Range(
+      new Position(location[1], location[2]),
+      new Position(location[3], location[4])
+    ),
+  }
 }
 
 class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
@@ -179,70 +162,63 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   async getChildren(element: ConfigItem): Promise<ConfigItem[]> {
     if (!this.config) return []
 
-    let command = {
-      command: 'tailwindcss.revealConfig',
-      title: 'Reveal config',
-    }
-
     if (element) {
       if (element.key.length === 1 && element.key[0] === 'plugins') {
         return this.plugins.map((plugin, i) => ({
           label: plugin.name || 'Anonymous',
           key: ['plugins', i.toString()],
-          contextValue: getDocsUrl(['plugins', i.toString()], this.plugins)
-            ? 'documented'
-            : undefined,
+          contextValue: plugin.homepage ? 'hasPluginHomepage' : undefined,
         }))
       }
 
       let item = dlv(this.config, element.key)
       return Promise.all(
-        Object.keys(item).map(async (key) => {
-          let isExpandable = isObject(item[key])
-          let child = new ConfigItem({
-            label: key,
-            key: element.key.concat(key),
-            collapsibleState: isExpandable
-              ? TreeItemCollapsibleState.Collapsed
-              : TreeItemCollapsibleState.None,
-            description: isExpandable
-              ? undefined
-              : configValueToString(item[key]),
-            command: isExpandable
-              ? undefined
-              : { ...command, arguments: [element.key.concat(key)] },
-            contextValue: getDocsUrl(element.key.concat(key), this.plugins)
-              ? 'documented'
-              : undefined,
+        Object.keys(item)
+          .filter(isActualKey)
+          .map(async (key) => {
+            let isExpandable = isObject(item[key])
+            let location = getLocation(this.config, [...element.key, key])
+            let child = new ConfigItem({
+              label: key,
+              key: element.key.concat(key),
+              location,
+              collapsibleState: isExpandable
+                ? TreeItemCollapsibleState.Collapsed
+                : TreeItemCollapsibleState.None,
+              description: isExpandable
+                ? undefined
+                : configValueToString(item[key]),
+              contextValue: location ? 'revealable' : undefined,
+            })
+
+            if (getColorFromValue(item[key])) {
+              child.iconPath = await this.createColorIcon(item[key].trim())
+            }
+
+            return child
           })
-
-          if (getColorFromValue(item[key])) {
-            child.iconPath = await this.createColorIcon(item[key].trim())
-          }
-
-          return child
-        })
       )
     }
 
-    return Object.keys(this.config).map((key) => {
-      const isExpandable = key === 'plugins' || isObject(this.config[key])
+    return Object.keys(this.config)
+      .filter(isActualKey)
+      .map((key) => {
+        const isExpandable = key === 'plugins' || isObject(this.config[key])
+        const location = getLocation(this.config, [key])
 
-      return new ConfigItem({
-        label: key,
-        key: [key],
-        collapsibleState: isExpandable
-          ? TreeItemCollapsibleState.Collapsed
-          : TreeItemCollapsibleState.None,
-        description: isExpandable
-          ? undefined
-          : configValueToString(this.config[key]),
-        command: isExpandable ? undefined : { ...command, arguments: [[key]] },
-        contextValue: getDocsUrl([key], this.plugins)
-          ? 'documented'
-          : undefined,
+        return new ConfigItem({
+          label: key,
+          key: [key],
+          location,
+          collapsibleState: isExpandable
+            ? TreeItemCollapsibleState.Collapsed
+            : TreeItemCollapsibleState.None,
+          description: isExpandable
+            ? undefined
+            : configValueToString(this.config[key]),
+          contextValue: location ? 'revealable' : undefined,
+        })
       })
-    })
   }
 }
 
@@ -257,21 +233,29 @@ export function createConfigExplorer({
   config,
   plugins,
 }: DataProviderParams): ConfigExplorerInterface {
+  let currentConfigPath = path
+  let currentPlugins = plugins
   let provider = new TailwindDataProvider({ path, context, config, plugins })
 
-  let openConfigCommand = commands.registerCommand(
-    'tailwindcss.openConfigFile',
-    async () => {
-      window.showTextDocument(await workspace.openTextDocument(path))
-    }
+  context.subscriptions.push(
+    commands.registerCommand('tailwindcss.openConfigFile', async () => {
+      window.showTextDocument(
+        await workspace.openTextDocument(currentConfigPath)
+      )
+    })
   )
 
-  commands.registerCommand('tailwindcss.openDocs', (item: ConfigItem) => {
-    commands.executeCommand(
-      'vscode.open',
-      Uri.parse(getDocsUrl(item.key, plugins))
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tailwindcss.openPluginHomepage',
+      (item: ConfigItem) => {
+        commands.executeCommand(
+          'vscode.open',
+          Uri.parse(currentPlugins[item.key[item.key.length - 1]].homepage)
+        )
+      }
     )
-  })
+  )
 
   let treeView = window.createTreeView('tailwindcssConfigExplorer', {
     treeDataProvider: provider,
@@ -292,13 +276,8 @@ export function createConfigExplorer({
     refresh: ({ path, context, config, plugins }) => {
       treeView.message = undefined
       provider.refresh({ path, context, config, plugins })
-      openConfigCommand.dispose()
-      openConfigCommand = commands.registerCommand(
-        'tailwindcss.openConfigFile',
-        async () => {
-          window.showTextDocument(await workspace.openTextDocument(path))
-        }
-      )
+      currentConfigPath = path
+      currentPlugins = plugins
     },
   }
 }
@@ -312,18 +291,25 @@ export function registerConfigExplorer({
 }): void {
   let configExplorer: ConfigExplorerInterface
 
-  emitter.on('configUpdated', ({ configPath, config, plugins }) => {
-    if (configExplorer) {
-      configExplorer.refresh({ path: configPath, context, config, plugins })
-    } else {
-      configExplorer = createConfigExplorer({
-        path: configPath,
-        context,
-        config,
-        plugins,
-      })
+  emitter.on(
+    'configUpdated',
+    async ({ configPath, config: originalConfig, plugins }) => {
+      let config = originalConfig
+      try {
+        config = (await emitter.emit('configWithLocations', {})).config
+      } catch (_) {}
+      if (configExplorer) {
+        configExplorer.refresh({ path: configPath, context, config, plugins })
+      } else {
+        configExplorer = createConfigExplorer({
+          path: configPath,
+          context,
+          config,
+          plugins,
+        })
+      }
     }
-  })
+  )
 
   emitter.on('configError', async ({ message }) => {
     if (configExplorer) {
@@ -331,16 +317,20 @@ export function registerConfigExplorer({
     }
   })
 
-  commands.registerCommand('tailwindcss.revealConfig', async (key) => {
-    let result = await emitter.emit('findDefinition', { key })
-    if (result.error) {
-    } else {
-      window.showTextDocument(Uri.file(result.file), {
-        selection: new Range(
-          new Position(result.range.start.line, result.range.start.character),
-          new Position(result.range.end.line, result.range.end.character)
-        ),
-      })
-    }
-  })
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tailwindcss.revealConfigEntry',
+      ({ location }: ConfigItem) => {
+        window.showTextDocument(Uri.file(location.file), {
+          selection: new Range(
+            new Position(
+              location.range.start.line,
+              location.range.start.character
+            ),
+            new Position(location.range.end.line, location.range.end.character)
+          ),
+        })
+      }
+    )
+  )
 }

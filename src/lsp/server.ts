@@ -28,7 +28,7 @@ import {
 import { provideHover } from './providers/hoverProvider'
 import { URI } from 'vscode-uri'
 import { getDocumentSettings } from './util/getDocumentSettings'
-import getConfigLocation from './util/getConfigLocation'
+import getConfigWithLocations from './util/getConfigWithLocations'
 import {
   provideDiagnostics,
   updateAllDiagnostics,
@@ -202,12 +202,8 @@ connection.onInitialized &&
       },
     ])
 
-    onMessage(connection, 'findDefinition', async ({ key }) => {
-      try {
-        return getConfigLocation(state, key)
-      } catch (error) {
-        return { error }
-      }
+    onMessage(connection, 'configWithLocations', async () => {
+      return getConfigWithLocations(state.configPath)
     })
   })
 

@@ -1,16 +1,15 @@
-import { State } from './state'
 import * as childProcess from 'child_process'
 import { Range } from 'vscode-languageserver'
 
 let fork: childProcess.ChildProcess
 let id = 0
 
-export default function getConfigLocation(
-  state: State,
-  key: string[]
+export default function getConfigWithLocations(
+  configPath: string,
+  key?: string[]
 ): Promise<ConfigLocation> {
   if (!fork) {
-    fork = childProcess.fork(__filename, ['--definition'])
+    fork = childProcess.fork(__filename, ['--config-locations'])
   }
 
   let msgId = id++
@@ -23,11 +22,13 @@ export default function getConfigLocation(
         return reject(msg.error)
       }
       fork.off('message', callback)
+      fork.kill()
+      fork = undefined
       resolve(msg)
     }
 
     fork.on('message', callback)
-    fork.send([msgId, state.configPath, key])
+    fork.send([msgId, configPath, key])
   })
 }
 
@@ -39,3 +40,4 @@ export type ConfigLocation =
       range: Range
     }
   | { id: number; error: string }
+  | { id: number; config: any }

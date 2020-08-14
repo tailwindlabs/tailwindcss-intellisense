@@ -165,8 +165,13 @@
       ],
       "view/item/context": [
         {
-          "command": "tailwindcss.openDocs",
-          "when": "view == tailwindcssConfigExplorer && viewItem == documented",
+          "command": "tailwindcss.openPluginHomepage",
+          "when": "view == tailwindcssConfigExplorer && viewItem == hasPluginHomepage",
+          "group": "inline"
+        },
+        {
+          "command": "tailwindcss.revealConfigEntry",
+          "when": "view == tailwindcssConfigExplorer && viewItem == revealable",
           "group": "inline"
         }
       ]
@@ -178,13 +183,14 @@
         "icon": "$(go-to-file)"
       },
       {
-        "command": "tailwindcss.openDocs",
-        "title": "View Documentation",
+        "command": "tailwindcss.openPluginHomepage",
+        "title": "Open plugin homepage",
         "icon": "$(book)"
       },
       {
-        "command": "tailwindcss.revealConfig",
-        "title": "Reveal config"
+        "command": "tailwindcss.revealConfigEntry",
+        "title": "Reveal config entry",
+        "icon": "$(go-to-file)"
       }
     ]
   },

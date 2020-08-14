@@ -1,23 +1,21 @@
 import { dirname } from 'path'
 import { resolveConfig } from '../class-names/index'
-const dlv = require('dlv')
 import * as crypto from 'crypto'
 import * as BabelTypes from '@babel/types'
 import { Visitor, NodePath } from '@babel/traverse'
-import isObject from '../util/isObject'
 require('@babel/register').default({
   plugins: [plugin],
   cache: false,
   babelrc: false,
   ignore: [
-    (filepath: string) => {
-      if (/node_modules\/@?tailwind/.test(filepath)) return false
-      return /node_modules/.test(filepath)
+    (filename: string) => {
+      if (/node_modules\/@?tailwind/.test(filename)) return false
+      return /node_modules/.test(filename)
     },
   ],
 })
 
-const LOCATION_PROP = '__twlsp_locations__'
+const LOCATION_PROP_PREFIX = '__twlsp_locations__'
 
 interface PluginOptions {
   file: {
@@ -27,8 +25,8 @@ interface PluginOptions {
   }
 }
 
-process.on('message', ([id, configPath, key]: [number, string, string[]]) => {
-  let config
+process.on('message', ([id, configPath]: [number, string, string[]]) => {
+  let config: any
   try {
     // @ts-ignore
     config = resolveConfig({
@@ -36,33 +34,10 @@ process.on('message', ([id, configPath, key]: [number, string, string[]]) => {
       config: configPath,
     })
   } catch (_) {
-    return process.send({ id, error: 'Couldn’t find definition' })
+    return process.send({ id, error: 'Couldn’t generate locations' })
   }
 
-  let parent = dlv(config, key.slice(0, key.length - 1))
-
-  if (isObject(parent)) {
-    let location: [string, number, number, number, number]
-    for (let k in parent) {
-      if (k.startsWith(LOCATION_PROP) && parent[k][key[key.length - 1]]) {
-        location = parent[k][key[key.length - 1]]
-      }
-    }
-    if (location) {
-      process.send({
-        id,
-        key,
-        file: location[0],
-        range: {
-          start: { line: location[1], character: location[2] },
-          end: { line: location[3], character: location[4] },
-        },
-      })
-      return
-    }
-  }
-
-  process.send({ id, error: 'Couldn’t find definition' })
+  process.send({ id, config })
 })
 
 function isObjectPropertyPath(
@@ -81,7 +56,7 @@ function plugin({
     ObjectExpression(path, state) {
       if (
         isObjectPropertyPath(path.parentPath, t) &&
-        path.parentPath.node.key.name.startsWith(LOCATION_PROP)
+        path.parentPath.node.key.name.startsWith(LOCATION_PROP_PREFIX)
       ) {
         return
       }
@@ -106,7 +81,9 @@ function plugin({
       path.unshiftContainer(
         'properties',
         t.objectProperty(
-          t.identifier(LOCATION_PROP + crypto.randomBytes(16).toString('hex')),
+          t.identifier(
+            LOCATION_PROP_PREFIX + crypto.randomBytes(16).toString('hex')
+          ),
           t.objectExpression(props)
         )
       )
