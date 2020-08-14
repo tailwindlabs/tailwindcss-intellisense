@@ -47,20 +47,22 @@ export function registerColorDecorator(
       return
     }
 
-    let settings = workspace.getConfiguration(
-      'tailwindCSS.colorDecorators',
-      editor.document
-    )
+    let preference =
+      workspace.getConfiguration('tailwindCSS', editor.document)
+        .colorDecorators || 'inherit'
 
-    if (settings.enabled !== true) {
+    let enabled =
+      preference === 'inherit'
+        ? workspace.getConfiguration('editor').colorDecorators
+        : preference === 'on'
+
+    if (enabled !== true) {
       editor.setDecorations(colorDecorationType, [])
       return
     }
 
     let { colors } = await emitter.emit('getDocumentColors', {
       document: editor.document.uri.toString(),
-      classes: settings.classes,
-      cssHelpers: settings.cssHelpers,
     })
 
     editor.setDecorations(

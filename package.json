@@ -71,19 +71,20 @@
           "default": {},
           "markdownDescription": "Enable features in languages that are not supported by default. Add a mapping here between the new language and an already supported language.\n E.g.: `{\"plaintext\": \"html\"}`"
         },
-        "tailwindCSS.colorDecorators.enabled": {
-          "type": "boolean",
-          "default": true,
-          "scope": "language-overridable"
-        },
-        "tailwindCSS.colorDecorators.classes": {
-          "type": "boolean",
-          "default": true,
-          "scope": "language-overridable"
-        },
-        "tailwindCSS.colorDecorators.cssHelpers": {
-          "type": "boolean",
-          "default": true,
+        "tailwindCSS.colorDecorators": {
+          "type": "string",
+          "enum": [
+            "inherit",
+            "on",
+            "off"
+          ],
+          "markdownEnumDescriptions": [
+            "Color decorators are rendered if `editor.colorDecorators` is `true`.",
+            "Color decorators are rendered.",
+            "Color decorators are not rendered."
+          ],
+          "default": "inherit",
+          "markdownDescription": "Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions.",
           "scope": "language-overridable"
         },
         "tailwindCSS.validate": {
