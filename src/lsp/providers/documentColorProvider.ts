@@ -16,6 +16,7 @@ export function registerDocumentColorProvider(state: State) {
     'getDocumentColors',
     async ({ document }) => {
       let colors = []
+      if (!state.enabled) return { colors }
       let doc = state.editor.documents.get(document)
       if (!doc) return { colors }
 

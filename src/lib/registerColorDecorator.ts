@@ -127,4 +127,12 @@ export function registerColorDecorator(
       window.visibleTextEditors.forEach(updateDecorationsInEditor)
     }
   })
+
+  emitter.on('configUpdated', () => {
+    window.visibleTextEditors.forEach(updateDecorationsInEditor)
+  })
+
+  emitter.on('configError', () => {
+    window.visibleTextEditors.forEach(updateDecorationsInEditor)
+  })
 }
