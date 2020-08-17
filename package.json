@@ -151,7 +151,8 @@
           "id": "tailwindcssConfigExplorer",
           "name": "Tailwind CSS",
           "when": "tailwindcssConfigExplorerEnabled",
-          "icon": "media/explorer-icon.svg"
+          "icon": "media/explorer-icon.svg",
+          "visibility": "collapsed"
         }
       ]
     },
