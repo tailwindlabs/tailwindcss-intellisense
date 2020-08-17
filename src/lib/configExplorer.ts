@@ -24,7 +24,7 @@ import { NotificationEmitter } from './emitter'
 
 const fileExists = util.promisify(fs.exists)
 
-function configValueToString(value: any): string {
+function configValueToString(value: unknown): string {
   if (Array.isArray(value)) {
     return value.join(', ')
   }

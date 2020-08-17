@@ -28,10 +28,7 @@ export default function getPlugins(config) {
   }
 
   return plugins.map((plugin) => {
-    let pluginConfig = plugin.config
-    if (!isObject(pluginConfig)) {
-      pluginConfig = {}
-    }
+    let pluginConfig = isObject(plugin.config) ? plugin.config : {}
 
     let contributes = {
       theme: isObject(pluginConfig.theme)
@@ -42,35 +39,44 @@ export default function getPlugins(config) {
         : [],
     }
 
-    const fn = plugin.handler || plugin
-    const fnName =
-      typeof fn.name === 'string' && fn.name !== 'handler' && fn.name !== ''
-        ? fn.name
+    const handler =
+      typeof plugin.handler === 'function' ? plugin.handler : plugin
+    const handlerName =
+      typeof handler.name === 'string' &&
+      handler.name !== 'handler' &&
+      handler.name !== ''
+        ? handler.name
         : null
 
     try {
-      fn()
+      handler()
     } catch (e) {
       const trace = stackTrace.parse(e)
-      if (trace.length === 0)
+      if (trace.length === 0) {
         return {
-          name: fnName,
+          name: handlerName,
         }
+      }
       const file = trace[0].fileName
-      const dir = path.dirname(file)
-      let pkg = pkgUp.sync({ cwd: dir })
-      if (!pkg)
+      if (!/node_modules/.test(file)) {
         return {
-          name: fnName,
+          name: handlerName,
         }
+      }
+      let pkg = pkgUp.sync({ cwd: path.dirname(file) })
+      if (!pkg) {
+        return {
+          name: handlerName,
+        }
+      }
       try {
         pkg = __non_webpack_require__(pkg)
       } catch (_) {
         return {
-          name: fnName,
+          name: handlerName,
         }
       }
-      if (pkg.name && path.resolve(dir, pkg.main || 'index.js') === file) {
+      if (pkg.name) {
         return {
           name: pkg.name,
           homepage: pkg.homepage,
@@ -79,7 +85,7 @@ export default function getPlugins(config) {
       }
     }
     return {
-      name: fnName,
+      name: handlerName,
     }
   })
 }
