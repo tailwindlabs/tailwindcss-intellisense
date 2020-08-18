@@ -79,7 +79,7 @@
             "off"
           ],
           "markdownEnumDescriptions": [
-            "Color decorators are rendered if `editor.colorDecorators` is `true`.",
+            "Color decorators are rendered if `editor.colorDecorators` is enabled.",
             "Color decorators are rendered.",
             "Color decorators are not rendered."
           ],
