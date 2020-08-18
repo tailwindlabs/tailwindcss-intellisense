@@ -56,6 +56,7 @@ function plugin({
     ObjectExpression(path, state) {
       if (
         isObjectPropertyPath(path.parentPath, t) &&
+        path.parentPath.node.key.name &&
         path.parentPath.node.key.name.startsWith(LOCATION_PROP_PREFIX)
       ) {
         return
