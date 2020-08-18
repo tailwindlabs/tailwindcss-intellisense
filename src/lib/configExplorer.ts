@@ -9,9 +9,10 @@ import {
   commands,
   Uri,
   ExtensionContext,
-  workspace,
   Range,
   Position,
+  workspace as Workspace,
+  ThemeIcon,
 } from 'vscode'
 const dlv = require('dlv')
 import * as path from 'path'
@@ -21,6 +22,7 @@ import * as crypto from 'crypto'
 import { getColorFromValue } from '../lsp/util/color'
 import isObject from '../util/isObject'
 import { NotificationEmitter } from './emitter'
+import { LanguageClient, State as ClientState } from 'vscode-languageclient'
 
 const fileExists = util.promisify(fs.exists)
 
@@ -33,14 +35,15 @@ function configValueToString(value: unknown): string {
 
 type ConfigItemParams = {
   label: string
-  key: string[]
+  key?: string[]
+  workspace?: string
   location?: {
     file: string
     range: Range
   }
   collapsibleState: TreeItemCollapsibleState
   description?: string
-  iconPath?: string
+  iconPath?: string | ThemeIcon
   command?: Command
   contextValue?: string
 }
@@ -51,11 +54,13 @@ class ConfigItem extends TreeItem {
     file: string
     range: Range
   }
+  public workspace?: string
 
   constructor({
     label,
     collapsibleState,
     key,
+    workspace,
     location,
     description,
     iconPath,
@@ -69,15 +74,17 @@ class ConfigItem extends TreeItem {
     this.iconPath = iconPath
     this.command = command
     this.contextValue = contextValue
+    this.workspace = workspace
   }
 }
 
-export type DataProviderParams = {
-  path: string
-  context: ExtensionContext
+export type ExplorerWorkspace = {
+  configPath: string
   config: any
   plugins: any[]
 }
+
+export type ExplorerWorkspaces = Record<string, ExplorerWorkspace>
 
 function isActualKey(key: string): boolean {
   return !key.startsWith('__twlsp_locations__')
@@ -113,16 +120,13 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   readonly onDidChangeTreeData: Event<ConfigItem | null> = this
     ._onDidChangeTreeData.event
 
-  private path: string
   private context: ExtensionContext
-  private config: any
-  private plugins: any[]
+  private workspaces: ExplorerWorkspaces
+  private expandedWorkspaces: string[] = []
 
-  constructor({ path, context, config, plugins }: DataProviderParams) {
-    this.path = path
+  constructor(context: ExtensionContext, workspaces: ExplorerWorkspaces) {
+    this.workspaces = workspaces
     this.context = context
-    this.config = config
-    this.plugins = plugins
   }
 
   private async createColorIcon(color: string) {
@@ -143,68 +147,45 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     return fullPath
   }
 
-  public refresh({ path, context, config, plugins }: DataProviderParams): void {
-    if (path) this.path = path
-    if (context) this.context = context
-    if (config) this.config = config
-    if (plugins) this.plugins = plugins
+  public refresh(workspaces?: ExplorerWorkspaces): void {
+    if (workspaces) {
+      this.workspaces = workspaces
+    }
     this._onDidChangeTreeData.fire()
   }
 
   public clear(): void {
-    this.config = null
+    this.workspaces = null
     this._onDidChangeTreeData.fire()
+  }
+
+  public onDidExpandElement(item: ConfigItem): void {
+    if (!item.key && item.workspace) {
+      this.expandedWorkspaces.push(item.workspace)
+      this._onDidChangeTreeData.fire()
+    }
+  }
+
+  public onDidCollapseElement(item: ConfigItem): void {
+    if (!item.key && item.workspace) {
+      this.expandedWorkspaces.splice(
+        this.expandedWorkspaces.indexOf(item.workspace),
+        1
+      )
+      this._onDidChangeTreeData.fire()
+    }
   }
 
   getTreeItem(element: ConfigItem): ConfigItem {
     return element
   }
-  async getChildren(element: ConfigItem): Promise<ConfigItem[]> {
-    if (!this.config) return []
-
-    if (element) {
-      if (element.key.length === 1 && element.key[0] === 'plugins') {
-        return this.plugins.map((plugin, i) => ({
-          label: plugin.name || 'Anonymous',
-          key: ['plugins', i.toString()],
-          contextValue: plugin.homepage ? 'hasPluginHomepage' : undefined,
-        }))
-      }
-
-      let item = dlv(this.config, element.key)
-      return Promise.all(
-        Object.keys(item)
-          .filter(isActualKey)
-          .map(async (key) => {
-            let isExpandable = isObject(item[key])
-            let location = getLocation(this.config, [...element.key, key])
-            let child = new ConfigItem({
-              label: key,
-              key: element.key.concat(key),
-              location,
-              collapsibleState: isExpandable
-                ? TreeItemCollapsibleState.Collapsed
-                : TreeItemCollapsibleState.None,
-              description: isExpandable
-                ? undefined
-                : configValueToString(item[key]),
-              contextValue: location ? 'revealable' : undefined,
-            })
-
-            if (getColorFromValue(item[key])) {
-              child.iconPath = await this.createColorIcon(item[key].trim())
-            }
-
-            return child
-          })
-      )
-    }
-
-    return Object.keys(this.config)
+  getTopLevel(workspace: string): ConfigItem[] {
+    let { config } = this.workspaces[workspace]
+    return Object.keys(config)
       .filter(isActualKey)
       .map((key) => {
-        const isExpandable = key === 'plugins' || isObject(this.config[key])
-        const location = getLocation(this.config, [key])
+        const isExpandable = key === 'plugins' || isObject(config[key])
+        const location = getLocation(config, [key])
 
         return new ConfigItem({
           label: key,
@@ -215,51 +196,126 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
             : TreeItemCollapsibleState.None,
           description: isExpandable
             ? undefined
-            : configValueToString(this.config[key]),
+            : configValueToString(config[key]),
           contextValue: location ? 'revealable' : undefined,
+          workspace,
         })
       })
+  }
+  async getChildren(element: ConfigItem): Promise<ConfigItem[]> {
+    if (!this.workspaces) return []
+
+    if (element) {
+      if (element.key) {
+        let { plugins, config } = this.workspaces[element.workspace]
+
+        if (element.key.length === 1 && element.key[0] === 'plugins') {
+          return plugins.map((plugin, i) => ({
+            label: plugin.name || 'Anonymous',
+            key: ['plugins', i.toString()],
+            workspace: element.workspace,
+            contextValue: plugin.homepage ? 'hasPluginHomepage' : undefined,
+          }))
+        }
+
+        let item = dlv(config, element.key)
+        return Promise.all(
+          Object.keys(item)
+            .filter(isActualKey)
+            .map(async (key) => {
+              let isExpandable = isObject(item[key])
+              let location = getLocation(config, [...element.key, key])
+              let child = new ConfigItem({
+                label: key,
+                key: element.key.concat(key),
+                location,
+                collapsibleState: isExpandable
+                  ? TreeItemCollapsibleState.Collapsed
+                  : TreeItemCollapsibleState.None,
+                description: isExpandable
+                  ? undefined
+                  : configValueToString(item[key]),
+                contextValue: location ? 'revealable' : undefined,
+                workspace: element.workspace,
+              })
+
+              if (getColorFromValue(item[key])) {
+                child.iconPath = await this.createColorIcon(item[key].trim())
+              }
+
+              return child
+            })
+        )
+      }
+
+      return this.getTopLevel(element.workspace)
+    }
+
+    // top-level
+    if (
+      Object.keys(this.workspaces).length === 1 &&
+      Workspace.workspaceFolders.length < 2
+    ) {
+      return this.getTopLevel(Object.keys(this.workspaces)[0])
+    }
+
+    return Object.keys(this.workspaces).map((workspace) => {
+      return new ConfigItem({
+        label: path.basename(workspace),
+        collapsibleState: TreeItemCollapsibleState.Collapsed,
+        workspace,
+        iconPath: new ThemeIcon(
+          this.expandedWorkspaces.includes(workspace)
+            ? 'root-folder-opened'
+            : 'root-folder'
+        ),
+      })
+    })
   }
 }
 
 interface ConfigExplorerInterface {
   clear: (message?: string) => void
-  refresh: (params: DataProviderParams) => void
+  refresh: (workspaces: ExplorerWorkspaces) => void
 }
 
-export function createConfigExplorer({
-  path,
-  context,
-  config,
-  plugins,
-}: DataProviderParams): ConfigExplorerInterface {
-  let currentConfigPath = path
-  let currentPlugins = plugins
-  let provider = new TailwindDataProvider({ path, context, config, plugins })
+export function createConfigExplorer(
+  context: ExtensionContext,
+  workspaces: ExplorerWorkspaces
+): ConfigExplorerInterface {
+  // let currentConfigPath = path
+  // let currentPlugins = plugins
+  let provider = new TailwindDataProvider(context, workspaces)
 
-  context.subscriptions.push(
-    commands.registerCommand('tailwindcss.openConfigFile', async () => {
-      window.showTextDocument(
-        await workspace.openTextDocument(currentConfigPath)
-      )
-    })
-  )
+  // context.subscriptions.push(
+  //   commands.registerCommand('tailwindcss.openConfigFile', async () => {
+  //     window.showTextDocument(
+  //       await workspace.openTextDocument(currentConfigPath)
+  //     )
+  //   })
+  // )
 
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tailwindcss.openPluginHomepage',
-      (item: ConfigItem) => {
-        commands.executeCommand(
-          'vscode.open',
-          Uri.parse(currentPlugins[item.key[item.key.length - 1]].homepage)
-        )
-      }
-    )
-  )
+  // context.subscriptions.push(
+  //   commands.registerCommand(
+  //     'tailwindcss.openPluginHomepage',
+  //     (item: ConfigItem) => {
+  //       commands.executeCommand(
+  //         'vscode.open',
+  //         Uri.parse(currentPlugins[item.key[item.key.length - 1]].homepage)
+  //       )
+  //     }
+  //   )
+  // )
 
   let treeView = window.createTreeView('tailwindcssConfigExplorer', {
     treeDataProvider: provider,
     showCollapseAll: true,
+  })
+  treeView.onDidExpandElement(({ element }) => {
+    provider.onDidExpandElement(element)
+  })
+  treeView.onDidCollapseElement(({ element }) => {
+    provider.onDidCollapseElement(element)
   })
 
   commands.executeCommand(
@@ -273,49 +329,29 @@ export function createConfigExplorer({
       provider.clear()
       treeView.message = message
     },
-    refresh: ({ path, context, config, plugins }) => {
+    refresh: (workspaces) => {
       treeView.message = undefined
-      provider.refresh({ path, context, config, plugins })
-      currentConfigPath = path
-      currentPlugins = plugins
+      provider.refresh(workspaces)
+      // currentConfigPath = path
+      // currentPlugins = plugins
     },
   }
 }
 
+export interface ConfigExplorerApi {
+  addWorkspace: (params: {
+    emitter: NotificationEmitter
+    client: LanguageClient
+  }) => void
+}
+
 export function registerConfigExplorer({
   context,
-  emitter,
 }: {
   context: ExtensionContext
-  emitter: NotificationEmitter
-}): void {
+}): ConfigExplorerApi {
+  let workspaces: ExplorerWorkspaces = {}
   let configExplorer: ConfigExplorerInterface
-
-  emitter.on(
-    'configUpdated',
-    async ({ configPath, config: originalConfig, plugins }) => {
-      let config = originalConfig
-      try {
-        config = (await emitter.emit('configWithLocations', {})).config
-      } catch (_) {}
-      if (configExplorer) {
-        configExplorer.refresh({ path: configPath, context, config, plugins })
-      } else {
-        configExplorer = createConfigExplorer({
-          path: configPath,
-          context,
-          config,
-          plugins,
-        })
-      }
-    }
-  )
-
-  emitter.on('configError', async ({ message }) => {
-    if (configExplorer) {
-      configExplorer.clear(`Error loading configuration: ${message}`)
-    }
-  })
 
   context.subscriptions.push(
     commands.registerCommand(
@@ -333,4 +369,48 @@ export function registerConfigExplorer({
       }
     )
   )
+
+  return {
+    addWorkspace: ({ client, emitter }) => {
+      let folder = client.clientOptions.workspaceFolder.uri.toString()
+
+      async function onUpdate({ configPath, config: originalConfig, plugins }) {
+        workspaces[folder] = {
+          configPath,
+          config: originalConfig,
+          plugins,
+        }
+
+        try {
+          workspaces[folder].config = (
+            await emitter.emit('configWithLocations', {})
+          ).config
+        } catch (_) {}
+
+        if (configExplorer) {
+          configExplorer.refresh(workspaces)
+        } else {
+          configExplorer = createConfigExplorer(context, workspaces)
+        }
+      }
+
+      async function onError({ message }) {
+        if (configExplorer) {
+          configExplorer.clear(`Error loading configuration: ${message}`)
+        }
+      }
+
+      emitter.on('configUpdated', onUpdate)
+      emitter.on('configError', onError)
+
+      client.onDidChangeState(({ newState }) => {
+        if (newState === ClientState.Stopped) {
+          delete workspaces[folder]
+          if (configExplorer) {
+            configExplorer.refresh(workspaces)
+          }
+        }
+      })
+    },
+  }
 }

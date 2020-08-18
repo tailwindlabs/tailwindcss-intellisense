@@ -149,7 +149,8 @@
       "explorer": [
         {
           "id": "tailwindcssConfigExplorer",
-          "name": "Tailwind CSS",
+          "name": "Configuration",
+          "contextualTitle": "Tailwind CSS",
           "when": "tailwindcssConfigExplorerEnabled",
           "icon": "media/explorer-icon.svg",
           "visibility": "collapsed"
@@ -180,17 +181,17 @@
     "commands": [
       {
         "command": "tailwindcss.openConfigFile",
-        "title": "Open Configuration",
+        "title": "Open Configuration File",
         "icon": "$(go-to-file)"
       },
       {
         "command": "tailwindcss.openPluginHomepage",
-        "title": "Open plugin homepage",
+        "title": "Open Plugin Homepage",
         "icon": "$(book)"
       },
       {
         "command": "tailwindcss.revealConfigEntry",
-        "title": "Reveal config entry",
+        "title": "Reveal in Configuration",
         "icon": "$(go-to-file)"
       }
     ]

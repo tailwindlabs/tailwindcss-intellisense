@@ -22,7 +22,7 @@ import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
 import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
 import { dedupe, equal } from './util/array'
-import { registerConfigExplorer } from './lib/configExplorer'
+import { registerConfigExplorer, ConfigExplorerApi } from './lib/configExplorer'
 import { createEmitter } from './lib/emitter'
 import { onMessage } from './lsp/notifications'
 
@@ -31,6 +31,8 @@ const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
+
+let explorer: ConfigExplorerApi | undefined
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {
@@ -152,7 +154,10 @@ export function activate(context: ExtensionContext) {
 
     client.onReady().then(() => {
       let emitter = createEmitter(client)
-      registerConfigExplorer({ context, emitter })
+      if (!explorer) {
+        explorer = registerConfigExplorer({ context })
+      }
+      explorer.addWorkspace({ client, emitter })
       registerConfigErrorHandler(emitter)
       onMessage(client, 'getConfiguration', async (scope) => {
         return Workspace.getConfiguration('tailwindCSS', scope)
