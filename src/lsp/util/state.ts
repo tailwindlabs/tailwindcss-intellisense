@@ -75,6 +75,15 @@ export type DocumentClassName = {
   classList: DocumentClassList
 }
 
+export type DocumentHelperFunction = {
+  full: string
+  helper: 'theme' | 'config'
+  value: string
+  quotes: '"' | "'"
+  range: Range
+  valueRange: Range
+}
+
 export type ClassNameMeta = {
   source: 'base' | 'components' | 'utilities'
   pseudo: string[]
