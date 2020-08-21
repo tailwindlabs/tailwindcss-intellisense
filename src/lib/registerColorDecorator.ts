@@ -1,6 +1,7 @@
 import { window, workspace, ExtensionContext, TextEditor } from 'vscode'
 import { NotificationEmitter } from './emitter'
 import { LanguageClient } from 'vscode-languageclient'
+import debounce from 'debounce'
 
 const colorDecorationType = window.createTextEditorDecorationType({
   before: {
@@ -28,7 +29,6 @@ export function registerColorDecorator(
   emitter: NotificationEmitter
 ) {
   let activeEditor = window.activeTextEditor
-  let timeout: NodeJS.Timer | undefined = undefined
 
   async function updateDecorations() {
     return updateDecorationsInEditor(activeEditor)
@@ -76,13 +76,7 @@ export function registerColorDecorator(
     )
   }
 
-  function triggerUpdateDecorations() {
-    if (timeout) {
-      clearTimeout(timeout)
-      timeout = undefined
-    }
-    timeout = setTimeout(updateDecorations, 500)
-  }
+  const triggerUpdateDecorations = debounce(updateDecorations, 200)
 
   if (activeEditor) {
     triggerUpdateDecorations()
