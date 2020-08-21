@@ -28,6 +28,8 @@ import {
   getClassAttributeLexer,
   getComputedClassAttributeLexer,
 } from '../util/lexers'
+import { validateApply } from '../util/validateApply'
+import { flagEnabled } from '../util/flagEnabled'
 
 function completionsFromClassList(
   state: State,
@@ -193,16 +195,11 @@ function provideAtApplyCompletions(
       end: position,
     },
     (item) => {
-      // TODO: first line excludes all subtrees but there could _technically_ be
-      // valid apply-able class names in there. Will be correct in 99% of cases
-      if (item.kind === CompletionItemKind.Module) return false
-      let info = dlv(state.classNames.classNames, item.data)
-      return (
-        !Array.isArray(info) &&
-        info.__source === 'utilities' &&
-        info.__context.length === 0 &&
-        info.__pseudo.length === 0
-      )
+      if (item.kind === CompletionItemKind.Module) {
+        return flagEnabled(state, 'applyComplexClasses')
+      }
+      let validated = validateApply(state, item.data)
+      return validated !== null && validated.isApplyable === true
     }
   )
 }

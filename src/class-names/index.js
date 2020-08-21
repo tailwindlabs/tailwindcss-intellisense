@@ -47,6 +47,7 @@ export default async function getClassNames(
     let tailwindcss
     let browserslistModule
     let version
+    let featureFlags = { future: [], experimental: [] }
 
     const configPaths = (
       await glob(CONFIG_GLOB, {
@@ -73,6 +74,10 @@ export default async function getClassNames(
     try {
       // this is not required
       browserslistModule = importFrom(tailwindBase, 'browserslist')
+    } catch (_) {}
+
+    try {
+      featureFlags = importFrom(tailwindBase, './lib/featureFlags.js').default
     } catch (_) {}
 
     const sepLocation = semver.gte(version, '0.99.0')
@@ -152,6 +157,7 @@ export default async function getClassNames(
         tailwindcss,
         postcss,
       },
+      featureFlags,
     }
   }
 

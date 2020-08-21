@@ -57,6 +57,7 @@ export type State = null | {
   variants?: string[]
   classNames?: ClassNames
   dependencies?: string[]
+  featureFlags?: { future: string[]; experimental: string[] }
   editor?: EditorState
   error?: Error
 }
