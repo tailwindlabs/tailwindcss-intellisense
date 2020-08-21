@@ -39,16 +39,6 @@ export function registerDocumentColorProvider(state: State) {
         let value = dlv(state.config, [...base, ...keys])
         let color = getColorFromValue(value)
         if (color) {
-          // colors.push({
-          //   range: {
-          //     start: {
-          //       line: fn.valueRange.start.line,
-          //       character: fn.valueRange.start.character + 1,
-          //     },
-          //     end: fn.valueRange.end,
-          //   },
-          //   color,
-          // })
           colors.push({ range: fn.valueRange, color })
         }
       })
