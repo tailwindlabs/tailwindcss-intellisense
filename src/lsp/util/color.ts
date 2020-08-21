@@ -48,17 +48,43 @@ export function getColor(
   )
 
   // check that all of the values are valid colors
-  if (colors.some((color) => !color.isValid)) {
+  if (colors.some((color) => color !== 'transparent' && !color.isValid)) {
     return null
   }
 
-  // check that all of the values are the same color
-  const colorStrings = colors.map((color) => color.toRgbString())
-  if (dedupe(colorStrings).length !== 1) {
+  // check that all of the values are the same color, ignoring alpha
+  const colorStrings = dedupe(
+    colors.map((color) =>
+      color === 'transparent'
+        ? 'transparent'
+        : `${color.r}-${color.g}-${color.b}`
+    )
+  )
+  if (colorStrings.length !== 1) {
     return null
   }
 
-  return { documentation: colorStrings[0] }
+  if (colorStrings[0] === 'transparent') {
+    return {
+      documentation: 'rgba(0, 0, 0, 0.01)',
+    }
+  }
+
+  const nonTransparentColors = colors.filter(
+    (color): color is TinyColor => color !== 'transparent'
+  )
+
+  const alphas = dedupe(nonTransparentColors.map((color) => color.a))
+
+  if (alphas.length === 1 || (alphas.length === 2 && alphas.includes(0))) {
+    return {
+      documentation: nonTransparentColors
+        .find((color) => color.a !== 0)
+        .toRgbString(),
+    }
+  }
+
+  return null
 }
 
 export function getColorFromValue(value: unknown): string {
@@ -73,9 +99,9 @@ export function getColorFromValue(value: unknown): string {
   return null
 }
 
-function createColor(str: string): TinyColor {
+function createColor(str: string): TinyColor | 'transparent' {
   if (str === 'transparent') {
-    return new TinyColor({ r: 0, g: 0, b: 0, a: 0.01 })
+    return 'transparent'
   }
 
   // matches: rgba(<r>, <g>, <b>, var(--bg-opacity))
