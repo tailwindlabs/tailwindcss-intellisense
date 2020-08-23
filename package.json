@@ -189,6 +189,7 @@
     "dset": "^2.0.1",
     "esm": "^3.2.25",
     "fast-glob": "^3.2.4",
+    "find-up": "^5.0.0",
     "glob-exec": "^0.1.1",
     "globalyzer": "^0.1.4",
     "globrex": "^0.1.2",
@@ -216,5 +217,6 @@
     "vscode-languageclient": "^5.2.1",
     "vscode-languageserver": "^5.2.1",
     "vscode-uri": "^2.1.1"
-  }
+  },
+  "dependencies": {}
 }
