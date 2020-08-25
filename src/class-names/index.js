@@ -17,17 +17,6 @@ import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
 
-function TailwindConfigError(error) {
-  Error.call(this)
-  Error.captureStackTrace(this, this.constructor)
-
-  this.name = this.constructor.name
-  this.message = error.message
-  this.stack = error.stack
-}
-
-util.inherits(TailwindConfigError, Error)
-
 function arraysEqual(arr1, arr2) {
   return (
     JSON.stringify(arr1.concat([]).sort()) ===
@@ -98,23 +87,34 @@ export default async function getClassNames(
     try {
       config = __non_webpack_require__(configPath)
     } catch (error) {
-      throw new TailwindConfigError(error)
+      hook.unwatch()
+      hook.unhook()
+      throw error
     }
+
     hook.unwatch()
 
-    const [base, components, utilities] = await Promise.all(
-      [
-        semver.gte(version, '0.99.0') ? 'base' : 'preflight',
-        'components',
-        'utilities',
-      ].map((group) =>
-        postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
-          from: undefined,
-        })
-      )
-    )
+    let postcssResult
 
-    hook.unhook()
+    try {
+      postcssResult = await Promise.all(
+        [
+          semver.gte(version, '0.99.0') ? 'base' : 'preflight',
+          'components',
+          'utilities',
+        ].map((group) =>
+          postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
+            from: undefined,
+          })
+        )
+      )
+    } catch (error) {
+      throw error
+    } finally {
+      hook.unhook()
+    }
+
+    const [base, components, utilities] = postcssResult
 
     if (typeof userSeperator !== 'undefined') {
       dset(config, sepLocation, userSeperator)
@@ -180,12 +180,7 @@ export default async function getClassNames(
     try {
       result = await run()
     } catch (error) {
-      if (error instanceof TailwindConfigError) {
-        onChange({ error })
-      } else {
-        unwatch()
-        onChange(null)
-      }
+      onChange({ error })
       return
     }
     const newDeps = [result.configPath, ...result.dependencies]
