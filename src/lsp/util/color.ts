@@ -21,10 +21,14 @@ const COLOR_PROPS = [
   'text-decoration-color',
 ]
 
+function isKeyword(value: string): boolean {
+  return ['transparent', 'currentcolor'].includes(value.toLowerCase())
+}
+
 export function getColor(
   state: State,
   keys: string[]
-): { documentation?: string } {
+): TinyColor | string | null {
   const item = dlv(state.classNames.classNames, keys)
   if (!item.__rule) return null
   const props = Object.keys(removeMeta(item))
@@ -48,40 +52,36 @@ export function getColor(
   )
 
   // check that all of the values are valid colors
-  if (colors.some((color) => color !== 'transparent' && !color.isValid)) {
+  if (colors.some((color) => typeof color !== 'string' && !color.isValid)) {
     return null
   }
 
   // check that all of the values are the same color, ignoring alpha
   const colorStrings = dedupe(
     colors.map((color) =>
-      color === 'transparent'
-        ? 'transparent'
-        : `${color.r}-${color.g}-${color.b}`
+      typeof color === 'string' ? color : `${color.r}-${color.g}-${color.b}`
     )
   )
   if (colorStrings.length !== 1) {
     return null
   }
 
-  if (colorStrings[0] === 'transparent') {
-    return {
-      documentation: 'rgba(0, 0, 0, 0.01)',
-    }
+  if (isKeyword(colorStrings[0])) {
+    return colorStrings[0]
   }
 
-  const nonTransparentColors = colors.filter(
-    (color): color is TinyColor => color !== 'transparent'
+  const nonKeywordColors = colors.filter(
+    (color): color is TinyColor => typeof color !== 'string'
   )
 
-  const alphas = dedupe(nonTransparentColors.map((color) => color.a))
+  const alphas = dedupe(nonKeywordColors.map((color) => color.a))
 
-  if (alphas.length === 1 || (alphas.length === 2 && alphas.includes(0))) {
-    return {
-      documentation: nonTransparentColors
-        .find((color) => color.a !== 0)
-        .toRgbString(),
-    }
+  if (alphas.length === 1) {
+    return nonKeywordColors[0]
+  }
+
+  if (alphas.length === 2 && alphas.includes(0)) {
+    return nonKeywordColors.find((color) => color.a !== 0)
   }
 
   return null
@@ -99,9 +99,9 @@ export function getColorFromValue(value: unknown): string {
   return null
 }
 
-function createColor(str: string): TinyColor | 'transparent' {
-  if (str === 'transparent') {
-    return 'transparent'
+function createColor(str: string): TinyColor | string {
+  if (isKeyword(str)) {
+    return str
   }
 
   // matches: rgba(<r>, <g>, <b>, var(--bg-opacity))

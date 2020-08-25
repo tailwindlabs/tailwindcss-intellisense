@@ -27,8 +27,10 @@ export function registerDocumentColorProvider(state: State) {
           let parts = getClassNameParts(state, className.className)
           if (!parts) return
           let color = getColor(state, parts)
-          if (!color) return
-          colors.push({ range: className.range, color: color.documentation })
+          if (color === null || typeof color === 'string' || color.a === 0) {
+            return
+          }
+          colors.push({ range: className.range, color: color.toRgbString() })
         })
       })
 

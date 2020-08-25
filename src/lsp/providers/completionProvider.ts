@@ -89,9 +89,11 @@ function completionsFromClassList(
           sortText = '-' + sortText // move to top
         } else {
           const color = getColor(state, [className])
-          if (color) {
+          if (color !== null) {
             kind = CompletionItemKind.Color
-            documentation = color.documentation
+            if (typeof color !== 'string' && color.a !== 0) {
+              documentation = color.toRgbString()
+            }
           }
         }
 
