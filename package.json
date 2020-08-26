@@ -177,14 +177,14 @@
       "view/title": [
         {
           "command": "tailwindcss.openConfigFile",
-          "when": "view == tailwindcssConfigExplorer",
+          "when": "view == tailwindcssConfigExplorer && workspaceFolderCount == 1",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "tailwindcss.openPluginHomepage",
-          "when": "view == tailwindcssConfigExplorer && viewItem == hasPluginHomepage",
+          "when": "view == tailwindcssConfigExplorer && viewItem =~ /^plugin:/",
           "group": "inline"
         },
         {
@@ -195,6 +195,11 @@
         {
           "command": "tailwindcss.viewConfigError",
           "when": "view == tailwindcssConfigExplorer && viewItem =~ /^error:/",
+          "group": "inline"
+        },
+        {
+          "command": "tailwindcss.openConfigFile",
+          "when": "view == tailwindcssConfigExplorer && viewItem =~ /^config:/",
           "group": "inline"
         }
       ]

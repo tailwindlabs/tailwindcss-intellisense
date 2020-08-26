@@ -225,7 +225,9 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
             key: ['plugins', i.toString()],
             workspace: element.workspace,
             tooltip: plugin.description,
-            contextValue: plugin.homepage ? 'hasPluginHomepage' : undefined,
+            contextValue: plugin.homepage
+              ? `plugin:${plugin.homepage}`
+              : undefined,
           }))
         }
 
@@ -275,6 +277,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
         label: path.basename(workspace),
         collapsibleState: TreeItemCollapsibleState.Collapsed,
         workspace,
+        contextValue: `config:${this.workspaces[workspace].configPath}`,
         iconPath: new ThemeIcon(
           this.expandedWorkspaces.includes(workspace)
             ? 'root-folder-opened'
@@ -286,36 +289,46 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
 }
 
 interface ConfigExplorerInterface {
-  refresh: (workspaces: ExplorerWorkspaces) => void
+  refresh: (workspaces?: ExplorerWorkspaces) => void
 }
 
 export function createConfigExplorer(
   context: ExtensionContext,
   workspaces: ExplorerWorkspaces
 ): ConfigExplorerInterface {
-  // let currentConfigPath = path
-  // let currentPlugins = plugins
   let provider = new TailwindDataProvider(context, workspaces)
 
-  // context.subscriptions.push(
-  //   commands.registerCommand('tailwindcss.openConfigFile', async () => {
-  //     window.showTextDocument(
-  //       await workspace.openTextDocument(currentConfigPath)
-  //     )
-  //   })
-  // )
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tailwindcss.openConfigFile',
+      async (item?: ConfigItem) => {
+        if (item) {
+          const match = item.contextValue.match(/^config:(?<file>.*?)$/)
+          if (match === null) return
+          window.showTextDocument(
+            await Workspace.openTextDocument(match.groups.file)
+          )
+        } else {
+          window.showTextDocument(
+            await Workspace.openTextDocument(
+              workspaces[Object.keys(workspaces)[0]].configPath
+            )
+          )
+        }
+      }
+    )
+  )
 
-  // context.subscriptions.push(
-  //   commands.registerCommand(
-  //     'tailwindcss.openPluginHomepage',
-  //     (item: ConfigItem) => {
-  //       commands.executeCommand(
-  //         'vscode.open',
-  //         Uri.parse(currentPlugins[item.key[item.key.length - 1]].homepage)
-  //       )
-  //     }
-  //   )
-  // )
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tailwindcss.openPluginHomepage',
+      (item: ConfigItem) => {
+        const match = item.contextValue.match(/^plugin:(?<url>.*?)$/)
+        if (match === null) return
+        commands.executeCommand('vscode.open', Uri.parse(match.groups.url))
+      }
+    )
+  )
 
   let treeView = window.createTreeView('tailwindcssConfigExplorer', {
     treeDataProvider: provider,
@@ -337,8 +350,6 @@ export function createConfigExplorer(
   return {
     refresh: (workspaces) => {
       provider.refresh(workspaces)
-      // currentConfigPath = path
-      // currentPlugins = plugins
     },
   }
 }
@@ -355,7 +366,7 @@ export function registerConfigExplorer({
 }: {
   context: ExtensionContext
 }): ConfigExplorerApi {
-  let workspaces: ExplorerWorkspaces = {}
+  const workspaces: ExplorerWorkspaces = {}
   let configExplorer: ConfigExplorerInterface
 
   context.subscriptions.push(
@@ -388,6 +399,12 @@ export function registerConfigExplorer({
       }
     )
   )
+
+  Workspace.onDidChangeWorkspaceFolders(() => {
+    if (configExplorer) {
+      configExplorer.refresh()
+    }
+  })
 
   return {
     addWorkspace: ({ client, emitter }) => {
