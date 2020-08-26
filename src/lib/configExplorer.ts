@@ -13,6 +13,7 @@ import {
   Position,
   workspace as Workspace,
   ThemeIcon,
+  TreeView,
 } from 'vscode'
 const dlv = require('dlv')
 import * as path from 'path'
@@ -116,18 +117,96 @@ function getLocation(
   }
 }
 
-class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
+export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   private _onDidChangeTreeData: EventEmitter<ConfigItem | null> = new EventEmitter<ConfigItem | null>()
   readonly onDidChangeTreeData: Event<ConfigItem | null> = this
     ._onDidChangeTreeData.event
 
   private context: ExtensionContext
-  private workspaces: ExplorerWorkspaces
+  private workspaces: ExplorerWorkspaces = {}
   private expandedWorkspaces: string[] = []
+  private treeView: TreeView<ConfigItem>
 
-  constructor(context: ExtensionContext, workspaces: ExplorerWorkspaces) {
-    this.workspaces = workspaces
+  constructor(context: ExtensionContext) {
     this.context = context
+
+    commands.executeCommand(
+      'setContext',
+      'tailwindcssConfigExplorerEnabled',
+      true
+    )
+
+    context.subscriptions.push(
+      commands.registerCommand(
+        'tailwindcss.revealConfigEntry',
+        ({ location }: ConfigItem) => {
+          window.showTextDocument(Uri.file(location.file), {
+            selection: new Range(
+              new Position(
+                location.range.start.line,
+                location.range.start.character
+              ),
+              new Position(
+                location.range.end.line,
+                location.range.end.character
+              )
+            ),
+          })
+        }
+      )
+    )
+
+    context.subscriptions.push(
+      commands.registerCommand(
+        'tailwindcss.viewConfigError',
+        ({ contextValue }: ConfigItem) => {
+          const match = contextValue.match(
+            /^error:(?<file>.*?):(?<line>[0-9]+)$/
+          )
+          if (match === null) return
+          const position = new Position(parseInt(match.groups.line, 10), 0)
+          window.showTextDocument(Uri.file(match.groups.file), {
+            selection: new Range(position, position),
+          })
+        }
+      )
+    )
+
+    context.subscriptions.push(
+      commands.registerCommand(
+        'tailwindcss.openConfigFile',
+        async (item?: ConfigItem) => {
+          if (item) {
+            const match = item.contextValue.match(/^config:(?<file>.*?)$/)
+            if (match === null) return
+            window.showTextDocument(
+              await Workspace.openTextDocument(match.groups.file)
+            )
+          } else {
+            window.showTextDocument(
+              await Workspace.openTextDocument(
+                this.workspaces[Object.keys(this.workspaces)[0]].configPath
+              )
+            )
+          }
+        }
+      )
+    )
+
+    context.subscriptions.push(
+      commands.registerCommand(
+        'tailwindcss.openPluginHomepage',
+        (item: ConfigItem) => {
+          const match = item.contextValue.match(/^plugin:(?<url>.*?)$/)
+          if (match === null) return
+          commands.executeCommand('vscode.open', Uri.parse(match.groups.url))
+        }
+      )
+    )
+
+    Workspace.onDidChangeWorkspaceFolders(() => {
+      this.refresh()
+    })
   }
 
   private async createColorIcon(color: string) {
@@ -148,28 +227,75 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     return fullPath
   }
 
+  public setTreeView(treeView: TreeView<ConfigItem>): void {
+    this.treeView = treeView
+    this.treeView.onDidExpandElement(({ element }) => {
+      if (!element.key && element.workspace) {
+        this.expandedWorkspaces.push(element.workspace)
+        this.refresh()
+      }
+    })
+    this.treeView.onDidCollapseElement(({ element }) => {
+      if (!element.key && element.workspace) {
+        this.expandedWorkspaces.splice(
+          this.expandedWorkspaces.indexOf(element.workspace),
+          1
+        )
+        this.refresh()
+      }
+    })
+  }
+
+  public addWorkspace({
+    client,
+    emitter,
+  }: {
+    client: LanguageClient
+    emitter: NotificationEmitter
+  }) {
+    let folder = client.clientOptions.workspaceFolder.uri.toString()
+
+    const onUpdate = async ({
+      configPath,
+      config: originalConfig,
+      plugins,
+    }) => {
+      this.workspaces[folder] = {
+        configPath,
+        config: originalConfig,
+        plugins,
+      }
+
+      try {
+        this.workspaces[folder].config = (
+          await emitter.emit('configWithLocations', {})
+        ).config
+      } catch (_) {}
+
+      this.refresh()
+    }
+
+    const onError = async (error) => {
+      this.workspaces[folder].error = error
+      this.refresh()
+    }
+
+    emitter.on('configUpdated', onUpdate)
+    emitter.on('configError', onError)
+
+    client.onDidChangeState(({ newState }) => {
+      if (newState === ClientState.Stopped) {
+        delete this.workspaces[folder]
+        this.refresh()
+      }
+    })
+  }
+
   public refresh(workspaces?: ExplorerWorkspaces): void {
     if (workspaces) {
       this.workspaces = workspaces
     }
     this._onDidChangeTreeData.fire()
-  }
-
-  public onDidExpandElement(item: ConfigItem): void {
-    if (!item.key && item.workspace) {
-      this.expandedWorkspaces.push(item.workspace)
-      this._onDidChangeTreeData.fire()
-    }
-  }
-
-  public onDidCollapseElement(item: ConfigItem): void {
-    if (!item.key && item.workspace) {
-      this.expandedWorkspaces.splice(
-        this.expandedWorkspaces.indexOf(item.workspace),
-        1
-      )
-      this._onDidChangeTreeData.fire()
-    }
   }
 
   getTreeItem(element: ConfigItem): ConfigItem {
@@ -288,166 +414,19 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   }
 }
 
-interface ConfigExplorerInterface {
-  refresh: (workspaces?: ExplorerWorkspaces) => void
-}
-
-export function createConfigExplorer(
-  context: ExtensionContext,
-  workspaces: ExplorerWorkspaces
-): ConfigExplorerInterface {
-  let provider = new TailwindDataProvider(context, workspaces)
-
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tailwindcss.openConfigFile',
-      async (item?: ConfigItem) => {
-        if (item) {
-          const match = item.contextValue.match(/^config:(?<file>.*?)$/)
-          if (match === null) return
-          window.showTextDocument(
-            await Workspace.openTextDocument(match.groups.file)
-          )
-        } else {
-          window.showTextDocument(
-            await Workspace.openTextDocument(
-              workspaces[Object.keys(workspaces)[0]].configPath
-            )
-          )
-        }
-      }
-    )
-  )
-
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tailwindcss.openPluginHomepage',
-      (item: ConfigItem) => {
-        const match = item.contextValue.match(/^plugin:(?<url>.*?)$/)
-        if (match === null) return
-        commands.executeCommand('vscode.open', Uri.parse(match.groups.url))
-      }
-    )
-  )
-
-  let treeView = window.createTreeView('tailwindcssConfigExplorer', {
-    treeDataProvider: provider,
-    showCollapseAll: true,
-  })
-  treeView.onDidExpandElement(({ element }) => {
-    provider.onDidExpandElement(element)
-  })
-  treeView.onDidCollapseElement(({ element }) => {
-    provider.onDidCollapseElement(element)
-  })
-
-  commands.executeCommand(
-    'setContext',
-    'tailwindcssConfigExplorerEnabled',
-    true
-  )
-
-  return {
-    refresh: (workspaces) => {
-      provider.refresh(workspaces)
-    },
-  }
-}
-
-export interface ConfigExplorerApi {
-  addWorkspace: (params: {
-    emitter: NotificationEmitter
-    client: LanguageClient
-  }) => void
-}
-
 export function registerConfigExplorer({
   context,
 }: {
   context: ExtensionContext
-}): ConfigExplorerApi {
-  const workspaces: ExplorerWorkspaces = {}
-  let configExplorer: ConfigExplorerInterface
+}): TailwindDataProvider {
+  let provider = new TailwindDataProvider(context)
 
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tailwindcss.revealConfigEntry',
-      ({ location }: ConfigItem) => {
-        window.showTextDocument(Uri.file(location.file), {
-          selection: new Range(
-            new Position(
-              location.range.start.line,
-              location.range.start.character
-            ),
-            new Position(location.range.end.line, location.range.end.character)
-          ),
-        })
-      }
-    )
+  provider.setTreeView(
+    window.createTreeView('tailwindcssConfigExplorer', {
+      treeDataProvider: provider,
+      showCollapseAll: true,
+    })
   )
 
-  context.subscriptions.push(
-    commands.registerCommand(
-      'tailwindcss.viewConfigError',
-      ({ contextValue }: ConfigItem) => {
-        const match = contextValue.match(/^error:(?<file>.*?):(?<line>[0-9]+)$/)
-        if (match === null) return
-        const position = new Position(parseInt(match.groups.line, 10), 0)
-        window.showTextDocument(Uri.file(match.groups.file), {
-          selection: new Range(position, position),
-        })
-      }
-    )
-  )
-
-  Workspace.onDidChangeWorkspaceFolders(() => {
-    if (configExplorer) {
-      configExplorer.refresh()
-    }
-  })
-
-  return {
-    addWorkspace: ({ client, emitter }) => {
-      let folder = client.clientOptions.workspaceFolder.uri.toString()
-
-      async function onUpdate({ configPath, config: originalConfig, plugins }) {
-        workspaces[folder] = {
-          configPath,
-          config: originalConfig,
-          plugins,
-        }
-
-        try {
-          workspaces[folder].config = (
-            await emitter.emit('configWithLocations', {})
-          ).config
-        } catch (_) {}
-
-        if (configExplorer) {
-          configExplorer.refresh(workspaces)
-        } else {
-          configExplorer = createConfigExplorer(context, workspaces)
-        }
-      }
-
-      async function onError(error) {
-        workspaces[folder].error = error
-        if (configExplorer) {
-          configExplorer.refresh(workspaces)
-        }
-      }
-
-      emitter.on('configUpdated', onUpdate)
-      emitter.on('configError', onError)
-
-      client.onDidChangeState(({ newState }) => {
-        if (newState === ClientState.Stopped) {
-          delete workspaces[folder]
-          if (configExplorer) {
-            configExplorer.refresh(workspaces)
-          }
-        }
-      })
-    },
-  }
+  return provider
 }

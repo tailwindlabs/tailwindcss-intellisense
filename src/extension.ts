@@ -22,7 +22,10 @@ import { registerConfigErrorHandler } from './lib/registerConfigErrorHandler'
 import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
 import { dedupe, equal } from './util/array'
-import { registerConfigExplorer, ConfigExplorerApi } from './lib/configExplorer'
+import {
+  registerConfigExplorer,
+  TailwindDataProvider,
+} from './lib/configExplorer'
 import { createEmitter } from './lib/emitter'
 import { onMessage } from './lsp/notifications'
 import { registerColorDecorator } from './lib/registerColorDecorator'
@@ -33,7 +36,7 @@ const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
 
-let explorer: ConfigExplorerApi | undefined
+let explorer: TailwindDataProvider | undefined
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {
