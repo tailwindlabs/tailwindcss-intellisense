@@ -1,5 +1,6 @@
 import { State } from './state'
 import { getClassNameMeta } from './getClassNameMeta'
+import { flagEnabled } from './flagEnabled'
 
 export function validateApply(
   state: State,
@@ -7,6 +8,10 @@ export function validateApply(
 ): { isApplyable: true } | { isApplyable: false; reason: string } | null {
   const meta = getClassNameMeta(state, classNameOrParts)
   if (!meta) return null
+
+  if (flagEnabled(state, 'applyComplexClasses')) {
+    return { isApplyable: true }
+  }
 
   const className = Array.isArray(classNameOrParts)
     ? classNameOrParts.join(state.separator)

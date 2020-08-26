@@ -57,6 +57,7 @@ export type State = null | {
   variants?: string[]
   classNames?: ClassNames
   dependencies?: string[]
+  featureFlags?: { future: string[]; experimental: string[] }
   editor?: EditorState
   error?: Error
 }
@@ -72,6 +73,15 @@ export type DocumentClassName = {
   range: Range
   relativeRange: Range
   classList: DocumentClassList
+}
+
+export type DocumentHelperFunction = {
+  full: string
+  helper: 'theme' | 'config'
+  value: string
+  quotes: '"' | "'"
+  range: Range
+  valueRange: Range
 }
 
 export type ClassNameMeta = {

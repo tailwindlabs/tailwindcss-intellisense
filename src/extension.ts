@@ -25,6 +25,7 @@ import { dedupe, equal } from './util/array'
 import { registerConfigExplorer, ConfigExplorerApi } from './lib/configExplorer'
 import { createEmitter } from './lib/emitter'
 import { onMessage } from './lsp/notifications'
+import { registerColorDecorator } from './lib/registerColorDecorator'
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
@@ -159,6 +160,7 @@ export function activate(context: ExtensionContext) {
       }
       explorer.addWorkspace({ client, emitter })
       registerConfigErrorHandler(emitter)
+      registerColorDecorator(client, context, emitter)
       onMessage(client, 'getConfiguration', async (scope) => {
         return Workspace.getConfiguration('tailwindCSS', scope)
       })

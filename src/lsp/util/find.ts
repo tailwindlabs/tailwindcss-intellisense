@@ -1,5 +1,10 @@
 import { TextDocument, Range, Position } from 'vscode-languageserver'
-import { DocumentClassName, DocumentClassList, State } from './state'
+import {
+  DocumentClassName,
+  DocumentClassList,
+  State,
+  DocumentHelperFunction,
+} from './state'
 import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext, isHtmlDoc, isSvelteDoc, isVueDoc } from './html'
@@ -11,6 +16,7 @@ import {
   getComputedClassAttributeLexer,
 } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
+import { resolveRange } from './resolveRange'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -252,6 +258,64 @@ export function findClassListsInDocument(
     ...boundaries.html.map((range) => findClassListsInHtmlRange(doc, range)),
     ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
   ])
+}
+
+export function findHelperFunctionsInDocument(
+  state: State,
+  doc: TextDocument
+): DocumentHelperFunction[] {
+  if (isCssDoc(state, doc)) {
+    return findHelperFunctionsInRange(doc)
+  }
+
+  let boundaries = getLanguageBoundaries(state, doc)
+  if (!boundaries) return []
+
+  return flatten(
+    boundaries.css.map((range) => findHelperFunctionsInRange(doc, range))
+  )
+}
+
+export function findHelperFunctionsInRange(
+  doc: TextDocument,
+  range?: Range
+): DocumentHelperFunction[] {
+  const text = doc.getText(range)
+  const matches = findAll(
+    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")\)/gm,
+    text
+  )
+
+  return matches.map((match) => {
+    let value = match[4] || match[6]
+    let startIndex = match.index + match.groups.before.length
+    return {
+      full: match[0].substr(match.groups.before.length),
+      value,
+      helper: match.groups.helper === 'theme' ? 'theme' : 'config',
+      quotes: match.groups.single ? "'" : '"',
+      range: resolveRange(
+        {
+          start: indexToPosition(text, startIndex),
+          end: indexToPosition(text, match.index + match[0].length),
+        },
+        range
+      ),
+      valueRange: resolveRange(
+        {
+          start: indexToPosition(
+            text,
+            startIndex + match.groups.helper.length + 1
+          ),
+          end: indexToPosition(
+            text,
+            startIndex + match.groups.helper.length + 1 + 1 + value.length + 1
+          ),
+        },
+        range
+      ),
+    }
+  })
 }
 
 export function indexToPosition(str: string, index: number): Position {

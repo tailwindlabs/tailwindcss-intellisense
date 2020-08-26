@@ -10,23 +10,11 @@ import invariant from 'tiny-invariant'
 import getPlugins from './getPlugins'
 import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
-import * as util from 'util'
 import * as path from 'path'
 import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
-
-function TailwindConfigError(error) {
-  Error.call(this)
-  Error.captureStackTrace(this, this.constructor)
-
-  this.name = this.constructor.name
-  this.message = error.message
-  this.stack = error.stack
-}
-
-util.inherits(TailwindConfigError, Error)
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -47,6 +35,7 @@ export default async function getClassNames(
     let tailwindcss
     let browserslistModule
     let version
+    let featureFlags = { future: [], experimental: [] }
 
     const configPaths = (
       await glob(CONFIG_GLOB, {
@@ -75,6 +64,10 @@ export default async function getClassNames(
       browserslistModule = importFrom(tailwindBase, 'browserslist')
     } catch (_) {}
 
+    try {
+      featureFlags = importFrom(tailwindBase, './lib/featureFlags.js').default
+    } catch (_) {}
+
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
@@ -93,23 +86,34 @@ export default async function getClassNames(
     try {
       config = __non_webpack_require__(configPath)
     } catch (error) {
-      throw new TailwindConfigError(error)
+      hook.unwatch()
+      hook.unhook()
+      throw error
     }
+
     hook.unwatch()
 
-    const [base, components, utilities] = await Promise.all(
-      [
-        semver.gte(version, '0.99.0') ? 'base' : 'preflight',
-        'components',
-        'utilities',
-      ].map((group) =>
-        postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
-          from: undefined,
-        })
-      )
-    )
+    let postcssResult
 
-    hook.unhook()
+    try {
+      postcssResult = await Promise.all(
+        [
+          semver.gte(version, '0.99.0') ? 'base' : 'preflight',
+          'components',
+          'utilities',
+        ].map((group) =>
+          postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
+            from: undefined,
+          })
+        )
+      )
+    } catch (error) {
+      throw error
+    } finally {
+      hook.unhook()
+    }
+
+    const [base, components, utilities] = postcssResult
 
     if (typeof userSeperator !== 'undefined') {
       dset(config, sepLocation, userSeperator)
@@ -152,6 +156,7 @@ export default async function getClassNames(
         tailwindcss,
         postcss,
       },
+      featureFlags,
     }
   }
 
@@ -174,12 +179,7 @@ export default async function getClassNames(
     try {
       result = await run()
     } catch (error) {
-      if (error instanceof TailwindConfigError) {
-        onChange({ error })
-      } else {
-        unwatch()
-        onChange(null)
-      }
+      onChange({ error })
       return
     }
     const newDeps = [result.configPath, ...result.dependencies]

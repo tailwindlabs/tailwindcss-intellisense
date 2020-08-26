@@ -21,10 +21,14 @@ const COLOR_PROPS = [
   'text-decoration-color',
 ]
 
+function isKeyword(value: string): boolean {
+  return ['transparent', 'currentcolor'].includes(value.toLowerCase())
+}
+
 export function getColor(
   state: State,
   keys: string[]
-): { documentation?: string } {
+): TinyColor | string | null {
   const item = dlv(state.classNames.classNames, keys)
   if (!item.__rule) return null
   const props = Object.keys(removeMeta(item))
@@ -48,17 +52,39 @@ export function getColor(
   )
 
   // check that all of the values are valid colors
-  if (colors.some((color) => !color.isValid)) {
+  if (colors.some((color) => typeof color !== 'string' && !color.isValid)) {
     return null
   }
 
-  // check that all of the values are the same color
-  const colorStrings = colors.map((color) => color.toRgbString())
-  if (dedupe(colorStrings).length !== 1) {
+  // check that all of the values are the same color, ignoring alpha
+  const colorStrings = dedupe(
+    colors.map((color) =>
+      typeof color === 'string' ? color : `${color.r}-${color.g}-${color.b}`
+    )
+  )
+  if (colorStrings.length !== 1) {
     return null
   }
 
-  return { documentation: colorStrings[0] }
+  if (isKeyword(colorStrings[0])) {
+    return colorStrings[0]
+  }
+
+  const nonKeywordColors = colors.filter(
+    (color): color is TinyColor => typeof color !== 'string'
+  )
+
+  const alphas = dedupe(nonKeywordColors.map((color) => color.a))
+
+  if (alphas.length === 1) {
+    return nonKeywordColors[0]
+  }
+
+  if (alphas.length === 2 && alphas.includes(0)) {
+    return nonKeywordColors.find((color) => color.a !== 0)
+  }
+
+  return null
 }
 
 export function getColorFromValue(value: unknown): string {
@@ -73,9 +99,9 @@ export function getColorFromValue(value: unknown): string {
   return null
 }
 
-function createColor(str: string): TinyColor {
-  if (str === 'transparent') {
-    return new TinyColor({ r: 0, g: 0, b: 0, a: 0.01 })
+function createColor(str: string): TinyColor | string {
+  if (isKeyword(str)) {
+    return str
   }
 
   // matches: rgba(<r>, <g>, <b>, var(--bg-opacity))

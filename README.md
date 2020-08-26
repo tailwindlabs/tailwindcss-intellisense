@@ -56,6 +56,14 @@ Enable completions when using [Emmet](https://emmet.io/)-style syntax, for examp
 }
 ```
 
+### `tailwindCSS.colorDecorators`
+
+Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions.
+
+- `inherit`: Color decorators are rendered if `editor.colorDecorators` is enabled.
+- `on`: Color decorators are rendered.
+- `off`: Color decorators are not rendered.
+
 ### `tailwindCSS.validate`
 
 Enable linting. Rules can be configured individually using the `tailwindcss.lint` settings:

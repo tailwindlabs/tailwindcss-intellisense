@@ -37,9 +37,10 @@ import {
 import { createEmitter } from '../lib/emitter'
 import { provideCodeActions } from './providers/codeActions/codeActionProvider'
 import { onMessage } from './notifications'
+import { registerDocumentColorProvider } from './providers/documentColorProvider'
 
 let connection = createConnection(ProposedFeatures.all)
-let state: State = { enabled: false, emitter: createEmitter(connection) }
+const state: State = { enabled: false, emitter: createEmitter(connection) }
 let documents = new TextDocuments()
 let workspaceFolder: string | null
 
@@ -75,7 +76,7 @@ connection.onInitialize(
   async (params: InitializeParams): Promise<InitializeResult> => {
     const capabilities = params.capabilities
 
-    const editorState: EditorState = {
+    state.editor = {
       connection,
       documents,
       documentSettings,
@@ -101,12 +102,7 @@ connection.onInitialize(
         // @ts-ignore
         onChange: (newState: State): void => {
           if (newState && !newState.error) {
-            state = {
-              ...newState,
-              enabled: true,
-              emitter: state.emitter,
-              editor: editorState,
-            }
+            Object.assign(state, newState, { enabled: true })
             connection.sendNotification('tailwindcss/configUpdated', [
               {
                 configPath: state.configPath,
@@ -116,11 +112,7 @@ connection.onInitialize(
             ])
             updateAllDiagnostics(state)
           } else {
-            state = {
-              enabled: false,
-              emitter: state.emitter,
-              editor: editorState,
-            }
+            state.enabled = false
             if (newState && newState.error) {
               const payload: {
                 message: string
@@ -144,14 +136,9 @@ connection.onInitialize(
     )
 
     if (tailwindState) {
-      state = {
-        enabled: true,
-        emitter: state.emitter,
-        editor: editorState,
-        ...tailwindState,
-      }
+      Object.assign(state, tailwindState, { enabled: true })
     } else {
-      state = { enabled: false, emitter: state.emitter, editor: editorState }
+      state.enabled = false
     }
 
     return {
@@ -205,6 +192,8 @@ connection.onInitialized &&
     onMessage(connection, 'configWithLocations', async () => {
       return getConfigWithLocations(state.configPath)
     })
+
+    registerDocumentColorProvider(state)
   })
 
 connection.onDidChangeConfiguration((change) => {
