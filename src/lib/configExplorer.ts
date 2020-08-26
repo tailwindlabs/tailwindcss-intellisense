@@ -220,7 +220,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
 
         if (element.key.length === 1 && element.key[0] === 'plugins') {
           return plugins.map((plugin, i) => ({
-            label: plugin.name || 'Anonymous',
+            label: plugin.name || '(anonymous)',
             description: plugin.version ? `v${plugin.version}` : undefined,
             key: ['plugins', i.toString()],
             workspace: element.workspace,
