@@ -254,6 +254,7 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     emitter: NotificationEmitter
   }) {
     let folder = client.clientOptions.workspaceFolder.uri.toString()
+    this.expandedWorkspaces.push(folder)
 
     const onUpdate = async ({
       configPath,
@@ -401,7 +402,7 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     return Object.keys(this.workspaces).map((workspace) => {
       return new ConfigItem({
         label: path.basename(workspace),
-        collapsibleState: TreeItemCollapsibleState.Collapsed,
+        collapsibleState: TreeItemCollapsibleState.Expanded,
         workspace,
         contextValue: `config:${this.workspaces[workspace].configPath}`,
         iconPath: new ThemeIcon(
