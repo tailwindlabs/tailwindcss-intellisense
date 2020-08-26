@@ -81,6 +81,7 @@ export default function getPlugins(config) {
           name: pkg.name,
           description: pkg.description,
           homepage: pkg.homepage,
+          version: pkg.version,
           contributes,
         }
       }
