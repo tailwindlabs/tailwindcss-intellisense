@@ -208,7 +208,7 @@
       {
         "command": "tailwindcss.openPluginHomepage",
         "title": "Open Plugin Homepage",
-        "icon": "$(book)"
+        "icon": "$(globe)"
       },
       {
         "command": "tailwindcss.revealConfigEntry",
