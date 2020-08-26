@@ -103,3 +103,4 @@ If you’re having issues getting the IntelliSense features to activate, there a
 - Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.js` or `tailwind.js`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation/#3-create-your-tailwind-config-file-optional).
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`. Tailwind CSS IntelliSense does not currently support Yarn Plug'n'Play.
 - If you installed `tailwindcss` or created your config file while your project was already open in Visual Studio Code you may need to reload the editor. You can either restart VS Code entirely, or use the `Developer: Reload Window` command which can be found in the command palette.
+- Make sure your VS Code settings (`.vscode/settings.json`) aren't causing the Tailwind config to be excluded from search.
