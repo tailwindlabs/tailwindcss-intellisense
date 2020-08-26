@@ -79,6 +79,7 @@ export default function getPlugins(config) {
       if (pkg.name) {
         return {
           name: pkg.name,
+          description: pkg.description,
           homepage: pkg.homepage,
           contributes,
         }

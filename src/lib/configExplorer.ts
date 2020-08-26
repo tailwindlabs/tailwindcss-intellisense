@@ -223,6 +223,7 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
             label: plugin.name || 'Anonymous',
             key: ['plugins', i.toString()],
             workspace: element.workspace,
+            tooltip: plugin.description,
             contextValue: plugin.homepage ? 'hasPluginHomepage' : undefined,
           }))
         }
