@@ -82,6 +82,7 @@ export type ExplorerWorkspace = {
   configPath: string
   config: any
   plugins: any[]
+  error?: { message: string } | { message: string; file: string; line: number }
 }
 
 export type ExplorerWorkspaces = Record<string, ExplorerWorkspace>
@@ -154,11 +155,6 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     this._onDidChangeTreeData.fire()
   }
 
-  public clear(): void {
-    this.workspaces = null
-    this._onDidChangeTreeData.fire()
-  }
-
   public onDidExpandElement(item: ConfigItem): void {
     if (!item.key && item.workspace) {
       this.expandedWorkspaces.push(item.workspace)
@@ -180,7 +176,20 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     return element
   }
   getTopLevel(workspace: string): ConfigItem[] {
-    let { config } = this.workspaces[workspace]
+    let { config, error } = this.workspaces[workspace]
+
+    if (error) {
+      return [
+        new ConfigItem({
+          label: `Error: ${error.message}`,
+          iconPath: new ThemeIcon('warning'),
+          collapsibleState: TreeItemCollapsibleState.None,
+          contextValue:
+            'file' in error ? `error:${error.file}:${error.line}` : undefined,
+        }),
+      ]
+    }
+
     return Object.keys(config)
       .filter(isActualKey)
       .map((key) => {
@@ -275,7 +284,6 @@ class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
 }
 
 interface ConfigExplorerInterface {
-  clear: (message?: string) => void
   refresh: (workspaces: ExplorerWorkspaces) => void
 }
 
@@ -325,12 +333,7 @@ export function createConfigExplorer(
   )
 
   return {
-    clear: (message?: string) => {
-      provider.clear()
-      treeView.message = message
-    },
     refresh: (workspaces) => {
-      treeView.message = undefined
       provider.refresh(workspaces)
       // currentConfigPath = path
       // currentPlugins = plugins
@@ -370,6 +373,20 @@ export function registerConfigExplorer({
     )
   )
 
+  context.subscriptions.push(
+    commands.registerCommand(
+      'tailwindcss.viewConfigError',
+      ({ contextValue }: ConfigItem) => {
+        const match = contextValue.match(/^error:(?<file>.*?):(?<line>[0-9]+)$/)
+        if (match === null) return
+        const position = new Position(parseInt(match.groups.line, 10), 0)
+        window.showTextDocument(Uri.file(match.groups.file), {
+          selection: new Range(position, position),
+        })
+      }
+    )
+  )
+
   return {
     addWorkspace: ({ client, emitter }) => {
       let folder = client.clientOptions.workspaceFolder.uri.toString()
@@ -394,9 +411,10 @@ export function registerConfigExplorer({
         }
       }
 
-      async function onError({ message }) {
+      async function onError(error) {
+        workspaces[folder].error = error
         if (configExplorer) {
-          configExplorer.clear(`Error loading configuration: ${message}`)
+          configExplorer.refresh(workspaces)
         }
       }
 

@@ -191,6 +191,11 @@
           "command": "tailwindcss.revealConfigEntry",
           "when": "view == tailwindcssConfigExplorer && viewItem == revealable",
           "group": "inline"
+        },
+        {
+          "command": "tailwindcss.viewConfigError",
+          "when": "view == tailwindcssConfigExplorer && viewItem =~ /^error:/",
+          "group": "inline"
         }
       ]
     },
@@ -208,6 +213,11 @@
       {
         "command": "tailwindcss.revealConfigEntry",
         "title": "Reveal in Configuration",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "tailwindcss.viewConfigError",
+        "title": "View Error",
         "icon": "$(go-to-file)"
       }
     ]
