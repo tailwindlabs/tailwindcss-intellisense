@@ -130,12 +130,6 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
   constructor(context: ExtensionContext) {
     this.context = context
 
-    commands.executeCommand(
-      'setContext',
-      'tailwindcssConfigExplorerEnabled',
-      true
-    )
-
     context.subscriptions.push(
       commands.registerCommand(
         'tailwindcss.revealConfigEntry',
@@ -207,6 +201,22 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     Workspace.onDidChangeWorkspaceFolders(() => {
       this.refresh()
     })
+  }
+
+  private enable(): void {
+    commands.executeCommand(
+      'setContext',
+      'tailwindcssConfigExplorerEnabled',
+      true
+    )
+  }
+
+  private disable(): void {
+    commands.executeCommand(
+      'setContext',
+      'tailwindcssConfigExplorerEnabled',
+      false
+    )
   }
 
   private async createColorIcon(color: string) {
@@ -292,16 +302,19 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
     })
   }
 
-  public refresh(workspaces?: ExplorerWorkspaces): void {
-    if (workspaces) {
-      this.workspaces = workspaces
-    }
+  public refresh(): void {
     this._onDidChangeTreeData.fire()
+    if (Object.keys(this.workspaces).length > 0) {
+      this.enable()
+    } else {
+      this.disable()
+    }
   }
 
   getTreeItem(element: ConfigItem): ConfigItem {
     return element
   }
+
   getTopLevel(workspace: string): ConfigItem[] {
     let { config, error } = this.workspaces[workspace]
 
@@ -338,6 +351,7 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
         })
       })
   }
+
   async getChildren(element: ConfigItem): Promise<ConfigItem[]> {
     if (!this.workspaces) return []
 
