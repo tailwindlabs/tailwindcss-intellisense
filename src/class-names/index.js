@@ -43,6 +43,7 @@ export default async function getClassNames(
         ignore: ['**/node_modules'],
         onlyFiles: true,
         absolute: true,
+        suppressErrors: true,
       })
     )
       .map(normalizePath)
