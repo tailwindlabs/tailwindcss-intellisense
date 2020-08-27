@@ -76,6 +76,8 @@ export default async function getClassNames(cwd = process.cwd(), { onChange = ()
               })
             )
           )
+        } catch (error) {
+          throw error
         } finally {
           hook.unhook()
         }
