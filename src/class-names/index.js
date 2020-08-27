@@ -184,7 +184,8 @@ function loadMeta(configDir) {
     let featureFlags
 
     try {
-      featureFlags = require('tailwindcss/lib/featureFlags.js').default
+      const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
+      featureFlags = require('./lib/featureFlags.js', tailwindBase).default
     } catch (_) {}
 
     return { version, featureFlags }

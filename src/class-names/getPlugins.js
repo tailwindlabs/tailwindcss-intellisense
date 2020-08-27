@@ -5,9 +5,10 @@ import { isObject } from './isObject'
 import { withUserEnvironment } from './environment'
 
 export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
-  return withUserEnvironment(cwd, ({ require }) => {
+  return withUserEnvironment(cwd, ({ require, resolve }) => {
+    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
-      return require('tailwindcss/lib/corePlugins.js').default({
+      return require('./lib/corePlugins.js', tailwindBase).default({
         corePlugins: resolvedConfig.corePlugins,
       })
     } catch (_) {

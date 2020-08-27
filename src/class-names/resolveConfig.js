@@ -12,13 +12,14 @@ export default function resolveConfig({ cwd, config }) {
   }
 
   let resolve = (x) => x
-  withUserEnvironment(cwd, ({ require }) => {
+  withUserEnvironment(cwd, ({ require, resolve }) => {
+    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
-      resolve = require('tailwindcss/resolveConfig.js')
+      resolve = require('./resolveConfig.js', tailwindBase)
     } catch (_) {
       try {
-        const resolveConfig = require('tailwindcss/lib/util/resolveConfig.js')
-        const defaultConfig = require('tailwindcss/stubs/defaultConfig.stub.js')
+        const resolveConfig = require('./lib/util/resolveConfig.js', tailwindBase)
+        const defaultConfig = require('./stubs/defaultConfig.stub.js', tailwindBase)
         resolve = (config) => resolveConfig([config, defaultConfig])
       } catch (_) {}
     }
