@@ -1,43 +1,112 @@
-import * as childProcess from 'child_process'
-import { Range } from 'vscode-languageserver'
+import * as crypto from 'crypto'
+import * as BabelTypes from '@babel/types'
+import { Visitor, NodePath } from '@babel/traverse'
+import { dirname } from 'path'
+import { resolveConfig } from '../../class-names'
+const babel = require('@babel/register')
 
-let fork: childProcess.ChildProcess
-let id = 0
+const LOCATION_PROP_PREFIX = '__twlsp_locations__'
 
-export default function getConfigWithLocations(
-  configPath: string,
-  key?: string[]
-): Promise<ConfigLocation> {
-  if (!fork) {
-    fork = childProcess.fork(__filename, ['--config-locations'])
-  }
-
-  let msgId = id++
-
-  return new Promise((resolve, reject) => {
-    function callback(msg: ConfigLocation) {
-      if (msg.id !== msgId) return
-      if ('error' in msg) {
-        fork.off('message', callback)
-        return reject(msg.error)
-      }
-      fork.off('message', callback)
-      fork.kill()
-      fork = undefined
-      resolve(msg)
+interface PluginOptions {
+  file: {
+    opts: {
+      filename: string
     }
-
-    fork.on('message', callback)
-    fork.send([msgId, configPath, key])
-  })
+  }
 }
 
-export type ConfigLocation =
-  | {
-      id: number
-      key: string[]
-      file: string
-      range: Range
-    }
-  | { id: number; error: string }
-  | { id: number; config: any }
+export default function getConfigWithLocations(
+  configPath: string
+): { config: any } {
+  babel.default({
+    plugins: [plugin],
+    cache: false,
+    babelrc: false,
+    ignore: [
+      (filename: string) => {
+        if (/node_modules\/@?tailwind/.test(filename)) return false
+        return /node_modules/.test(filename)
+      },
+    ],
+  })
+
+  let config
+
+  try {
+    // @ts-ignore
+    config = resolveConfig({
+      cwd: dirname(configPath),
+      config: configPath,
+    })
+  } finally {
+    babel.revert()
+  }
+
+  return { config }
+}
+
+function isObjectPropertyPath(
+  path: NodePath<any>,
+  t: typeof BabelTypes
+): path is NodePath<BabelTypes.ObjectProperty> {
+  return t.isObjectProperty(path)
+}
+
+function plugin({
+  types: t,
+}: {
+  types: typeof BabelTypes
+}): { visitor: Visitor<PluginOptions> } {
+  const objVisitor: Visitor<PluginOptions> = {
+    ObjectExpression(path, state) {
+      if (
+        isObjectPropertyPath(path.parentPath, t) &&
+        path.parentPath.node.key.name &&
+        path.parentPath.node.key.name.startsWith(LOCATION_PROP_PREFIX)
+      ) {
+        return
+      }
+      let props = path.node.properties
+        .filter(
+          (x): x is BabelTypes.ObjectProperty => x.type === 'ObjectProperty'
+        )
+        .map((prop) => {
+          return t.objectProperty(
+            prop.key,
+            t.arrayExpression([
+              t.stringLiteral(state.file.opts.filename),
+              t.numericLiteral(prop.key.loc.start.line - 1),
+              t.numericLiteral(prop.key.loc.start.column),
+              t.numericLiteral(prop.key.loc.end.line - 1),
+              t.numericLiteral(prop.key.loc.end.column),
+            ]),
+            prop.computed
+          )
+        })
+      if (props.length === 0) return
+      path.unshiftContainer(
+        'properties',
+        t.objectProperty(
+          t.identifier(
+            LOCATION_PROP_PREFIX + crypto.randomBytes(16).toString('hex')
+          ),
+          t.objectExpression(props)
+        )
+      )
+    },
+  }
+
+  return {
+    visitor: {
+      Program(path, state) {
+        path.traverse(objVisitor, {
+          file: {
+            opts: {
+              filename: state.file.opts.filename,
+            },
+          },
+        })
+      },
+    },
+  }
+}
