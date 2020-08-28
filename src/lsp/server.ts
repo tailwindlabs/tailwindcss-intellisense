@@ -181,13 +181,15 @@ connection.onInitialized &&
       )
     }
 
-    connection.sendNotification('tailwindcss/configUpdated', [
-      {
-        configPath: state.configPath,
-        config: state.config,
-        plugins: state.plugins,
-      },
-    ])
+    if (state.enabled) {
+      connection.sendNotification('tailwindcss/configUpdated', [
+        {
+          configPath: state.configPath,
+          config: state.config,
+          plugins: state.plugins,
+        },
+      ])
+    }
 
     onMessage(connection, 'configWithLocations', async () => {
       return getConfigWithLocations(state.configPath)
