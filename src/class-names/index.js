@@ -15,6 +15,7 @@ import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
+import clearModule from 'clear-module'
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -82,6 +83,7 @@ export default async function getClassNames(
       return exports
     })
 
+    clearModule(configPath)
     hook.watch()
     let config
     try {

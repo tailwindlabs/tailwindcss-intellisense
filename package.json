@@ -247,6 +247,7 @@
     "@zeit/ncc": "^0.22.0",
     "callsite": "^1.0.0",
     "chokidar": "^3.3.1",
+    "clear-module": "^4.1.1",
     "concurrently": "^5.1.0",
     "css.escape": "^1.5.1",
     "debounce": "^1.2.0",

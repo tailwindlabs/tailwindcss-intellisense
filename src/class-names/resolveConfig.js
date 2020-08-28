@@ -1,7 +1,7 @@
 import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 import * as path from 'path'
-import decache from './decache'
+import clearModule from 'clear-module'
 
 export default function resolveConfig({ cwd, config }) {
   const tailwindBase = path.dirname(
@@ -13,7 +13,7 @@ export default function resolveConfig({ cwd, config }) {
     if (!cwd) {
       cwd = path.dirname(config)
     }
-    decache(config)
+    clearModule(config)
     config = __non_webpack_require__(config)
   }
 
