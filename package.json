@@ -165,8 +165,7 @@
       "explorer": [
         {
           "id": "tailwindcssConfigExplorer",
-          "name": "Configuration",
-          "contextualTitle": "Tailwind CSS",
+          "name": "Tailwind CSS",
           "when": "tailwindcssConfigExplorerEnabled",
           "icon": "media/explorer-icon.svg",
           "visibility": "collapsed"
