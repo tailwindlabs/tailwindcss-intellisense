@@ -30,7 +30,16 @@ export default function resolveConfig({ cwd, config }) {
         './stubs/defaultConfig.stub.js'
       )
       resolve = (config) => resolveConfig([config, defaultConfig])
-    } catch (_) {}
+    } catch (_) {
+      try {
+        const resolveConfig = importFrom(
+          tailwindBase,
+          './lib/util/mergeConfigWithDefaults.js'
+        ).default
+        const defaultConfig = importFrom(tailwindBase, './defaultConfig.js')()
+        resolve = (config) => resolveConfig(config, defaultConfig)
+      } catch (_) {}
+    }
   }
 
   return resolve(config)

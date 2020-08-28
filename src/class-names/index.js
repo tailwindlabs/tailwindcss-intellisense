@@ -16,12 +16,20 @@ import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
 import clearModule from 'clear-module'
+import clone from 'lodash.clonedeep'
 
 function arraysEqual(arr1, arr2) {
   return (
     JSON.stringify(arr1.concat([]).sort()) ===
     JSON.stringify(arr2.concat([]).sort())
   )
+}
+
+function deletePropertyPath(obj, path) {
+  for (let i = 0; i < path.length - 1; i++) {
+    obj = obj[path[i]]
+  }
+  delete obj[path.pop()]
 }
 
 const CONFIG_GLOB =
@@ -87,7 +95,7 @@ export default async function getClassNames(
     hook.watch()
     let config
     try {
-      config = __non_webpack_require__(configPath)
+      config = clone(__non_webpack_require__(configPath))
     } catch (error) {
       hook.unwatch()
       hook.unhook()
@@ -121,7 +129,7 @@ export default async function getClassNames(
     if (typeof userSeperator !== 'undefined') {
       dset(config, sepLocation, userSeperator)
     } else {
-      delete config[sepLocation]
+      deletePropertyPath(config, sepLocation)
     }
     if (typeof userPurge !== 'undefined') {
       config.purge = userPurge
