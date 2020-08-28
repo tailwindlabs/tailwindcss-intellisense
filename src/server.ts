@@ -1,1 +1,1 @@
-require('./lsp/server')
+import './lsp/server'
