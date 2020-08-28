@@ -4,6 +4,7 @@ import { Visitor, NodePath } from '@babel/traverse'
 import { dirname } from 'path'
 import { resolveConfig } from '../../class-names'
 const babel = require('@babel/register')
+babel.revert()
 
 const LOCATION_PROP_PREFIX = '__twlsp_locations__'
 
