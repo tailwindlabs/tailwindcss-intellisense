@@ -4,6 +4,7 @@ import pkgUp from 'pkg-up'
 import { isObject } from './isObject'
 import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
+import normalizePath from 'normalize-path'
 
 export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
   const tailwindBase = path.dirname(
@@ -77,6 +78,20 @@ export default function getPlugins(config) {
         }
       }
       if (pkg.name) {
+        if (
+          pkg.name === 'tailwindcss' &&
+          /node_modules\/tailwindcss\/lib\/plugins\/container\.js$/.test(
+            normalizePath(file)
+          )
+        ) {
+          return {
+            name: 'tailwindcss/plugins/container',
+            description:
+              "A component for fixing an element's width to the current breakpoint.",
+            homepage: 'https://tailwindcss-v0.netlify.app/docs/container/',
+            version: pkg.version,
+          }
+        }
         return {
           name: pkg.name,
           description: pkg.description,
