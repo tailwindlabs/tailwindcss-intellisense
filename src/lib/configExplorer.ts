@@ -27,9 +27,24 @@ import { LanguageClient, State as ClientState } from 'vscode-languageclient'
 
 const fileExists = util.promisify(fs.exists)
 
-function configValueToString(value: unknown): string {
+function configValueToString(
+  value: unknown,
+  asTooltip: boolean = false
+): string {
+  if (value === null) {
+    return 'null'
+  }
+  if (typeof value === 'undefined') {
+    return asTooltip ? '(undefined)' : ''
+  }
   if (Array.isArray(value)) {
+    if (asTooltip && value.length === 0) {
+      return '(empty array)'
+    }
     return value.join(', ')
+  }
+  if (asTooltip && value === '') {
+    return '(empty string)'
   }
   return value.toString()
 }
@@ -47,6 +62,7 @@ type ConfigItemParams = {
   iconPath?: string | ThemeIcon
   command?: Command
   contextValue?: string
+  tooltip?: string
 }
 
 class ConfigItem extends TreeItem {
@@ -67,6 +83,7 @@ class ConfigItem extends TreeItem {
     iconPath,
     command,
     contextValue,
+    tooltip,
   }: ConfigItemParams) {
     super(label, collapsibleState)
     this.key = key
@@ -76,6 +93,7 @@ class ConfigItem extends TreeItem {
     this.command = command
     this.contextValue = contextValue
     this.workspace = workspace
+    this.tooltip = tooltip
   }
 }
 
@@ -346,6 +364,9 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
           description: isExpandable
             ? undefined
             : configValueToString(config[key]),
+          tooltip: isExpandable
+            ? undefined
+            : configValueToString(config[key], true),
           contextValue: location ? 'revealable' : undefined,
           workspace,
         })
@@ -360,16 +381,20 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
         let { plugins, config } = this.workspaces[element.workspace]
 
         if (element.key.length === 1 && element.key[0] === 'plugins') {
-          return plugins.map((plugin, i) => ({
-            label: plugin.name || '(anonymous)',
-            description: plugin.version ? `v${plugin.version}` : undefined,
-            key: ['plugins', i.toString()],
-            workspace: element.workspace,
-            tooltip: plugin.description,
-            contextValue: plugin.homepage
-              ? `plugin:${plugin.homepage}`
-              : undefined,
-          }))
+          return plugins.map(
+            (plugin, i) =>
+              new ConfigItem({
+                label: plugin.name || '(anonymous)',
+                description: plugin.version ? `v${plugin.version}` : undefined,
+                key: ['plugins', i.toString()],
+                workspace: element.workspace,
+                tooltip: plugin.description,
+                contextValue: plugin.homepage
+                  ? `plugin:${plugin.homepage}`
+                  : undefined,
+                collapsibleState: TreeItemCollapsibleState.None,
+              })
+          )
         }
 
         let item = dlv(config, element.key)
@@ -389,6 +414,9 @@ export class TailwindDataProvider implements TreeDataProvider<ConfigItem> {
                 description: isExpandable
                   ? undefined
                   : configValueToString(item[key]),
+                tooltip: isExpandable
+                  ? undefined
+                  : configValueToString(item[key], true),
                 contextValue: location ? 'revealable' : undefined,
                 workspace: element.workspace,
               })
