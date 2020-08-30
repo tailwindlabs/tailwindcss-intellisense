@@ -129,17 +129,17 @@ function provideClassAttributeCompletions(
     start: { line: Math.max(position.line - 10, 0), character: 0 },
     end: position,
   })
-
-  const match = findLast( /(?:\b|:)class(?:Name)?=['"`{]|\btw=['"{]|\btw(?:\.\w+)?`/g, str)
-
+  
+  const match = findLast(/(?:\b|:)class(?:Name)?=['"`{]|\btw=['"{]|\btw(?:(?:\(\w+\))|(?:\.\w+))?`/g, str)
+  
   if (match === null) {
     return null
   }
-
+  
   const lexer =
-    match[0][0] === ':'
-      ? getComputedClassAttributeLexer()
-      : getClassAttributeLexer()
+  match[0][0] === ':'
+  ? getComputedClassAttributeLexer()
+  : getClassAttributeLexer()
   lexer.reset(str.substr(match.index + match[0].length - 1))
 
   try {
@@ -154,6 +154,7 @@ function provideClassAttributeCompletions(
           break
         }
       }
+      console.log("classList:", classList)
 
       return completionsFromClassList(state, classList, {
         start: {
