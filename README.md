@@ -42,7 +42,8 @@ This setting allows you to add additional language support. The key of each entr
 {
   "tailwindCSS.includeLanguages": {
     "plaintext": "html",
-    "typescript": "javascript"
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
   }
 }
 ```
