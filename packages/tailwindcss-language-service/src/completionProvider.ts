@@ -183,7 +183,6 @@ function provideClassAttributeCompletions(
           break
         }
       }
-      console.log("classList:", classList)
 
       return completionsFromClassList(state, classList, {
         start: {
