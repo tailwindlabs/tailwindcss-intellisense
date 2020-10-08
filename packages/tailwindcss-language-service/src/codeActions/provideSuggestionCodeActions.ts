@@ -1,8 +1,7 @@
 import { State } from '../util/state'
-import {
+import type {
   CodeActionParams,
   CodeAction,
-  CodeActionKind,
 } from 'vscode-languageserver'
 import {
   InvalidConfigPathDiagnostic,
@@ -22,7 +21,7 @@ export function provideSuggestionCodeActions(
 ): CodeAction[] {
   return diagnostic.suggestions.map((suggestion) => ({
     title: `Replace with '${suggestion}'`,
-    kind: CodeActionKind.QuickFix,
+    kind: 'quickfix', // CodeActionKind.QuickFix,
     diagnostics: [diagnostic],
     edit: {
       changes: {

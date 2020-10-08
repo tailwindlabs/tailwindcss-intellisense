@@ -1,7 +1,6 @@
-import {
+import type {
   CodeAction,
   CodeActionParams,
-  CodeActionKind,
   TextEdit,
   Range,
 } from 'vscode-languageserver'
@@ -146,7 +145,7 @@ export async function provideInvalidApplyCodeActions(
   return [
     {
       title: 'Extract to new rule',
-      kind: CodeActionKind.QuickFix,
+      kind: 'quickfix', // CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit: {
         changes: {

@@ -1,4 +1,4 @@
-import { CodeAction, CodeActionParams } from 'vscode-languageserver'
+import type { CodeAction, CodeActionParams } from 'vscode-languageserver'
 import { State } from '../util/state'
 import { doValidate } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'

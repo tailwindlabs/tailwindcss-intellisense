@@ -1,8 +1,7 @@
 import { State } from '../util/state'
-import {
+import type {
   CodeActionParams,
   CodeAction,
-  CodeActionKind,
 } from 'vscode-languageserver'
 import { CssConflictDiagnostic } from '../diagnostics/types'
 import { joinWithAnd } from '../util/joinWithAnd'
@@ -20,7 +19,7 @@ export async function provideCssConflictCodeActions(
           (otherClassName) => `'${otherClassName.className}'`
         )
       )}`,
-      kind: CodeActionKind.QuickFix,
+      kind: 'quickfix', // CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit: {
         changes: {
