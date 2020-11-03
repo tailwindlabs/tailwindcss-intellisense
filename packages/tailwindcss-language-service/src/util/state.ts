@@ -1,4 +1,5 @@
 import type { TextDocuments, Connection, Range } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -15,7 +16,7 @@ export type ClassNames = {
 
 export type EditorState = {
   connection: Connection
-  documents: TextDocuments
+  documents: TextDocuments<TextDocument>
   documentSettings: Map<string, Settings>
   globalSettings: Settings
   userLanguages: Record<string, string>

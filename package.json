@@ -1,9 +1,7 @@
 {
+  "name": "vscode-tailwindcss",
   "private": true,
-  "scripts": {
-    "bootstrap": "lerna clean && lerna bootstrap --hoist"
-  },
-  "devDependencies": {
-    "lerna": "^3.22.1"
-  }
+  "workspaces": [
+    "packages/*"
+  ]
 }

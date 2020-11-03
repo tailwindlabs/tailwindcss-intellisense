@@ -36,10 +36,11 @@ import {
 } from './providers/diagnostics/diagnosticsProvider'
 import { createEmitter } from '../lib/emitter'
 import { registerDocumentColorProvider } from './providers/documentColorProvider'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 let connection = createConnection(ProposedFeatures.all)
 const state: State = { enabled: false, emitter: createEmitter(connection) }
-let documents = new TextDocuments()
+let documents = new TextDocuments(TextDocument)
 let workspaceFolder: string | null
 
 const defaultSettings: Settings = {
@@ -139,11 +140,7 @@ connection.onInitialize(
 
     return {
       capabilities: {
-        // textDocumentSync: {
-        //   openClose: true,
-        //   change: TextDocumentSyncKind.None
-        // },
-        textDocumentSync: documents.syncKind,
+        textDocumentSync: TextDocumentSyncKind.Full,
         completionProvider: {
           resolveProvider: true,
           triggerCharacters: [
