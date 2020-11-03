@@ -3,7 +3,6 @@ import { InvalidApplyDiagnostic, DiagnosticKind } from './types'
 import { Settings, State } from '../util/state'
 import type { TextDocument, DiagnosticSeverity } from 'vscode-languageserver'
 import { validateApply } from '../util/validateApply'
-import { flagEnabled } from '../util/flagEnabled'
 
 export function getInvalidApplyDiagnostics(
   state: State,
@@ -12,7 +11,6 @@ export function getInvalidApplyDiagnostics(
 ): InvalidApplyDiagnostic[] {
   let severity = settings.lint.invalidApply
   if (severity === 'ignore') return []
-  if (flagEnabled(state, 'applyComplexClasses')) return []
 
   const classNames = findClassNamesInRange(document, undefined, 'css')
 

@@ -1,6 +1,7 @@
 import { State } from './state'
 import { getClassNameMeta } from './getClassNameMeta'
 import { flagEnabled } from './flagEnabled'
+import semver from 'semver'
 
 export function validateApply(
   state: State,
@@ -9,7 +10,10 @@ export function validateApply(
   const meta = getClassNameMeta(state, classNameOrParts)
   if (!meta) return null
 
-  if (flagEnabled(state, 'applyComplexClasses')) {
+  if (
+    semver.gte(state.version, '2.0.0-alpha.1') ||
+    flagEnabled(state, 'applyComplexClasses')
+  ) {
     return { isApplyable: true }
   }
 

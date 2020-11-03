@@ -199,7 +199,7 @@ function provideAtApplyCompletions(
     },
     (item) => {
       if (item.kind === 9) {
-        return flagEnabled(state, 'applyComplexClasses')
+        return semver.gte(state.version, '2.0.0-alpha.1') || flagEnabled(state, 'applyComplexClasses')
       }
       let validated = validateApply(state, item.data)
       return validated !== null && validated.isApplyable === true
