@@ -5,6 +5,7 @@ export const DEFAULT_LANGUAGES = [
   'django-html',
   'edge',
   'ejs',
+  'elm',
   'erb',
   'gohtml',
   'GoHTML',

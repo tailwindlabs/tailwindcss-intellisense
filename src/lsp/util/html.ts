@@ -7,6 +7,7 @@ export const HTML_LANGUAGES = [
   'django-html',
   'edge',
   'ejs',
+  'elm',
   'erb',
   'gohtml',
   'GoHTML',
