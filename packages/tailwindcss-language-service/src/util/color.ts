@@ -29,7 +29,7 @@ export function getColor(
   state: State,
   keys: string[]
 ): TinyColor | string | null {
-  const item = dlv(state.classNames.classNames, keys)
+  const item = dlv(state.classNames.classNames, [...keys, '__info'])
   if (!item.__rule) return null
   const props = Object.keys(removeMeta(item))
   if (props.length === 0) return null

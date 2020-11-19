@@ -57,7 +57,10 @@ function completionsFromClassList(
   for (let i = parts.length - 1; i > 0; i--) {
     let keys = parts.slice(0, i).filter(Boolean)
     subset = dlv(state.classNames.classNames, keys)
-    if (typeof subset !== 'undefined' && typeof subset.__rule === 'undefined') {
+    if (
+      typeof subset !== 'undefined' &&
+      typeof dlv(subset, ['__info', '__rule']) === 'undefined'
+    ) {
       isSubset = true
       subsetKey = keys
       replacementRange = {
@@ -74,50 +77,75 @@ function completionsFromClassList(
     }
   }
 
+  // console.log(Object.keys(isSubset ? subset : state.classNames.classNames))
+
   return {
     isIncomplete: false,
     items: Object.keys(isSubset ? subset : state.classNames.classNames)
-      .map((className, index) => {
-        let label = className
-        let kind: CompletionItemKind = 21
-        let documentation: string = null
-        let command: any
-        let sortText = naturalExpand(index)
-        if (isContextItem(state, [...subsetKey, className])) {
-          kind = 9
-          command = { title: '', command: 'editor.action.triggerSuggest' }
-          label += sep
-          sortText = '-' + sortText // move to top
-        } else {
-          const color = getColor(state, [className])
-          if (color !== null) {
-            kind = 16
-            if (typeof color !== 'string' && color.a !== 0) {
-              documentation = color.toRgbString()
-            }
+      .filter((k) => k !== '__info')
+      .filter((className) => isContextItem(state, [...subsetKey, className]))
+      .map(
+        (className, index): CompletionItem => {
+          return {
+            label: className + sep,
+            kind: 9,
+            documentation: null,
+            command: {
+              title: '',
+              command: 'editor.action.triggerSuggest',
+            },
+            sortText: '-' + naturalExpand(index),
+            data: [...subsetKey, className],
+            textEdit: {
+              newText: className + sep,
+              range: replacementRange,
+            },
           }
         }
+      )
+      .concat(
+        Object.keys(isSubset ? subset : state.classNames.classNames)
+          .filter((className) =>
+            dlv(state.classNames.classNames, [
+              ...subsetKey,
+              className,
+              '__info',
+            ])
+          )
+          .map((className, index) => {
+            let kind: CompletionItemKind = 21
+            let documentation: string = null
 
-        const item = {
-          label,
-          kind,
-          documentation,
-          command,
-          sortText,
-          data: [...subsetKey, className],
-          textEdit: {
-            newText: label,
-            range: replacementRange,
-          },
+            const color = getColor(state, [className])
+            if (color !== null) {
+              kind = 16
+              if (typeof color !== 'string' && color.a !== 0) {
+                documentation = color.toRgbString()
+              }
+            }
+
+            return {
+              label: className,
+              kind,
+              documentation,
+              sortText: naturalExpand(index),
+              data: [...subsetKey, className],
+              textEdit: {
+                newText: className,
+                range: replacementRange,
+              },
+            }
+          })
+      )
+      .filter((item) => {
+        if (item === null) {
+          return false
         }
-
         if (filter && !filter(item)) {
-          return null
+          return false
         }
-
-        return item
-      })
-      .filter((item) => item !== null),
+        return true
+      }),
   }
 }
 
@@ -199,7 +227,10 @@ function provideAtApplyCompletions(
     },
     (item) => {
       if (item.kind === 9) {
-        return semver.gte(state.version, '2.0.0-alpha.1') || flagEnabled(state, 'applyComplexClasses')
+        return (
+          semver.gte(state.version, '2.0.0-alpha.1') ||
+          flagEnabled(state, 'applyComplexClasses')
+        )
       }
       let validated = validateApply(state, item.data)
       return validated !== null && validated.isApplyable === true
@@ -708,8 +739,8 @@ export function resolveCompletionItem(
     return item
   }
 
-  const className = dlv(state.classNames.classNames, item.data)
-  if (isContextItem(state, item.data)) {
+  const className = dlv(state.classNames.classNames, [...item.data, '__info'])
+  if (item.kind === 9) {
     item.detail = state.classNames.context[
       item.data[item.data.length - 1]
     ].join(', ')
@@ -729,13 +760,19 @@ export function resolveCompletionItem(
 }
 
 function isContextItem(state: State, keys: string[]): boolean {
-  const item = dlv(state.classNames.classNames, keys)
-  return Boolean(
-    isObject(item) &&
-      !item.__rule &&
-      !Array.isArray(item) &&
-      state.classNames.context[keys[keys.length - 1]]
-  )
+  const item = dlv(state.classNames.classNames, [keys])
+
+  if (!isObject(item)) {
+    return false
+  }
+  if (!state.classNames.context[keys[keys.length - 1]]) {
+    return false
+  }
+  if (Object.keys(item).filter((x) => x !== '__info').length > 0) {
+    return true
+  }
+
+  return isObject(item.__info) && !item.__info.__rule
 }
 
 function stringifyDecls(obj: any): string {

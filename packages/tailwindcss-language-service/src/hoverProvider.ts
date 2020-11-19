@@ -89,13 +89,17 @@ function provideClassNameHover(
     }
   }
 
+  const css = stringifyCss(
+    className.className,
+    dlv(state.classNames.classNames, [...parts, '__info'])
+  )
+
+  if (!css) return null
+
   return {
     contents: {
       language: 'css',
-      value: stringifyCss(
-        className.className,
-        dlv(state.classNames.classNames, parts)
-      ),
+      value: css,
     },
     range: className.range,
   }

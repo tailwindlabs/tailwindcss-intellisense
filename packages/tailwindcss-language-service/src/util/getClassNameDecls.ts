@@ -10,7 +10,7 @@ export function getClassNameDecls(
   const parts = getClassNameParts(state, className)
   if (!parts) return null
 
-  const info = dlv(state.classNames.classNames, parts)
+  const info = dlv(state.classNames.classNames, [...parts, '__info'])
 
   if (Array.isArray(info)) {
     return info.map(removeMeta)

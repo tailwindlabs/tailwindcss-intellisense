@@ -1,6 +1,4 @@
 import selectorParser from 'postcss-selector-parser'
-import fs from 'fs'
-import path from 'path'
 import dset from 'dset'
 import dlv from 'dlv'
 
@@ -83,48 +81,43 @@ async function process(groups) {
         const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
         const index = []
 
-        const existing = dlv(tree, baseKeys)
+        const existing = dlv(tree, [...baseKeys, '__info'])
         if (typeof existing !== 'undefined') {
           if (Array.isArray(existing)) {
-            const scopeIndex = existing.findIndex(
-              (x) =>
-                x.__scope === classNames[i].scope &&
-                arraysEqual(existing.__context, context)
-            )
-            if (scopeIndex > -1) {
-              keys.unshift(scopeIndex)
-              index.push(scopeIndex)
-            } else {
-              keys.unshift(existing.length)
-              index.push(existing.length)
-            }
+            index.push(existing.length)
           } else {
-            if (
-              existing.__scope !== classNames[i].scope ||
-              !arraysEqual(existing.__context, context)
-            ) {
-              dset(tree, baseKeys, [existing])
-              keys.unshift(1)
-              index.push(1)
-            }
+            dset(tree, [...baseKeys, '__info'], [existing])
+            index.push(1)
           }
         }
         if (classNames[i].__rule) {
-          dset(tree, [...baseKeys, ...index, '__rule'], true)
-          dset(tree, [...baseKeys, ...index, '__source'], group.source)
+          dset(tree, [...baseKeys, '__info', ...index, '__rule'], true)
+          dset(
+            tree,
+            [...baseKeys, '__info', ...index, '__source'],
+            group.source
+          )
 
-          dsetEach(tree, [...baseKeys, ...index], decls)
+          dsetEach(tree, [...baseKeys, '__info', ...index], decls)
         }
-        dset(tree, [...baseKeys, ...index, '__pseudo'], classNames[i].__pseudo)
-        dset(tree, [...baseKeys, ...index, '__scope'], classNames[i].scope)
         dset(
           tree,
-          [...baseKeys, ...index, '__context'],
+          [...baseKeys, '__info', ...index, '__pseudo'],
+          classNames[i].__pseudo
+        )
+        dset(
+          tree,
+          [...baseKeys, '__info', ...index, '__scope'],
+          classNames[i].scope
+        )
+        dset(
+          tree,
+          [...baseKeys, '__info', ...index, '__context'],
           context.concat([]).reverse()
         )
 
         // common context
-        context.push(...classNames[i].__pseudo)
+        context.push(...classNames[i].__pseudo.map((x) => `&${x}`))
 
         for (let i = 0; i < contextKeys.length; i++) {
           if (typeof commonContext[contextKeys[i]] === 'undefined') {

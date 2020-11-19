@@ -5,15 +5,15 @@
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
-  "version": "0.4.3",
-  "homepage": "https://github.com/tailwindcss/intellisense",
+  "version": "0.5.0",
+  "homepage": "https://github.com/tailwindlabs/tailwindcss-intellisense",
   "bugs": {
-    "url": "https://github.com/tailwindcss/intellisense/issues",
+    "url": "https://github.com/tailwindlabs/tailwindcss-intellisense/issues",
     "email": "hello@bradley.dev"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tailwindcss/intellisense.git"
+    "url": "https://github.com/tailwindlabs/tailwindcss-intellisense.git"
   },
   "publisher": "bradlc",
   "keywords": [
@@ -177,6 +177,7 @@
     "@types/node": "^13.9.3",
     "@types/vscode": "^1.32.0",
     "@zeit/ncc": "^0.22.0",
+    "bufferutil": "^4.0.2",
     "callsite": "^1.0.0",
     "chokidar": "^3.3.1",
     "debounce": "^1.2.0",
@@ -196,11 +197,12 @@
     "rimraf": "^3.0.2",
     "semver": "^7.3.2",
     "stack-trace": "0.0.10",
-    "tailwindcss-language-service": "0.0.3",
+    "tailwindcss-language-service": "0.0.4",
     "terser": "^4.6.12",
     "tiny-invariant": "^1.1.0",
     "tslint": "^5.16.0",
     "typescript": "^3.8.3",
+    "utf-8-validate": "^5.0.3",
     "vsce": "^1.76.1",
     "vscode-languageclient": "^6.1.3",
     "vscode-languageserver": "^6.1.1",

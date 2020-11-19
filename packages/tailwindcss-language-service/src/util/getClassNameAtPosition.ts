@@ -8,8 +8,9 @@ export function getClassNameParts(state: State, className: string): string[] {
   let parts: string[] = className.split(separator)
 
   if (parts.length === 1) {
-    return dlv(state.classNames.classNames, [className, '__rule']) === true ||
-      Array.isArray(dlv(state.classNames.classNames, [className]))
+    return dlv(state.classNames.classNames, [className, '__info', '__rule']) ===
+      true ||
+      Array.isArray(dlv(state.classNames.classNames, [className, '__info']))
       ? [className]
       : null
   }
@@ -34,8 +35,8 @@ export function getClassNameParts(state: State, className: string): string[] {
 
   return possibilities.find((key) => {
     if (
-      dlv(state.classNames.classNames, [...key, '__rule']) === true ||
-      Array.isArray(dlv(state.classNames.classNames, [...key]))
+      dlv(state.classNames.classNames, [...key, '__info', '__rule']) === true ||
+      Array.isArray(dlv(state.classNames.classNames, [...key, '__info']))
     ) {
       return true
     }
