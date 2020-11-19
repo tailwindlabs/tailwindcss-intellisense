@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.0
+
+- Improve support for Tailwind CSS v2.0
+- Suppress filesystem errors when scanning for Tailwind config file (#174)
+
+## 0.4.3
+
+- Prevent crash when there's a Tailwind error, and show the error message in the editor (#156)
+- Fix completions not working when encountering a color with an alpha value of `0` (#177)
+
+## 0.4.2
+
+- Add color decorators for classes and CSS helper functions.
+  This can be configured with the new [`tailwindCSS.colorDecorators` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcsscolordecorators).
+- Fix incorrect `cssConflict` warnings. (#136)
+- Fix completion triggers for "computed" class attributes.
+- Disable `invalidApply` lint rule when `applyComplexClasses` experimental flag is enabled.
+- Show all classes in `@apply` completion list when `applyComplexClasses` experimental flag is enabled.
+
 ## 0.4.1
 
 - Fixed `cssConflict` lint rule when classes apply the same properties but have different scopes (#134)
