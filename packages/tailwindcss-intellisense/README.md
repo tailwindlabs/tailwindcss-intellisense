@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/banner-dark.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/packages/tailwindcss-intellisense/.github/banner-dark.png" alt="" />
 
 Tailwind CSS IntelliSense enhances the Tailwind development experience by providing Visual Studio Code users with advanced features such as autocomplete, syntax highlighting, and linting.
 
@@ -14,19 +14,19 @@ In order for the extension to activate you must have [`tailwindcss` installed](h
 
 Intelligent suggestions for class names, as well as [CSS functions and directives](https://tailwindcss.com/docs/functions-and-directives/).
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/autocomplete.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/packages/tailwindcss-intellisense/.github/autocomplete.png" alt="" />
 
 ### Linting
 
 Highlights errors and potential bugs in both your CSS and your markup.
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/linting.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/packages/tailwindcss-intellisense/.github/linting.png" alt="" />
 
 ### Hover Preview
 
 See the complete CSS for a Tailwind class name by hovering over it.
 
-<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/.github/hover.png" alt="" />
+<img src="https://raw.githubusercontent.com/bradlc/vscode-tailwindcss/master/packages/tailwindcss-intellisense/.github/hover.png" alt="" />
 
 ### CSS Syntax Highlighting
 
