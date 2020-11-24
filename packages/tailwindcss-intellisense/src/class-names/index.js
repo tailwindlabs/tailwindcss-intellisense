@@ -2,8 +2,6 @@ import extractClassNames from './extractClassNames'
 import Hook from './hook'
 import dlv from 'dlv'
 import dset from 'dset'
-import resolveFrom from 'resolve-from'
-import importFrom from 'import-from'
 import chokidar from 'chokidar'
 import semver from 'semver'
 import invariant from 'tiny-invariant'
@@ -15,6 +13,7 @@ import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
+import { withUserEnvironment } from './environment'
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -31,12 +30,6 @@ export default async function getClassNames(
   { onChange = () => {} } = {}
 ) {
   async function run() {
-    let postcss
-    let tailwindcss
-    let browserslistModule
-    let version
-    let featureFlags = { future: [], experimental: [] }
-
     const configPaths = (
       await glob(CONFIG_GLOB, {
         cwd,
@@ -53,21 +46,10 @@ export default async function getClassNames(
     invariant(configPaths.length > 0, 'No Tailwind CSS config found.')
     const configPath = configPaths[0]
     const configDir = path.dirname(configPath)
-    const tailwindBase = path.dirname(
-      resolveFrom(configDir, 'tailwindcss/package.json')
-    )
-    postcss = importFrom(tailwindBase, 'postcss')
-    tailwindcss = importFrom(configDir, 'tailwindcss')
-    version = importFrom(configDir, 'tailwindcss/package.json').version
-
-    try {
-      // this is not required
-      browserslistModule = importFrom(tailwindBase, 'browserslist')
-    } catch (_) {}
-
-    try {
-      featureFlags = importFrom(tailwindBase, './lib/featureFlags.js').default
-    } catch (_) {}
+    const {
+      version,
+      featureFlags = { future: [], experimental: [] },
+    } = loadMeta(configDir)
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
@@ -94,45 +76,68 @@ export default async function getClassNames(
 
     hook.unwatch()
 
-    let postcssResult
+    const {
+      base,
+      components,
+      utilities,
+      resolvedConfig,
+      browserslist,
+      postcss,
+    } = await withPackages(
+      configDir,
+      async ({ postcss, tailwindcss, browserslistModule }) => {
+        let postcssResult
+        try {
+          postcssResult = await Promise.all(
+            [
+              semver.gte(version, '0.99.0') ? 'base' : 'preflight',
+              'components',
+              'utilities',
+            ].map((group) =>
+              postcss([tailwindcss(configPath)]).process(
+                `@tailwind ${group};`,
+                {
+                  from: undefined,
+                }
+              )
+            )
+          )
+        } catch (error) {
+          throw error
+        } finally {
+          hook.unhook()
+        }
 
-    try {
-      postcssResult = await Promise.all(
-        [
-          semver.gte(version, '0.99.0') ? 'base' : 'preflight',
-          'components',
-          'utilities',
-        ].map((group) =>
-          postcss([tailwindcss(configPath)]).process(`@tailwind ${group};`, {
-            from: undefined,
-          })
-        )
-      )
-    } catch (error) {
-      throw error
-    } finally {
-      hook.unhook()
-    }
+        const [base, components, utilities] = postcssResult
 
-    const [base, components, utilities] = postcssResult
+        if (typeof userSeperator !== 'undefined') {
+          dset(config, sepLocation, userSeperator)
+        } else {
+          delete config[sepLocation]
+        }
+        if (typeof userPurge !== 'undefined') {
+          config.purge = userPurge
+        } else {
+          delete config.purge
+        }
 
-    if (typeof userSeperator !== 'undefined') {
-      dset(config, sepLocation, userSeperator)
-    } else {
-      delete config[sepLocation]
-    }
-    if (typeof userPurge !== 'undefined') {
-      config.purge = userPurge
-    } else {
-      delete config.purge
-    }
+        const resolvedConfig = resolveConfig({ cwd: configDir, config })
+        const browserslist = browserslistModule
+          ? browserslistModule(undefined, {
+              path: configDir,
+            })
+          : []
 
-    const resolvedConfig = resolveConfig({ cwd: configDir, config })
-    const browserslist = browserslistModule
-      ? browserslistModule(undefined, {
-          path: configDir,
-        })
-      : []
+        return {
+          base,
+          components,
+          utilities,
+          resolvedConfig,
+          postcss,
+          browserslist,
+        }
+      }
+    )
 
     return {
       version,
@@ -154,7 +159,6 @@ export default async function getClassNames(
         browserslist,
       }),
       modules: {
-        tailwindcss,
         postcss,
       },
       featureFlags,
@@ -193,11 +197,41 @@ export default async function getClassNames(
   let result
   try {
     result = await run()
-  } catch (_) {
+  } catch (e) {
+    console.log(e)
     return null
   }
 
   watch([result.configPath, ...result.dependencies])
 
   return result
+}
+
+function loadMeta(configDir) {
+  return withUserEnvironment(configDir, ({ require, resolve }) => {
+    const version = require('tailwindcss/package.json').version
+    let featureFlags
+
+    try {
+      const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
+      featureFlags = require('./lib/featureFlags.js', tailwindBase).default
+    } catch (_) {}
+
+    return { version, featureFlags }
+  })
+}
+
+function withPackages(configDir, cb) {
+  return withUserEnvironment(configDir, async ({ require, resolve }) => {
+    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
+    const postcss = require('postcss', tailwindBase)
+    const tailwindcss = require('tailwindcss')
+    let browserslistModule
+    try {
+      // this is not required
+      browserslistModule = require('browserslist', tailwindBase)
+    } catch (_) {}
+
+    return cb({ postcss, tailwindcss, browserslistModule })
+  })
 }

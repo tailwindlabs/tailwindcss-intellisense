@@ -2,22 +2,19 @@ import * as path from 'path'
 import stackTrace from 'stack-trace'
 import pkgUp from 'pkg-up'
 import { isObject } from './isObject'
-import resolveFrom from 'resolve-from'
-import importFrom from 'import-from'
+import { withUserEnvironment } from './environment'
 
 export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
-  const tailwindBase = path.dirname(
-    resolveFrom(cwd, 'tailwindcss/package.json')
-  )
-
-  try {
-    // TODO: add v0 support ("generators")
-    return importFrom(tailwindBase, './lib/corePlugins.js').default({
-      corePlugins: resolvedConfig.corePlugins,
-    })
-  } catch (_) {
-    return []
-  }
+  return withUserEnvironment(cwd, ({ require, resolve }) => {
+    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
+    try {
+      return require('./lib/corePlugins.js', tailwindBase).default({
+        corePlugins: resolvedConfig.corePlugins,
+      })
+    } catch (_) {
+      return []
+    }
+  })
 }
 
 export default function getPlugins(config) {
@@ -34,19 +31,12 @@ export default function getPlugins(config) {
     }
 
     let contributes = {
-      theme: isObject(pluginConfig.theme)
-        ? Object.keys(pluginConfig.theme)
-        : [],
-      variants: isObject(pluginConfig.variants)
-        ? Object.keys(pluginConfig.variants)
-        : [],
+      theme: isObject(pluginConfig.theme) ? Object.keys(pluginConfig.theme) : [],
+      variants: isObject(pluginConfig.variants) ? Object.keys(pluginConfig.variants) : [],
     }
 
     const fn = plugin.handler || plugin
-    const fnName =
-      typeof fn.name === 'string' && fn.name !== 'handler' && fn.name !== ''
-        ? fn.name
-        : null
+    const fnName = typeof fn.name === 'string' && fn.name !== 'handler' && fn.name !== '' ? fn.name : null
 
     try {
       fn()
