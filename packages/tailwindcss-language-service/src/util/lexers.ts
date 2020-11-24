@@ -66,6 +66,7 @@ export const getClassAttributeLexer = lazy(() => {
         start1: { match: '"', push: 'doubleClassList' },
         start2: { match: "'", push: 'singleClassList' },
         start3: { match: '{', push: 'interpBrace' },
+        start4: { match: '`', push: 'tickClassList' },
       },
       ...classAttributeStates(),
     })
