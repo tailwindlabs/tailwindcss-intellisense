@@ -1,7 +1,7 @@
 const dlv = require('dlv')
 import { State } from './state'
 import removeMeta from './removeMeta'
-import { TinyColor } from '@ctrl/tinycolor'
+import { TinyColor, names as colorNames } from '@ctrl/tinycolor'
 import { ensureArray, dedupe, flatten } from './array'
 
 const COLOR_PROPS = [
@@ -89,10 +89,18 @@ export function getColor(
 
 export function getColorFromValue(value: unknown): string {
   if (typeof value !== 'string') return null
-  if (value === 'transparent') {
+  const trimmedValue = value.trim()
+  if (trimmedValue === 'transparent') {
     return 'rgba(0, 0, 0, 0.01)'
   }
-  const color = new TinyColor(value)
+  if (
+    !/^\s*(?:rgba?|hsla?)\s*\([^)]+\)\s*$/.test(trimmedValue) &&
+    !/^\s*#[0-9a-f]+\s*$/i.test(trimmedValue) &&
+    !Object.keys(colorNames).includes(trimmedValue)
+  ) {
+    return null
+  }
+  const color = new TinyColor(trimmedValue)
   if (color.isValid) {
     return color.toRgbString()
   }
