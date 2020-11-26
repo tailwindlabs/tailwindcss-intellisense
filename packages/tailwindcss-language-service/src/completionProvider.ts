@@ -77,8 +77,6 @@ export function completionsFromClassList(
     }
   }
 
-  // console.log(Object.keys(isSubset ? subset : state.classNames.classNames))
-
   return {
     isIncomplete: false,
     items: Object.keys(isSubset ? subset : state.classNames.classNames)
