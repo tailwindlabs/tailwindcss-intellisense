@@ -28,7 +28,6 @@ import {
   doCodeActions,
 } from 'tailwindcss-language-service'
 import { URI } from 'vscode-uri'
-import { getDocumentSettings } from './util/getDocumentSettings'
 import {
   provideDiagnostics,
   updateAllDiagnostics,
@@ -44,6 +43,7 @@ let documents = new TextDocuments(TextDocument)
 let workspaceFolder: string | null
 
 const defaultSettings: Settings = {
+  tabSize: 2,
   emmetCompletions: false,
   includeLanguages: {},
   validate: true,
@@ -59,9 +59,6 @@ const defaultSettings: Settings = {
 let globalSettings: Settings = defaultSettings
 let documentSettings: Map<string, Settings> = new Map()
 
-documents.onDidOpen((event) => {
-  getDocumentSettings(state, event.document)
-})
 documents.onDidClose((event) => {
   documentSettings.delete(event.document.uri)
 })
@@ -206,14 +203,14 @@ connection.onCompletion(
 )
 
 connection.onCompletionResolve(
-  (item: CompletionItem): CompletionItem => {
+  (item: CompletionItem): Promise<CompletionItem> => {
     if (!state.enabled) return null
     return resolveCompletionItem(state, item)
   }
 )
 
 connection.onHover(
-  (params: TextDocumentPositionParams): Hover => {
+  (params: TextDocumentPositionParams): Promise<Hover> => {
     if (!state.enabled) return null
     let document = state.editor.documents.get(params.textDocument.uri)
     if (!document) return null

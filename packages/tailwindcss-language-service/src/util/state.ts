@@ -29,6 +29,7 @@ export type EditorState = {
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
 
 export type Settings = {
+  tabSize: number
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   validate: boolean

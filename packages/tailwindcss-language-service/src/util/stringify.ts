@@ -15,7 +15,11 @@ export function stringifyConfigValue(x: any): string {
   return null
 }
 
-export function stringifyCss(className: string, obj: any): string {
+export function stringifyCss(
+  className: string,
+  obj: any,
+  tabSize: number = 2
+): string {
   if (obj.__rule !== true && !Array.isArray(obj)) return null
 
   if (Array.isArray(obj)) {
@@ -25,19 +29,20 @@ export function stringifyCss(className: string, obj: any): string {
   }
 
   let css = ``
+  const indent = ' '.repeat(tabSize)
 
   const context = dlv(obj, '__context', [])
   const props = Object.keys(removeMeta(obj))
   if (props.length === 0) return null
 
   for (let i = 0; i < context.length; i++) {
-    css += `${'\t'.repeat(i)}${context[i]} {\n`
+    css += `${indent.repeat(i)}${context[i]} {\n`
   }
 
-  const indentStr = '\t'.repeat(context.length)
+  const indentStr = indent.repeat(context.length)
   const decls = props.reduce((acc, curr, i) => {
     const propStr = ensureArray(obj[curr])
-      .map((val) => `${indentStr + '\t'}${curr}: ${val};`)
+      .map((val) => `${indentStr + indent}${curr}: ${val};`)
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`
   }, '')
@@ -47,7 +52,7 @@ export function stringifyCss(className: string, obj: any): string {
   )} {\n${decls}\n${indentStr}}`
 
   for (let i = context.length - 1; i >= 0; i--) {
-    css += `${'\t'.repeat(i)}\n}`
+    css += `${indent.repeat(i)}\n}`
   }
 
   return css

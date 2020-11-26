@@ -155,7 +155,11 @@ export function activate(context: ExtensionContext) {
       registerConfigErrorHandler(emitter)
       registerColorDecorator(client, context, emitter)
       onMessage(client, 'getConfiguration', async (scope) => {
-        return Workspace.getConfiguration('tailwindCSS', scope)
+        return {
+          tabSize:
+            Workspace.getConfiguration('editor', scope).get('tabSize') || 2,
+          ...Workspace.getConfiguration('tailwindCSS', scope),
+        }
       })
     })
 

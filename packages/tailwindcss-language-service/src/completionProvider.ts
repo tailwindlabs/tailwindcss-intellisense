@@ -720,10 +720,10 @@ export async function doComplete(
   return provideEmmetCompletions(state, document, position)
 }
 
-export function resolveCompletionItem(
+export async function resolveCompletionItem(
   state: State,
   item: CompletionItem
-): CompletionItem {
+): Promise<CompletionItem> {
   if (['helper', 'directive', 'variant', '@tailwind'].includes(item.data)) {
     return item
   }
@@ -747,7 +747,8 @@ export function resolveCompletionItem(
   } else {
     item.detail = getCssDetail(state, className)
     if (!item.documentation) {
-      const css = stringifyCss(item.data.join(':'), className)
+      const { tabSize } = await getDocumentSettings(state)
+      const css = stringifyCss(item.data.join(':'), className, tabSize)
       if (css) {
         item.documentation = {
           kind: 'markdown' as typeof MarkupKind.Markdown,

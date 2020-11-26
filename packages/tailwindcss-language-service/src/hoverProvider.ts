@@ -6,14 +6,15 @@ import { isCssContext } from './util/css'
 import { findClassNameAtPosition } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
+import { getDocumentSettings } from './util/getDocumentSettings'
 
-export function doHover(
+export async function doHover(
   state: State,
   document: TextDocument,
   position: Position
-): Hover {
+): Promise<Hover> {
   return (
-    provideClassNameHover(state, document, position) ||
+    (await provideClassNameHover(state, document, position)) ||
     provideCssHelperHover(state, document, position)
   )
 }
@@ -71,11 +72,11 @@ function provideCssHelperHover(
   }
 }
 
-function provideClassNameHover(
+async function provideClassNameHover(
   state: State,
   document: TextDocument,
   position: Position
-): Hover {
+): Promise<Hover> {
   let className = findClassNameAtPosition(state, document, position)
   if (className === null) return null
 
@@ -89,9 +90,12 @@ function provideClassNameHover(
     }
   }
 
+  const { tabSize } = await getDocumentSettings(state, document)
+
   const css = stringifyCss(
     className.className,
-    dlv(state.classNames.classNames, [...parts, '__info'])
+    dlv(state.classNames.classNames, [...parts, '__info']),
+    tabSize
   )
 
   if (!css) return null
