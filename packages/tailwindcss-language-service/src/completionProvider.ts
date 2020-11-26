@@ -32,7 +32,7 @@ import {
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 
-function completionsFromClassList(
+export function completionsFromClassList(
   state: State,
   classList: string,
   classListRange: Range,
