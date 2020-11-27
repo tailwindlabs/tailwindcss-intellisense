@@ -158,6 +158,10 @@
           "default": "error",
           "markdownDescription": "Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs/functions-and-directives/#tailwind)",
           "scope": "language-overridable"
+        },
+        "tailwindCSS.experimental.classRegex": {
+          "type": "array",
+          "scope": "language-overridable"
         }
       }
     }

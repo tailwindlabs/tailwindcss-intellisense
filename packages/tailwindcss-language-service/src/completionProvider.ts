@@ -31,6 +31,7 @@ import {
 } from './util/lexers'
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
+import MultiRegexp from 'multi-regexp2'
 
 export function completionsFromClassList(
   state: State,
@@ -191,6 +192,72 @@ function provideClassAttributeCompletions(
       })
     }
   } catch (_) {}
+
+  return null
+}
+
+async function provideCustomClassNameCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position
+): Promise<CompletionList> {
+  const settings = await getDocumentSettings(state, document)
+  const regexes = dlv(settings, 'experimental.classRegex', [])
+  if (regexes.length === 0) return null
+
+  const searchRange = {
+    start: { line: Math.max(position.line - 10, 0), character: 0 },
+    end: { line: position.line + 10, character: 0 },
+  }
+
+  let str = document.getText(searchRange)
+
+  for (let i = 0; i < regexes.length; i++) {
+    let [containerRegex, classRegex] = Array.isArray(regexes[i])
+      ? regexes[i]
+      : [regexes[i]]
+    containerRegex = new MultiRegexp(new RegExp(containerRegex))
+    try {
+      const match = containerRegex.execForGroup(str, 1)
+      if (match === null) {
+        throw Error()
+      }
+      const searchStart = document.offsetAt(searchRange.start)
+      const matchStart = searchStart + match.start
+      const matchEnd = searchStart + match.end
+      const cursor = document.offsetAt(position)
+      if (cursor >= matchStart && cursor <= matchEnd) {
+        let classList
+
+        if (classRegex) {
+          classRegex = new MultiRegexp(new RegExp(classRegex, 'g'))
+          let classMatch
+          while (
+            (classMatch = classRegex.execForGroup(match.match, 1)) !== null
+          ) {
+            const classMatchStart = matchStart + classMatch.start
+            const classMatchEnd = matchStart + classMatch.end
+            if (cursor >= classMatchStart && cursor <= classMatchEnd) {
+              classList = classMatch.match.substr(0, cursor - classMatchStart)
+            }
+          }
+          if (typeof classList === 'undefined') {
+            throw Error()
+          }
+        } else {
+          classList = match.match.substr(0, cursor - matchStart)
+        }
+
+        return completionsFromClassList(state, classList, {
+          start: {
+            line: position.line,
+            character: position.character - classList.length,
+          },
+          end: position,
+        })
+      }
+    } catch (_) {}
+  }
 
   return null
 }
@@ -711,7 +778,8 @@ export async function doComplete(
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
     provideVariantsDirectiveCompletions(state, document, position) ||
-    provideTailwindDirectiveCompletions(state, document, position)
+    provideTailwindDirectiveCompletions(state, document, position) ||
+    (await provideCustomClassNameCompletions(state, document, position))
 
   if (result) return result
 

@@ -41,6 +41,9 @@ export type Settings = {
     invalidConfigPath: DiagnosticSeveritySetting
     invalidTailwindDirective: DiagnosticSeveritySetting
   }
+  experimental: {
+    classRegex: string[]
+  }
 }
 
 interface NotificationEmitter {

@@ -22,6 +22,7 @@
     "line-column": "^1.0.2",
     "mitt": "^2.1.0",
     "moo": "^0.5.1",
+    "multi-regexp2": "^1.0.3",
     "semver": "^7.3.2",
     "sift-string": "^0.0.2",
     "tsdx": "^0.13.3",

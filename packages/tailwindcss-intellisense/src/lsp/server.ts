@@ -46,6 +46,9 @@ const defaultSettings: Settings = {
   tabSize: 2,
   emmetCompletions: false,
   includeLanguages: {},
+  experimental: {
+    classRegex: [],
+  },
   validate: true,
   lint: {
     cssConflict: 'warning',
