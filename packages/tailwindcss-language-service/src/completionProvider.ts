@@ -562,6 +562,45 @@ function provideVariantsDirectiveCompletions(
   }
 }
 
+function provideLayerDirectiveCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position
+): CompletionList {
+  if (!isCssContext(state, document, position)) {
+    return null
+  }
+
+  let text = document.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  const match = text.match(/^\s*@layer\s+(?<partial>[^\s]*)$/i)
+
+  if (match === null) return null
+
+  return {
+    isIncomplete: false,
+    items: ['base', 'components', 'utilities'].map((layer, index) => ({
+      label: layer,
+      kind: 21,
+      data: 'layer',
+      sortText: naturalExpand(index),
+      textEdit: {
+        newText: layer,
+        range: {
+          start: {
+            line: position.line,
+            character: position.character - match.groups.partial.length,
+          },
+          end: position,
+        },
+      },
+    })),
+  }
+}
+
 function provideScreenDirectiveCompletions(
   state: State,
   document: TextDocument,
@@ -678,6 +717,20 @@ function provideCssDirectiveCompletions(
         )})`,
       },
     },
+    ...(semver.gte(state.version, '1.8.0')
+      ? [
+          {
+            label: '@layer',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#layer'
+              )})`,
+            },
+          },
+        ]
+      : []),
   ]
 
   return {
@@ -779,6 +832,7 @@ export async function doComplete(
     provideScreenDirectiveCompletions(state, document, position) ||
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
+    provideLayerDirectiveCompletions(state, document, position) ||
     (await provideCustomClassNameCompletions(state, document, position))
 
   if (result) return result
@@ -790,7 +844,9 @@ export async function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): Promise<CompletionItem> {
-  if (['helper', 'directive', 'variant', '@tailwind'].includes(item.data)) {
+  if (
+    ['helper', 'directive', 'variant', 'layer', '@tailwind'].includes(item.data)
+  ) {
     return item
   }
 
