@@ -21,6 +21,7 @@ export const HTML_LANGUAGES = [
   'leaf',
   'liquid',
   'markdown',
+  'mdx',
   'mustache',
   'njk',
   'nunjucks',

@@ -19,6 +19,7 @@ export const DEFAULT_LANGUAGES = [
   'leaf',
   'liquid',
   'markdown',
+  'mdx',
   'mustache',
   'njk',
   'nunjucks',
