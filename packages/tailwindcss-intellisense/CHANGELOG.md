@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- Add support for `[ngClass]` attribute (#187)
+
 ## 0.5.1
 
 - Update color parser to avoid interpreting shadows and font-weights as colors (#180)
