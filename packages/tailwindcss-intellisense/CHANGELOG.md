@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.1
+
+- Update color parser to avoid interpreting shadows and font-weights as colors (#180)
+- Respect default editor tab size in CSS previews
+- Add `experimental.classRegex` setting (#129)
+- Fix documentation links
+- Add `@​layer` completions
+- Add `mdx` to default languages
+- Fix readme image references
+
 ## 0.5.0
 
 - Improve support for Tailwind CSS v2.0
