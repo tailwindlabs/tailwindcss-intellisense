@@ -135,14 +135,14 @@ export function findClassListsInHtmlRange(
   range?: Range
 ): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/(?:\s|:)class(?:Name)?=['"`{]/g, text)
+  const matches = findAll(/(?:\s|:)(?:class(?:Name)?|\[ngClass\])=['"`{]/g, text)
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
 
     let lexer =
-      match[0][0] === ':'
+      match[0][0] === ':' || match[0].trim().startsWith('[ngClass]')
         ? getComputedClassAttributeLexer()
         : getClassAttributeLexer()
     lexer.reset(subtext)

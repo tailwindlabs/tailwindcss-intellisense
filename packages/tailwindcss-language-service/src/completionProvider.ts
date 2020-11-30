@@ -158,14 +158,14 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(/(?:\s|:)class(?:Name)?=['"`{]/gi, str)
+  const match = findLast(/(?:\s|:)(?:class(?:Name)?|\[ngClass\])=['"`{]/gi, str)
 
   if (match === null) {
     return null
   }
 
   const lexer =
-    match[0][0] === ':'
+    match[0][0] === ':' || match[0].trim().startsWith('[ngClass]')
       ? getComputedClassAttributeLexer()
       : getClassAttributeLexer()
   lexer.reset(str.substr(match.index + match[0].length - 1))
