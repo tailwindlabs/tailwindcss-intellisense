@@ -205,56 +205,65 @@ async function provideCustomClassNameCompletions(
   const regexes = dlv(settings, 'experimental.classRegex', [])
   if (regexes.length === 0) return null
 
-  const searchRange = {
-    start: { line: Math.max(position.line - 10, 0), character: 0 },
-    end: { line: position.line + 10, character: 0 },
+  const positionOffset = document.offsetAt(position)
+
+  const searchRange: Range = {
+    start: document.positionAt(Math.max(0, positionOffset - 500)),
+    end: document.positionAt(positionOffset + 500),
   }
 
   let str = document.getText(searchRange)
 
   for (let i = 0; i < regexes.length; i++) {
-    let [containerRegex, classRegex] = Array.isArray(regexes[i])
-      ? regexes[i]
-      : [regexes[i]]
-    containerRegex = new MultiRegexp(new RegExp(containerRegex))
     try {
-      const match = containerRegex.execForGroup(str, 1)
-      if (match === null) {
-        throw Error()
-      }
-      const searchStart = document.offsetAt(searchRange.start)
-      const matchStart = searchStart + match.start
-      const matchEnd = searchStart + match.end
-      const cursor = document.offsetAt(position)
-      if (cursor >= matchStart && cursor <= matchEnd) {
-        let classList
+      let [containerRegex, classRegex] = Array.isArray(regexes[i])
+        ? regexes[i]
+        : [regexes[i]]
 
-        if (classRegex) {
-          classRegex = new MultiRegexp(new RegExp(classRegex, 'g'))
-          let classMatch
-          while (
-            (classMatch = classRegex.execForGroup(match.match, 1)) !== null
-          ) {
-            const classMatchStart = matchStart + classMatch.start
-            const classMatchEnd = matchStart + classMatch.end
-            if (cursor >= classMatchStart && cursor <= classMatchEnd) {
-              classList = classMatch.match.substr(0, cursor - classMatchStart)
+      containerRegex = new MultiRegexp(new RegExp(containerRegex, 'g'))
+      let containerMatch
+
+      while ((containerMatch = containerRegex.execForGroup(str, 1)) !== null) {
+        console.log(containerMatch)
+        const searchStart = document.offsetAt(searchRange.start)
+        const matchStart = searchStart + containerMatch.start
+        const matchEnd = searchStart + containerMatch.end
+        const cursor = document.offsetAt(position)
+        if (cursor >= matchStart && cursor <= matchEnd) {
+          let classList
+
+          if (classRegex) {
+            classRegex = new MultiRegexp(new RegExp(classRegex, 'g'))
+            let classMatch
+
+            while (
+              (classMatch = classRegex.execForGroup(
+                containerMatch.match,
+                1
+              )) !== null
+            ) {
+              const classMatchStart = matchStart + classMatch.start
+              const classMatchEnd = matchStart + classMatch.end
+              if (cursor >= classMatchStart && cursor <= classMatchEnd) {
+                classList = classMatch.match.substr(0, cursor - classMatchStart)
+              }
             }
-          }
-          if (typeof classList === 'undefined') {
-            throw Error()
-          }
-        } else {
-          classList = match.match.substr(0, cursor - matchStart)
-        }
 
-        return completionsFromClassList(state, classList, {
-          start: {
-            line: position.line,
-            character: position.character - classList.length,
-          },
-          end: position,
-        })
+            if (typeof classList === 'undefined') {
+              throw Error()
+            }
+          } else {
+            classList = containerMatch.match.substr(0, cursor - matchStart)
+          }
+
+          return completionsFromClassList(state, classList, {
+            start: {
+              line: position.line,
+              character: position.character - classList.length,
+            },
+            end: position,
+          })
+        }
       }
     } catch (_) {}
   }
