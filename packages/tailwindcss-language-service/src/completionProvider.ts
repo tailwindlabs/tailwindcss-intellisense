@@ -32,6 +32,7 @@ import {
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 import MultiRegexp from 'multi-regexp2'
+import { remToPx } from './util/remToPx'
 
 export function completionsFromClassList(
   state: State,
@@ -876,10 +877,13 @@ export async function resolveCompletionItem(
       item.data[item.data.length - 1]
     ].join(', ')
   } else {
-    item.detail = getCssDetail(state, className)
+    item.detail = await getCssDetail(state, className)
     if (!item.documentation) {
-      const { tabSize } = await getDocumentSettings(state)
-      const css = stringifyCss(item.data.join(':'), className, tabSize)
+      const settings = await getDocumentSettings(state)
+      const css = stringifyCss(item.data.join(':'), className, {
+        tabSize: dlv(settings, 'tabSize'),
+        showPixelValues: dlv(settings, 'experimental.showPixelValues'),
+      })
       if (css) {
         item.documentation = {
           kind: 'markdown' as typeof MarkupKind.Markdown,
@@ -907,7 +911,10 @@ function isContextItem(state: State, keys: string[]): boolean {
   return isObject(item.__info) && !item.__info.__rule
 }
 
-function stringifyDecls(obj: any): string {
+function stringifyDecls(
+  obj: any,
+  { showPixelValues = false }: Partial<{ showPixelValues: boolean }> = {}
+): string {
   let props = Object.keys(obj)
   let nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
 
@@ -918,18 +925,24 @@ function stringifyDecls(obj: any): string {
   return props
     .map((prop) =>
       ensureArray(obj[prop])
-        .map((value) => `${prop}: ${value};`)
+        .map((value) => {
+          const px = showPixelValues ? remToPx(value) : undefined
+          return `${prop}: ${value}${px ? ` /*${px}*/` : ''};`
+        })
         .join(' ')
     )
     .join(' ')
 }
 
-function getCssDetail(state: State, className: any): string {
+async function getCssDetail(state: State, className: any): Promise<string> {
   if (Array.isArray(className)) {
     return `${className.length} rules`
   }
   if (className.__rule === true) {
-    return stringifyDecls(removeMeta(className))
+    const settings = await getDocumentSettings(state)
+    return stringifyDecls(removeMeta(className), {
+      showPixelValues: dlv(settings, 'experimental.showPixelValues', false),
+    })
   }
   return null
 }

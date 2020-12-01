@@ -43,6 +43,7 @@ export type Settings = {
   }
   experimental: {
     classRegex: string[]
+    showPixelValues: boolean
   }
 }
 

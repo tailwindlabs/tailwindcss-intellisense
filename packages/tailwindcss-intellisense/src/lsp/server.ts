@@ -48,6 +48,7 @@ const defaultSettings: Settings = {
   includeLanguages: {},
   experimental: {
     classRegex: [],
+    showPixelValues: false,
   },
   validate: true,
   lint: {

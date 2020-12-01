@@ -2,6 +2,7 @@ import removeMeta from './removeMeta'
 const dlv = require('dlv')
 import escapeClassName from 'css.escape'
 import { ensureArray } from './array'
+import { remToPx } from './remToPx'
 
 export function stringifyConfigValue(x: any): string {
   if (typeof x === 'string') return x
@@ -18,12 +19,17 @@ export function stringifyConfigValue(x: any): string {
 export function stringifyCss(
   className: string,
   obj: any,
-  tabSize: number = 2
+  {
+    tabSize = 2,
+    showPixelValues = false,
+  }: Partial<{ tabSize: number; showPixelValues: boolean }> = {}
 ): string {
   if (obj.__rule !== true && !Array.isArray(obj)) return null
 
   if (Array.isArray(obj)) {
-    const rules = obj.map((x) => stringifyCss(className, x)).filter(Boolean)
+    const rules = obj
+      .map((x) => stringifyCss(className, x, { tabSize, showPixelValues }))
+      .filter(Boolean)
     if (rules.length === 0) return null
     return rules.join('\n\n')
   }
@@ -42,7 +48,10 @@ export function stringifyCss(
   const indentStr = indent.repeat(context.length)
   const decls = props.reduce((acc, curr, i) => {
     const propStr = ensureArray(obj[curr])
-      .map((val) => `${indentStr + indent}${curr}: ${val};`)
+      .map((val) => {
+        const px = showPixelValues ? remToPx(val) : undefined
+        return `${indentStr + indent}${curr}: ${val}${px ? ` /*${px}*/` : ''};`
+      })
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`
   }, '')

@@ -90,12 +90,15 @@ async function provideClassNameHover(
     }
   }
 
-  const { tabSize } = await getDocumentSettings(state, document)
+  const settings = await getDocumentSettings(state, document)
 
   const css = stringifyCss(
     className.className,
     dlv(state.classNames.classNames, [...parts, '__info']),
-    tabSize
+    {
+      tabSize: dlv(settings, 'tabSize'),
+      showPixelValues: dlv(settings, 'experimental.showPixelValues'),
+    }
   )
 
   if (!css) return null

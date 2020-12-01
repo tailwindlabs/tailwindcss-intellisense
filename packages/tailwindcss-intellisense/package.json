@@ -162,6 +162,9 @@
         "tailwindCSS.experimental.classRegex": {
           "type": "array",
           "scope": "language-overridable"
+        },
+        "tailwindCSS.experimental.showPixelValues": {
+          "type": "boolean"
         }
       }
     }
