@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3
+
+- Add `experimental.showPixelValues` setting (#200)
+- Add some basic initialisation logs
+- Fixes for `experimental.classRegex` setting (#129)
+
 ## 0.5.2
 
 - Add support for `[ngClass]` attribute (#187)
