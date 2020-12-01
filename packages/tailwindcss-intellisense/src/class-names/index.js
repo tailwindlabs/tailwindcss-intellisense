@@ -52,6 +52,7 @@ export default async function getClassNames(
 
     invariant(configPaths.length > 0, 'No Tailwind CSS config found.')
     const configPath = configPaths[0]
+    console.log(`Found Tailwind config file: ${configPath}`)
     const configDir = path.dirname(configPath)
     const tailwindBase = path.dirname(
       resolveFrom(configDir, 'tailwindcss/package.json')
@@ -59,6 +60,7 @@ export default async function getClassNames(
     postcss = importFrom(tailwindBase, 'postcss')
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
+    console.log(`Found tailwindcss v${version}: ${tailwindBase}`)
 
     try {
       // this is not required
@@ -193,7 +195,9 @@ export default async function getClassNames(
   let result
   try {
     result = await run()
-  } catch (_) {
+    console.log('Initialised successfully.')
+  } catch (error) {
+    console.error('Failed to initialise:', error)
     return null
   }
 
