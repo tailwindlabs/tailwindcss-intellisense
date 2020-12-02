@@ -15,6 +15,7 @@ import * as fs from 'fs'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
+import execa from 'execa'
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -33,7 +34,6 @@ export default async function getClassNames(
   async function run() {
     let postcss
     let tailwindcss
-    let browserslistModule
     let version
     let featureFlags = { future: [], experimental: [] }
 
@@ -61,11 +61,6 @@ export default async function getClassNames(
     tailwindcss = importFrom(configDir, 'tailwindcss')
     version = importFrom(configDir, 'tailwindcss/package.json').version
     console.log(`Found tailwindcss v${version}: ${tailwindBase}`)
-
-    try {
-      // this is not required
-      browserslistModule = importFrom(tailwindBase, 'browserslist')
-    } catch (_) {}
 
     try {
       featureFlags = importFrom(tailwindBase, './lib/featureFlags.js').default
@@ -130,11 +125,21 @@ export default async function getClassNames(
     }
 
     const resolvedConfig = resolveConfig({ cwd: configDir, config })
-    const browserslist = browserslistModule
-      ? browserslistModule(undefined, {
-          path: configDir,
-        })
-      : []
+
+    let browserslist = []
+    try {
+      const { stdout, stderr } = await execa('browserslist', [], {
+        preferLocal: true,
+        localDir: configDir,
+        cwd: configDir,
+      })
+      if (stderr) {
+        throw Error(stderr)
+      }
+      browserslist = stdout.split('\n')
+    } catch (error) {
+      console.error('Failed to load browserslist:', error)
+    }
 
     return {
       version,
