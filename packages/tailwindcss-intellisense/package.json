@@ -5,7 +5,7 @@
   "preview": true,
   "author": "Brad Cornes <hello@bradley.dev>",
   "license": "MIT",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "homepage": "https://github.com/tailwindlabs/tailwindcss-intellisense",
   "bugs": {
     "url": "https://github.com/tailwindlabs/tailwindcss-intellisense/issues",
@@ -173,7 +173,7 @@
     "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
     "build": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
     "minify": "glob-exec --foreach --parallel \"dist/**/*.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\"",
-    "package": "vsce package",
+    "publish": "vsce publish",
     "vscode:prepublish": "npm run clean && npm run build && npm run minify",
     "clean": "rimraf dist",
     "test": "jest"
