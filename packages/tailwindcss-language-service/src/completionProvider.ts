@@ -225,7 +225,6 @@ async function provideCustomClassNameCompletions(
       let containerMatch
 
       while ((containerMatch = containerRegex.execForGroup(str, 1)) !== null) {
-        console.log(containerMatch)
         const searchStart = document.offsetAt(searchRange.start)
         const matchStart = searchStart + containerMatch.start
         const matchEnd = searchStart + containerMatch.end
