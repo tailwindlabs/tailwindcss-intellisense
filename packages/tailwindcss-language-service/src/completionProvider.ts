@@ -197,6 +197,62 @@ function provideClassAttributeCompletions(
   return null
 }
 
+function createMultiRegexp(regexString: string) {
+  let insideCharClass = false
+  let captureGroupIndex = -1
+
+  for (let i = 0; i < regexString.length; i++) {
+    if (
+      !insideCharClass &&
+      regexString[i] === '[' &&
+      regexString[i - 1] !== '\\'
+    ) {
+      insideCharClass = true
+    } else if (
+      insideCharClass &&
+      regexString[i] === ']' &&
+      regexString[i - 1] !== '\\'
+    ) {
+      insideCharClass = false
+    } else if (
+      !insideCharClass &&
+      regexString[i] === '(' &&
+      regexString.substr(i + 1, 2) !== '?:'
+    ) {
+      captureGroupIndex = i
+      break
+    }
+  }
+
+  const re = /(?:[^\\]|^)\(\?:/g
+  let match: RegExpExecArray
+  let nonCaptureGroupIndexes: number[] = []
+
+  while ((match = re.exec(regexString)) !== null) {
+    if (match[0].startsWith('(')) {
+      nonCaptureGroupIndexes.push(match.index)
+    } else {
+      nonCaptureGroupIndexes.push(match.index + 1)
+    }
+  }
+
+  const regex = new MultiRegexp(
+    new RegExp(
+      regexString.replace(re, (m) => m.substr(0, m.length - 2)),
+      'g'
+    )
+  )
+
+  let groupIndex =
+    1 + nonCaptureGroupIndexes.filter((i) => i < captureGroupIndex).length
+
+  return {
+    exec: (str: string) => {
+      return regex.execForGroup(str, groupIndex)
+    },
+  }
+}
+
 async function provideCustomClassNameCompletions(
   state: State,
   document: TextDocument,
@@ -221,10 +277,10 @@ async function provideCustomClassNameCompletions(
         ? regexes[i]
         : [regexes[i]]
 
-      containerRegex = new MultiRegexp(new RegExp(containerRegex, 'g'))
+      containerRegex = createMultiRegexp(containerRegex)
       let containerMatch
 
-      while ((containerMatch = containerRegex.execForGroup(str, 1)) !== null) {
+      while ((containerMatch = containerRegex.exec(str)) !== null) {
         const searchStart = document.offsetAt(searchRange.start)
         const matchStart = searchStart + containerMatch.start
         const matchEnd = searchStart + containerMatch.end
@@ -233,14 +289,11 @@ async function provideCustomClassNameCompletions(
           let classList
 
           if (classRegex) {
-            classRegex = new MultiRegexp(new RegExp(classRegex, 'g'))
+            classRegex = createMultiRegexp(classRegex)
             let classMatch
 
             while (
-              (classMatch = classRegex.execForGroup(
-                containerMatch.match,
-                1
-              )) !== null
+              (classMatch = classRegex.exec(containerMatch.match)) !== null
             ) {
               const classMatchStart = matchStart + classMatch.start
               const classMatchEnd = matchStart + classMatch.end
