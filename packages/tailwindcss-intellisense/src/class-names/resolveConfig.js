@@ -11,19 +11,25 @@ export default function resolveConfig({ cwd, config }) {
     config = __non_webpack_require__(config)
   }
 
-  let resolve = (x) => x
-  withUserEnvironment(cwd, ({ require, resolve }) => {
+  return withUserEnvironment(cwd, ({ require, resolve }) => {
+    let resolveConfigFn = (config) => config
     const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
-      resolve = require('./resolveConfig.js', tailwindBase)
+      resolveConfigFn = require('./resolveConfig.js', tailwindBase)
     } catch (_) {
       try {
         const resolveConfig = require('./lib/util/resolveConfig.js', tailwindBase)
         const defaultConfig = require('./stubs/defaultConfig.stub.js', tailwindBase)
-        resolve = (config) => resolveConfig([config, defaultConfig])
-      } catch (_) {}
+        resolveConfigFn = (config) => resolveConfig([config, defaultConfig])
+      } catch (_) {
+        try {
+          const resolveConfig = require('./lib/util/mergeConfigWithDefaults.js', tailwindBase)
+            .default
+          const defaultConfig = require('./defaultConfig.js', tailwindBase)()
+          resolveConfigFn = (config) => resolveConfig(config, defaultConfig)
+        } catch (_) {}
+      }
     }
+    return resolveConfigFn(config)
   })
-
-  return resolve(config)
 }
