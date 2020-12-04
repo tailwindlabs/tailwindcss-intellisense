@@ -1,14 +1,8 @@
-import resolveFrom from 'resolve-from'
-import importFrom from 'import-from'
 import * as path from 'path'
 import clearModule from 'clear-module'
+import { withUserEnvironment } from './environment'
 
 export default function resolveConfig({ cwd, config }) {
-  const tailwindBase = path.dirname(
-    resolveFrom(cwd, 'tailwindcss/package.json')
-  )
-  let resolve = (x) => x
-
   if (typeof config === 'string') {
     if (!cwd) {
       cwd = path.dirname(config)
@@ -17,30 +11,25 @@ export default function resolveConfig({ cwd, config }) {
     config = __non_webpack_require__(config)
   }
 
-  try {
-    resolve = importFrom(tailwindBase, './resolveConfig.js')
-  } catch (_) {
+  return withUserEnvironment(cwd, ({ require, resolve }) => {
+    let resolveConfigFn = (config) => config
+    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
-      const resolveConfig = importFrom(
-        tailwindBase,
-        './lib/util/resolveConfig.js'
-      )
-      const defaultConfig = importFrom(
-        tailwindBase,
-        './stubs/defaultConfig.stub.js'
-      )
-      resolve = (config) => resolveConfig([config, defaultConfig])
+      resolveConfigFn = require('./resolveConfig.js', tailwindBase)
     } catch (_) {
       try {
-        const resolveConfig = importFrom(
-          tailwindBase,
-          './lib/util/mergeConfigWithDefaults.js'
-        ).default
-        const defaultConfig = importFrom(tailwindBase, './defaultConfig.js')()
-        resolve = (config) => resolveConfig(config, defaultConfig)
-      } catch (_) {}
+        const resolveConfig = require('./lib/util/resolveConfig.js', tailwindBase)
+        const defaultConfig = require('./stubs/defaultConfig.stub.js', tailwindBase)
+        resolveConfigFn = (config) => resolveConfig([config, defaultConfig])
+      } catch (_) {
+        try {
+          const resolveConfig = require('./lib/util/mergeConfigWithDefaults.js', tailwindBase)
+            .default
+          const defaultConfig = require('./defaultConfig.js', tailwindBase)()
+          resolveConfigFn = (config) => resolveConfig(config, defaultConfig)
+        } catch (_) {}
+      }
     }
-  }
-
-  return resolve(config)
+    return resolveConfigFn(config)
+  })
 }
