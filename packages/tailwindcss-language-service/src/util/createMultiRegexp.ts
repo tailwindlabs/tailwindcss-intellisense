@@ -1,3 +1,5 @@
+import MultiRegexp from 'multi-regexp2'
+
 export function createMultiRegexp(regexString: string) {
   let insideCharClass = false
   let captureGroupIndex = -1
