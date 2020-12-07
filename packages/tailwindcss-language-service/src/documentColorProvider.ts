@@ -10,11 +10,11 @@ import { stringToPath } from './util/stringToPath'
 import type { TextDocument } from 'vscode-languageserver'
 const dlv = require('dlv')
 
-export function getDocumentColors(state: State, document: TextDocument) {
+export async function getDocumentColors(state: State, document: TextDocument) {
   let colors = []
   if (!state.enabled) return colors
 
-  let classLists = findClassListsInDocument(state, document)
+  let classLists = await findClassListsInDocument(state, document)
   classLists.forEach((classList) => {
     let classNames = getClassNamesInClassList(classList)
     classNames.forEach((className) => {

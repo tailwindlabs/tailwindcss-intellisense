@@ -26,10 +26,10 @@ export async function doValidate(
   return settings.validate
     ? [
         ...(only.includes(DiagnosticKind.CssConflict)
-          ? getCssConflictDiagnostics(state, document, settings)
+          ? await getCssConflictDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidApply)
-          ? getInvalidApplyDiagnostics(state, document, settings)
+          ? await getInvalidApplyDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidScreen)
           ? getInvalidScreenDiagnostics(state, document, settings)

@@ -4,15 +4,21 @@ import { Settings, State } from '../util/state'
 import type { TextDocument, DiagnosticSeverity } from 'vscode-languageserver'
 import { validateApply } from '../util/validateApply'
 
-export function getInvalidApplyDiagnostics(
+export async function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): InvalidApplyDiagnostic[] {
+): Promise<InvalidApplyDiagnostic[]> {
   let severity = settings.lint.invalidApply
   if (severity === 'ignore') return []
 
-  const classNames = findClassNamesInRange(document, undefined, 'css')
+  const classNames = await findClassNamesInRange(
+    state,
+    document,
+    undefined,
+    'css',
+    false
+  )
 
   let diagnostics: InvalidApplyDiagnostic[] = classNames.map((className) => {
     let result = validateApply(state, className.className)

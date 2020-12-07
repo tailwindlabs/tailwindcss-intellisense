@@ -77,7 +77,7 @@ async function provideClassNameHover(
   document: TextDocument,
   position: Position
 ): Promise<Hover> {
-  let className = findClassNameAtPosition(state, document, position)
+  let className = await findClassNameAtPosition(state, document, position)
   if (className === null) return null
 
   const parts = getClassNameParts(state, className.className)

@@ -10,16 +10,16 @@ import { getClassNameDecls } from '../util/getClassNameDecls'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 
-export function getCssConflictDiagnostics(
+export async function getCssConflictDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): CssConflictDiagnostic[] {
+): Promise<CssConflictDiagnostic[]> {
   let severity = settings.lint.cssConflict
   if (severity === 'ignore') return []
 
   let diagnostics: CssConflictDiagnostic[] = []
-  const classLists = findClassListsInDocument(state, document)
+  const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
     const classNames = getClassNamesInClassList(classList)
