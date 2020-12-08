@@ -40,7 +40,7 @@ VS Code has built-it CSS validation which may display errors when using Tailwind
 "css.validate": false
 ```
 
-By default VS Code will not trigger completions when editing "string" content, for example within HTML attribute values. Updating the `editor.quickSuggestions` setting may improve your experience, particularly when editing Tailwind classes in HTML files:
+By default VS Code will not trigger completions when editing "string" content, for example within JSX attribute values. Updating the `editor.quickSuggestions` setting may improve your experience, particularly when editing Tailwind classes within JSX:
 
 ```
 "editor.quickSuggestions": {
