@@ -36,7 +36,7 @@
   },
   "icon": "media/icon.png",
   "activationEvents": [
-    "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js"
+    "workspaceContains:**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.{js,cjs}"
   ],
   "main": "dist/extension/index.js",
   "contributes": {

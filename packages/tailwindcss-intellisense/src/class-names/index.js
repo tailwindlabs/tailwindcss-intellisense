@@ -24,7 +24,7 @@ function arraysEqual(arr1, arr2) {
 }
 
 const CONFIG_GLOB =
-  '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.js'
+  '**/{tailwind,tailwind.config,tailwind-config,.tailwindrc}.{js,cjs}'
 
 export default async function getClassNames(
   cwd = process.cwd(),
