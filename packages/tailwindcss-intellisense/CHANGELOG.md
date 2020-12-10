@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.5
+
+- Add support for Yarn Plug'n'Play. Thanks @DanSnow! (#217)
+- Add `rescript` to list of default languages. Thanks @dcalhoun! (#222)
+- Add hover, color decorator, linting support for classRegex setting (#129)
+- Add support for config files with `.cjs` extension (#198)
+
 ## 0.5.4
 
 - Fix initialisation failure when using `extends` in browserslist config (#159)
