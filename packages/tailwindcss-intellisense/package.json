@@ -173,7 +173,7 @@
     "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
     "build": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
     "minify": "glob-exec --foreach --parallel \"dist/**/*.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\"",
-    "publish": "vsce publish",
+    "package": "vsce package",
     "vscode:prepublish": "npm run clean && npm run build && npm run minify",
     "clean": "rimraf dist",
     "test": "jest"
