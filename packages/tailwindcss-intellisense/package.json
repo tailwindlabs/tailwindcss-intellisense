@@ -206,7 +206,7 @@
     "rimraf": "^3.0.2",
     "semver": "^7.3.2",
     "stack-trace": "0.0.10",
-    "tailwindcss-language-service": "0.0.8",
+    "tailwindcss-language-service": "0.0.9",
     "terser": "^4.6.12",
     "tiny-invariant": "^1.1.0",
     "tslint": "^5.16.0",
