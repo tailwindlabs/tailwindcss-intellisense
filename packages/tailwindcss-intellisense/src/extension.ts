@@ -12,6 +12,8 @@ import {
   WorkspaceFolder,
   Uri,
   ConfigurationScope,
+  commands,
+  SymbolInformation,
 } from 'vscode'
 import {
   LanguageClient,
@@ -154,11 +156,21 @@ export function activate(context: ExtensionContext) {
       let emitter = createEmitter(client)
       registerConfigErrorHandler(emitter)
       registerColorDecorator(client, context, emitter)
+
       onMessage(client, 'getConfiguration', async (scope) => {
         return {
           tabSize:
             Workspace.getConfiguration('editor', scope).get('tabSize') || 2,
           ...Workspace.getConfiguration('tailwindCSS', scope),
+        }
+      })
+
+      onMessage(client, 'getDocumentSymbols', async ({ uri }) => {
+        return {
+          symbols: await commands.executeCommand<SymbolInformation[]>(
+            'vscode.executeDocumentSymbolProvider',
+            Uri.parse(uri)
+          ),
         }
       })
     })

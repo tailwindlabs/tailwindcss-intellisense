@@ -767,11 +767,10 @@ async function provideEmmetCompletions(
   let settings = await getDocumentSettings(state, document)
   if (settings.emmetCompletions !== true) return null
 
-  const syntax = isHtmlContext(state, document, position)
-    ? 'html'
-    : isJsContext(state, document, position)
-    ? 'jsx'
-    : null
+  const isHtml = isHtmlContext(state, document, position)
+  const isJs = !isHtml && isJsContext(state, document, position)
+
+  const syntax = isHtml ? 'html' : isJs ? 'jsx' : null
 
   if (syntax === null) {
     return null
@@ -799,6 +798,27 @@ async function provideEmmetCompletions(
     )
   ) {
     return null
+  }
+
+  if (isJs) {
+    const abbreviation: string = extractAbbreviationResults.abbreviation
+    if (abbreviation.startsWith('this.')) {
+      return null
+    }
+    const { symbols } = await state.emitter.emit('getDocumentSymbols', {
+      uri: document.uri,
+    })
+    if (
+      symbols &&
+      symbols.find(
+        (symbol) =>
+          abbreviation === symbol.name ||
+          (abbreviation.startsWith(symbol.name + '.') &&
+            !/>|\*|\+/.test(abbreviation))
+      )
+    ) {
+      return null
+    }
   }
 
   const emmetItems = emmetHelper.doComplete(document, position, syntax, {})
