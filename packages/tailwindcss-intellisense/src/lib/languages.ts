@@ -39,6 +39,7 @@ export const DEFAULT_LANGUAGES = [
   'javascript',
   'javascriptreact',
   'reason',
+  'rescript',
   'typescript',
   'typescriptreact',
   // mixed
