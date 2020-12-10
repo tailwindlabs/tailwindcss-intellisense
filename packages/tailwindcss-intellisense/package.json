@@ -40,6 +40,12 @@
   ],
   "main": "dist/extension/index.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "tailwindCSS.search",
+        "title": "Tailwind CSS: Search Documentation"
+      }
+    ],
     "grammars": [
       {
         "scopeName": "tailwindcss.injection",

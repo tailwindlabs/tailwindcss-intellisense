@@ -25,6 +25,7 @@ import { dedupe, equal } from './util/array'
 import { createEmitter } from './lib/emitter'
 import { onMessage } from './lsp/notifications'
 import { registerColorDecorator } from './lib/registerColorDecorator'
+import { registerSearchCommand } from './lib/registerSearchCommand'
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
@@ -204,6 +205,8 @@ export function activate(context: ExtensionContext) {
       }
     }
   })
+
+  registerSearchCommand(context)
 }
 
 export function deactivate(): Thenable<void> {
