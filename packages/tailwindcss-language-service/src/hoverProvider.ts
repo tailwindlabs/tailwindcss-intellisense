@@ -7,6 +7,7 @@ import { findClassNameAtPosition } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import { getDocumentSettings } from './util/getDocumentSettings'
+import { getDocsForClassName } from './util/docs'
 
 export async function doHover(
   state: State,
@@ -103,10 +104,19 @@ async function provideClassNameHover(
 
   if (!css) return null
 
+  const docs = await getDocsForClassName(parts[parts.length - 1], 200)
+
   return {
     contents: {
-      language: 'css',
-      value: css,
+      kind: 'markdown',
+      value: [
+        '```css',
+        css,
+        '```',
+        ...(docs
+          ? ['', '---', '', `[Tailwind CSS Documentation](${docs.url})`]
+          : []),
+      ].join('\n'),
     },
     range: className.range,
   }

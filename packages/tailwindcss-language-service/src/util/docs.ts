@@ -1,5 +1,11 @@
 import fetch from 'isomorphic-unfetch'
 import Cache from 'tmp-cache'
+import AbortController from 'abort-controller'
+
+interface Doc {
+  title: string
+  url: string
+}
 
 const cache = new Cache(30)
 
@@ -51,4 +57,58 @@ export async function searchDocs(
       ? { url: hit.url.replace(/#(content-wrapper|class-reference)$/, '') }
       : {}),
   }))
+}
+
+const classNameCache = {}
+
+export async function getDocsForClassName(
+  className: string,
+  timeoutMs?: number
+): Promise<Doc | undefined> {
+  if (classNameCache[className]) return classNameCache[className]
+
+  let hit
+  const controller = new AbortController()
+  const timeout = timeoutMs
+    ? setTimeout(() => controller.abort(), timeoutMs)
+    : undefined
+
+  try {
+    const hits = await searchDocs(
+      className,
+      {
+        hitsPerPage: 20,
+        attributesToRetrieve: [
+          'hierarchy.lvl1',
+          'hierarchy.lvl4',
+          'type',
+          'url',
+        ],
+        attributesToSnippet: [],
+        facetFilters: 'version:v2',
+        distinct: 1,
+      },
+      { signal: controller.signal }
+    )
+
+    hit = hits.find((hit) => {
+      return (
+        hit.type === 'lvl4' &&
+        hit.url.endsWith('#class-reference') &&
+        hit.hierarchy.lvl4 === className
+      )
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
+
+  if (hit) {
+    classNameCache[className] = {
+      title: hit.hierarchy.lvl1,
+      url: hit.url.replace(/\/?#class-reference$/, ''),
+    }
+    return classNameCache[className]
+  }
+
+  return undefined
 }

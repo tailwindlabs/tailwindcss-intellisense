@@ -16,6 +16,7 @@
   "dependencies": {
     "@ctrl/tinycolor": "^3.1.4",
     "@types/moo": "^0.5.3",
+    "abort-controller": "^3.0.0",
     "css.escape": "^1.5.1",
     "detect-indent": "^6.0.0",
     "dlv": "^1.1.3",
