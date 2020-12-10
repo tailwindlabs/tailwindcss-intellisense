@@ -52,7 +52,7 @@ export default async function getClassNames(
       version,
       featureFlags = { future: [], experimental: [] },
       tailwindBase,
-    } = loadMeta(configDir)
+    } = loadMeta(configDir, cwd)
 
     console.log(`Found tailwindcss v${version}: ${tailwindBase}`)
 
@@ -90,6 +90,7 @@ export default async function getClassNames(
       postcss,
     } = await withPackages(
       configDir,
+      cwd,
       async ({
         postcss,
         tailwindcss,
@@ -131,7 +132,11 @@ export default async function getClassNames(
           delete config.purge
         }
 
-        const resolvedConfig = resolveConfig({ cwd: configDir, config })
+        const resolvedConfig = resolveConfig({
+          base: configDir,
+          root: cwd,
+          config,
+        })
 
         let browserslist = []
         if (
@@ -180,7 +185,8 @@ export default async function getClassNames(
       plugins: getPlugins(config),
       variants: getVariants({ config, version, postcss, browserslist }),
       utilityConfigMap: await getUtilityConfigMap({
-        cwd: configDir,
+        base: configDir,
+        root: cwd,
         resolvedConfig,
         postcss,
         browserslist,
@@ -235,8 +241,8 @@ export default async function getClassNames(
   return result
 }
 
-function loadMeta(configDir) {
-  return withUserEnvironment(configDir, ({ require, resolve }) => {
+function loadMeta(configDir, root) {
+  return withUserEnvironment(configDir, root, ({ require, resolve }) => {
     const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     const version = require('tailwindcss/package.json').version
     let featureFlags
@@ -249,31 +255,35 @@ function loadMeta(configDir) {
   })
 }
 
-function withPackages(configDir, cb) {
-  return withUserEnvironment(configDir, async ({ isPnP, require, resolve }) => {
-    const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
-    const postcss = require('postcss', tailwindBase)
-    const tailwindcss = require('tailwindcss')
+function withPackages(configDir, root, cb) {
+  return withUserEnvironment(
+    configDir,
+    root,
+    async ({ isPnP, require, resolve }) => {
+      const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
+      const postcss = require('postcss', tailwindBase)
+      const tailwindcss = require('tailwindcss')
 
-    let browserslistCommand
-    let browserslistArgs = []
-    try {
-      const browserslistBin = resolve(
-        path.join(
-          'browserslist',
-          require('browserslist/package.json', tailwindBase).bin.browserslist
-        ),
-        tailwindBase
-      )
-      if (isPnP) {
-        browserslistCommand = 'yarn'
-        browserslistArgs = ['node', browserslistBin]
-      } else {
-        browserslistCommand = process.execPath
-        browserslistArgs = [browserslistBin]
-      }
-    } catch (_) {}
+      let browserslistCommand
+      let browserslistArgs = []
+      try {
+        const browserslistBin = resolve(
+          path.join(
+            'browserslist',
+            require('browserslist/package.json', tailwindBase).bin.browserslist
+          ),
+          tailwindBase
+        )
+        if (isPnP) {
+          browserslistCommand = 'yarn'
+          browserslistArgs = ['node', browserslistBin]
+        } else {
+          browserslistCommand = process.execPath
+          browserslistArgs = [browserslistBin]
+        }
+      } catch (_) {}
 
-    return cb({ postcss, tailwindcss, browserslistCommand, browserslistArgs })
-  })
+      return cb({ postcss, tailwindcss, browserslistCommand, browserslistArgs })
+    }
+  )
 }

@@ -19,12 +19,13 @@ const proxyHandler = (base = []) => ({
 })
 
 export async function getUtilityConfigMap({
-  cwd,
+  base,
+  root,
   resolvedConfig,
   postcss,
   browserslist,
 }) {
-  const builtInPlugins = await getBuiltInPlugins({ cwd, resolvedConfig })
+  const builtInPlugins = await getBuiltInPlugins({ base, root, resolvedConfig })
   const userPlugins = Array.isArray(resolvedConfig.plugins)
     ? resolvedConfig.plugins
     : []

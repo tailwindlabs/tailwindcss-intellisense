@@ -4,8 +4,8 @@ import pkgUp from 'pkg-up'
 import { isObject } from './isObject'
 import { withUserEnvironment } from './environment'
 
-export async function getBuiltInPlugins({ cwd, resolvedConfig }) {
-  return withUserEnvironment(cwd, ({ require, resolve }) => {
+export async function getBuiltInPlugins({ base, root, resolvedConfig }) {
+  return withUserEnvironment(base, root, ({ require, resolve }) => {
     const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
       return require('./lib/corePlugins.js', tailwindBase).default({

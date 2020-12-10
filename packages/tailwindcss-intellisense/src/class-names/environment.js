@@ -4,8 +4,19 @@ import findUp from 'find-up'
 import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 
-export function withUserEnvironment(base, cb) {
-  const pnpPath = findUp.sync('.pnp.js', { cwd: base })
+export function withUserEnvironment(base, root, cb) {
+  const pnpPath = findUp.sync(
+    (dir) => {
+      const pnpFile = path.join(dir, '.pnp.js')
+      if (findUp.sync.exists(pnpFile)) {
+        return pnpFile
+      }
+      if (dir === root) {
+        return findUp.stop
+      }
+    },
+    { cwd: base }
+  )
   if (pnpPath) {
     return withPnpEnvironment(pnpPath, cb)
   }

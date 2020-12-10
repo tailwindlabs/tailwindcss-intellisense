@@ -2,7 +2,7 @@ import * as path from 'path'
 import decache from './decache'
 import { withUserEnvironment } from './environment'
 
-export default function resolveConfig({ cwd, config }) {
+export default function resolveConfig({ base, root, config }) {
   if (typeof config === 'string') {
     if (!cwd) {
       cwd = path.dirname(config)
@@ -11,7 +11,7 @@ export default function resolveConfig({ cwd, config }) {
     config = __non_webpack_require__(config)
   }
 
-  return withUserEnvironment(cwd, ({ require, resolve }) => {
+  return withUserEnvironment(base, root, ({ require, resolve }) => {
     let resolveConfigFn = (config) => config
     const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
     try {
