@@ -32,7 +32,9 @@ export default async function getClassNames(
 ) {
   async function run() {
     const configPaths = (
-      await glob(CONFIG_GLOB, {
+      // Async version of glob is not resolved in VS Code ARM64 build for Mac (Apple Silicon)
+      // https://github.com/tailwindlabs/tailwindcss-intellisense/issues/209#issuecomment-743605212
+      glob.sync(CONFIG_GLOB, {
         cwd,
         ignore: ['**/node_modules'],
         onlyFiles: true,
