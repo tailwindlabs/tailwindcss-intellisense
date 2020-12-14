@@ -259,7 +259,7 @@ function withPackages(configDir, root, cb) {
   return withUserEnvironment(
     configDir,
     root,
-    async ({ isPnP, require, resolve }) => {
+    async ({ isPnp, require, resolve }) => {
       const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
       const postcss = require('postcss', tailwindBase)
       const tailwindcss = require('tailwindcss')
@@ -274,7 +274,7 @@ function withPackages(configDir, root, cb) {
           ),
           tailwindBase
         )
-        if (isPnP) {
+        if (isPnp) {
           browserslistCommand = 'yarn'
           browserslistArgs = ['node', browserslistBin]
         } else {

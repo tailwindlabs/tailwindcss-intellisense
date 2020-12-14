@@ -1,13 +1,27 @@
 import * as path from 'path'
-import Module from 'module'
 import findUp from 'find-up'
 import resolveFrom from 'resolve-from'
 import importFrom from 'import-from'
 
+let isPnp
+let pnpApi
+
 export function withUserEnvironment(base, root, cb) {
+  if (isPnp === true) {
+    return withPnpEnvironment(base, cb)
+  }
+
+  if (isPnp === false) {
+    return withNonPnpEnvironment(base, cb)
+  }
+
   const pnpPath = findUp.sync(
     (dir) => {
-      const pnpFile = path.join(dir, '.pnp.js')
+      let pnpFile = path.join(dir, '.pnp.js')
+      if (findUp.sync.exists(pnpFile)) {
+        return pnpFile
+      }
+      pnpFile = path.join(dir, '.pnp.cjs')
       if (findUp.sync.exists(pnpFile)) {
         return pnpFile
       }
@@ -17,62 +31,47 @@ export function withUserEnvironment(base, root, cb) {
     },
     { cwd: base }
   )
+
   if (pnpPath) {
-    return withPnpEnvironment(pnpPath, cb)
+    isPnp = true
+    pnpApi = __non_webpack_require__(pnpPath)
+    pnpApi.setup()
+  } else {
+    isPnp = false
   }
-  return withNonPnpEnvironment(base, cb)
+
+  return withUserEnvironment(base, root, cb)
 }
 
-function withPnpEnvironment(pnpPath, cb) {
-  const basePath = path.dirname(pnpPath)
-
-  // pnp will patch `module` and `fs` to load package in pnp environment
-  // backup the functions which will be patched here
-  const originalModule = Object.create(null)
-  originalModule._load = Module._load
-  originalModule._resolveFilename = Module._resolveFilename
-  originalModule._findPath = Module._findPath
-
-  const pnpapi = __non_webpack_require__(pnpPath)
-
-  // get into pnp environment
-  pnpapi.setup()
-
-  // restore the patched function, we can not load any package after called this
-  const restore = () => Object.assign(Module, originalModule)
-
-  const pnpResolve = (request, from = basePath) => {
-    return pnpapi.resolveRequest(request, from + '/')
+function withPnpEnvironment(base, cb) {
+  const pnpResolve = (request, from = base) => {
+    return pnpApi.resolveRequest(request, from.replace(/\/$/, '') + '/')
   }
 
   const pnpRequire = (request, from) => {
     return __non_webpack_require__(pnpResolve(request, from))
   }
 
-  const res = cb({ isPnP: true, resolve: pnpResolve, require: pnpRequire })
+  const res = cb({ isPnp: true, resolve: pnpResolve, require: pnpRequire })
 
   // check if it return a thenable
   if (res != null && res.then) {
     return res.then(
       (x) => {
-        restore()
         return x
       },
       (err) => {
-        restore()
         throw err
       }
     )
   }
-
-  restore()
 
   return res
 }
 
 function withNonPnpEnvironment(base, cb) {
   return cb({
-    isPnP: false,
+    isPnp: false,
     require(request, from = base) {
       return importFrom(from, request)
     },
