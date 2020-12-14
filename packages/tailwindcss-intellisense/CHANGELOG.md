@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.6
+
+- Fix module resolution in config files when using Yarn Plug'n'Play
+- Add noise check when providing Emmet-style completions (#146, #228)
+
 ## 0.5.5
 
 - Add support for Yarn Plug'n'Play. Thanks @DanSnow! (#217)
