@@ -1,0 +1,65 @@
+{
+    "version": 1.1,
+    "atDirectives": [
+        {
+            "name": "@tailwind",
+            "description": "Use the `@tailwind` directive to insert Tailwind's `base`, `components`, `utilities` and `screens` styles into your CSS.",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#tailwind"
+                }
+            ]
+        },
+        {
+            "name": "@responsive",
+            "description": "You can generate responsive variants of your own classes by wrapping their definitions in the `@responsive` directive:\n```css\n@responsive {\n  .alert {\n    background-color: #E53E3E;\n  }\n}\n```\n",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#responsive"
+                }
+            ]
+        },
+        {
+            "name": "@screen",
+            "description": "The `@screen` directive allows you to create media queries that reference your breakpoints by **name** instead of duplicating their values in your own CSS:\n```css\n@screen sm {\n  /* ... */\n}\n```\n…gets transformed into this:\n```css\n@media (min-width: 640px) {\n  /* ... */\n}\n```\n",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#screen"
+                }
+            ]
+        },
+        {
+            "name": "@variants",
+            "description": "Generate `hover`, `focus`, `active` and other **variants** of your own utilities by wrapping their definitions in the `@variants` directive:\n```css\n@variants hover, focus {\n   .btn-brand {\n    background-color: #3182CE;\n  }\n}\n```\n",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#variants"
+                }
+            ]
+        },
+        {
+            "name": "@layer",
+            "description": "Use the @layer directive to tell Tailwind which 'bucket' a set of custom styles belong to. Valid layers are a base, components, and utilities.\n```css@layer base {\n  h1 {\n    @apply text-2xl;\n  }\n  h2 {  @apply text-xl;\n  }\n}```",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#layer"
+                }
+            ]
+        },
+        {
+            "name": "@apply",
+            "description": "Use @apply to inline any existing utility classes into your own custom CSS.\n\nThis is useful when you find a common utility pattern in your HTML that you'd like to extract to a new component.\n```css.btn {  @apply font-bold py-2 px-4 rounded;\n}\n.btn-blue {\n  @apply bg-blue-500 hover:bg-blue-700 text-white;}```",
+            "references": [
+                {
+                    "name": "Tailwind Documentation",
+                    "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
+                }
+            ]
+        }
+    ]
+}

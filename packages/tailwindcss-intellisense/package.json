@@ -167,6 +167,11 @@
           "type": "boolean"
         }
       }
+    },
+    "css": {
+      "customData": [
+        "./tailwind.css-data.json"
+      ]
     }
   },
   "scripts": {
