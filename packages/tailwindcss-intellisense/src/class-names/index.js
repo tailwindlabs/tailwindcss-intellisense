@@ -10,6 +10,7 @@ import getVariants from './getVariants'
 import resolveConfig from './resolveConfig'
 import * as path from 'path'
 import * as fs from 'fs'
+import * as os from 'os'
 import { getUtilityConfigMap } from './getUtilityConfigMap'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
@@ -38,6 +39,12 @@ export default async function getClassNames(
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
+        // fast-glob defaults concurrency to `os.cpus().length`,
+        // but this can be 0, so we override it here, ensuring
+        // that concurrency is at least 1. Fix is here but is
+        // currently unpublished:
+        // https://github.com/mrmlnc/fast-glob/pull/296
+        concurrency: Math.max(os.cpus().length, 1),
       })
     )
       .map(normalizePath)
