@@ -34,7 +34,7 @@ Provides syntax definitions so that Tailwind features are highlighted correctly.
 
 ## Recommended VS Code Settings
 
-VS Code has built-it CSS validation which may display errors when using Tailwind-specific syntax, such as `@apply`. You can disable this with the `css.validate` setting:
+VS Code has built-in CSS validation which may display errors when using Tailwind-specific syntax, such as `@apply`. You can disable this with the `css.validate` setting:
 
 ```
 "css.validate": false
