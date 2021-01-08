@@ -202,7 +202,7 @@ export default async function getClassNames(
   function watch(files = []) {
     unwatch()
     watcher = chokidar
-      .watch(files, { cwd })
+      .watch(files, { cwd, ignorePermissionErrors: true })
       .on('change', handleChange)
       .on('unlink', handleChange)
   }
