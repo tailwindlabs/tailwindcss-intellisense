@@ -209,7 +209,7 @@ export function findClassListsInHtmlRange(
 ): DocumentClassList[] {
   const text = doc.getText(range)
   const matches = findAll(
-    /(?:\s|:)(?:class(?:Name)?|\[ngClass\])=['"`{]/g,
+    /(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])=['"`{]/g,
     text
   )
   const result: DocumentClassList[] = []
