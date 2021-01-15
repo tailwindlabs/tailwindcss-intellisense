@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.7
+
+- Ignore file watcher permission errors (#238)
+- Update class attribute regex to support `(class="_")` (#233)
+- Fix `fast-glob` concurrency on certain operating systems (#226, #239)
+
 ## 0.5.6
 
 - Fix module resolution in config files when using Yarn Plug'n'Play
