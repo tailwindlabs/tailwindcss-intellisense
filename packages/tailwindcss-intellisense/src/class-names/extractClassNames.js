@@ -44,93 +44,100 @@ function getClassNamesFromSelector(selector) {
   return classNames
 }
 
-async function process(groups) {
+async function process(root) {
   const tree = {}
   const commonContext = {}
 
-  groups.forEach((group) => {
-    group.root.walkRules((rule) => {
-      const classNames = getClassNamesFromSelector(rule.selector)
+  let layer
 
-      const decls = {}
-      rule.walkDecls((decl) => {
-        if (decls[decl.prop]) {
-          decls[decl.prop] = [
-            ...(Array.isArray(decls[decl.prop])
-              ? decls[decl.prop]
-              : [decls[decl.prop]]),
-            decl.value,
-          ]
-        } else {
-          decls[decl.prop] = decl.value
-        }
-      })
+  root.walk((node) => {
+    if (node.type === 'comment') {
+      let match = node.text.trim().match(/^__tw_intellisense_layer_([a-z]+)__$/)
+      if (match === null) return
+      layer = match[1]
+      node.remove()
+      return
+    }
 
-      let p = rule
-      const keys = []
-      while (p.parent.type !== 'root') {
-        p = p.parent
-        if (p.type === 'atrule') {
-          keys.push(`@${p.name} ${p.params}`)
-        }
-      }
+    if (node.type !== 'rule') return
 
-      for (let i = 0; i < classNames.length; i++) {
-        const context = keys.concat([])
-        const baseKeys = classNames[i].className.split('__TAILWIND_SEPARATOR__')
-        const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
-        const index = []
+    const rule = node
+    const classNames = getClassNamesFromSelector(rule.selector)
 
-        const existing = dlv(tree, [...baseKeys, '__info'])
-        if (typeof existing !== 'undefined') {
-          if (Array.isArray(existing)) {
-            index.push(existing.length)
-          } else {
-            dset(tree, [...baseKeys, '__info'], [existing])
-            index.push(1)
-          }
-        }
-        if (classNames[i].__rule) {
-          dset(tree, [...baseKeys, '__info', ...index, '__rule'], true)
-          dset(
-            tree,
-            [...baseKeys, '__info', ...index, '__source'],
-            group.source
-          )
-
-          dsetEach(tree, [...baseKeys, '__info', ...index], decls)
-        }
-        dset(
-          tree,
-          [...baseKeys, '__info', ...index, '__pseudo'],
-          classNames[i].__pseudo
-        )
-        dset(
-          tree,
-          [...baseKeys, '__info', ...index, '__scope'],
-          classNames[i].scope
-        )
-        dset(
-          tree,
-          [...baseKeys, '__info', ...index, '__context'],
-          context.concat([]).reverse()
-        )
-
-        // common context
-        context.push(...classNames[i].__pseudo.map((x) => `&${x}`))
-
-        for (let i = 0; i < contextKeys.length; i++) {
-          if (typeof commonContext[contextKeys[i]] === 'undefined') {
-            commonContext[contextKeys[i]] = context
-          } else {
-            commonContext[contextKeys[i]] = intersection(
-              commonContext[contextKeys[i]],
-              context
-            )
-          }
-        }
+    const decls = {}
+    rule.walkDecls((decl) => {
+      if (decls[decl.prop]) {
+        decls[decl.prop] = [
+          ...(Array.isArray(decls[decl.prop])
+            ? decls[decl.prop]
+            : [decls[decl.prop]]),
+          decl.value,
+        ]
+      } else {
+        decls[decl.prop] = decl.value
       }
     })
+
+    let p = rule
+    const keys = []
+    while (p.parent.type !== 'root') {
+      p = p.parent
+      if (p.type === 'atrule') {
+        keys.push(`@${p.name} ${p.params}`)
+      }
+    }
+
+    for (let i = 0; i < classNames.length; i++) {
+      const context = keys.concat([])
+      const baseKeys = classNames[i].className.split(/__TWSEP__.*?__TWSEP__/)
+      const contextKeys = baseKeys.slice(0, baseKeys.length - 1)
+      const index = []
+
+      const existing = dlv(tree, [...baseKeys, '__info'])
+      if (typeof existing !== 'undefined') {
+        if (Array.isArray(existing)) {
+          index.push(existing.length)
+        } else {
+          dset(tree, [...baseKeys, '__info'], [existing])
+          index.push(1)
+        }
+      }
+      if (classNames[i].__rule) {
+        dset(tree, [...baseKeys, '__info', ...index, '__rule'], true)
+        dset(tree, [...baseKeys, '__info', ...index, '__source'], layer)
+
+        dsetEach(tree, [...baseKeys, '__info', ...index], decls)
+      }
+      dset(
+        tree,
+        [...baseKeys, '__info', ...index, '__pseudo'],
+        classNames[i].__pseudo
+      )
+      dset(
+        tree,
+        [...baseKeys, '__info', ...index, '__scope'],
+        classNames[i].scope
+      )
+      dset(
+        tree,
+        [...baseKeys, '__info', ...index, '__context'],
+        context.concat([]).reverse()
+      )
+
+      // common context
+      context.push(...classNames[i].__pseudo.map((x) => `&${x}`))
+
+      for (let i = 0; i < contextKeys.length; i++) {
+        if (typeof commonContext[contextKeys[i]] === 'undefined') {
+          commonContext[contextKeys[i]] = context
+        } else {
+          commonContext[contextKeys[i]] = intersection(
+            commonContext[contextKeys[i]],
+            context
+          )
+        }
+      }
+    }
   })
 
   return { classNames: tree, context: commonContext }

@@ -16,6 +16,7 @@ import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
 import { withUserEnvironment } from './environment'
 import execa from 'execa'
+import { klona } from 'klona/full'
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -71,7 +72,13 @@ export default async function getClassNames(
     let hook = Hook(fs.realpathSync(configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
       userPurge = exports.purge
-      dset(exports, sepLocation, '__TAILWIND_SEPARATOR__')
+      dset(
+        exports,
+        sepLocation,
+        `__TWSEP__${
+          typeof userSeperator === 'undefined' ? ':' : userSeperator
+        }__TWSEP__`
+      )
       exports.purge = {}
       return exports
     })
@@ -89,15 +96,17 @@ export default async function getClassNames(
     hook.unwatch()
 
     const {
-      base,
-      components,
-      utilities,
+      postcssResult,
       resolvedConfig,
       browserslist,
       postcss,
     } = await withPackages(
-      configDir,
-      cwd,
+      {
+        configDir,
+        cwd,
+        userSeperator,
+        version,
+      },
       async ({
         postcss,
         tailwindcss,
@@ -106,27 +115,23 @@ export default async function getClassNames(
       }) => {
         let postcssResult
         try {
-          postcssResult = await Promise.all(
+          postcssResult = await postcss([tailwindcss(configPath)]).process(
             [
               semver.gte(version, '0.99.0') ? 'base' : 'preflight',
               'components',
               'utilities',
-            ].map((group) =>
-              postcss([tailwindcss(configPath)]).process(
-                `@tailwind ${group};`,
-                {
-                  from: undefined,
-                }
-              )
-            )
+            ]
+              .map((x) => `/*__tw_intellisense_layer_${x}__*/\n@tailwind ${x};`)
+              .join('\n'),
+            {
+              from: undefined,
+            }
           )
         } catch (error) {
           throw error
         } finally {
           hook.unhook()
         }
-
-        const [base, components, utilities] = postcssResult
 
         if (typeof userSeperator !== 'undefined') {
           dset(config, sepLocation, userSeperator)
@@ -168,9 +173,7 @@ export default async function getClassNames(
         }
 
         return {
-          base,
-          components,
-          utilities,
+          postcssResult,
           resolvedConfig,
           postcss,
           browserslist,
@@ -183,11 +186,7 @@ export default async function getClassNames(
       configPath,
       config: resolvedConfig,
       separator: typeof userSeperator === 'undefined' ? ':' : userSeperator,
-      classNames: await extractClassNames([
-        { root: base.root, source: 'base' },
-        { root: components.root, source: 'components' },
-        { root: utilities.root, source: 'utilities' },
-      ]),
+      classNames: await extractClassNames(postcssResult.root),
       dependencies: hook.deps,
       plugins: getPlugins(config),
       variants: getVariants({ config, version, postcss, browserslist }),
@@ -262,10 +261,10 @@ function loadMeta(configDir, root) {
   })
 }
 
-function withPackages(configDir, root, cb) {
+function withPackages({ configDir, cwd, userSeperator, version }, cb) {
   return withUserEnvironment(
     configDir,
-    root,
+    cwd,
     async ({ isPnp, require, resolve }) => {
       const tailwindBase = path.dirname(resolve('tailwindcss/package.json'))
       const postcss = require('postcss', tailwindBase)
@@ -289,6 +288,55 @@ function withPackages(configDir, root, cb) {
           browserslistArgs = [browserslistBin]
         }
       } catch (_) {}
+
+      if (semver.gte(version, '1.7.0')) {
+        const applyComplexClasses = semver.gte(version, '1.99.0')
+          ? require('./lib/lib/substituteClassApplyAtRules', tailwindBase)
+          : require('./lib/flagged/applyComplexClasses', tailwindBase)
+
+        if (!applyComplexClasses.default.__patched) {
+          let _applyComplexClasses = applyComplexClasses.default
+          applyComplexClasses.default = (config, ...args) => {
+            let configClone = klona(config)
+            configClone.separator =
+              typeof userSeperator === 'undefined' ? ':' : userSeperator
+
+            let fn = _applyComplexClasses(configClone, ...args)
+
+            return async (css) => {
+              css.walkRules((rule) => {
+                const newSelector = rule.selector.replace(
+                  /__TWSEP__(.*?)__TWSEP__/g,
+                  '$1'
+                )
+                if (newSelector !== rule.selector) {
+                  rule.before(
+                    postcss.comment({
+                      text: '__ORIGINAL_SELECTOR__:' + rule.selector,
+                    })
+                  )
+                  rule.selector = newSelector
+                }
+              })
+
+              await fn(css)
+
+              css.walkComments((comment) => {
+                if (comment.text.startsWith('__ORIGINAL_SELECTOR__:')) {
+                  comment.next().selector = comment.text.replace(
+                    /^__ORIGINAL_SELECTOR__:/,
+                    ''
+                  )
+                  comment.remove()
+                }
+              })
+
+              return css
+            }
+          }
+          applyComplexClasses.default.__patched = true
+        }
+      }
 
       return cb({ postcss, tailwindcss, browserslistCommand, browserslistArgs })
     }
