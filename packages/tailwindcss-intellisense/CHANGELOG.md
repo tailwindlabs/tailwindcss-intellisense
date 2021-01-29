@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.8
+
+- Fix error when `@​apply` is used within a plugin (#255)
+
 ## 0.5.7
 
 - Ignore file watcher permission errors (#238)
