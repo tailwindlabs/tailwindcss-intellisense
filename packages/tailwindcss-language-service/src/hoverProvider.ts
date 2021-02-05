@@ -96,8 +96,9 @@ async function provideClassNameHover(
     className.className,
     dlv(state.classNames.classNames, [...parts, '__info']),
     {
-      tabSize: dlv(settings, 'tabSize'),
-      showPixelValues: dlv(settings, 'experimental.showPixelValues'),
+      tabSize: dlv(settings, 'tabSize', 2),
+      showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
+      rootFontSize: dlv(settings, 'rootFontSize', 16),
     }
   )
 

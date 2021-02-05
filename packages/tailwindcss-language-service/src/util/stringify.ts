@@ -21,14 +21,25 @@ export function stringifyCss(
   obj: any,
   {
     tabSize = 2,
-    showPixelValues = false,
-  }: Partial<{ tabSize: number; showPixelValues: boolean }> = {}
+    showPixelEquivalents = false,
+    rootFontSize = 16,
+  }: Partial<{
+    tabSize: number
+    showPixelEquivalents: boolean
+    rootFontSize: number
+  }> = {}
 ): string {
   if (obj.__rule !== true && !Array.isArray(obj)) return null
 
   if (Array.isArray(obj)) {
     const rules = obj
-      .map((x) => stringifyCss(className, x, { tabSize, showPixelValues }))
+      .map((x) =>
+        stringifyCss(className, x, {
+          tabSize,
+          showPixelEquivalents,
+          rootFontSize,
+        })
+      )
       .filter(Boolean)
     if (rules.length === 0) return null
     return rules.join('\n\n')
@@ -49,7 +60,7 @@ export function stringifyCss(
   const decls = props.reduce((acc, curr, i) => {
     const propStr = ensureArray(obj[curr])
       .map((val) => {
-        const px = showPixelValues ? remToPx(val) : undefined
+        const px = showPixelEquivalents ? remToPx(val, rootFontSize) : undefined
         return `${indentStr + indent}${curr}: ${val}${px ? ` /*${px}*/` : ''};`
       })
       .join('\n')

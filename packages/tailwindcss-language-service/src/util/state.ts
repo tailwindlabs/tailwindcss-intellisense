@@ -33,6 +33,8 @@ export type Settings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   validate: boolean
+  showPixelEquivalents: boolean
+  rootFontSize: number
   lint: {
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
@@ -43,7 +45,6 @@ export type Settings = {
   }
   experimental: {
     classRegex: string[]
-    showPixelValues: boolean
   }
 }
 

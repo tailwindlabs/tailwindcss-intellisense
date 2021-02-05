@@ -48,8 +48,9 @@ const defaultSettings: Settings = {
   includeLanguages: {},
   experimental: {
     classRegex: [],
-    showPixelValues: false,
   },
+  showPixelEquivalents: true,
+  rootFontSize: 16,
   validate: true,
   lint: {
     cssConflict: 'warning',

@@ -900,8 +900,9 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       const settings = await getDocumentSettings(state)
       const css = stringifyCss(item.data.join(':'), className, {
-        tabSize: dlv(settings, 'tabSize'),
-        showPixelValues: dlv(settings, 'experimental.showPixelValues'),
+        tabSize: dlv(settings, 'tabSize', 2),
+        showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
+        rootFontSize: dlv(settings, 'rootFontSize', 16),
       })
       if (css) {
         item.documentation = {
@@ -932,7 +933,10 @@ function isContextItem(state: State, keys: string[]): boolean {
 
 function stringifyDecls(
   obj: any,
-  { showPixelValues = false }: Partial<{ showPixelValues: boolean }> = {}
+  {
+    showPixelEquivalents = false,
+    rootFontSize = 16,
+  }: Partial<{ showPixelEquivalents: boolean; rootFontSize: number }> = {}
 ): string {
   let props = Object.keys(obj)
   let nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
@@ -945,7 +949,9 @@ function stringifyDecls(
     .map((prop) =>
       ensureArray(obj[prop])
         .map((value) => {
-          const px = showPixelValues ? remToPx(value) : undefined
+          const px = showPixelEquivalents
+            ? remToPx(value, rootFontSize)
+            : undefined
           return `${prop}: ${value}${px ? ` /*${px}*/` : ''};`
         })
         .join(' ')
@@ -960,7 +966,8 @@ async function getCssDetail(state: State, className: any): Promise<string> {
   if (className.__rule === true) {
     const settings = await getDocumentSettings(state)
     return stringifyDecls(removeMeta(className), {
-      showPixelValues: dlv(settings, 'experimental.showPixelValues', false),
+      showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
+      rootFontSize: dlv(settings, 'rootFontSize', 16),
     })
   }
   return null

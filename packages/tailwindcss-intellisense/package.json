@@ -163,8 +163,15 @@
           "type": "array",
           "scope": "language-overridable"
         },
-        "tailwindCSS.experimental.showPixelValues": {
-          "type": "boolean"
+        "tailwindCSS.showPixelEquivalents": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show `px` equivalents for `rem` CSS values."
+        },
+        "tailwindCSS.rootFontSize": {
+          "type": "number",
+          "default": 16,
+          "markdownDescription": "Root font size in pixels. Used to convert `rem` CSS values to their `px` equivalents. See `#tailwindCSS.showPixelEquivalents#`."
         }
       }
     }
