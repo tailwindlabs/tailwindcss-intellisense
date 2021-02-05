@@ -15,6 +15,9 @@ export default function getVariants({
   semver.gte(version, '1.1.0') &&
     variants.push('first', 'last', 'odd', 'even', 'disabled', 'visited')
   semver.gte(version, '1.3.0') && variants.push('group-focus')
+  semver.gte(version, '1.5.0') && variants.push('focus-visible', 'checked')
+  semver.gte(version, '1.6.0') && variants.push('motion-safe', 'motion-reduce')
+  semver.gte(version, '2.0.0-alpha.1') && variants.push('dark')
 
   let plugins = Array.isArray(config.plugins) ? config.plugins : []
 
