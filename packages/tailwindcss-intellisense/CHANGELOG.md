@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.9
+
+- Add `focus-visible`, `checked`, `motion-safe`, `motion-reduce`, and `dark`  to `@variants` completions
+- Add `showPixelEquivalents` and `rootFontSize` settings (#200)
+
 ## 0.5.8
 
 - Fix error when `@​apply` is used within a plugin (#255)

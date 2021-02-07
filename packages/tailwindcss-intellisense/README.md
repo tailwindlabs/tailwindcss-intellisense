@@ -80,6 +80,14 @@ Controls whether the editor should render inline color decorators for Tailwind C
 - `on`: Color decorators are rendered.
 - `off`: Color decorators are not rendered.
 
+### `tailwindCSS.showPixelEquivalents`
+
+Show `px` equivalents for `rem` CSS values in completions and hovers. **Default: `true`**
+
+### `tailwindCSS.rootFontSize`
+
+Root font size in pixels. Used to convert `rem` CSS values to their `px` equivalents. See [`tailwindCSS.showPixelEquivalents`](#tailwindcssshowpixelequivalents). **Default: `16`**
+
 ### `tailwindCSS.validate`
 
 Enable linting. Rules can be configured individually using the `tailwindcss.lint` settings:
