@@ -952,7 +952,7 @@ function stringifyDecls(
           const px = showPixelEquivalents
             ? remToPx(value, rootFontSize)
             : undefined
-          return `${prop}: ${value}${px ? ` /*${px}*/` : ''};`
+          return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
         })
         .join(' ')
     )

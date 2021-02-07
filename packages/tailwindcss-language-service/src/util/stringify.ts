@@ -61,7 +61,7 @@ export function stringifyCss(
     const propStr = ensureArray(obj[curr])
       .map((val) => {
         const px = showPixelEquivalents ? remToPx(val, rootFontSize) : undefined
-        return `${indentStr + indent}${curr}: ${val}${px ? ` /*${px}*/` : ''};`
+        return `${indentStr + indent}${curr}: ${val}${px ? `/* ${px} */` : ''};`
       })
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`
