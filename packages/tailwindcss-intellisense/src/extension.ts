@@ -79,7 +79,7 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
 
 export function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
-  let outputChannel: OutputChannel = Window.createOutputChannel(CLIENT_ID)
+  let outputChannel: OutputChannel = Window.createOutputChannel(CLIENT_NAME)
 
   // TODO: check if the actual language MAPPING changed
   // not just the language IDs
