@@ -54,15 +54,12 @@ export default async function getClassNames(
 
     invariant(configPaths.length > 0, 'No Tailwind CSS config found.')
     const configPath = configPaths[0]
-    console.log(`Found Tailwind config file: ${configPath}`)
     const configDir = path.dirname(configPath)
     const {
       version,
       featureFlags = { future: [], experimental: [] },
       tailwindBase,
     } = loadMeta(configDir, cwd)
-
-    console.log(`Found tailwindcss v${version}: ${tailwindBase}`)
 
     const sepLocation = semver.gte(version, '0.99.0')
       ? ['separator']
@@ -236,7 +233,6 @@ export default async function getClassNames(
   let result
   try {
     result = await run()
-    console.log('Initialised successfully.')
   } catch (error) {
     console.error('Failed to initialise:', error)
     return null
