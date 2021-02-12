@@ -17,6 +17,7 @@ import normalizePath from 'normalize-path'
 import { withUserEnvironment } from './environment'
 import execa from 'execa'
 import { klona } from 'klona/full'
+import { formatError } from '../lsp/util/formatError'
 
 function arraysEqual(arr1, arr2) {
   return (
@@ -238,7 +239,7 @@ export default async function getClassNames(
     result = await run()
     console.log('Initialised successfully.')
   } catch (error) {
-    console.error('Failed to initialise:', error)
+    console.error(formatError('Failed to initialise:', error))
     return null
   }
 

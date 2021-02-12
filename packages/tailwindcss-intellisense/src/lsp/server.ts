@@ -36,11 +36,19 @@ import {
 import { createEmitter } from '../lib/emitter'
 import { registerDocumentColorProvider } from './providers/documentColorProvider'
 import { TextDocument } from 'vscode-languageserver-textdocument'
+import { formatError } from './util/formatError'
 
 let connection = createConnection(ProposedFeatures.all)
 const state: State = { enabled: false, emitter: createEmitter(connection) }
 let documents = new TextDocuments(TextDocument)
 let workspaceFolder: string | null
+
+console.log = connection.console.log.bind(connection.console)
+console.error = connection.console.error.bind(connection.console)
+
+process.on('unhandledRejection', (e: any) => {
+  connection.console.error(formatError(`Unhandled exception`, e))
+})
 
 const defaultSettings: Settings = {
   tabSize: 2,
