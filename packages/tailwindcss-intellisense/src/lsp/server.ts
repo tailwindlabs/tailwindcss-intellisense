@@ -56,6 +56,7 @@ const defaultSettings: Settings = {
   includeLanguages: {},
   experimental: {
     classRegex: [],
+    showPixelValues: false,
   },
   showPixelEquivalents: true,
   rootFontSize: 16,
