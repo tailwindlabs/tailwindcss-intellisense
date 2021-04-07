@@ -70,9 +70,11 @@ export default async function getClassNames(
       : ['options', 'separator']
     let userSeperator
     let userPurge
+    let userMode
     let hook = Hook(fs.realpathSync(configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
       userPurge = exports.purge
+      userMode = exports.mode
       dset(
         exports,
         sepLocation,
@@ -144,6 +146,11 @@ export default async function getClassNames(
           config.purge = userPurge
         } else {
           delete config.purge
+        }
+        if (typeof userMode !== 'undefined') {
+          config.mode = userMode
+        } else {
+          delete config.mode
         }
 
         const resolvedConfig = resolveConfig({
