@@ -80,6 +80,7 @@ export default async function getClassNames(
           typeof userSeperator === 'undefined' ? ':' : userSeperator
         }__TWSEP__`
       )
+      exports.mode = 'aot'
       exports.purge = {}
       return exports
     })
