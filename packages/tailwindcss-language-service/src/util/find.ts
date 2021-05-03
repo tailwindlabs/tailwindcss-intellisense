@@ -17,7 +17,6 @@ import {
 } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
-import { getDocumentSettings } from './getDocumentSettings'
 const dlv = require('dlv')
 import { createMultiRegexp } from './createMultiRegexp'
 
@@ -146,7 +145,7 @@ async function findCustomClassLists(
   doc: TextDocument,
   range?: Range
 ): Promise<DocumentClassList[]> {
-  const settings = await getDocumentSettings(state, doc)
+  const settings = await state.editor.getConfiguration(doc.uri)
   const regexes = dlv(settings, 'experimental.classRegex', [])
 
   if (!Array.isArray(regexes) || regexes.length === 0) return []

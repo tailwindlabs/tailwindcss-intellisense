@@ -1,13 +1,11 @@
 import { State } from '../util/state'
-import type {
-  CodeActionParams,
-  CodeAction,
-} from 'vscode-languageserver'
+import type { CodeActionParams, CodeAction } from 'vscode-languageserver'
 import {
   InvalidConfigPathDiagnostic,
   InvalidTailwindDirectiveDiagnostic,
   InvalidScreenDiagnostic,
   InvalidVariantDiagnostic,
+  IncorrectVariantOrderDiagnostic,
 } from '../diagnostics/types'
 
 export function provideSuggestionCodeActions(
@@ -18,6 +16,7 @@ export function provideSuggestionCodeActions(
     | InvalidTailwindDirectiveDiagnostic
     | InvalidScreenDiagnostic
     | InvalidVariantDiagnostic
+    | IncorrectVariantOrderDiagnostic
 ): CodeAction[] {
   return diagnostic.suggestions.map((suggestion) => ({
     title: `Replace with '${suggestion}'`,

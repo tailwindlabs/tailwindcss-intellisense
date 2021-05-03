@@ -2,14 +2,8 @@ export function dedupe<T>(arr: Array<T>): Array<T> {
   return arr.filter((value, index, self) => self.indexOf(value) === index)
 }
 
-export function dedupeBy<T>(
-  arr: Array<T>,
-  transform: (item: T) => any
-): Array<T> {
-  return arr.filter(
-    (value, index, self) =>
-      self.map(transform).indexOf(transform(value)) === index
-  )
+export function dedupeBy<T>(arr: Array<T>, transform: (item: T) => any): Array<T> {
+  return arr.filter((value, index, self) => self.map(transform).indexOf(transform(value)) === index)
 }
 
 export function ensureArray<T>(value: T | T[]): T[] {
@@ -20,9 +14,27 @@ export function flatten<T>(arrays: T[][]): T[] {
   return [].concat.apply([], arrays)
 }
 
-export function equal(arr1: any[], arr2: any[]): boolean {
-  return (
-    JSON.stringify(arr1.concat([]).sort()) ===
-    JSON.stringify(arr2.concat([]).sort())
-  )
+export function equal(a: any[], b: any[]): boolean {
+  if (a === b) return true
+  if (a.length !== b.length) return false
+
+  let aSorted = a.concat().sort()
+  let bSorted = b.concat().sort()
+
+  for (let i = 0; i < aSorted.length; ++i) {
+    if (aSorted[i] !== bSorted[i]) return false
+  }
+
+  return true
+}
+
+export function equalExact(a: any[], b: any[]): boolean {
+  if (a === b) return true
+  if (a.length !== b.length) return false
+
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false
+  }
+
+  return true
 }

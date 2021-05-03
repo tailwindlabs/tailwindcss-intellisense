@@ -21,6 +21,10 @@ export function getClassNameMeta(
     }))
   }
 
+  if (info === undefined) {
+    console.log({ classNameOrParts })
+  }
+
   return {
     source: info.__source,
     pseudo: info.__pseudo,

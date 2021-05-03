@@ -4,27 +4,34 @@ import {
   getClassNamesInClassList,
   findHelperFunctionsInDocument,
 } from './util/find'
-import { getClassNameParts } from './util/getClassNameAtPosition'
-import { getColor, getColorFromValue } from './util/color'
+import { getColor, getColorFromValue, tinyColorToVscodeColor } from './util/color'
 import { stringToPath } from './util/stringToPath'
-import type { TextDocument } from 'vscode-languageserver'
-const dlv = require('dlv')
+import type { TextDocument, ColorInformation } from 'vscode-languageserver'
+import { TinyColor } from '@ctrl/tinycolor'
+import dlv from 'dlv'
 
-export async function getDocumentColors(state: State, document: TextDocument) {
-  let colors = []
+export async function getDocumentColors(
+  state: State,
+  document: TextDocument
+): Promise<ColorInformation[]> {
+  let colors: ColorInformation[] = []
   if (!state.enabled) return colors
+
+  let settings = await state.editor.getConfiguration(document.uri)
+  if (settings.colorDecorators === 'off') return colors
 
   let classLists = await findClassListsInDocument(state, document)
   classLists.forEach((classList) => {
     let classNames = getClassNamesInClassList(classList)
     classNames.forEach((className) => {
-      let parts = getClassNameParts(state, className.className)
-      if (!parts) return
-      let color = getColor(state, parts)
+      let color = getColor(state, className.className)
       if (color === null || typeof color === 'string' || color.a === 0) {
         return
       }
-      colors.push({ range: className.range, color: color.toRgbString() })
+      colors.push({
+        range: className.range,
+        color: tinyColorToVscodeColor(color),
+      })
     })
   })
 
@@ -34,8 +41,8 @@ export async function getDocumentColors(state: State, document: TextDocument) {
     let base = fn.helper === 'theme' ? ['theme'] : []
     let value = dlv(state.config, [...base, ...keys])
     let color = getColorFromValue(value)
-    if (color) {
-      colors.push({ range: fn.valueRange, color })
+    if (color instanceof TinyColor && color.a !== 0) {
+      colors.push({ range: fn.valueRange, color: tinyColorToVscodeColor(color) })
     }
   })
 

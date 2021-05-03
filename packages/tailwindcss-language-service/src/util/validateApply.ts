@@ -7,13 +7,14 @@ export function validateApply(
   state: State,
   classNameOrParts: string | string[]
 ): { isApplyable: true } | { isApplyable: false; reason: string } | null {
+  if (state.jit) {
+    return { isApplyable: true }
+  }
+
   const meta = getClassNameMeta(state, classNameOrParts)
   if (!meta) return null
 
-  if (
-    semver.gte(state.version, '2.0.0-alpha.1') ||
-    flagEnabled(state, 'applyComplexClasses')
-  ) {
+  if (semver.gte(state.version, '2.0.0-alpha.1') || flagEnabled(state, 'applyComplexClasses')) {
     return { isApplyable: true }
   }
 

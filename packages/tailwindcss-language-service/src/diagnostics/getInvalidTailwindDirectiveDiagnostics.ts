@@ -61,10 +61,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
         code: DiagnosticKind.InvalidTailwindDirective,
         range: absoluteRange(
           {
-            start: indexToPosition(
-              text,
-              match.index + match[0].length - match.groups.value.length
-            ),
+            start: indexToPosition(text, match.index + match[0].length - match.groups.value.length),
             end: indexToPosition(text, match.index + match[0].length),
           },
           range

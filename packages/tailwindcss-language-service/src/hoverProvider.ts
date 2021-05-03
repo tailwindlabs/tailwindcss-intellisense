@@ -6,7 +6,7 @@ import { isCssContext } from './util/css'
 import { findClassNameAtPosition } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
-import { getDocumentSettings } from './util/getDocumentSettings'
+import * as jit from './util/jit'
 
 export async function doHover(
   state: State,
@@ -19,11 +19,7 @@ export async function doHover(
   )
 }
 
-function provideCssHelperHover(
-  state: State,
-  document: TextDocument,
-  position: Position
-): Hover {
+function provideCssHelperHover(state: State, document: TextDocument, position: Position): Hover {
   if (!isCssContext(state, document, position)) return null
 
   const line = document.getText({
@@ -31,9 +27,7 @@ function provideCssHelperHover(
     end: { line: position.line + 1, character: 0 },
   })
 
-  const match = line.match(
-    /(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/
-  )
+  const match = line.match(/(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/)
 
   if (match === null) return null
 
@@ -80,6 +74,22 @@ async function provideClassNameHover(
   let className = await findClassNameAtPosition(state, document, position)
   if (className === null) return null
 
+  if (state.jit) {
+    let { root, rules } = jit.generateRules(state, [className.className])
+
+    if (rules.length === 0) {
+      return null
+    }
+
+    return {
+      contents: {
+        language: 'css',
+        value: await jit.stringifyRoot(state, root, document.uri),
+      },
+      range: className.range,
+    }
+  }
+
   const parts = getClassNameParts(state, className.className)
   if (!parts) return null
 
@@ -90,7 +100,7 @@ async function provideClassNameHover(
     }
   }
 
-  const settings = await getDocumentSettings(state, document)
+  const settings = await state.editor.getConfiguration(document.uri)
 
   const css = stringifyCss(
     className.className,

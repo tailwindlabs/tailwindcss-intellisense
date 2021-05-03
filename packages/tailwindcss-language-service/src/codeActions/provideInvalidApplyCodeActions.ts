@@ -1,9 +1,4 @@
-import type {
-  CodeAction,
-  CodeActionParams,
-  TextEdit,
-  Range,
-} from 'vscode-languageserver'
+import type { CodeAction, CodeActionParams, TextEdit, Range } from 'vscode-languageserver'
 import { State } from '../util/state'
 import { InvalidApplyDiagnostic } from '../diagnostics/types'
 import { isCssDoc } from '../util/css'
@@ -13,7 +8,7 @@ import { getClassNameParts } from '../util/getClassNameAtPosition'
 import { validateApply } from '../util/validateApply'
 import { isWithinRange } from '../util/isWithinRange'
 const dlv = require('dlv')
-import type { Root, NodeSource } from 'postcss'
+import type { Root, Source } from 'postcss'
 import { absoluteRange } from '../util/absoluteRange'
 import { removeRangesFromString } from '../util/removeRangesFromString'
 import detectIndent from 'detect-indent'
@@ -35,9 +30,7 @@ export async function provideInvalidApplyCodeActions(
   const { postcss } = state.modules
   let changes: TextEdit[] = []
 
-  let totalClassNamesInClassList = diagnostic.className.classList.classList.split(
-    /\s+/
-  ).length
+  let totalClassNamesInClassList = diagnostic.className.classList.classList.split(/\s+/).length
 
   let className = diagnostic.className.className
   let classNameParts = getClassNameParts(state, className)
@@ -50,90 +43,88 @@ export async function provideInvalidApplyCodeActions(
   if (!isCssDoc(state, document)) {
     let languageBoundaries = getLanguageBoundaries(state, document)
     if (!languageBoundaries) return []
-    cssRange = languageBoundaries.css.find((range) =>
-      isWithinRange(diagnostic.range.start, range)
-    )
+    cssRange = languageBoundaries.css.find((range) => isWithinRange(diagnostic.range.start, range))
     if (!cssRange) return []
     cssText = document.getText(cssRange)
   }
 
   try {
-    await postcss([
-      postcss.plugin('', (_options = {}) => {
-        return (root: Root) => {
-          root.walkRules((rule) => {
-            if (changes.length) return false
+    await postcss
+      .module([
+        // TODO: use plain function?
+        // @ts-ignore
+        postcss.module.plugin('', (_options = {}) => {
+          return (root: Root) => {
+            root.walkRules((rule) => {
+              if (changes.length) return false
 
-            rule.walkAtRules('apply', (atRule) => {
-              let atRuleRange = postcssSourceToRange(atRule.source)
-              if (cssRange) {
-                atRuleRange = absoluteRange(atRuleRange, cssRange)
-              }
+              rule.walkAtRules('apply', (atRule) => {
+                let atRuleRange = postcssSourceToRange(atRule.source)
+                if (cssRange) {
+                  atRuleRange = absoluteRange(atRuleRange, cssRange)
+                }
 
-              if (!isWithinRange(diagnostic.range.start, atRuleRange))
-                return true
+                if (!isWithinRange(diagnostic.range.start, atRuleRange)) return undefined // true
 
-              let ast = classNameToAst(
-                state,
-                classNameParts,
-                rule.selector,
-                diagnostic.className.classList.important
-              )
+                let ast = classNameToAst(
+                  state,
+                  classNameParts,
+                  rule.selector,
+                  diagnostic.className.classList.important
+                )
 
-              if (!ast) return false
+                if (!ast) return false
 
-              rule.after(ast.nodes)
-              let insertedRule = rule.next()
-              if (!insertedRule) return false
+                rule.after(ast.nodes)
+                let insertedRule = rule.next()
+                if (!insertedRule) return false
 
-              if (totalClassNamesInClassList === 1) {
-                atRule.remove()
-              } else {
+                if (totalClassNamesInClassList === 1) {
+                  atRule.remove()
+                } else {
+                  changes.push({
+                    range: diagnostic.className.classList.range,
+                    newText: removeRangesFromString(
+                      diagnostic.className.classList.classList,
+                      diagnostic.className.relativeRange
+                    ),
+                  })
+                }
+
+                let ruleRange = postcssSourceToRange(rule.source)
+                if (cssRange) {
+                  ruleRange = absoluteRange(ruleRange, cssRange)
+                }
+
+                let outputIndent: string
+                let documentIndent = detectIndent(cssText)
+
                 changes.push({
-                  range: diagnostic.className.classList.range,
-                  newText: removeRangesFromString(
-                    diagnostic.className.classList.classList,
-                    diagnostic.className.relativeRange
-                  ),
+                  range: ruleRange,
+                  newText:
+                    rule.toString() +
+                    (insertedRule.raws.before || '\n\n') +
+                    insertedRule
+                      .toString()
+                      .replace(/\n\s*\n/g, '\n')
+                      .replace(/(@apply [^;\n]+)$/gm, '$1;')
+                      .replace(/([^\s^]){$/gm, '$1 {')
+                      .replace(/^\s+/gm, (m: string) => {
+                        if (typeof outputIndent === 'undefined') outputIndent = m
+                        return m.replace(new RegExp(outputIndent, 'g'), documentIndent.indent)
+                      })
+                      .replace(/^(\s+)(.*?[^{}]\n)([^\s}])/gm, '$1$2$1$3'),
                 })
-              }
 
-              let ruleRange = postcssSourceToRange(rule.source)
-              if (cssRange) {
-                ruleRange = absoluteRange(ruleRange, cssRange)
-              }
-
-              let outputIndent: string
-              let documentIndent = detectIndent(cssText)
-
-              changes.push({
-                range: ruleRange,
-                newText:
-                  rule.toString() +
-                  (insertedRule.raws.before || '\n\n') +
-                  insertedRule
-                    .toString()
-                    .replace(/\n\s*\n/g, '\n')
-                    .replace(/(@apply [^;\n]+)$/gm, '$1;')
-                    .replace(/([^\s^]){$/gm, '$1 {')
-                    .replace(/^\s+/gm, (m: string) => {
-                      if (typeof outputIndent === 'undefined') outputIndent = m
-                      return m.replace(
-                        new RegExp(outputIndent, 'g'),
-                        documentIndent.indent
-                      )
-                    })
-                    .replace(/^(\s+)(.*?[^{}]\n)([^\s}])/gm, '$1$2$1$3'),
+                return false
               })
 
-              return false
+              return undefined // true
             })
-
-            return true
-          })
-        }
-      }),
-    ]).process(cssText, { from: undefined })
+          }
+        }),
+      ])
+      .process(cssText, { from: undefined })
   } catch (_) {
     return []
   }
@@ -156,7 +147,7 @@ export async function provideInvalidApplyCodeActions(
   ]
 }
 
-function postcssSourceToRange(source: NodeSource): Range {
+function postcssSourceToRange(source: Source): Range {
   return {
     start: {
       line: source.start.line - 1,
@@ -177,10 +168,7 @@ function classNameToAst(
 ) {
   const baseClassName = classNameParts[classNameParts.length - 1]
   const validatedBaseClassName = validateApply(state, [baseClassName])
-  if (
-    validatedBaseClassName === null ||
-    validatedBaseClassName.isApplyable === false
-  ) {
+  if (validatedBaseClassName === null || validatedBaseClassName.isApplyable === false) {
     return null
   }
   const meta = getClassNameMeta(state, classNameParts)
@@ -188,11 +176,7 @@ function classNameToAst(
   let context = meta.context
   let pseudo = meta.pseudo
   const globalContexts = state.classNames.context
-  let screens = dlv(
-    state.config,
-    'theme.screens',
-    dlv(state.config, 'screens', {})
-  )
+  let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
   if (!isObject(screens)) screens = {}
   screens = Object.keys(screens)
   const path = []
@@ -231,10 +215,7 @@ function classNameToAst(
   return cssObjToAst(obj, state.modules.postcss)
 }
 
-function appendPseudosToSelector(
-  selector: string,
-  pseudos: string[]
-): string | null {
+function appendPseudosToSelector(selector: string, pseudos: string[]): string | null {
   if (pseudos.length === 0) return selector
 
   let canTransform = true

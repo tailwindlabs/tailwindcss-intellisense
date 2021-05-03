@@ -8,6 +8,7 @@ export enum DiagnosticKind {
   InvalidVariant = 'invalidVariant',
   InvalidConfigPath = 'invalidConfigPath',
   InvalidTailwindDirective = 'invalidTailwindDirective',
+  IncorrectVariantOrder = 'incorrectVariantOrder',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -77,6 +78,17 @@ export function isInvalidTailwindDirectiveDiagnostic(
   return diagnostic.code === DiagnosticKind.InvalidTailwindDirective
 }
 
+export type IncorrectVariantOrderDiagnostic = Diagnostic & {
+  code: DiagnosticKind.IncorrectVariantOrder
+  suggestions: string[]
+}
+
+export function isIncorrectVariantOrderDiagnostic(
+  diagnostic: AugmentedDiagnostic
+): diagnostic is IncorrectVariantOrderDiagnostic {
+  return diagnostic.code === DiagnosticKind.IncorrectVariantOrder
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -84,3 +96,4 @@ export type AugmentedDiagnostic =
   | InvalidVariantDiagnostic
   | InvalidConfigPathDiagnostic
   | InvalidTailwindDirectiveDiagnostic
+  | IncorrectVariantOrderDiagnostic

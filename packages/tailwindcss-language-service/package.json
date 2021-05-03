@@ -14,23 +14,27 @@
     "lint": "tsdx lint"
   },
   "dependencies": {
-    "@ctrl/tinycolor": "^3.1.4",
-    "@types/moo": "^0.5.3",
-    "css.escape": "^1.5.1",
-    "detect-indent": "^6.0.0",
-    "dlv": "^1.1.3",
-    "line-column": "^1.0.2",
-    "mitt": "^2.1.0",
-    "moo": "^0.5.1",
-    "multi-regexp2": "^1.0.3",
-    "semver": "^7.3.2",
-    "sift-string": "^0.0.2",
-    "tsdx": "^0.13.3",
-    "tslib": "^2.0.1",
-    "typescript": "^4.0.2",
-    "vscode-emmet-helper-bundled": "^0.0.1",
-    "vscode-languageclient": "^6.1.3",
-    "vscode-languageserver": "^6.1.1",
-    "vscode-languageserver-textdocument": "^1.0.1"
+    "@ctrl/tinycolor": "3.1.4",
+    "@types/moo": "0.5.3",
+    "css.escape": "1.5.1",
+    "detect-indent": "6.0.0",
+    "dlv": "1.1.3",
+    "dset": "2.0.1",
+    "line-column": "1.0.2",
+    "moo": "0.5.1",
+    "multi-regexp2": "1.0.3",
+    "postcss-selector-parser": "6.0.2",
+    "semver": "7.3.2",
+    "sift-string": "0.0.2",
+    "vscode-emmet-helper-bundled": "0.0.1",
+    "vscode-languageclient": "7.0.0",
+    "vscode-languageserver": "7.0.0",
+    "vscode-languageserver-textdocument": "1.0.1"
+  },
+  "devDependencies": {
+    "postcss": "8.2.6",
+    "tsdx": "0.14.1",
+    "tslib": "2.2.0",
+    "typescript": "4.2.4"
   }
 }

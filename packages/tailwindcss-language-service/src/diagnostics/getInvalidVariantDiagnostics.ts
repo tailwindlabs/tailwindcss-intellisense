@@ -37,13 +37,13 @@ export function getInvalidVariantDiagnostics(
 
       for (let i = 0; i < variants.length; i += 2) {
         let variant = variants[i].trim()
-        if (state.variants.includes(variant)) {
+        if (Object.keys(state.variants).includes(variant)) {
           continue
         }
 
         let message = `The variant '${variant}' does not exist.`
         let suggestions: string[] = []
-        let suggestion = closest(variant, state.variants)
+        let suggestion = closest(variant, Object.keys(state.variants))
 
         if (suggestion) {
           suggestions.push(suggestion)

@@ -1,5 +1,6 @@
-import type { TextDocuments, Connection, Range } from 'vscode-languageserver'
+import type { TextDocuments, Connection, Range, SymbolInformation } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import type { Postcss } from 'postcss'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -17,13 +18,14 @@ export type ClassNames = {
 export type EditorState = {
   connection: Connection
   documents: TextDocuments<TextDocument>
-  documentSettings: Map<string, Settings>
   globalSettings: Settings
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
     diagnosticRelatedInformation: boolean
   }
+  getConfiguration: (uri?: string) => Promise<Settings>
+  getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
 }
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
@@ -35,6 +37,7 @@ export type Settings = {
   validate: boolean
   showPixelEquivalents: boolean
   rootFontSize: number
+  colorDecorators: 'inherit' | 'on' | 'off'
   lint: {
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
@@ -42,36 +45,41 @@ export type Settings = {
     invalidVariant: DiagnosticSeveritySetting
     invalidConfigPath: DiagnosticSeveritySetting
     invalidTailwindDirective: DiagnosticSeveritySetting
+    incorrectVariantOrder: DiagnosticSeveritySetting
   }
   experimental: {
     classRegex: string[]
   }
 }
 
-interface NotificationEmitter {
-  on: (name: string, handler: (args: any) => void) => void
-  off: (name: string, handler: (args: any) => void) => void
-  emit: (name: string, args: any) => Promise<any>
+export interface FeatureFlags {
+  future: string[]
+  experimental: string[]
 }
 
-export type State = null | {
+export interface State {
   enabled: boolean
-  emitter?: NotificationEmitter
-  version?: string
   configPath?: string
   config?: any
-  modules?: {
-    tailwindcss: any
-    postcss: any
-  }
+  version?: string
   separator?: string
-  plugins?: any[]
-  variants?: string[]
-  classNames?: ClassNames
   dependencies?: string[]
-  featureFlags?: { future: string[]; experimental: string[] }
+  plugins?: any
+  variants?: Record<string, string | null>
+  modules?: {
+    tailwindcss?: { version: string; module: any }
+    postcss?: { version: string; module: Postcss }
+    postcssSelectorParser?: { module: any }
+    resolveConfig?: { module: any }
+    jit?: { generateRules: { module: any } }
+  }
+  browserslist?: string[]
+  featureFlags?: FeatureFlags
+  classNames?: ClassNames
   editor?: EditorState
-  error?: Error
+  jit?: boolean
+  jitContext?: any
+  // postcssPlugins?: { before: any[]; after: any[] }
 }
 
 export type DocumentClassList = {

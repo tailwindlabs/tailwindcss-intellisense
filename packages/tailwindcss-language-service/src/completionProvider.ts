@@ -19,26 +19,31 @@ import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
-import { getDocumentSettings } from './util/getDocumentSettings'
 import { isJsContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from './util/docsUrl'
 import { ensureArray } from './util/array'
-import {
-  getClassAttributeLexer,
-  getComputedClassAttributeLexer,
-} from './util/lexers'
+import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 import { remToPx } from './util/remToPx'
 import { createMultiRegexp } from './util/createMultiRegexp'
+import * as jit from './util/jit'
+import { TinyColor } from '@ctrl/tinycolor'
+import { getVariantsFromClassName } from './util/getVariantsFromClassName'
+
+let isUtil = (className) =>
+  Array.isArray(className.__info)
+    ? className.__info.some((x) => x.__source === 'utilities')
+    : className.__info.__source === 'utilities'
 
 export function completionsFromClassList(
   state: State,
   classList: string,
   classListRange: Range,
-  filter?: (item: CompletionItem) => boolean
+  filter?: (item: CompletionItem) => boolean,
+  document?: TextDocument
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
@@ -56,23 +61,126 @@ export function completionsFromClassList(
     },
   }
 
+  if (state.jit) {
+    let allVariants = Object.keys(state.variants)
+    let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
+
+    replacementRange.start.character += offset
+
+    let important = partialClassName.substr(offset).startsWith('!')
+    if (important) {
+      replacementRange.start.character += 1
+    }
+
+    let items: CompletionItem[] = []
+
+    if (!important) {
+      items.push(
+        ...Object.entries(state.variants)
+          .filter(([variant]) => !existingVariants.includes(variant))
+          .map(([variant, definition], index) => {
+            let resultingVariants = [...existingVariants, variant].sort(
+              (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+            )
+
+            return {
+              label: variant + sep,
+              kind: 9,
+              detail: definition,
+              data: 'variant',
+              command: {
+                title: '',
+                command: 'editor.action.triggerSuggest',
+              },
+              sortText: '-' + naturalExpand(index),
+              textEdit: {
+                newText: resultingVariants[resultingVariants.length - 1] + sep,
+                range: replacementRange,
+              },
+              additionalTextEdits:
+                resultingVariants.length > 1
+                  ? [
+                      {
+                        newText:
+                          resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
+                        range: {
+                          start: {
+                            ...classListRange.start,
+                            character: classListRange.end.character - partialClassName.length,
+                          },
+                          end: {
+                            ...replacementRange.start,
+                            character: replacementRange.start.character,
+                          },
+                        },
+                      },
+                    ]
+                  : [],
+            } as CompletionItem
+          })
+      )
+    }
+
+    return {
+      isIncomplete: false,
+      items: items
+        .concat(
+          Object.keys(state.classNames.classNames)
+            .filter((className) => {
+              let item = state.classNames.classNames[className]
+              if (existingVariants.length === 0) {
+                return item.__info
+              }
+              return item.__info && isUtil(item)
+            })
+            .map((className, index) => {
+              let kind: CompletionItemKind = 21
+              let documentation: string = null
+
+              const color = getColor(state, className)
+              if (color !== null) {
+                kind = 16
+                if (typeof color !== 'string' && color.a !== 0) {
+                  documentation = color.toRgbString()
+                }
+              }
+
+              return {
+                label: className,
+                kind,
+                documentation,
+                sortText: naturalExpand(index),
+                data: [...existingVariants, important ? `!${className}` : className],
+                textEdit: {
+                  newText: className,
+                  range: replacementRange,
+                },
+              } as CompletionItem
+            })
+        )
+        .filter((item) => {
+          if (item === null) {
+            return false
+          }
+          if (filter && !filter(item)) {
+            return false
+          }
+          return true
+        }),
+    }
+  }
+
   for (let i = parts.length - 1; i > 0; i--) {
     let keys = parts.slice(0, i).filter(Boolean)
     subset = dlv(state.classNames.classNames, keys)
-    if (
-      typeof subset !== 'undefined' &&
-      typeof dlv(subset, ['__info', '__rule']) === 'undefined'
-    ) {
+    if (typeof subset !== 'undefined' && typeof dlv(subset, ['__info', '__rule']) === 'undefined') {
       isSubset = true
       subsetKey = keys
       replacementRange = {
         ...replacementRange,
         start: {
           ...replacementRange.start,
-          character:
-            replacementRange.start.character +
-            keys.join(sep).length +
-            sep.length,
+          character: replacementRange.start.character + keys.join(sep).length + sep.length,
         },
       }
       break
@@ -106,17 +214,13 @@ export function completionsFromClassList(
       .concat(
         Object.keys(isSubset ? subset : state.classNames.classNames)
           .filter((className) =>
-            dlv(state.classNames.classNames, [
-              ...subsetKey,
-              className,
-              '__info',
-            ])
+            dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
           )
           .map((className, index) => {
             let kind: CompletionItemKind = 21
             let documentation: string = null
 
-            const color = getColor(state, [className])
+            const color = getColor(state, className)
             if (color !== null) {
               kind = 16
               if (typeof color !== 'string' && color.a !== 0) {
@@ -159,10 +263,7 @@ function provideClassAttributeCompletions(
     end: position,
   })
 
-  const match = findLast(
-    /(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])=['"`{]/gi,
-    str
-  )
+  const match = findLast(/(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])=['"`{]/gi, str)
 
   if (match === null) {
     return null
@@ -187,13 +288,19 @@ function provideClassAttributeCompletions(
         }
       }
 
-      return completionsFromClassList(state, classList, {
-        start: {
-          line: position.line,
-          character: position.character - classList.length,
+      return completionsFromClassList(
+        state,
+        classList,
+        {
+          start: {
+            line: position.line,
+            character: position.character - classList.length,
+          },
+          end: position,
         },
-        end: position,
-      })
+        undefined,
+        document
+      )
     }
   } catch (_) {}
 
@@ -205,7 +312,7 @@ async function provideCustomClassNameCompletions(
   document: TextDocument,
   position: Position
 ): Promise<CompletionList> {
-  const settings = await getDocumentSettings(state, document)
+  const settings = await state.editor.getConfiguration(document.uri)
   const regexes = dlv(settings, 'experimental.classRegex', [])
   if (regexes.length === 0) return null
 
@@ -220,9 +327,7 @@ async function provideCustomClassNameCompletions(
 
   for (let i = 0; i < regexes.length; i++) {
     try {
-      let [containerRegex, classRegex] = Array.isArray(regexes[i])
-        ? regexes[i]
-        : [regexes[i]]
+      let [containerRegex, classRegex] = Array.isArray(regexes[i]) ? regexes[i] : [regexes[i]]
 
       containerRegex = createMultiRegexp(containerRegex)
       let containerMatch
@@ -239,9 +344,7 @@ async function provideCustomClassNameCompletions(
             classRegex = createMultiRegexp(classRegex)
             let classMatch
 
-            while (
-              (classMatch = classRegex.exec(containerMatch.match)) !== null
-            ) {
+            while ((classMatch = classRegex.exec(containerMatch.match)) !== null) {
               const classMatchStart = matchStart + classMatch.start
               const classMatchEnd = matchStart + classMatch.end
               if (cursor >= classMatchStart && cursor <= classMatchEnd) {
@@ -302,8 +405,7 @@ function provideAtApplyCompletions(
     (item) => {
       if (item.kind === 9) {
         return (
-          semver.gte(state.version, '2.0.0-alpha.1') ||
-          flagEnabled(state, 'applyComplexClasses')
+          semver.gte(state.version, '2.0.0-alpha.1') || flagEnabled(state, 'applyComplexClasses')
         )
       }
       let validated = validateApply(state, item.data)
@@ -317,10 +419,7 @@ function provideClassNameCompletions(
   document: TextDocument,
   position: Position
 ): CompletionList {
-  if (
-    isHtmlContext(state, document, position) ||
-    isJsContext(state, document, position)
-  ) {
+  if (isHtmlContext(state, document, position) || isJsContext(state, document, position)) {
     return provideClassAttributeCompletions(state, document, position)
   }
 
@@ -354,10 +453,7 @@ function provideCssHelperCompletions(
     return null
   }
 
-  let base =
-    match.groups.helper === 'config'
-      ? state.config
-      : dlv(state.config, 'theme', {})
+  let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
   let parts = match.groups.keys.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
   let separators = parts.filter((_, i) => i % 2 !== 0)
@@ -372,9 +468,7 @@ function provideCssHelperCompletions(
 
   let obj: any
   let offset: number = 0
-  let separator: string = separators.length
-    ? separators[separators.length - 1]
-    : null
+  let separator: string = separators.length ? separators[separators.length - 1] : null
 
   if (keys.length === 1) {
     obj = base
@@ -396,8 +490,7 @@ function provideCssHelperCompletions(
     isIncomplete: false,
     items: Object.keys(obj).map((item, index) => {
       let color = getColorFromValue(obj[item])
-      const replaceDot: boolean =
-        item.indexOf('.') !== -1 && separator && separator.endsWith('.')
+      const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
       const insertClosingBrace: boolean =
         text.charAt(text.length - 1) !== ']' &&
         (replaceDot || (separator && separator.endsWith('[')))
@@ -408,21 +501,16 @@ function provideCssHelperCompletions(
         filterText: `${replaceDot ? '.' : ''}${item}`,
         sortText: naturalExpand(index),
         kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
-        // VS Code bug causes '0' to not display in some cases
-        detail: detail === '0' ? '0 ' : detail,
-        documentation: color,
+        // VS Code bug causes some values to not display in some cases
+        detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
+        documentation: color instanceof TinyColor && color.a !== 0 ? color.toRgbString() : null,
         textEdit: {
-          newText: `${replaceDot ? '[' : ''}${item}${
-            insertClosingBrace ? ']' : ''
-          }`,
+          newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
           range: {
             start: {
               line: position.line,
               character:
-                position.character -
-                keys[keys.length - 1].length -
-                (replaceDot ? 1 : 0) -
-                offset,
+                position.character - keys[keys.length - 1].length - (replaceDot ? 1 : 0) - offset,
             },
             end: position,
           },
@@ -433,7 +521,6 @@ function provideCssHelperCompletions(
   }
 }
 
-// TODO: vary docs links based on Tailwind version
 function provideTailwindDirectiveCompletions(
   state: State,
   document: TextDocument,
@@ -550,13 +637,15 @@ function provideVariantsDirectiveCompletions(
 
   return {
     isIncomplete: false,
-    items: state.variants
+    items: Object.keys(state.variants)
       .filter((v) => existingVariants.indexOf(v) === -1)
-      .map((variant) => ({
+      .map((variant, index) => ({
         // TODO: detail
         label: variant,
+        detail: state.variants[variant],
         kind: 21,
         data: 'variant',
+        sortText: naturalExpand(index),
         textEdit: {
           newText: variant,
           range: {
@@ -628,11 +717,7 @@ function provideScreenDirectiveCompletions(
 
   if (match === null) return null
 
-  const screens = dlv(
-    state.config,
-    ['screens'],
-    dlv(state.config, ['theme', 'screens'], {})
-  )
+  const screens = dlv(state.config, ['screens'], dlv(state.config, ['theme', 'screens'], {}))
 
   if (!isObject(screens)) return null
 
@@ -767,7 +852,7 @@ async function provideEmmetCompletions(
   document: TextDocument,
   position: Position
 ): Promise<CompletionList> {
-  let settings = await getDocumentSettings(state, document)
+  let settings = await state.editor.getConfiguration(document.uri)
   if (settings.emmetCompletions !== true) return null
 
   const isHtml = isHtmlContext(state, document, position)
@@ -779,26 +864,16 @@ async function provideEmmetCompletions(
     return null
   }
 
-  const extractAbbreviationResults = emmetHelper.extractAbbreviation(
-    document,
-    position,
-    true
-  )
+  const extractAbbreviationResults = emmetHelper.extractAbbreviation(document, position, true)
   if (
     !extractAbbreviationResults ||
-    !emmetHelper.isAbbreviationValid(
-      syntax,
-      extractAbbreviationResults.abbreviation
-    )
+    !emmetHelper.isAbbreviationValid(syntax, extractAbbreviationResults.abbreviation)
   ) {
     return null
   }
 
   if (
-    !isValidLocationForEmmetAbbreviation(
-      document,
-      extractAbbreviationResults.abbreviationRange
-    )
+    !isValidLocationForEmmetAbbreviation(document, extractAbbreviationResults.abbreviationRange)
   ) {
     return null
   }
@@ -808,16 +883,13 @@ async function provideEmmetCompletions(
     if (abbreviation.startsWith('this.')) {
       return null
     }
-    const { symbols } = await state.emitter.emit('getDocumentSymbols', {
-      uri: document.uri,
-    })
+    const symbols = await state.editor.getDocumentSymbols(document.uri)
     if (
       symbols &&
       symbols.find(
         (symbol) =>
           abbreviation === symbol.name ||
-          (abbreviation.startsWith(symbol.name + '.') &&
-            !/>|\*|\+/.test(abbreviation))
+          (abbreviation.startsWith(symbol.name + '.') && !/>|\*|\+/.test(abbreviation))
       )
     ) {
       return null
@@ -847,11 +919,7 @@ async function provideEmmetCompletions(
   })
 }
 
-export async function doComplete(
-  state: State,
-  document: TextDocument,
-  position: Position
-) {
+export async function doComplete(state: State, document: TextDocument, position: Position) {
   if (state === null) return { items: [], isIncomplete: false }
 
   const result =
@@ -873,32 +941,44 @@ export async function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): Promise<CompletionItem> {
-  if (
-    ['helper', 'directive', 'variant', 'layer', '@tailwind'].includes(item.data)
-  ) {
+  if (['helper', 'directive', 'variant', 'layer', '@tailwind'].includes(item.data)) {
     return item
   }
 
   if (item.data === 'screen') {
-    let screens = dlv(
-      state.config,
-      ['theme', 'screens'],
-      dlv(state.config, ['screens'], {})
-    )
+    let screens = dlv(state.config, ['theme', 'screens'], dlv(state.config, ['screens'], {}))
     if (!isObject(screens)) screens = {}
     item.detail = stringifyScreen(screens[item.label] as Screen)
     return item
   }
 
+  if (state.jit) {
+    if (item.kind === 9) return item
+    let { root, rules } = jit.generateRules(state, [item.data.join(state.separator)])
+    if (rules.length === 0) return item
+    if (!item.detail) {
+      if (rules.length === 1) {
+        item.detail = jit.stringifyDecls(rules[0])
+      } else {
+        item.detail = `${rules.length} rules`
+      }
+    }
+    if (!item.documentation) {
+      item.documentation = {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: ['```css', await jit.stringifyRoot(state, root), '```'].join('\n'),
+      }
+    }
+    return item
+  }
+
   const className = dlv(state.classNames.classNames, [...item.data, '__info'])
   if (item.kind === 9) {
-    item.detail = state.classNames.context[
-      item.data[item.data.length - 1]
-    ].join(', ')
+    item.detail = state.classNames.context[item.data[item.data.length - 1]].join(', ')
   } else {
     item.detail = await getCssDetail(state, className)
     if (!item.documentation) {
-      const settings = await getDocumentSettings(state)
+      const settings = await state.editor.getConfiguration()
       const css = stringifyCss(item.data.join(':'), className, {
         tabSize: dlv(settings, 'tabSize', 2),
         showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
@@ -949,9 +1029,7 @@ function stringifyDecls(
     .map((prop) =>
       ensureArray(obj[prop])
         .map((value) => {
-          const px = showPixelEquivalents
-            ? remToPx(value, rootFontSize)
-            : undefined
+          const px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
           return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
         })
         .join(' ')
@@ -964,7 +1042,7 @@ async function getCssDetail(state: State, className: any): Promise<string> {
     return `${className.length} rules`
   }
   if (className.__rule === true) {
-    const settings = await getDocumentSettings(state)
+    const settings = await state.editor.getConfiguration()
     return stringifyDecls(removeMeta(className), {
       showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
       rootFontSize: dlv(settings, 'rootFontSize', 16),

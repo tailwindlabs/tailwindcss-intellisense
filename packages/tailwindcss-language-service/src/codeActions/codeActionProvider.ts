@@ -11,6 +11,7 @@ import {
   isInvalidTailwindDirectiveDiagnostic,
   isInvalidScreenDiagnostic,
   isInvalidVariantDiagnostic,
+  isIncorrectVariantOrderDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
@@ -38,10 +39,7 @@ async function getDiagnosticsFromCodeActionParams(
     .filter(Boolean)
 }
 
-export async function doCodeActions(
-  state: State,
-  params: CodeActionParams
-): Promise<CodeAction[]> {
+export async function doCodeActions(state: State, params: CodeActionParams): Promise<CodeAction[]> {
   let diagnostics = await getDiagnosticsFromCodeActionParams(
     state,
     params,
@@ -64,7 +62,8 @@ export async function doCodeActions(
         isInvalidConfigPathDiagnostic(diagnostic) ||
         isInvalidTailwindDirectiveDiagnostic(diagnostic) ||
         isInvalidScreenDiagnostic(diagnostic) ||
-        isInvalidVariantDiagnostic(diagnostic)
+        isInvalidVariantDiagnostic(diagnostic) ||
+        isIncorrectVariantOrderDiagnostic(diagnostic)
       ) {
         return provideSuggestionCodeActions(state, params, diagnostic)
       }
