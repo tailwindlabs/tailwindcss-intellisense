@@ -85,11 +85,13 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
 
 export function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
-  let outputChannel: OutputChannel = Window.createOutputChannel(CLIENT_NAME)
+  let outputChannel: OutputChannel
 
   context.subscriptions.push(
     commands.registerCommand('tailwindCSS.showOutput', () => {
-      outputChannel.show()
+      if (outputChannel) {
+        outputChannel.show()
+      }
     })
   )
 
@@ -153,6 +155,11 @@ export function activate(context: ExtensionContext) {
         folder.uri.toString(),
         dedupe([...DEFAULT_LANGUAGES, ...Object.keys(getUserLanguages(folder))])
       )
+    }
+
+    if (!outputChannel) {
+      outputChannel = Window.createOutputChannel(CLIENT_NAME)
+      commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
     }
 
     let serverOptions: ServerOptions = {

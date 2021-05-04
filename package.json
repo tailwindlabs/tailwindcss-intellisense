@@ -43,7 +43,8 @@
     "commands": [
       {
         "command": "tailwindCSS.showOutput",
-        "title": "Tailwind CSS: Show Output"
+        "title": "Tailwind CSS: Show Output",
+        "enablement": "tailwindCSS.hasOutputChannel"
       }
     ],
     "grammars": [
