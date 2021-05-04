@@ -995,7 +995,9 @@ class TW {
 
     this.initialized = true
 
+    // TODO
     const workspaceFolders =
+      false &&
       Array.isArray(this.initializeParams.workspaceFolders) &&
       this.initializeParams.capabilities.workspace?.workspaceFolders
         ? this.initializeParams.workspaceFolders.map((el) => ({
@@ -1147,7 +1149,6 @@ connection.onInitialize(
       return {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Full,
-          workspace: { workspaceFolders: { supported: true, changeNotifications: true } },
         },
       }
     }
@@ -1157,7 +1158,6 @@ connection.onInitialize(
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
-        workspace: { workspaceFolders: { supported: true, changeNotifications: true } },
         hoverProvider: true,
         colorProvider: true,
         codeActionProvider: true,
