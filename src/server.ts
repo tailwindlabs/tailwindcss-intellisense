@@ -178,7 +178,7 @@ async function createProjectService(
         tryRebuild()
       }
     })
-    .on('change', async (file) => {
+    .on('change', (file) => {
       if (!state.enabled || minimatch(file, '**/package.json')) {
         tryInit()
       } else {
