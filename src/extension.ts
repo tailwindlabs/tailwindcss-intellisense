@@ -25,6 +25,7 @@ import {
   ServerOptions,
   TransportKind,
   State as LanguageClientState,
+  RevealOutputChannelOn,
 } from 'vscode-languageclient/node'
 import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
@@ -173,6 +174,7 @@ export function activate(context: ExtensionContext) {
       diagnosticCollectionName: CLIENT_ID,
       workspaceFolder: folder,
       outputChannel: outputChannel,
+      revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
