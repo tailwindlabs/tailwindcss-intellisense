@@ -19,7 +19,12 @@ import {
   RelativePattern,
   ConfigurationScope,
 } from 'vscode'
-import { LanguageClient, LanguageClientOptions, TransportKind } from 'vscode-languageclient/node'
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  TransportKind,
+  State as LanguageClientState,
+} from 'vscode-languageclient/node'
 import { DEFAULT_LANGUAGES } from './lib/languages'
 import isObject from './util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
@@ -76,8 +81,6 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   return isObject(langs) ? langs : {}
 }
 
-let colorDecorationType: TextEditorDecorationType
-
 export function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
   let outputChannel: OutputChannel = Window.createOutputChannel(CLIENT_NAME)
@@ -130,6 +133,14 @@ export function activate(context: ExtensionContext) {
   function bootWorkspaceClient(folder: WorkspaceFolder) {
     if (clients.has(folder.uri.toString())) {
       return
+    }
+
+    let colorDecorationType: TextEditorDecorationType
+    function clearColors(): void {
+      if (colorDecorationType) {
+        colorDecorationType.dispose()
+        colorDecorationType = undefined
+      }
     }
 
     // placeholder so we don't boot another server before this one is ready
@@ -288,12 +299,7 @@ export function activate(context: ExtensionContext) {
         }
       })
 
-      client.onNotification('@/tailwindCSS/clearColors', () => {
-        if (colorDecorationType) {
-          colorDecorationType.dispose()
-          colorDecorationType = undefined
-        }
-      })
+      client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
 
       client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
         return commands.executeCommand<SymbolInformation[]>(
@@ -301,6 +307,12 @@ export function activate(context: ExtensionContext) {
           Uri.parse(uri)
         )
       })
+    })
+
+    client.onDidChangeState(({ newState }) => {
+      if (newState === LanguageClientState.Stopped) {
+        clearColors()
+      }
     })
 
     client.start()
