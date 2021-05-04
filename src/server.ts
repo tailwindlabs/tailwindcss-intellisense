@@ -411,7 +411,7 @@ async function createProjectService(
         applyComplexClasses = __non_webpack_require__(
           resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules')
         )
-      } else {
+      } else if (semver.gte(tailwindcssVersion, '1.7.0')) {
         applyComplexClasses = __non_webpack_require__(
           resolveFrom(tailwindDir, './lib/flagged/applyComplexClasses')
         )
@@ -463,7 +463,7 @@ async function createProjectService(
     state.featureFlags = featureFlags
     state.version = tailwindcssVersion
 
-    if (semver.gte(tailwindcssVersion, '1.7.0') && !applyComplexClasses.default.__patched) {
+    if (applyComplexClasses && !applyComplexClasses.default.__patched) {
       let _applyComplexClasses = applyComplexClasses.default
       applyComplexClasses.default = (config, ...args) => {
         let configClone = klona(config)
