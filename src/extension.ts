@@ -22,6 +22,7 @@ import {
 import {
   LanguageClient,
   LanguageClientOptions,
+  ServerOptions,
   TransportKind,
   State as LanguageClientState,
 } from 'vscode-languageclient/node'
@@ -153,15 +154,14 @@ export function activate(context: ExtensionContext) {
       )
     }
 
-    let debugOptions = {
-      execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
-    }
-    let serverOptions = {
+    let serverOptions: ServerOptions = {
       run: { module, transport: TransportKind.ipc },
       debug: {
         module,
         transport: TransportKind.ipc,
-        options: debugOptions,
+        options: {
+          execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
+        },
       },
     }
     let clientOptions: LanguageClientOptions = {
