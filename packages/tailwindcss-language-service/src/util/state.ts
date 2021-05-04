@@ -37,7 +37,7 @@ export type Settings = {
   validate: boolean
   showPixelEquivalents: boolean
   rootFontSize: number
-  colorDecorators: 'inherit' | 'on' | 'off'
+  colorDecorators: boolean
   lint: {
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting

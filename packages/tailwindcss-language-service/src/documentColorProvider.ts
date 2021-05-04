@@ -18,7 +18,7 @@ export async function getDocumentColors(
   if (!state.enabled) return colors
 
   let settings = await state.editor.getConfiguration(document.uri)
-  if (settings.colorDecorators === 'off') return colors
+  if (settings.colorDecorators === false) return colors
 
   let classLists = await findClassListsInDocument(state, document)
   classLists.forEach((classList) => {
