@@ -62,7 +62,6 @@ function sortedWorkspaceFolders(): string[] {
   }
   return _sortedWorkspaceFolders
 }
-Workspace.onDidChangeWorkspaceFolders(() => (_sortedWorkspaceFolders = undefined))
 
 function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
   let sorted = sortedWorkspaceFolders()
@@ -111,28 +110,30 @@ export function activate(context: ExtensionContext) {
   // TODO: check if the actual language MAPPING changed
   // not just the language IDs
   // e.g. "plaintext" already exists but you change it from "html" to "css"
-  Workspace.onDidChangeConfiguration((event) => {
-    clients.forEach((client, key) => {
-      const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
+  context.subscriptions.push(
+    Workspace.onDidChangeConfiguration((event) => {
+      clients.forEach((client, key) => {
+        const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
 
-      if (event.affectsConfiguration('tailwindCSS', folder)) {
-        const userLanguages = getUserLanguages(folder)
-        if (userLanguages) {
-          const userLanguageIds = Object.keys(userLanguages)
-          const newLanguages = dedupe([...DEFAULT_LANGUAGES, ...userLanguageIds])
-          if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
-            languages.set(folder.uri.toString(), newLanguages)
+        if (event.affectsConfiguration('tailwindCSS', folder)) {
+          const userLanguages = getUserLanguages(folder)
+          if (userLanguages) {
+            const userLanguageIds = Object.keys(userLanguages)
+            const newLanguages = dedupe([...DEFAULT_LANGUAGES, ...userLanguageIds])
+            if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
+              languages.set(folder.uri.toString(), newLanguages)
 
-            if (client) {
-              clients.delete(folder.uri.toString())
-              client.stop()
-              bootWorkspaceClient(folder)
+              if (client) {
+                clients.delete(folder.uri.toString())
+                client.stop()
+                bootWorkspaceClient(folder)
+              }
             }
           }
         }
-      }
+      })
     })
-  })
+  )
 
   function bootWorkspaceClient(folder: WorkspaceFolder) {
     if (clients.has(folder.uri.toString())) {
@@ -146,6 +147,13 @@ export function activate(context: ExtensionContext) {
         colorDecorationType = undefined
       }
     }
+    context.subscriptions.push({
+      dispose() {
+        if (colorDecorationType) {
+          colorDecorationType.dispose()
+        }
+      },
+    })
 
     // placeholder so we don't boot another server before this one is ready
     clients.set(folder.uri.toString(), null)
@@ -159,6 +167,7 @@ export function activate(context: ExtensionContext) {
 
     if (!outputChannel) {
       outputChannel = Window.createOutputChannel(CLIENT_NAME)
+      context.subscriptions.push(outputChannel)
       commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
     }
 
@@ -361,18 +370,22 @@ export function activate(context: ExtensionContext) {
     bootWorkspaceClient(folder)
   }
 
-  Workspace.onDidOpenTextDocument(didOpenTextDocument)
+  context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
   Workspace.textDocuments.forEach(didOpenTextDocument)
-  Workspace.onDidChangeWorkspaceFolders((event) => {
-    for (let folder of event.removed) {
-      let client = clients.get(folder.uri.toString())
-      if (client) {
-        searchedFolders.delete(folder.uri.toString())
-        clients.delete(folder.uri.toString())
-        client.stop()
+  context.subscriptions.push(
+    Workspace.onDidChangeWorkspaceFolders((event) => {
+      _sortedWorkspaceFolders = undefined
+
+      for (let folder of event.removed) {
+        let client = clients.get(folder.uri.toString())
+        if (client) {
+          searchedFolders.delete(folder.uri.toString())
+          clients.delete(folder.uri.toString())
+          client.stop()
+        }
       }
-    }
-  })
+    })
+  )
 }
 
 export function deactivate(): Thenable<void> {
