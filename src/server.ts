@@ -36,9 +36,9 @@ import chokidar from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
-import postcssFallback, { Result } from 'postcss'
-import tailwindcssFallback from 'tailwindcss'
-import resolveConfigFallback from 'tailwindcss/resolveConfig'
+import { /*postcssFallback,*/ Result } from 'postcss'
+// import tailwindcssFallback from 'tailwindcss'
+// import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import Module from 'module'
 import Hook from './lib/hook'
 import semver from 'semver'
@@ -307,7 +307,7 @@ async function createProjectService(
       .map(path.normalize)
 
     if (!configPath) {
-      throw Error('No config file found.')
+      throw new SilentError('No config file found.')
     }
 
     console.log(`Found Tailwind CSS config file: ${configPath}`)
@@ -438,18 +438,17 @@ async function createProjectService(
         }
       } catch (_) {}
     } catch (error) {
-      console.log(error)
-      // throw new SilentError(error.message)
+      throw new SilentError(error.message)
       // TODO: force mode
-      tailwindcss = tailwindcssFallback
-      resolveConfigFn = resolveConfigFallback
-      postcss = postcssFallback
-      applyComplexClasses = require('tailwindcss/lib/lib/substituteClassApplyAtRules')
-      tailwindcssVersion = '2.0.3'
-      postcssVersion = '8.2.6'
-      console.log(
-        `Failed to load workspace modules. Initializing with tailwindcss v${tailwindcssVersion}`
-      )
+      // tailwindcss = tailwindcssFallback
+      // resolveConfigFn = resolveConfigFallback
+      // postcss = postcssFallback
+      // applyComplexClasses = require('tailwindcss/lib/lib/substituteClassApplyAtRules')
+      // tailwindcssVersion = '2.0.3'
+      // postcssVersion = '8.2.6'
+      // console.log(
+      //   `Failed to load workspace modules. Initializing with tailwindcss v${tailwindcssVersion}`
+      // )
     }
 
     state.configPath = configPath
