@@ -147,7 +147,7 @@ async function createProjectService(
     editor: {
       connection,
       globalSettings: params.initializationOptions.configuration as Settings,
-      userLanguages: {},
+      userLanguages: params.initializationOptions.userLanguages,
       // TODO
       capabilities: {
         configuration: true,
