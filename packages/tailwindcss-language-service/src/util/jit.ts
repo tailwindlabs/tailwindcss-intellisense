@@ -33,9 +33,9 @@ export function generateRules(state: State, classNames: string[]): { root: Root;
 
 export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
-  let tabSize = dlv(settings, 'tabSize', 2)
-  let showPixelEquivalents = dlv(settings, 'showPixelEquivalents', true)
-  let rootFontSize = dlv(settings, 'rootFontSize', 16)
+  let tabSize = dlv(settings, 'editor.tabSize', 2)
+  let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
+  let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
 
   let clone = root
 

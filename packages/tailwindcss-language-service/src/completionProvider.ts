@@ -313,7 +313,7 @@ async function provideCustomClassNameCompletions(
   position: Position
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
-  const regexes = dlv(settings, 'experimental.classRegex', [])
+  const regexes = dlv(settings, 'tailwindCSS.experimental.classRegex', [])
   if (regexes.length === 0) return null
 
   const positionOffset = document.offsetAt(position)
@@ -853,7 +853,7 @@ async function provideEmmetCompletions(
   position: Position
 ): Promise<CompletionList> {
   let settings = await state.editor.getConfiguration(document.uri)
-  if (settings.emmetCompletions !== true) return null
+  if (settings.tailwindCSS.emmetCompletions !== true) return null
 
   const isHtml = isHtmlContext(state, document, position)
   const isJs = !isHtml && isJsContext(state, document, position)
@@ -980,9 +980,9 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       const settings = await state.editor.getConfiguration()
       const css = stringifyCss(item.data.join(':'), className, {
-        tabSize: dlv(settings, 'tabSize', 2),
-        showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
-        rootFontSize: dlv(settings, 'rootFontSize', 16),
+        tabSize: dlv(settings, 'editor.tabSize', 2),
+        showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
+        rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
       })
       if (css) {
         item.documentation = {
@@ -1044,8 +1044,8 @@ async function getCssDetail(state: State, className: any): Promise<string> {
   if (className.__rule === true) {
     const settings = await state.editor.getConfiguration()
     return stringifyDecls(removeMeta(className), {
-      showPixelEquivalents: dlv(settings, 'showPixelEquivalents', true),
-      rootFontSize: dlv(settings, 'rootFontSize', 16),
+      showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
+      rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
     })
   }
   return null

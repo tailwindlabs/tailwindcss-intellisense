@@ -13,7 +13,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
   document: TextDocument,
   settings: Settings
 ): InvalidTailwindDirectiveDiagnostic[] {
-  let severity = settings.lint.invalidTailwindDirective
+  let severity = settings.tailwindCSS.lint.invalidTailwindDirective
   if (severity === 'ignore') return []
 
   let diagnostics: InvalidTailwindDirectiveDiagnostic[] = []

@@ -13,7 +13,7 @@ export async function getIncorrectVariantOrderDiagnostics(
 ): Promise<IncorrectVariantOrderDiagnostic[]> {
   if (!state.jit) return []
 
-  let severity = settings.lint.incorrectVariantOrder
+  let severity = settings.tailwindCSS.lint.incorrectVariantOrder
   if (severity === 'ignore') return []
 
   let diagnostics: IncorrectVariantOrderDiagnostic[] = []

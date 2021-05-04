@@ -13,7 +13,7 @@ export async function getCssConflictDiagnostics(
   document: TextDocument,
   settings: Settings
 ): Promise<CssConflictDiagnostic[]> {
-  let severity = settings.lint.cssConflict
+  let severity = settings.tailwindCSS.lint.cssConflict
   if (severity === 'ignore') return []
 
   let diagnostics: CssConflictDiagnostic[] = []

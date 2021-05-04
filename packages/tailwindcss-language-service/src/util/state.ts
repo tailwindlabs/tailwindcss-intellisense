@@ -31,24 +31,28 @@ export type EditorState = {
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
 
 export type Settings = {
-  tabSize: number
-  emmetCompletions: boolean
-  includeLanguages: Record<string, string>
-  validate: boolean
-  showPixelEquivalents: boolean
-  rootFontSize: number
-  colorDecorators: boolean
-  lint: {
-    cssConflict: DiagnosticSeveritySetting
-    invalidApply: DiagnosticSeveritySetting
-    invalidScreen: DiagnosticSeveritySetting
-    invalidVariant: DiagnosticSeveritySetting
-    invalidConfigPath: DiagnosticSeveritySetting
-    invalidTailwindDirective: DiagnosticSeveritySetting
-    incorrectVariantOrder: DiagnosticSeveritySetting
+  editor: {
+    tabSize: number
   }
-  experimental: {
-    classRegex: string[]
+  tailwindCSS: {
+    emmetCompletions: boolean
+    includeLanguages: Record<string, string>
+    validate: boolean
+    showPixelEquivalents: boolean
+    rootFontSize: number
+    colorDecorators: boolean
+    lint: {
+      cssConflict: DiagnosticSeveritySetting
+      invalidApply: DiagnosticSeveritySetting
+      invalidScreen: DiagnosticSeveritySetting
+      invalidVariant: DiagnosticSeveritySetting
+      invalidConfigPath: DiagnosticSeveritySetting
+      invalidTailwindDirective: DiagnosticSeveritySetting
+      incorrectVariantOrder: DiagnosticSeveritySetting
+    }
+    experimental: {
+      classRegex: string[]
+    }
   }
 }
 

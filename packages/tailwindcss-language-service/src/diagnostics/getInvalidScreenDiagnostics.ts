@@ -13,7 +13,7 @@ export function getInvalidScreenDiagnostics(
   document: TextDocument,
   settings: Settings
 ): InvalidScreenDiagnostic[] {
-  let severity = settings.lint.invalidScreen
+  let severity = settings.tailwindCSS.lint.invalidScreen
   if (severity === 'ignore') return []
 
   let diagnostics: InvalidScreenDiagnostic[] = []
@@ -31,9 +31,7 @@ export function getInvalidScreenDiagnostics(
     let text = document.getText(range)
     let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
 
-    let screens = Object.keys(
-      dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
-    )
+    let screens = Object.keys(dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {})))
 
     matches.forEach((match) => {
       if (screens.includes(match.groups.screen)) {

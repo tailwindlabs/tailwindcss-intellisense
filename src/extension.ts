@@ -17,6 +17,7 @@ import {
   Range,
   TextEditorDecorationType,
   RelativePattern,
+  ConfigurationScope,
 } from 'vscode'
 import { LanguageClient, LanguageClientOptions, TransportKind } from 'vscode-languageclient/node'
 import { DEFAULT_LANGUAGES } from './lib/languages'
@@ -249,31 +250,28 @@ export function activate(context: ExtensionContext) {
           return editableColors
         },
         workspace: {
-          configuration: (params, token, next) => {
-            try {
-              return params.items.map(({ section, scopeUri }) => {
-                if (section === 'tailwindCSS') {
-                  let scope = scopeUri
-                    ? {
-                        languageId: Workspace.textDocuments.find(
-                          (doc) => doc.uri.toString() === scopeUri
-                        ).languageId,
-                      }
-                    : folder
-                  let tabSize = Workspace.getConfiguration('editor', scope).get('tabSize') || 2
-                  return { tabSize, ...Workspace.getConfiguration(section, scope) }
+          configuration: (params) => {
+            return params.items.map(({ section, scopeUri }) => {
+              let scope: ConfigurationScope = folder
+              if (scopeUri) {
+                let doc = Workspace.textDocuments.find((doc) => doc.uri.toString() === scopeUri)
+                if (doc) {
+                  scope = {
+                    languageId: doc.languageId,
+                  }
                 }
-                throw Error()
-              })
-            } catch (_error) {
-              return next(params, token)
-            }
+              }
+              return Workspace.getConfiguration(section, scope)
+            })
           },
         },
       },
       initializationOptions: {
         userLanguages: getUserLanguages(folder),
-        configuration: Workspace.getConfiguration('tailwindCSS', folder),
+        configuration: {
+          editor: Workspace.getConfiguration('editor', folder),
+          tailwindCSS: Workspace.getConfiguration('tailwindCSS', folder),
+        },
       },
       synchronize: {
         configurationSection: ['editor', 'tailwindCSS'],

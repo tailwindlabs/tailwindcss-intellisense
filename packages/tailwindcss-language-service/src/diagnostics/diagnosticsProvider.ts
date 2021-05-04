@@ -24,7 +24,7 @@ export async function doValidate(
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
 
-  return settings.validate
+  return settings.tailwindCSS.validate
     ? [
         ...(only.includes(DiagnosticKind.CssConflict)
           ? await getCssConflictDiagnostics(state, document, settings)

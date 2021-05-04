@@ -158,10 +158,17 @@ async function createProjectService(
         if (documentSettingsCache.has(uri)) {
           return documentSettingsCache.get(uri)
         }
-        let config = await connection.workspace.getConfiguration({
-          section: 'tailwindCSS',
-          scopeUri: uri,
-        })
+        let [editor, tailwindCSS] = await Promise.all([
+          connection.workspace.getConfiguration({
+            section: 'editor',
+            scopeUri: uri,
+          }),
+          connection.workspace.getConfiguration({
+            section: 'tailwindCSS',
+            scopeUri: uri,
+          }),
+        ])
+        let config: Settings = { editor, tailwindCSS }
         documentSettingsCache.set(uri, config)
         return config
       },
