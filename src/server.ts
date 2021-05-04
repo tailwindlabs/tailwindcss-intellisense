@@ -251,7 +251,9 @@ async function createProjectService(
   function resetState(): void {
     clearAllDiagnostics(state)
     Object.keys(state).forEach((key) => {
-      delete state[key]
+      if (key !== 'editor') {
+        delete state[key]
+      }
     })
     state.enabled = false
     registerCapabilities()
