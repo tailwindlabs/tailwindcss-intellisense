@@ -16,6 +16,7 @@ import {
   Position,
   Range,
   TextEditorDecorationType,
+  RelativePattern,
 } from 'vscode'
 import { LanguageClient, LanguageClientOptions, TransportKind } from 'vscode-languageclient/node'
 import { DEFAULT_LANGUAGES } from './lib/languages'
@@ -28,8 +29,11 @@ const colorNames = Object.keys(namedColors)
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
+const CONFIG_FILE_GLOB = 'tailwind.config.{js,cjs}'
+
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
+let searchedFolders: Set<string> = new Set()
 
 let _sortedWorkspaceFolders: string[] | undefined
 function sortedWorkspaceFolders(): string[] {
@@ -83,6 +87,19 @@ export function activate(context: ExtensionContext) {
     })
   )
 
+  let watcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
+
+  watcher.onDidCreate((uri) => {
+    let folder = Workspace.getWorkspaceFolder(uri)
+    if (!folder) {
+      return
+    }
+    folder = getOuterMostWorkspaceFolder(folder)
+    bootWorkspaceClient(folder)
+  })
+
+  context.subscriptions.push(watcher)
+
   // TODO: check if the actual language MAPPING changed
   // not just the language IDs
   // e.g. "plaintext" already exists but you change it from "html" to "css"
@@ -116,6 +133,13 @@ export function activate(context: ExtensionContext) {
 
     // placeholder so we don't boot another server before this one is ready
     clients.set(folder.uri.toString(), null)
+
+    if (!languages.has(folder.uri.toString())) {
+      languages.set(
+        folder.uri.toString(),
+        dedupe([...DEFAULT_LANGUAGES, ...Object.keys(getUserLanguages(folder))])
+      )
+    }
 
     let debugOptions = {
       execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
@@ -255,6 +279,7 @@ export function activate(context: ExtensionContext) {
         configurationSection: ['editor', 'tailwindCSS'],
       },
     }
+
     let client = new LanguageClient(CLIENT_ID, CLIENT_NAME, serverOptions, clientOptions)
 
     client.onReady().then(() => {
@@ -284,7 +309,7 @@ export function activate(context: ExtensionContext) {
     clients.set(folder.uri.toString(), client)
   }
 
-  function didOpenTextDocument(document: TextDocument): void {
+  async function didOpenTextDocument(document: TextDocument): Promise<void> {
     // We are only interested in language mode text
     if (document.uri.scheme !== 'file') {
       return
@@ -300,11 +325,18 @@ export function activate(context: ExtensionContext) {
     // If we have nested workspace folders we only start a server on the outer most workspace folder.
     folder = getOuterMostWorkspaceFolder(folder)
 
-    if (!languages.has(folder.uri.toString())) {
-      languages.set(
-        folder.uri.toString(),
-        dedupe([...DEFAULT_LANGUAGES, ...Object.keys(getUserLanguages())])
-      )
+    if (searchedFolders.has(folder.uri.toString())) return
+
+    searchedFolders.add(folder.uri.toString())
+
+    let [configFile] = await Workspace.findFiles(
+      new RelativePattern(folder, `**/${CONFIG_FILE_GLOB}`),
+      '**/node_modules/**',
+      1
+    )
+
+    if (!configFile) {
+      return
     }
 
     bootWorkspaceClient(folder)
@@ -316,6 +348,7 @@ export function activate(context: ExtensionContext) {
     for (let folder of event.removed) {
       let client = clients.get(folder.uri.toString())
       if (client) {
+        searchedFolders.delete(folder.uri.toString())
         clients.delete(folder.uri.toString())
         client.stop()
       }
