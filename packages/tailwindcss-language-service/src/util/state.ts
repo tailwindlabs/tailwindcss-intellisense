@@ -60,6 +60,7 @@ export interface FeatureFlags {
 export interface State {
   enabled: boolean
   configPath?: string
+  configModified?: number
   config?: any
   version?: string
   separator?: string

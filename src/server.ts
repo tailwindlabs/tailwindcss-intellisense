@@ -142,7 +142,35 @@ async function createProjectService(
   params: InitializeParams,
   documentService: DocumentService
 ): Promise<ProjectService> {
-  const state: State = { enabled: false }
+  const state: State = {
+    enabled: false,
+    editor: {
+      connection,
+      globalSettings: params.initializationOptions.configuration as Settings,
+      userLanguages: {},
+      // TODO
+      capabilities: {
+        configuration: true,
+        diagnosticRelatedInformation: true,
+      },
+      documents: documentService.documents,
+      getConfiguration: async (uri?: string) => {
+        if (documentSettingsCache.has(uri)) {
+          return documentSettingsCache.get(uri)
+        }
+        let config = await connection.workspace.getConfiguration({
+          section: 'tailwindCSS',
+          scopeUri: uri,
+        })
+        documentSettingsCache.set(uri, config)
+        return config
+      },
+      getDocumentSymbols: (uri: string) => {
+        return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
+      },
+    },
+  }
+
   const documentSettingsCache: Map<string, Settings> = new Map()
   let registrations: Promise<BulkUnregistration>
 
@@ -255,33 +283,6 @@ async function createProjectService(
   async function init() {
     clearRequireCache()
 
-    // TODO
-    state.editor = {
-      connection,
-      globalSettings: params.initializationOptions.configuration as Settings,
-      userLanguages: {},
-      // TODO
-      capabilities: {
-        configuration: true,
-        diagnosticRelatedInformation: true,
-      },
-      documents: documentService.documents,
-      getConfiguration: async (uri?: string) => {
-        if (documentSettingsCache.has(uri)) {
-          return documentSettingsCache.get(uri)
-        }
-        let config = await connection.workspace.getConfiguration({
-          section: 'tailwindCSS',
-          scopeUri: uri,
-        })
-        documentSettingsCache.set(uri, config)
-        return config
-      },
-      getDocumentSymbols: (uri: string) => {
-        return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
-      },
-    }
-
     let [configPath] = (
       await glob([`**/${CONFIG_FILE_GLOB}`], {
         cwd: folder,
@@ -325,6 +326,7 @@ async function createProjectService(
       setPnpApi(pnpApi)
     }
 
+    const configModified = fs.statSync(configPath).mtimeMs
     const configDir = path.dirname(configPath)
     let tailwindcss: any
     let postcss: any
@@ -355,6 +357,16 @@ async function createProjectService(
       tailwindcss = __non_webpack_require__(tailwindcssPath)
       tailwindcssVersion = tailwindcssPkg.version
       console.log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
+
+      if (
+        state.enabled &&
+        postcssVersion === state.modules.postcss.version &&
+        tailwindcssVersion === state.modules.tailwindcss.version &&
+        configPath === state.configPath &&
+        configModified === state.configModified
+      ) {
+        return
+      }
 
       try {
         resolveConfigFn = __non_webpack_require__(resolveFrom(tailwindDir, './resolveConfig.js'))
@@ -432,6 +444,7 @@ async function createProjectService(
     }
 
     state.configPath = configPath
+    state.configModified = configModified
     state.modules = {
       tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
       postcss: { version: postcssVersion, module: postcss },
