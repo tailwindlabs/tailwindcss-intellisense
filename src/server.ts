@@ -68,6 +68,7 @@ import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/code
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
 import { fromRatio, names as namedColors } from '@ctrl/tinycolor'
 import { debounce } from 'debounce'
+import { getModuleDependencies } from './util/getModuleDependencies'
 // import postcssLoadConfig from 'postcss-load-config'
 
 const CONFIG_FILE_GLOB = 'tailwind.config.{js,cjs}'
@@ -121,6 +122,12 @@ function deletePropertyPath(obj: any, path: string | string[]): void {
   }
 
   delete obj[path.pop()]
+}
+
+function getConfigId(configPath: string, configDependencies: string[]): string {
+  return JSON.stringify(
+    [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs])
+  )
 }
 
 interface ProjectService {
@@ -335,7 +342,8 @@ async function createProjectService(
       setPnpApi(pnpApi)
     }
 
-    const configModified = fs.statSync(configPath).mtimeMs
+    const configDependencies = getModuleDependencies(configPath)
+    const configId = getConfigId(configPath, configDependencies)
     const configDir = path.dirname(configPath)
     let tailwindcss: any
     let postcss: any
@@ -372,7 +380,7 @@ async function createProjectService(
         postcssVersion === state.modules.postcss.version &&
         tailwindcssVersion === state.modules.tailwindcss.version &&
         configPath === state.configPath &&
-        configModified === state.configModified
+        configId === state.configId
       ) {
         return
       }
@@ -452,7 +460,6 @@ async function createProjectService(
     }
 
     state.configPath = configPath
-    state.configModified = configModified
     state.modules = {
       tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
       postcss: { version: postcssVersion, module: postcss },
@@ -593,17 +600,13 @@ async function createProjectService(
       return exports
     })
 
-    hook.watch()
     let config
     try {
       config = __non_webpack_require__(state.configPath)
     } catch (error) {
-      hook.unwatch()
       hook.unhook()
       throw error
     }
-
-    hook.unwatch()
 
     let postcssResult: Result
     try {
@@ -656,8 +659,11 @@ async function createProjectService(
     if (state.dependencies) {
       watcher.unwatch(state.dependencies)
     }
-    state.dependencies = hook.deps
+    state.dependencies = getModuleDependencies(state.configPath)
+    console.log({ deps: state.dependencies })
     watcher.add(state.dependencies)
+
+    state.configId = getConfigId(state.configPath, state.dependencies)
 
     state.config = resolveConfig.module(config)
     state.separator = typeof userSeperator === 'string' ? userSeperator : ':'

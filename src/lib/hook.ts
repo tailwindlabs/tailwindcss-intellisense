@@ -6,7 +6,6 @@ import Module from 'module'
 export default class Hook {
   cache = {}
   deps: string[] = []
-  private _watching: boolean = false
   private _unhooked: boolean = false
   private _origRequire = Module.prototype.require
   private _require: (req: string) => any
@@ -50,9 +49,6 @@ export default class Hook {
       let exports = self._origRequire.apply(this, arguments)
 
       if (filename !== find) {
-        if (self._watching) {
-          self.deps.push(filename)
-        }
         return exports
       }
 
@@ -80,13 +76,5 @@ export default class Hook {
     if (this._require === Module.prototype.require) {
       Module.prototype.require = this._origRequire
     }
-  }
-
-  watch() {
-    this._watching = true
-  }
-
-  unwatch() {
-    this._watching = false
   }
 }
