@@ -76,6 +76,8 @@ Enable completions when using [Emmet](https://emmet.io/)-style syntax, for examp
 
 Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions. **Default: `true`**
 
+> Note that `editor.colorDecorators` must be enabled for color decorators to be shown.
+
 ### `tailwindCSS.showPixelEquivalents`
 
 Show `px` equivalents for `rem` CSS values in completions and hovers. **Default: `true`**
