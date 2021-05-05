@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+- Add support for `jit` mode
+- General stability and reliability improvements
+
+## 0.5.10
+
+- Update output channel name (#262)
+- Fix initialisation failure when using "jit" mode with tailwindcss v2.1 (#296)
+
 ## 0.5.9
 
 - Add `focus-visible`, `checked`, `motion-safe`, `motion-reduce`, and `dark`  to `@variants` completions
