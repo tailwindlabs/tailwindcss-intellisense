@@ -11,7 +11,7 @@ import {
   isInvalidTailwindDirectiveDiagnostic,
   isInvalidScreenDiagnostic,
   isInvalidVariantDiagnostic,
-  isIncorrectVariantOrderDiagnostic,
+  isRecommendedVariantOrderDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
@@ -63,7 +63,7 @@ export async function doCodeActions(state: State, params: CodeActionParams): Pro
         isInvalidTailwindDirectiveDiagnostic(diagnostic) ||
         isInvalidScreenDiagnostic(diagnostic) ||
         isInvalidVariantDiagnostic(diagnostic) ||
-        isIncorrectVariantOrderDiagnostic(diagnostic)
+        isRecommendedVariantOrderDiagnostic(diagnostic)
       ) {
         return provideSuggestionCodeActions(state, params, diagnostic)
       }

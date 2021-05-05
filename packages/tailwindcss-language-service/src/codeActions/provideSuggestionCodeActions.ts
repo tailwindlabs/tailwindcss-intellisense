@@ -5,7 +5,7 @@ import {
   InvalidTailwindDirectiveDiagnostic,
   InvalidScreenDiagnostic,
   InvalidVariantDiagnostic,
-  IncorrectVariantOrderDiagnostic,
+  RecommendedVariantOrderDiagnostic,
 } from '../diagnostics/types'
 
 export function provideSuggestionCodeActions(
@@ -16,7 +16,7 @@ export function provideSuggestionCodeActions(
     | InvalidTailwindDirectiveDiagnostic
     | InvalidScreenDiagnostic
     | InvalidVariantDiagnostic
-    | IncorrectVariantOrderDiagnostic
+    | RecommendedVariantOrderDiagnostic
 ): CodeAction[] {
   return diagnostic.suggestions.map((suggestion) => ({
     title: `Replace with '${suggestion}'`,

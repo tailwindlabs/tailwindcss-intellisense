@@ -48,7 +48,7 @@ export type Settings = {
       invalidVariant: DiagnosticSeveritySetting
       invalidConfigPath: DiagnosticSeveritySetting
       invalidTailwindDirective: DiagnosticSeveritySetting
-      incorrectVariantOrder: DiagnosticSeveritySetting
+      recommendedVariantOrder: DiagnosticSeveritySetting
     }
     experimental: {
       classRegex: string[]

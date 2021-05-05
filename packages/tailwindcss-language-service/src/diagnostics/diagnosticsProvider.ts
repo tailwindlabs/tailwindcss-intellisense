@@ -7,7 +7,7 @@ import { getInvalidScreenDiagnostics } from './getInvalidScreenDiagnostics'
 import { getInvalidVariantDiagnostics } from './getInvalidVariantDiagnostics'
 import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnostics'
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
-import { getIncorrectVariantOrderDiagnostics } from './getIncorrectVariantOrderDiagnostics'
+import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -19,7 +19,7 @@ export async function doValidate(
     DiagnosticKind.InvalidVariant,
     DiagnosticKind.InvalidConfigPath,
     DiagnosticKind.InvalidTailwindDirective,
-    DiagnosticKind.IncorrectVariantOrder,
+    DiagnosticKind.RecommendedVariantOrder,
   ]
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
@@ -44,8 +44,8 @@ export async function doValidate(
         ...(only.includes(DiagnosticKind.InvalidTailwindDirective)
           ? getInvalidTailwindDirectiveDiagnostics(state, document, settings)
           : []),
-        ...(only.includes(DiagnosticKind.IncorrectVariantOrder)
-          ? await getIncorrectVariantOrderDiagnostics(state, document, settings)
+        ...(only.includes(DiagnosticKind.RecommendedVariantOrder)
+          ? await getRecommendedVariantOrderDiagnostics(state, document, settings)
           : []),
       ]
     : []

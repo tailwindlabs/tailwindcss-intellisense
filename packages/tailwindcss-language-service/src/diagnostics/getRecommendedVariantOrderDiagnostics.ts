@@ -1,22 +1,22 @@
 import { State, Settings } from '../util/state'
 import type { TextDocument } from 'vscode-languageserver'
-import { IncorrectVariantOrderDiagnostic, DiagnosticKind } from './types'
+import { RecommendedVariantOrderDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import * as jit from '../util/jit'
 import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
 import { equalExact } from '../util/array'
 
-export async function getIncorrectVariantOrderDiagnostics(
+export async function getRecommendedVariantOrderDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings
-): Promise<IncorrectVariantOrderDiagnostic[]> {
+): Promise<RecommendedVariantOrderDiagnostic[]> {
   if (!state.jit) return []
 
-  let severity = settings.tailwindCSS.lint.incorrectVariantOrder
+  let severity = settings.tailwindCSS.lint.recommendedVariantOrder
   if (severity === 'ignore') return []
 
-  let diagnostics: IncorrectVariantOrderDiagnostic[] = []
+  let diagnostics: RecommendedVariantOrderDiagnostic[] = []
   const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
@@ -34,7 +34,7 @@ export async function getIncorrectVariantOrderDiagnostics(
 
       if (!equalExact(variants, sortedVariants)) {
         diagnostics.push({
-          code: DiagnosticKind.IncorrectVariantOrder,
+          code: DiagnosticKind.RecommendedVariantOrder,
           suggestions: [
             [...sortedVariants, className.className.substr(offset)].join(state.separator),
           ],
