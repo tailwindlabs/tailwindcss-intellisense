@@ -6,7 +6,7 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation/#1-install-tailwind-via-npm) and a [Tailwind config file](https://tailwindcss.com/docs/installation/#3-create-your-tailwind-config-file-optional) named `tailwind.config.js` or `tailwind.js` in your workspace.
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.js` in your workspace.
 
 ## Features
 
@@ -66,12 +66,6 @@ This setting allows you to add additional language support. The key of each entr
 
 Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. **Default: `false`**
 
-```json
-{
-  "tailwindCSS.emmetCompletions": true
-}
-```
-
 ### `tailwindCSS.colorDecorators`
 
 Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions. **Default: `true`**
@@ -122,6 +116,6 @@ Class names on the same HTML element which apply the same CSS property or proper
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
-- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.js` or `tailwind.js`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation#create-your-configuration-file).
+- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.js`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation#create-your-configuration-file).
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
 - Make sure your VS Code settings aren’t causing your Tailwind config file to be excluded from search, for example via the `search.exclude` setting.
