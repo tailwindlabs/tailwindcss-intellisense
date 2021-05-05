@@ -156,6 +156,17 @@
           "markdownDescription": "Unknown value used with the [`@tailwind` directive](https://tailwindcss.com/docs/functions-and-directives/#tailwind)",
           "scope": "language-overridable"
         },
+        "tailwindCSS.lint.recommendedVariantOrder": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "Class variants not in the recommended order (applies in [JIT mode](https://tailwindcss.com/docs/just-in-time-mode) only)",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.experimental.classRegex": {
           "type": "array",
           "scope": "language-overridable"
