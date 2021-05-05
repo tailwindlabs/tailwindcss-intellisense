@@ -536,6 +536,7 @@ async function createProjectService(
     let userPurge
     let userVariants: any
     let userMode: any
+    let userPlugins: any
     let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
       if (typeof userSeperator !== 'string') {
@@ -560,25 +561,33 @@ async function createProjectService(
 
       // inject JIT `matchUtilities` function
       if (Array.isArray(exports.plugins)) {
-        for (let index in exports.plugins) {
-          let plugin = exports.plugins[index]
+        userPlugins = exports.plugins
+        exports.plugins = exports.plugins.map((plugin) => {
           if (typeof plugin === 'function') {
-            exports.plugins[index] = (...args) => {
+            let newPlugin = (...args) => {
               if (!args[0].matchUtilities) {
                 args[0].matchUtilities = () => {}
               }
               return plugin(...args)
             }
-          } else if (plugin.handler) {
-            let oldHandler = plugin.handler
-            plugin.handler = (...args) => {
-              if (!args[0].matchUtilities) {
-                args[0].matchUtilities = () => {}
-              }
-              return oldHandler(...args)
+            // @ts-ignore
+            newPlugin.__intellisense_cache_bust = Math.random()
+            return newPlugin
+          }
+          if (plugin.handler) {
+            return {
+              ...plugin,
+              handler: (...args) => {
+                if (!args[0].matchUtilities) {
+                  args[0].matchUtilities = () => {}
+                }
+                return plugin.handler(...args)
+              },
+              __intellisense_cache_bust: Math.random(),
             }
           }
-        }
+          return plugin
+        })
       }
 
       return exports
@@ -639,6 +648,9 @@ async function createProjectService(
     }
     if (typeof userMode !== 'undefined') {
       config.mode = userMode
+    }
+    if (typeof userPlugins !== 'undefined') {
+      config.plugins = userPlugins
     }
 
     if (state.dependencies) {
