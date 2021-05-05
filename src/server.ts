@@ -784,6 +784,7 @@ function runPlugin(
       addUtilities: () => {},
       addComponents: () => {},
       addBase: () => {},
+      matchUtilities: () => {},
       addVariant: () => {},
       e: (x) => x,
       prefix: (x) => x,
