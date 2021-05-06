@@ -660,7 +660,6 @@ async function createProjectService(
       watcher.unwatch(state.dependencies)
     }
     state.dependencies = getModuleDependencies(state.configPath)
-    console.log({ deps: state.dependencies })
     watcher.add(state.dependencies)
 
     state.configId = getConfigId(state.configPath, state.dependencies)
