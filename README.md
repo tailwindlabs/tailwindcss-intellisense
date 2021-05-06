@@ -112,6 +112,10 @@ Unknown or invalid path used with the [`theme` helper](https://tailwindcss.com/d
 
 Class names on the same HTML element which apply the same CSS property or properties. **Default: `warning`**
 
+#### `tailwindCSS.lint.recommendedVariantOrder`
+
+Class variants not in the recommended order (applies in [JIT mode](https://tailwindcss.com/docs/just-in-time-mode) only). **Default: `warning`**
+
 ## Troubleshooting
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
