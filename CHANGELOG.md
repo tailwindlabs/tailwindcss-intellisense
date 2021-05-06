@@ -2,7 +2,7 @@
 
 ## 0.6.0
 
-- Add support for `jit` mode
+- Add support for [JIT mode](https://tailwindcss.com/docs/just-in-time-mode)
 - General stability and reliability improvements
 
 ## 0.5.10
