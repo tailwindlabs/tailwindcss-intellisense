@@ -26,7 +26,7 @@ import {
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import { showError, SilentError } from './util/error'
+import { formatError, showError, SilentError } from './util/error'
 import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
@@ -94,12 +94,12 @@ declare var __non_webpack_require__: typeof require
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
 
-// console.log = connection.console.log.bind(connection.console)
-// console.error = connection.console.error.bind(connection.console)
+console.log = connection.console.log.bind(connection.console)
+console.error = connection.console.error.bind(connection.console)
 
-// process.on('unhandledRejection', (e: any) => {
-//   connection.console.error(formatError(`Unhandled exception`, e))
-// })
+process.on('unhandledRejection', (e: any) => {
+  connection.console.error(formatError(`Unhandled exception`, e))
+})
 
 function normalizeFileNameToFsPath(fileName: string) {
   return URI.file(fileName).fsPath
