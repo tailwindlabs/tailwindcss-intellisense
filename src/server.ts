@@ -438,6 +438,11 @@ async function createProjectService(
               resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
             ).generateRules,
           },
+          setupContext: {
+            module: __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
+            ).default,
+          },
         }
       } catch (_) {
         try {
@@ -446,6 +451,11 @@ async function createProjectService(
               module: __non_webpack_require__(
                 resolveFrom(configDir, 'tailwindcss/jit/lib/generateRules')
               ).generateRules,
+            },
+            setupContext: {
+              module: __non_webpack_require__(
+                resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext')
+              ),
             },
           }
         } catch (_) {}
@@ -676,19 +686,7 @@ async function createProjectService(
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
 
     if (state.jit) {
-      let setupContext
-
-      try {
-        setupContext = __non_webpack_require__(
-          resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/jit/lib/setupContext')
-        ).default
-      } catch (_) {
-        setupContext = __non_webpack_require__(
-          resolveFrom(path.dirname(state.configPath), 'tailwindcss/jit/lib/setupContext')
-        )
-      }
-
-      state.jitContext = setupContext(state.configPath)(
+      state.jitContext = state.modules.jit.setupContext.module(state.configPath)(
         { opts: {}, messages: [] },
         state.modules.postcss.module.root()
       )

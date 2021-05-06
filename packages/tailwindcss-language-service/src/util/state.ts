@@ -76,7 +76,7 @@ export interface State {
     postcss?: { version: string; module: Postcss }
     postcssSelectorParser?: { module: any }
     resolveConfig?: { module: any }
-    jit?: { generateRules: { module: any } }
+    jit?: { generateRules: { module: any }; setupContext: { module: any } }
   }
   browserslist?: string[]
   featureFlags?: FeatureFlags
