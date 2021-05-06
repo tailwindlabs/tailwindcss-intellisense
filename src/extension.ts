@@ -37,7 +37,7 @@ const colorNames = Object.keys(namedColors)
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
-const CONFIG_FILE_GLOB = 'tailwind.config.{js,cjs}'
+const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()

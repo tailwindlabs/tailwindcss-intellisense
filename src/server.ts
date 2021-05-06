@@ -71,7 +71,7 @@ import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 // import postcssLoadConfig from 'postcss-load-config'
 
-const CONFIG_FILE_GLOB = 'tailwind.config.{js,cjs}'
+const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 const TRIGGER_CHARACTERS = [
   // class attributes
   '"',
