@@ -435,16 +435,21 @@ async function createProjectService(
         jitModules = {
           generateRules: {
             module: __non_webpack_require__(
-              resolveFrom(
-                configDir,
-                semver.gte(tailwindcssVersion, '2.1.3')
-                  ? 'tailwindcss/lib/jit/lib/generateRules'
-                  : 'tailwindcss/jit/lib/generateRules'
-              )
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
             ).generateRules,
           },
         }
-      } catch (_) {}
+      } catch (_) {
+        try {
+          jitModules = {
+            generateRules: {
+              module: __non_webpack_require__(
+                resolveFrom(configDir, 'tailwindcss/jit/lib/generateRules')
+              ).generateRules,
+            },
+          }
+        } catch (_) {}
+      }
     } catch (error) {
       throw new SilentError(error.message)
       // TODO: force mode
@@ -670,13 +675,17 @@ async function createProjectService(
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
 
     if (state.jit) {
-      let setupContext = semver.gte(tailwindcss.version, '2.1.3')
-        ? __non_webpack_require__(
-            resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/jit/lib/setupContext')
-          ).default
-        : __non_webpack_require__(
-            resolveFrom(path.dirname(state.configPath), 'tailwindcss/jit/lib/setupContext')
-          )
+      let setupContext
+
+      try {
+        setupContext = __non_webpack_require__(
+          resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/jit/lib/setupContext')
+        ).default
+      } catch (_) {
+        setupContext = __non_webpack_require__(
+          resolveFrom(path.dirname(state.configPath), 'tailwindcss/jit/lib/setupContext')
+        )
+      }
 
       state.jitContext = setupContext(state.configPath)(
         { opts: {}, messages: [] },
