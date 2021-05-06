@@ -565,11 +565,12 @@ async function createProjectService(
         state.jit = true
         userVariants = exports.variants
         exports.variants = []
-        userMode = exports.mode
-        delete exports.mode
       } else {
         state.jit = false
       }
+
+      userMode = exports.mode
+      delete exports.mode
 
       // inject JIT `matchUtilities` function
       if (Array.isArray(exports.plugins)) {
