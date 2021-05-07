@@ -4,6 +4,7 @@
 
 - Add support for [JIT mode](https://tailwindcss.com/docs/just-in-time-mode)
 - General stability and reliability improvements
+- Change `tailwindCSS.colorDecorators` setting to a boolean. Note that `editor.colorDecorators` must be enabled for decorators to render.
 
 ## 0.5.10
 
