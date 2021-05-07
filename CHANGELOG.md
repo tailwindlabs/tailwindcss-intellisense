@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Fix error caused by incorrect feature flags import
+
 ## 0.6.0
 
 - Add support for [JIT mode](https://tailwindcss.com/docs/just-in-time-mode)
