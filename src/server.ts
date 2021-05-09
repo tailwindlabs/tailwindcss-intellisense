@@ -428,7 +428,8 @@ async function createProjectService(
       }
 
       try {
-        featureFlags = __non_webpack_require__(resolveFrom(tailwindDir, './lib/featureFlags.js')).default
+        featureFlags = __non_webpack_require__(resolveFrom(tailwindDir, './lib/featureFlags.js'))
+          .default
       } catch (_) {}
 
       try {
