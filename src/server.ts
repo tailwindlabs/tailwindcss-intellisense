@@ -586,6 +586,9 @@ async function createProjectService(
       if (Array.isArray(exports.plugins)) {
         userPlugins = exports.plugins
         exports.plugins = exports.plugins.map((plugin) => {
+          if (plugin.__isOptionsFunction) {
+            plugin = plugin()
+          }
           if (typeof plugin === 'function') {
             let newPlugin = (...args) => {
               if (!args[0].matchUtilities) {
