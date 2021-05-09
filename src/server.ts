@@ -317,8 +317,6 @@ async function createProjectService(
       throw new SilentError('No config file found.')
     }
 
-    console.log(`Found Tailwind CSS config file: ${configPath}`)
-
     const pnpPath = findUp.sync(
       (dir) => {
         let pnpFile = path.join(dir, '.pnp.js')
@@ -359,7 +357,6 @@ async function createProjectService(
     try {
       const tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
       const tailwindcssPkgPath = resolveFrom(configDir, 'tailwindcss/package.json')
-      const tailwindcssPkg = __non_webpack_require__(tailwindcssPkgPath)
       const tailwindDir = path.dirname(tailwindcssPkgPath)
 
       const postcssPath = resolveFrom(tailwindDir, 'postcss')
@@ -367,13 +364,8 @@ async function createProjectService(
       const postcssDir = path.dirname(postcssPkgPath)
       const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
 
-      postcss = __non_webpack_require__(postcssPath)
       postcssVersion = __non_webpack_require__(postcssPkgPath).version
-      postcssSelectorParser = __non_webpack_require__(postcssSelectorParserPath)
-      console.log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
-      tailwindcss = __non_webpack_require__(tailwindcssPath)
-      tailwindcssVersion = tailwindcssPkg.version
-      console.log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
+      tailwindcssVersion = __non_webpack_require__(tailwindcssPkgPath).version
 
       if (
         state.enabled &&
@@ -384,6 +376,15 @@ async function createProjectService(
       ) {
         return
       }
+
+      console.log(`Found Tailwind CSS config file: ${configPath}`)
+
+      postcss = __non_webpack_require__(postcssPath)
+      postcssSelectorParser = __non_webpack_require__(postcssSelectorParserPath)
+      console.log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
+
+      tailwindcss = __non_webpack_require__(tailwindcssPath)
+      console.log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       try {
         resolveConfigFn = __non_webpack_require__(resolveFrom(tailwindDir, './resolveConfig.js'))
