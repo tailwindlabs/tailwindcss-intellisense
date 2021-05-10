@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.3
+
+- [JIT] Fix error when using `@apply` in a plugin (#319)
+
+## 0.6.2
+
+- Fix error when using a `withOptions` plugin without any options
+
 ## 0.6.1
 
 - Fix error caused by incorrect feature flags import
