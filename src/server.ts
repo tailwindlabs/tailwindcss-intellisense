@@ -445,6 +445,11 @@ async function createProjectService(
               resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
             ).default,
           },
+          expandApplyAtRules: {
+            module: __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules')
+            ).default,
+          },
         }
       } catch (_) {
         try {
@@ -457,6 +462,11 @@ async function createProjectService(
             setupContext: {
               module: __non_webpack_require__(
                 resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext')
+              ),
+            },
+            expandApplyAtRules: {
+              module: __non_webpack_require__(
+                resolveFrom(configDir, 'tailwindcss/jit/lib/expandApplyAtRules')
               ),
             },
           }
@@ -491,6 +501,10 @@ async function createProjectService(
     if (applyComplexClasses && !applyComplexClasses.default.__patched) {
       let _applyComplexClasses = applyComplexClasses.default
       applyComplexClasses.default = (config, ...args) => {
+        if (state.jit) {
+          return state.modules.jit.expandApplyAtRules.module(state.jitContext)
+        }
+
         let configClone = klona(config)
         configClone.separator = typeof state.separator === 'undefined' ? ':' : state.separator
 
@@ -629,6 +643,15 @@ async function createProjectService(
       throw error
     }
 
+    if (state.jit) {
+      state.jitContext = state.modules.jit.setupContext.module(state.configPath)(
+        { opts: {}, messages: [] },
+        state.modules.postcss.module.root()
+      )
+      state.jitContext.tailwindConfig.separator =
+        typeof userSeperator === 'undefined' ? ':' : userSeperator
+    }
+
     let postcssResult: Result
     try {
       postcssResult = await postcss
@@ -689,13 +712,6 @@ async function createProjectService(
     state.separator = typeof userSeperator === 'string' ? userSeperator : ':'
     state.plugins = await getPlugins(config)
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
-
-    if (state.jit) {
-      state.jitContext = state.modules.jit.setupContext.module(state.configPath)(
-        { opts: {}, messages: [] },
-        state.modules.postcss.module.root()
-      )
-    }
 
     state.variants = getVariants(state)
 

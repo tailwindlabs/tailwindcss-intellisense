@@ -13,20 +13,16 @@ export function generateRules(state: State, classNames: string[]): { root: Root;
     .module(new Set(classNames), state.jitContext)
     .sort(([a], [z]) => bigSign(a - z))
 
-  let actualRules: Rule[] = []
+  let root = state.modules.postcss.module.root({ nodes: rules.map(([, rule]) => rule) })
+  state.modules.jit.expandApplyAtRules.module(state.jitContext)(root)
 
-  for (let [, rule] of rules) {
-    if (rule.type === 'rule') {
-      actualRules.push(rule)
-    } else if (rule.walkRules) {
-      rule.walkRules((subRule) => {
-        actualRules.push(subRule)
-      })
-    }
-  }
+  let actualRules: Rule[] = []
+  root.walkRules((subRule) => {
+    actualRules.push(subRule)
+  })
 
   return {
-    root: state.modules.postcss.module.root({ nodes: rules.map(([, rule]) => rule) }),
+    root,
     rules: actualRules,
   }
 }
