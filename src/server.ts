@@ -644,7 +644,7 @@ async function createProjectService(
     }
 
     if (state.jit) {
-      state.jitContext = state.modules.jit.setupContext.module(state.configPath)(
+      state.jitContext = state.modules.jit.setupContext.module(state.configPath, new Set())(
         { opts: {}, messages: [] },
         state.modules.postcss.module.root()
       )
