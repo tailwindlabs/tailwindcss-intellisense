@@ -712,8 +712,10 @@ async function createProjectService(
     state.separator = typeof userSeperator === 'string' ? userSeperator : ':'
     state.plugins = await getPlugins(config)
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
-
     state.variants = getVariants(state)
+
+    let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
+    state.screens = isObject(screens) ? Object.keys(screens) : []
 
     state.enabled = true
 

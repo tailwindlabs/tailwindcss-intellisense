@@ -176,16 +176,13 @@ function classNameToAst(
   let context = meta.context
   let pseudo = meta.pseudo
   const globalContexts = state.classNames.context
-  let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
-  if (!isObject(screens)) screens = {}
-  screens = Object.keys(screens)
   const path = []
 
   for (let i = 0; i < classNameParts.length - 1; i++) {
     let part = classNameParts[i]
     let common = globalContexts[part]
     if (!common) return null
-    if (screens.includes(part)) {
+    if (state.screens.includes(part)) {
       path.push(`@screen ${part}`)
       context = context.filter((con) => !common.includes(con))
     }

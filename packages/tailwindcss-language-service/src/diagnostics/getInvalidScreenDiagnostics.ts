@@ -31,16 +31,14 @@ export function getInvalidScreenDiagnostics(
     let text = document.getText(range)
     let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
 
-    let screens = Object.keys(dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {})))
-
     matches.forEach((match) => {
-      if (screens.includes(match.groups.screen)) {
+      if (state.screens.includes(match.groups.screen)) {
         return null
       }
 
       let message = `The screen '${match.groups.screen}' does not exist in your theme config.`
       let suggestions: string[] = []
-      let suggestion = closest(match.groups.screen, screens)
+      let suggestion = closest(match.groups.screen, state.screens)
 
       if (suggestion) {
         suggestions.push(suggestion)

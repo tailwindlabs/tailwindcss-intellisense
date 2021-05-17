@@ -70,6 +70,7 @@ export interface State {
   separator?: string
   dependencies?: string[]
   plugins?: any
+  screens?: string[]
   variants?: Record<string, string | null>
   modules?: {
     tailwindcss?: { version: string; module: any }

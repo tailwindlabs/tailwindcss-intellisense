@@ -6,6 +6,7 @@ import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
+import dlv from 'dlv'
 
 export function getInvalidVariantDiagnostics(
   state: State,
@@ -26,6 +27,12 @@ export function getInvalidVariantDiagnostics(
     ranges.push(...boundaries.css)
   }
 
+  let possibleVariants = Object.keys(state.variants)
+  if (state.jit) {
+    possibleVariants.unshift('responsive')
+    possibleVariants = possibleVariants.filter((v) => !state.screens.includes(v))
+  }
+
   ranges.forEach((range) => {
     let text = document.getText(range)
     let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
@@ -36,13 +43,13 @@ export function getInvalidVariantDiagnostics(
 
       for (let i = 0; i < variants.length; i += 2) {
         let variant = variants[i].trim()
-        if (Object.keys(state.variants).includes(variant)) {
+        if (possibleVariants.includes(variant)) {
           continue
         }
 
         let message = `The variant '${variant}' does not exist.`
         let suggestions: string[] = []
-        let suggestion = closest(variant, Object.keys(state.variants))
+        let suggestion = closest(variant, possibleVariants)
 
         if (suggestion) {
           suggestions.push(suggestion)

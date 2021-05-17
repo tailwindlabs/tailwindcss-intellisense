@@ -633,11 +633,17 @@ function provideVariantsDirectiveCompletions(
 
   if (/\s+/.test(parts[parts.length - 1])) return null
 
+  let possibleVariants = Object.keys(state.variants)
   const existingVariants = parts.slice(0, parts.length - 1)
+
+  if (state.jit) {
+    possibleVariants.unshift('responsive')
+    possibleVariants = possibleVariants.filter((v) => !state.screens.includes(v))
+  }
 
   return {
     isIncomplete: false,
-    items: Object.keys(state.variants)
+    items: possibleVariants
       .filter((v) => existingVariants.indexOf(v) === -1)
       .map((variant, index) => ({
         // TODO: detail
