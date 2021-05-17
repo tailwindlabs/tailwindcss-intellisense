@@ -228,10 +228,10 @@ async function createProjectService(
       }
     })
 
-  async function registerCapabilities(): Promise<void> {
+  function registerCapabilities(): void {
     if (supportsDynamicRegistration(connection, params)) {
       if (registrations) {
-        ;(await registrations).dispose()
+        registrations.then((r) => r.dispose())
       }
 
       let capabilities = BulkRegistration.create()
