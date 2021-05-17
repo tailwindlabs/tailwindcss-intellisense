@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.4
+
+- Update minimum VS Code version requirement to `^1.52.0`
+- Potential fix for language feature duplication (#316, #326, #327)
+- [JIT] Fix `@variants` completions and diagnostics (#324)
+
 ## 0.6.3
 
 - [JIT] Fix error when using `@apply` in a plugin (#319)
