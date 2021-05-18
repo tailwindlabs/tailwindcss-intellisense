@@ -82,8 +82,15 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   return isObject(langs) ? langs : {}
 }
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
+  let prod = path.join('dist', 'server', 'tailwindServer.js')
+
+  try {
+    await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
+    module = context.asAbsolutePath(prod)
+  } catch (_) {}
+
   let outputChannel: OutputChannel
 
   context.subscriptions.push(

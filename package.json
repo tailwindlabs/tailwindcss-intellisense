@@ -185,12 +185,12 @@
     }
   },
   "scripts": {
-    "dev": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
-    "build": "glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
+    "dev": "npm run clean && glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} --watch -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\"",
+    "build": "npm run clean && glob-exec --foreach --parallel \"src/*.ts\" -- \"ncc build {{file}} -o dist/{{file.toString().replace(/^src\\//, '').replace(/\\.ts$/, '')}}\" && mv dist/server/index.js dist/server/tailwindServer.js && npm run minify",
     "minify": "glob-exec --foreach --parallel \"dist/**/*.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\"",
     "package": "vsce package",
     "publish": "vsce publish",
-    "vscode:prepublish": "npm run clean && npm run build && npm run minify",
+    "vscode:prepublish": "npm run build",
     "clean": "rimraf dist",
     "test": "jest"
   },
