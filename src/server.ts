@@ -85,6 +85,8 @@ const TRIGGER_CHARACTERS = [
   '[',
   // JIT "important" prefix
   '!',
+  // JIT opacity modifiers
+  '/',
 ] as const
 
 const colorNames = Object.keys(namedColors)
@@ -748,7 +750,7 @@ async function createProjectService(
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
-      return doComplete(state, document, params.position)
+      return doComplete(state, document, params.position, params.context)
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
       if (!state.enabled) return null

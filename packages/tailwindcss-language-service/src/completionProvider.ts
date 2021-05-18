@@ -7,6 +7,7 @@ import type {
   CompletionList,
   TextDocument,
   Position,
+  CompletionContext,
 } from 'vscode-languageserver'
 const dlv = require('dlv')
 import removeMeta from './util/removeMeta'
@@ -43,7 +44,8 @@ export function completionsFromClassList(
   classList: string,
   classListRange: Range,
   filter?: (item: CompletionItem) => boolean,
-  document?: TextDocument
+  document?: TextDocument,
+  context?: CompletionContext
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
@@ -62,6 +64,58 @@ export function completionsFromClassList(
   }
 
   if (state.jit) {
+    if (
+      context &&
+      (context.triggerKind === 1 ||
+        (context.triggerKind === 2 && context.triggerCharacter === '/')) &&
+      partialClassName.includes('/')
+    ) {
+      let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
+      let testClass = beforeSlash + '/[0]'
+      let { rules } = jit.generateRules(state, [testClass])
+      if (rules.length > 0) {
+        let opacities = dlv(state.config, 'theme.opacity', {})
+        if (!isObject(opacities)) {
+          opacities = {}
+        }
+        return {
+          isIncomplete: false,
+          items: Object.keys(opacities).map((opacity, index) => {
+            let className = `${beforeSlash}/${opacity}`
+            let kind: CompletionItemKind = 21
+            let documentation: string = null
+
+            const color = getColor(state, className)
+            if (color !== null) {
+              kind = 16
+              if (typeof color !== 'string') {
+                documentation = color.toRgbString().replace(/(^rgba\([^)]+) 0\)$/, '$1 0.001)')
+              }
+            }
+
+            return {
+              label: opacity,
+              detail: stringifyConfigValue(opacities[opacity]),
+              documentation,
+              kind,
+              sortText: naturalExpand(index),
+              data: [className],
+              textEdit: {
+                newText: opacity,
+                range: {
+                  ...replacementRange,
+                  start: {
+                    ...replacementRange.start,
+                    character: replacementRange.start.character + beforeSlash.length + 1,
+                  },
+                },
+              },
+            }
+          }),
+        }
+      }
+    }
+
     let allVariants = Object.keys(state.variants)
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
@@ -256,7 +310,8 @@ export function completionsFromClassList(
 function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): CompletionList {
   let str = document.getText({
     start: { line: Math.max(position.line - 10, 0), character: 0 },
@@ -299,7 +354,8 @@ function provideClassAttributeCompletions(
           end: position,
         },
         undefined,
-        document
+        document,
+        context
       )
     }
   } catch (_) {}
@@ -417,10 +473,11 @@ function provideAtApplyCompletions(
 function provideClassNameCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): CompletionList {
   if (isHtmlContext(state, document, position) || isJsContext(state, document, position)) {
-    return provideClassAttributeCompletions(state, document, position)
+    return provideClassAttributeCompletions(state, document, position, context)
   }
 
   if (isCssContext(state, document, position)) {
@@ -925,11 +982,16 @@ async function provideEmmetCompletions(
   })
 }
 
-export async function doComplete(state: State, document: TextDocument, position: Position) {
+export async function doComplete(
+  state: State,
+  document: TextDocument,
+  position: Position,
+  context?: CompletionContext
+) {
   if (state === null) return { items: [], isIncomplete: false }
 
   const result =
-    provideClassNameCompletions(state, document, position) ||
+    provideClassNameCompletions(state, document, position, context) ||
     provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
@@ -958,8 +1020,13 @@ export async function resolveCompletionItem(
     return item
   }
 
+  if (!Array.isArray(item.data)) {
+    return item
+  }
+
   if (state.jit) {
     if (item.kind === 9) return item
+    if (item.detail && item.documentation) return item
     let { root, rules } = jit.generateRules(state, [item.data.join(state.separator)])
     if (rules.length === 0) return item
     if (!item.detail) {
