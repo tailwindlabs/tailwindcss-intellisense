@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+
+- [JIT] Add [opacity modifier](https://github.com/tailwindlabs/tailwindcss/pull/4348) completions
+- Update language server filename
+
 ## 0.6.4
 
 - Update minimum VS Code version requirement to `^1.52.0`
