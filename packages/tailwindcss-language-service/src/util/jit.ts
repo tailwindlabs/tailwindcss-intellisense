@@ -58,10 +58,15 @@ export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2)
     .replace(/^(?:    )+/gm, (indent: string) => ' '.repeat((indent.length / 4) * tabSize))
 }
 
-export function stringifyDecls(rule: Rule): string {
+export async function stringifyDecls(state: State, rule: Rule, uri?: string): Promise<string> {
+  let settings = await state.editor.getConfiguration(uri)
+  let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
+  let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
+
   let result = []
   rule.walkDecls(({ prop, value }) => {
-    result.push(`${prop}: ${value};`)
+    let px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
+    result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''};`)
   })
   return result.join(' ')
 }

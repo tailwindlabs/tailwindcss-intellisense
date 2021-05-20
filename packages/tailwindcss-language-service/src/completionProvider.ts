@@ -1031,7 +1031,7 @@ export async function resolveCompletionItem(
     if (rules.length === 0) return item
     if (!item.detail) {
       if (rules.length === 1) {
-        item.detail = jit.stringifyDecls(rules[0])
+        item.detail = await jit.stringifyDecls(state, rules[0])
       } else {
         item.detail = `${rules.length} rules`
       }
