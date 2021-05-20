@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.6
+
+- [JIT] Show `rem` pixel equivalents in completion item details (#332)
+- [JIT] Fix initialisation when `mode` is set in a preset (#333)
+- Fix completions and hovers inside `<style>` in JavaScript files (#334)
+- Fix module resolution when path has a `#` character (#331)
+
 ## 0.6.5
 
 - [JIT] Add [opacity modifier](https://github.com/tailwindlabs/tailwindcss/pull/4348) completions
