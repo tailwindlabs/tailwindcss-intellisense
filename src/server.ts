@@ -577,6 +577,9 @@ async function createProjectService(
     let userVariants: any
     let userMode: any
     let userPlugins: any
+    let presetModes: any[] = []
+    let presetVariants: any[] = []
+
     let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
       userSeperator = dlv(exports, sepLocation)
       if (typeof userSeperator !== 'string') {
@@ -589,16 +592,37 @@ async function createProjectService(
         `__TWSEP__${typeof userSeperator === 'undefined' ? ':' : userSeperator}__TWSEP__`
       )
       exports.purge = []
-      if (state.modules.jit && exports.mode === 'jit') {
+
+      let mode: any
+      if (Array.isArray(exports.presets)) {
+        for (let preset of exports.presets) {
+          if (typeof preset.mode !== 'undefined') {
+            mode = preset.mode
+          }
+          presetModes.push(preset.mode)
+          delete preset.mode
+        }
+      }
+      if (typeof exports.mode !== 'undefined') {
+        mode = exports.mode
+      }
+      userMode = exports.mode
+      delete exports.mode
+
+      if (state.modules.jit && mode === 'jit') {
         state.jit = true
         userVariants = exports.variants
         exports.variants = []
+
+        if (Array.isArray(exports.presets)) {
+          for (let preset of exports.presets) {
+            presetVariants.push(preset.variants)
+            preset.variants = []
+          }
+        }
       } else {
         state.jit = false
       }
-
-      userMode = exports.mode
-      delete exports.mode
 
       // inject JIT `matchUtilities` function
       if (Array.isArray(exports.plugins)) {
@@ -700,6 +724,21 @@ async function createProjectService(
     }
     if (typeof userPlugins !== 'undefined') {
       config.plugins = userPlugins
+    }
+
+    for (let index in presetModes) {
+      if (typeof presetModes[index] === 'undefined') {
+        delete config.presets[index].mode
+      } else {
+        config.presets[index].mode = presetModes[index]
+      }
+    }
+    for (let index in presetVariants) {
+      if (typeof presetVariants[index] === 'undefined') {
+        delete config.presets[index].variants
+      } else {
+        config.presets[index].variants = presetVariants[index]
+      }
     }
 
     if (state.dependencies) {
