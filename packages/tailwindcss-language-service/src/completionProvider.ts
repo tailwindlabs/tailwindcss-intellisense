@@ -476,12 +476,12 @@ function provideClassNameCompletions(
   position: Position,
   context?: CompletionContext
 ): CompletionList {
-  if (isHtmlContext(state, document, position) || isJsContext(state, document, position)) {
-    return provideClassAttributeCompletions(state, document, position, context)
-  }
-
   if (isCssContext(state, document, position)) {
     return provideAtApplyCompletions(state, document, position)
+  }
+
+  if (isHtmlContext(state, document, position) || isJsContext(state, document, position)) {
+    return provideClassAttributeCompletions(state, document, position, context)
   }
 
   return null
