@@ -22,5 +22,6 @@ export function setPnpApi(pnpApi: any): void {
 export default function resolveFrom(from?: string, id?: string): string {
   let result = resolver.resolveSync({}, from, id)
   if (result === false) throw Error()
-  return result
+  // https://github.com/webpack/enhanced-resolve/issues/282
+  return result.replace(/\0#/g, '#')
 }
