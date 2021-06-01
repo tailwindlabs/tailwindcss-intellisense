@@ -1,5 +1,4 @@
-export const DEFAULT_LANGUAGES = [
-  // html
+export const htmlLanguages = [
   'aspnetcorerazor',
   'blade',
   'django-html',
@@ -27,22 +26,19 @@ export const DEFAULT_LANGUAGES = [
   'razor',
   'slim',
   'twig',
-  // css
-  'css',
-  'less',
-  'postcss',
-  'sass',
-  'scss',
-  'stylus',
-  'sugarss',
-  // js
+]
+
+export const cssLanguages = ['css', 'less', 'postcss', 'sass', 'scss', 'stylus', 'sugarss']
+
+export const jsLanguages = [
   'javascript',
   'javascriptreact',
   'reason',
   'rescript',
   'typescript',
   'typescriptreact',
-  // mixed
-  'vue',
-  'svelte',
 ]
+
+export const specialLanguages = ['vue', 'svelte']
+
+export const languages = [...cssLanguages, ...htmlLanguages, ...jsLanguages, ...specialLanguages]

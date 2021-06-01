@@ -27,8 +27,8 @@ import {
   State as LanguageClientState,
   RevealOutputChannelOn,
 } from 'vscode-languageclient/node'
-import { DEFAULT_LANGUAGES } from './lib/languages'
-import isObject from './util/isObject'
+import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
+import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import { names as namedColors } from '@ctrl/tinycolor'
 
@@ -83,6 +83,7 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
 }
 
 export async function activate(context: ExtensionContext) {
+  console.log(Uri.parse(`command:editor.action.addCommentLine`).toString())
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
   let prod = path.join('dist', 'server', 'tailwindServer.js')
 
@@ -126,7 +127,7 @@ export async function activate(context: ExtensionContext) {
           const userLanguages = getUserLanguages(folder)
           if (userLanguages) {
             const userLanguageIds = Object.keys(userLanguages)
-            const newLanguages = dedupe([...DEFAULT_LANGUAGES, ...userLanguageIds])
+            const newLanguages = dedupe([...defaultLanguages, ...userLanguageIds])
             if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
               languages.set(folder.uri.toString(), newLanguages)
 
@@ -168,7 +169,7 @@ export async function activate(context: ExtensionContext) {
     if (!languages.has(folder.uri.toString())) {
       languages.set(
         folder.uri.toString(),
-        dedupe([...DEFAULT_LANGUAGES, ...Object.keys(getUserLanguages(folder))])
+        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
       )
     }
 
@@ -199,6 +200,15 @@ export async function activate(context: ExtensionContext) {
       outputChannel: outputChannel,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
+        async provideHover(document, position, token, next) {
+          let result = await next(document, position, token)
+          result.contents = result.contents.map((content) => {
+            // @ts-ignore
+            content.isTrusted = true
+            return content
+          })
+          return result
+        },
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections

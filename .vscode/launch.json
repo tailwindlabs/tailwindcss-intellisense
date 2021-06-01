@@ -7,10 +7,10 @@
       "request": "launch",
       "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+      "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/vscode-tailwindcss"],
       "stopOnEntry": false,
       "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/dist/extension/**/*.js"],
+      "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"]
       // "preLaunchTask": "npm: dev"
     },
     {
@@ -21,7 +21,7 @@
       "protocol": "inspector",
       "port": 6011,
       "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/dist/server/**/*.js"]
+      "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"]
     },
     {
       "type": "node",
@@ -31,7 +31,7 @@
       "protocol": "inspector",
       "port": 6012,
       "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/dist/server/**/*.js"]
+      "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"]
     }
   ]
 }

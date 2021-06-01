@@ -24,6 +24,7 @@
     "line-column": "1.0.2",
     "moo": "0.5.1",
     "multi-regexp2": "1.0.3",
+    "postcss": "8.2.6",
     "postcss-selector-parser": "6.0.2",
     "semver": "7.3.2",
     "sift-string": "0.0.2",
@@ -33,7 +34,7 @@
     "vscode-languageserver-textdocument": "1.0.1"
   },
   "devDependencies": {
-    "postcss": "8.2.6",
+    "prettier": "2.3.0",
     "tsdx": "0.14.1",
     "tslib": "2.2.0",
     "typescript": "4.2.4"

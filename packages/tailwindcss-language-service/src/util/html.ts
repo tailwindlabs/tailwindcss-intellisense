@@ -1,44 +1,13 @@
 import type { TextDocument, Position } from 'vscode-languageserver'
 import { State } from './state'
-
-export const HTML_LANGUAGES = [
-  'aspnetcorerazor',
-  'blade',
-  'django-html',
-  'edge',
-  'ejs',
-  'erb',
-  'gohtml',
-  'GoHTML',
-  'haml',
-  'handlebars',
-  'hbs',
-  'html',
-  'HTML (Eex)',
-  'HTML (EEx)',
-  'html-eex',
-  'jade',
-  'leaf',
-  'liquid',
-  'markdown',
-  'mdx',
-  'mustache',
-  'njk',
-  'nunjucks',
-  'php',
-  'razor',
-  'slim',
-  'twig',
-]
+import { htmlLanguages } from './languages'
 
 export function isHtmlDoc(state: State, doc: TextDocument): boolean {
-  const userHtmlLanguages = Object.keys(
-    state.editor.userLanguages
-  ).filter((lang) => HTML_LANGUAGES.includes(state.editor.userLanguages[lang]))
-
-  return (
-    [...HTML_LANGUAGES, ...userHtmlLanguages].indexOf(doc.languageId) !== -1
+  const userHtmlLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
+    htmlLanguages.includes(state.editor.userLanguages[lang])
   )
+
+  return [...htmlLanguages, ...userHtmlLanguages].indexOf(doc.languageId) !== -1
 }
 
 export function isVueDoc(doc: TextDocument): boolean {
@@ -49,11 +18,7 @@ export function isSvelteDoc(doc: TextDocument): boolean {
   return doc.languageId === 'svelte'
 }
 
-export function isHtmlContext(
-  state: State,
-  doc: TextDocument,
-  position: Position
-): boolean {
+export function isHtmlContext(state: State, doc: TextDocument, position: Position): boolean {
   let str = doc.getText({
     start: { line: 0, character: 0 },
     end: position,

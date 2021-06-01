@@ -3,16 +3,16 @@
     "module": "commonjs",
     "target": "es6",
     "lib": ["ES2019"],
-    "rootDir": ".",
+    "rootDir": "..",
     "sourceMap": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
-      "tailwindcss-language-service/*": ["packages/tailwindcss-language-service/*"]
+      "tailwindcss-language-service/*": ["../packages/tailwindcss-language-service/*"]
     }
   },
-  "include": ["src", "packages/tailwindcss-language-service"]
+  "include": ["src", "../packages/tailwindcss-language-service"]
 }
