@@ -116,6 +116,10 @@ Class names on the same HTML element which apply the same CSS property or proper
 
 Class variants not in the recommended order (applies in [JIT mode](https://tailwindcss.com/docs/just-in-time-mode) only). **Default: `warning`**
 
+#### `tailwindCSS.inspectPort`
+
+Enable the Node.js inspector agent for the language server and listen on the specified port. **Default: `null`**
+
 ## Troubleshooting
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
