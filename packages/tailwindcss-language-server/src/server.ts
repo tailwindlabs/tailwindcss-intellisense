@@ -431,21 +431,41 @@ async function createProjectService(
       }
 
       try {
-        featureFlags = __non_webpack_require__(resolveFrom(tailwindDir, './lib/featureFlags.js'))
-          .default
+        featureFlags = __non_webpack_require__(
+          resolveFrom(tailwindDir, './lib/featureFlags.js')
+        ).default
       } catch (_) {}
 
+      // stubs
+      let tailwindDirectives = new Set()
+      let root = postcss.root()
+      let result = { opts: {}, messages: [] }
+
       try {
+        let createContext
+
+        try {
+          let createContextFn = __non_webpack_require__(
+            resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils')
+          ).createContext
+          createContext = (state) => createContextFn(state.config)
+        } catch (_) {
+          // TODO: only for canary releases so can probably remove
+          let setupContext = __non_webpack_require__(
+            resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
+          ).default
+          createContext = (state) =>
+            setupContext(state.configPath, tailwindDirectives)(result, root)
+        }
+
         jitModules = {
           generateRules: {
             module: __non_webpack_require__(
               resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
             ).generateRules,
           },
-          setupContext: {
-            module: __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
-            ).default,
+          createContext: {
+            module: createContext,
           },
           expandApplyAtRules: {
             module: __non_webpack_require__(
@@ -455,16 +475,18 @@ async function createProjectService(
         }
       } catch (_) {
         try {
+          let setupContext = __non_webpack_require__(
+            resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext')
+          )
+
           jitModules = {
             generateRules: {
               module: __non_webpack_require__(
                 resolveFrom(configDir, 'tailwindcss/jit/lib/generateRules')
               ).generateRules,
             },
-            setupContext: {
-              module: __non_webpack_require__(
-                resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext')
-              ),
+            createContext: {
+              module: (state) => setupContext(state.configPath, tailwindDirectives)(result, root),
             },
             expandApplyAtRules: {
               module: __non_webpack_require__(
@@ -499,6 +521,14 @@ async function createProjectService(
     state.browserslist = browserslist
     state.featureFlags = featureFlags
     state.version = tailwindcssVersion
+
+    try {
+      state.corePlugins = Object.keys(
+        __non_webpack_require__(
+          resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/plugins/index.js')
+        )
+      )
+    } catch (_) {}
 
     if (applyComplexClasses && !applyComplexClasses.default.__patched) {
       let _applyComplexClasses = applyComplexClasses.default
@@ -572,25 +602,18 @@ async function createProjectService(
     const sepLocation = semver.gte(tailwindcss.version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
-    let userSeperator: string
-    let userPurge
-    let userVariants: any
-    let userMode: any
-    let userPlugins: any
     let presetModes: any[] = []
     let presetVariants: any[] = []
+    let originalConfig: any
 
     let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
-      userSeperator = dlv(exports, sepLocation)
-      if (typeof userSeperator !== 'string') {
-        userSeperator = undefined
+      originalConfig = klona(exports)
+
+      let separator = dlv(exports, sepLocation)
+      if (typeof separator !== 'string') {
+        separator = ''
       }
-      userPurge = exports.purge
-      dset(
-        exports,
-        sepLocation,
-        `__TWSEP__${typeof userSeperator === 'undefined' ? ':' : userSeperator}__TWSEP__`
-      )
+      dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
       exports.purge = []
 
       let mode: any
@@ -606,12 +629,10 @@ async function createProjectService(
       if (typeof exports.mode !== 'undefined') {
         mode = exports.mode
       }
-      userMode = exports.mode
       delete exports.mode
 
       if (state.modules.jit && mode === 'jit') {
         state.jit = true
-        userVariants = exports.variants
         exports.variants = []
 
         if (Array.isArray(exports.presets)) {
@@ -624,9 +645,16 @@ async function createProjectService(
         state.jit = false
       }
 
+      if (state.corePlugins) {
+        let corePluginsConfig = {}
+        for (let pluginName of state.corePlugins) {
+          corePluginsConfig[pluginName] = true
+        }
+        exports.corePlugins = corePluginsConfig
+      }
+
       // inject JIT `matchUtilities` function
       if (Array.isArray(exports.plugins)) {
-        userPlugins = exports.plugins
         exports.plugins = exports.plugins.map((plugin) => {
           if (plugin.__isOptionsFunction) {
             plugin = plugin()
@@ -661,21 +689,22 @@ async function createProjectService(
       return exports
     })
 
-    let config
     try {
-      config = __non_webpack_require__(state.configPath)
+      __non_webpack_require__(state.configPath)
     } catch (error) {
       hook.unhook()
       throw error
     }
 
+    if (!originalConfig) {
+      throw new SilentError(`Failed to load config file: ${state.configPath}`)
+    }
+
+    state.config = resolveConfig.module(originalConfig)
+
     if (state.jit) {
-      state.jitContext = state.modules.jit.setupContext.module(state.configPath, new Set())(
-        { opts: {}, messages: [] },
-        state.modules.postcss.module.root()
-      )
-      state.jitContext.tailwindConfig.separator =
-        typeof userSeperator === 'undefined' ? ':' : userSeperator
+      state.jitContext = state.modules.jit.createContext.module(state)
+      state.jitContext.tailwindConfig.separator = state.config.separator
     }
 
     let postcssResult: Result
@@ -704,43 +733,6 @@ async function createProjectService(
       hook.unhook()
     }
 
-    if (typeof userSeperator !== 'undefined') {
-      dset(config, sepLocation, userSeperator)
-    } else {
-      deletePropertyPath(config, sepLocation)
-    }
-    if (typeof userPurge !== 'undefined') {
-      config.purge = userPurge
-    } else {
-      delete config.purge
-    }
-    if (typeof userVariants !== 'undefined') {
-      config.variants = userVariants
-    } else {
-      delete config.variants
-    }
-    if (typeof userMode !== 'undefined') {
-      config.mode = userMode
-    }
-    if (typeof userPlugins !== 'undefined') {
-      config.plugins = userPlugins
-    }
-
-    for (let index in presetModes) {
-      if (typeof presetModes[index] === 'undefined') {
-        delete config.presets[index].mode
-      } else {
-        config.presets[index].mode = presetModes[index]
-      }
-    }
-    for (let index in presetVariants) {
-      if (typeof presetVariants[index] === 'undefined') {
-        delete config.presets[index].variants
-      } else {
-        config.presets[index].variants = presetVariants[index]
-      }
-    }
-
     if (state.dependencies) {
       watcher.unwatch(state.dependencies)
     }
@@ -749,9 +741,8 @@ async function createProjectService(
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
-    state.config = resolveConfig.module(config)
-    state.separator = typeof userSeperator === 'string' ? userSeperator : ':'
-    state.plugins = await getPlugins(config)
+    state.separator = state.config.separator
+    state.plugins = await getPlugins(originalConfig)
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
     state.variants = getVariants(state)
 
@@ -908,8 +899,15 @@ function getVariants(state: State): Record<string, string> {
       return dlv(node, 'raws.value', node.value)
     }
 
-    return Array.from(state.jitContext.variantMap as Map<string, [any, any]>).reduce(
-      (acc, [variant, [, applyVariant]]) => {
+    let result = {}
+    // [name, [sort, fn]]
+    // [name, [[sort, fn]]]
+    Array.from(state.jitContext.variantMap as Map<string, [any, any]>).forEach(
+      ([variantName, variantFnOrFns]) => {
+        let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
+          ([_sort, fn]) => fn
+        )
+
         let placeholder = '__variant_placeholder__'
 
         let root = state.modules.postcss.module.root({
@@ -947,26 +945,37 @@ function getVariants(state: State): Record<string, string> {
           return root
         }
 
-        applyVariant({
-          container: root,
-          separator: state.separator,
-          modifySelectors,
-        })
+        let definitions = []
 
-        let definition = root
-          .toString()
-          .replace(`.${escape(`${variant}:${placeholder}`)}`, '&')
-          .replace(/(?<!\\)[{}]/g, '')
-          .replace(/\s*\n\s*/g, ' ')
-          .trim()
+        for (let fn of fns) {
+          let container = root.clone()
+          fn({
+            container,
+            separator: state.separator,
+            modifySelectors,
+          })
 
-        return {
-          ...acc,
-          [variant]: definition.includes(placeholder) ? null : definition,
+          container.walkDecls((decl) => {
+            decl.remove()
+          })
+
+          let definition = container
+            .toString()
+            .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
+            .replace(/(?<!\\)[{}]/g, '')
+            .replace(/\s*\n\s*/g, ' ')
+            .trim()
+
+          if (!definition.includes(placeholder)) {
+            definitions.push(definition)
+          }
         }
-      },
-      {}
+
+        result[variantName] = definitions.join(', ') || null
+      }
     )
+
+    return result
   }
 
   let config = state.config
@@ -1232,34 +1241,32 @@ function supportsDynamicRegistration(connection: Connection, params: InitializeP
 
 const tw = new TW(connection)
 
-connection.onInitialize(
-  async (params: InitializeParams): Promise<InitializeResult> => {
-    tw.initializeParams = params
+connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
+  tw.initializeParams = params
 
-    if (supportsDynamicRegistration(connection, params)) {
-      return {
-        capabilities: {
-          textDocumentSync: TextDocumentSyncKind.Full,
-        },
-      }
-    }
-
-    tw.init()
-
+  if (supportsDynamicRegistration(connection, params)) {
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
-        hoverProvider: true,
-        colorProvider: true,
-        codeActionProvider: true,
-        completionProvider: {
-          resolveProvider: true,
-          triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
-        },
       },
     }
   }
-)
+
+  tw.init()
+
+  return {
+    capabilities: {
+      textDocumentSync: TextDocumentSyncKind.Full,
+      hoverProvider: true,
+      colorProvider: true,
+      codeActionProvider: true,
+      completionProvider: {
+        resolveProvider: true,
+        triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
+      },
+    },
+  }
+})
 
 connection.onInitialized(async () => {
   await tw.init()

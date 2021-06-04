@@ -72,6 +72,7 @@ export interface State {
   plugins?: any
   screens?: string[]
   variants?: Record<string, string | null>
+  corePlugins?: string[]
   modules?: {
     tailwindcss?: { version: string; module: any }
     postcss?: { version: string; module: Postcss }
@@ -79,7 +80,7 @@ export interface State {
     resolveConfig?: { module: any }
     jit?: {
       generateRules: { module: any }
-      setupContext: { module: any }
+      createContext: { module: any }
       expandApplyAtRules: { module: any }
     }
   }
