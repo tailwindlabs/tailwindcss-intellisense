@@ -179,8 +179,19 @@ export async function activate(context: ExtensionContext) {
       commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
     }
 
+    let configuration = {
+      editor: Workspace.getConfiguration('editor', folder),
+      tailwindCSS: Workspace.getConfiguration('tailwindCSS', folder),
+    }
+
+    let inspectPort = configuration.tailwindCSS.get('inspectPort')
+
     let serverOptions: ServerOptions = {
-      run: { module, transport: TransportKind.ipc },
+      run: {
+        module,
+        transport: TransportKind.ipc,
+        options: { execArgv: inspectPort === null ? [] : [`--inspect=${inspectPort}`] },
+      },
       debug: {
         module,
         transport: TransportKind.ipc,
@@ -189,6 +200,7 @@ export async function activate(context: ExtensionContext) {
         },
       },
     }
+
     let clientOptions: LanguageClientOptions = {
       documentSelector: languages.get(folder.uri.toString()).map((language) => ({
         scheme: 'file',
@@ -314,10 +326,7 @@ export async function activate(context: ExtensionContext) {
       },
       initializationOptions: {
         userLanguages: getUserLanguages(folder),
-        configuration: {
-          editor: Workspace.getConfiguration('editor', folder),
-          tailwindCSS: Workspace.getConfiguration('tailwindCSS', folder),
-        },
+        configuration,
       },
       synchronize: {
         configurationSection: ['editor', 'tailwindCSS'],
