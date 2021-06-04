@@ -70,6 +70,7 @@ export function completionsFromClassList(
         (context.triggerKind === 2 && context.triggerCharacter === '/')) &&
       partialClassName.includes('/')
     ) {
+      // opacity modifiers
       let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
       let testClass = beforeSlash + '/[0]'
       let { rules } = jit.generateRules(state, [testClass])
@@ -94,21 +95,14 @@ export function completionsFromClassList(
             }
 
             return {
-              label: opacity,
-              detail: stringifyConfigValue(opacities[opacity]),
+              label: className,
               documentation,
               kind,
               sortText: naturalExpand(index),
               data: [className],
               textEdit: {
-                newText: opacity,
-                range: {
-                  ...replacementRange,
-                  start: {
-                    ...replacementRange.start,
-                    character: replacementRange.start.character + beforeSlash.length + 1,
-                  },
-                },
+                newText: className,
+                range: replacementRange,
               },
             }
           }),
