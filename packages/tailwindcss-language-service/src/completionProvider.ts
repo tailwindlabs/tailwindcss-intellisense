@@ -240,25 +240,23 @@ export function completionsFromClassList(
     items: Object.keys(isSubset ? subset : state.classNames.classNames)
       .filter((k) => k !== '__info')
       .filter((className) => isContextItem(state, [...subsetKey, className]))
-      .map(
-        (className, index): CompletionItem => {
-          return {
-            label: className + sep,
-            kind: 9,
-            documentation: null,
-            command: {
-              title: '',
-              command: 'editor.action.triggerSuggest',
-            },
-            sortText: '-' + naturalExpand(index),
-            data: [...subsetKey, className],
-            textEdit: {
-              newText: className + sep,
-              range: replacementRange,
-            },
-          }
+      .map((className, index): CompletionItem => {
+        return {
+          label: className + sep,
+          kind: 9,
+          documentation: null,
+          command: {
+            title: '',
+            command: 'editor.action.triggerSuggest',
+          },
+          sortText: '-' + naturalExpand(index),
+          data: [...subsetKey, className],
+          textEdit: {
+            newText: className + sep,
+            range: replacementRange,
+          },
         }
-      )
+      })
       .concat(
         Object.keys(isSubset ? subset : state.classNames.classNames)
           .filter((className) =>
