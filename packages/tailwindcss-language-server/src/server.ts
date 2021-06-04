@@ -69,6 +69,7 @@ import { getDocumentColors } from 'tailwindcss-language-service/src/documentColo
 import { fromRatio, names as namedColors } from '@ctrl/tinycolor'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
+import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
@@ -130,6 +131,19 @@ function getConfigId(configPath: string, configDependencies: string[]): string {
   return JSON.stringify(
     [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs])
   )
+}
+
+function first<T>(...options: Array<() => T>): T {
+  for (let i = 0; i < options.length; i++) {
+    let option = options[i]
+    if (i === options.length - 1) {
+      return option()
+    } else {
+      try {
+        return option()
+      } catch (_) {}
+    }
+  }
 }
 
 interface ProjectService {
@@ -442,23 +456,38 @@ async function createProjectService(
       let tailwindDirectives = new Set()
       let root = postcss.root()
       let result = { opts: {}, messages: [] }
+      let registerDependency = () => {}
 
       try {
-        let createContext
-
-        try {
-          let createContextFn = __non_webpack_require__(
-            resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils')
-          ).createContext
-          createContext = (state) => createContextFn(state.config)
-        } catch (_) {
-          // TODO: only for canary releases so can probably remove
-          let setupContext = __non_webpack_require__(
-            resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
-          ).default
-          createContext = (state) =>
-            setupContext(state.configPath, tailwindDirectives)(result, root)
-        }
+        let createContext = first(
+          () => {
+            let createContextFn = __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils')
+            ).createContext
+            assert.strictEqual(typeof createContextFn, 'function')
+            return (state) => createContextFn(state.config)
+          },
+          // TODO: the next two are canary releases only so can probably be removed
+          () => {
+            let setupTrackingContext = __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupTrackingContext')
+            ).default
+            assert.strictEqual(typeof setupTrackingContext, 'function')
+            return (state) =>
+              setupTrackingContext(
+                state.configPath,
+                tailwindDirectives,
+                registerDependency
+              )(result, root)
+          },
+          () => {
+            let setupContext = __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
+            ).default
+            assert.strictEqual(typeof setupContext, 'function')
+            return (state) => setupContext(state.configPath, tailwindDirectives)(result, root)
+          }
+        )
 
         jitModules = {
           generateRules: {
