@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.7
+
+- Add support for `tailwindcss` v2.2
+- Fix excess semi-colons in CSS previews
+- Add `tailwindCSS.inspectPort` setting
+
 ## 0.6.6
 
 - [JIT] Show `rem` pixel equivalents in completion item details (#332)
