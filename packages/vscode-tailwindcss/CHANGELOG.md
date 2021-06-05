@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.8
+
+- Add [Astro](https://astro.build/) languages (`astro` and `astro-markdown`)
+- Fix incorrect separator (#343)
+- [JIT] Update opacity modifier completions to show the full class
+
 ## 0.6.7
 
 - Add support for `tailwindcss` v2.2
