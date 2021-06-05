@@ -23,6 +23,8 @@ import {
   CodeActionRequest,
   BulkUnregistration,
   HoverRequest,
+  DidChangeWatchedFilesNotification,
+  FileChangeType,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -32,7 +34,7 @@ import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as os from 'os'
 import * as fs from 'fs'
-import chokidar from 'chokidar'
+import chokidar, { FSWatcher } from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
@@ -206,47 +208,87 @@ async function createProjectService(
   const documentSettingsCache: Map<string, Settings> = new Map()
   let registrations: Promise<BulkUnregistration>
 
-  const watcher = chokidar.watch(
-    [normalizePath(`${folder}/**/${CONFIG_FILE_GLOB}`), normalizePath(`${folder}/**/package.json`)],
-    {
-      ignorePermissionErrors: true,
-      ignoreInitial: true,
-      ignored: ['**/node_modules/**'],
-      awaitWriteFinish: {
-        stabilityThreshold: 100,
-        pollInterval: 20,
-      },
+  let watcher: FSWatcher
+
+  function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
+    let needsInit = false
+    let needsRebuild = false
+
+    for (let change of changes) {
+      let file = normalizePath(change.file)
+
+      if (change.type === FileChangeType.Created) {
+        needsInit = true
+        break
+      } else if (change.type === FileChangeType.Changed) {
+        if (!state.enabled || minimatch(file, '**/package.json')) {
+          needsInit = true
+          break
+        } else {
+          needsRebuild = true
+        }
+      } else if (change.type === FileChangeType.Deleted) {
+        if (
+          !state.enabled ||
+          minimatch(file, '**/package.json') ||
+          minimatch(file, `**/${CONFIG_FILE_GLOB}`)
+        ) {
+          needsInit = true
+          break
+        } else {
+          needsRebuild = true
+        }
+      }
     }
-  )
 
-  await new Promise<void>((resolve) => {
-    watcher.on('ready', () => resolve())
-  })
-
-  watcher
-    .on('add', () => {
+    if (needsInit) {
       tryInit()
-    })
-    .on('unlink', (file) => {
-      if (
-        !state.enabled ||
-        minimatch(file, '**/package.json') ||
-        minimatch(file, `**/${CONFIG_FILE_GLOB}`)
-      ) {
-        tryInit()
-      } else {
-        tryRebuild()
-      }
-    })
-    .on('change', (file) => {
-      if (!state.enabled || minimatch(file, '**/package.json')) {
-        tryInit()
-      } else {
-        tryRebuild()
-      }
+    } else if (needsRebuild) {
+      tryRebuild()
+    }
+  }
+
+  if (params.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
+    connection.onDidChangeWatchedFiles(({ changes }) => {
+      onFileEvents(
+        changes.map(({ uri, type }) => ({
+          file: URI.parse(uri).fsPath,
+          type,
+        }))
+      )
     })
 
-  function registerCapabilities(): void {
+    connection.client.register(DidChangeWatchedFilesNotification.type, {
+      watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: '**/package.json' }],
+    })
+  } else {
+    watcher = chokidar.watch(
+      [
+        normalizePath(`${folder}/**/${CONFIG_FILE_GLOB}`),
+        normalizePath(`${folder}/**/package.json`),
+      ],
+      {
+        ignorePermissionErrors: true,
+        ignoreInitial: true,
+        ignored: ['**/node_modules/**'],
+        awaitWriteFinish: {
+          stabilityThreshold: 100,
+          pollInterval: 20,
+        },
+      }
+    )
+
+    await new Promise<void>((resolve) => {
+      watcher.on('ready', () => resolve())
+    })
+
+    watcher
+      .on('add', (file) => onFileEvents([{ file, type: FileChangeType.Created }]))
+      .on('change', (file) => onFileEvents([{ file, type: FileChangeType.Changed }]))
+      .on('unlink', (file) => onFileEvents([{ file, type: FileChangeType.Deleted }]))
+  }
+
+  function registerCapabilities(watchFiles?: string[]): void {
     if (supportsDynamicRegistration(connection, params)) {
       if (registrations) {
         registrations.then((r) => r.dispose())
@@ -268,6 +310,11 @@ async function createProjectService(
         resolveProvider: true,
         triggerCharacters: [...TRIGGER_CHARACTERS, state.separator],
       })
+      if (watchFiles) {
+        capabilities.add(DidChangeWatchedFilesNotification.type, {
+          watchers: watchFiles.map((file) => ({ globPattern: file })),
+        })
+      }
 
       registrations = connection.client.register(capabilities)
     }
@@ -766,10 +813,10 @@ async function createProjectService(
     }
 
     if (state.dependencies) {
-      watcher.unwatch(state.dependencies)
+      watcher?.unwatch(state.dependencies)
     }
     state.dependencies = getModuleDependencies(state.configPath)
-    watcher.add(state.dependencies)
+    watcher?.add(state.dependencies)
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -784,7 +831,7 @@ async function createProjectService(
 
     updateAllDiagnostics(state)
 
-    registerCapabilities()
+    registerCapabilities(state.dependencies)
   }
 
   return {
@@ -796,7 +843,7 @@ async function createProjectService(
         updateAllDiagnostics(state)
       }
       if (settings.editor.colorDecorators) {
-        registerCapabilities()
+        registerCapabilities(state.dependencies)
       } else {
         connection.sendNotification('@/tailwindCSS/clearColors')
       }
