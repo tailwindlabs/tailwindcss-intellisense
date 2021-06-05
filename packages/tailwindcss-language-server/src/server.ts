@@ -642,7 +642,7 @@ async function createProjectService(
 
       let separator = dlv(exports, sepLocation)
       if (typeof separator !== 'string') {
-        separator = ''
+        separator = ':'
       }
       dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
       exports.purge = []
@@ -732,6 +732,7 @@ async function createProjectService(
     }
 
     state.config = resolveConfig.module(originalConfig)
+    state.separator = state.config.separator
 
     if (state.jit) {
       state.jitContext = state.modules.jit.createContext.module(state)
@@ -772,7 +773,6 @@ async function createProjectService(
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
-    state.separator = state.config.separator
     state.plugins = await getPlugins(originalConfig)
     state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
     state.variants = getVariants(state)
