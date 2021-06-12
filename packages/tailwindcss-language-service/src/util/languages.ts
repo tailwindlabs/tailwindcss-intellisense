@@ -1,5 +1,7 @@
 export const htmlLanguages = [
   'aspnetcorerazor',
+  'astro',
+  'astro-markdown',
   'blade',
   'django-html',
   'edge',
