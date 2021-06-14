@@ -8,3 +8,4 @@ tests/**
 **/*.map
 .gitignore
 **/tsconfig.json
+**/*.node

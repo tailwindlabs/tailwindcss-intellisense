@@ -25,6 +25,7 @@ import {
   HoverRequest,
   DidChangeWatchedFilesNotification,
   FileChangeType,
+  Disposable,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -73,6 +74,7 @@ import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
+import * as parcel from './watcher/index.js'
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 const TRIGGER_CHARACTERS = [
@@ -151,6 +153,7 @@ function first<T>(...options: Array<() => T>): T {
 interface ProjectService {
   state: State
   tryInit: () => Promise<void>
+  dispose: () => void
   onUpdateSettings: (settings: any) => void
   onHover(params: TextDocumentPositionParams): Promise<Hover>
   onCompletion(params: CompletionParams): Promise<CompletionList>
@@ -167,6 +170,7 @@ async function createProjectService(
   params: InitializeParams,
   documentService: DocumentService
 ): Promise<ProjectService> {
+  const disposables: Disposable[] = []
   const state: State = {
     enabled: false,
     editor: {
@@ -208,7 +212,13 @@ async function createProjectService(
   const documentSettingsCache: Map<string, Settings> = new Map()
   let registrations: Promise<BulkUnregistration>
 
-  let watcher: FSWatcher
+  let chokidarWatcher: FSWatcher
+  let ignore = [
+    '**/.git/objects/**',
+    '**/.git/subtree-cache/**',
+    '**/node_modules/**',
+    '**/.hg/store/**',
+  ]
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -217,22 +227,30 @@ async function createProjectService(
     for (let change of changes) {
       let file = normalizePath(change.file)
 
+      for (let ignorePattern of ignore) {
+        if (minimatch(file, ignorePattern)) {
+          continue
+        }
+      }
+
+      let isConfigFile = minimatch(file, `**/${CONFIG_FILE_GLOB}`)
+      let isPackageFile = minimatch(file, '**/package.json')
+      let isDependency = state.dependencies && state.dependencies.includes(change.file)
+
+      if (!isConfigFile && !isPackageFile && !isDependency) continue
+
       if (change.type === FileChangeType.Created) {
         needsInit = true
         break
       } else if (change.type === FileChangeType.Changed) {
-        if (!state.enabled || minimatch(file, '**/package.json')) {
+        if (!state.enabled || isPackageFile) {
           needsInit = true
           break
         } else {
           needsRebuild = true
         }
       } else if (change.type === FileChangeType.Deleted) {
-        if (
-          !state.enabled ||
-          minimatch(file, '**/package.json') ||
-          minimatch(file, `**/${CONFIG_FILE_GLOB}`)
-        ) {
+        if (!state.enabled || isPackageFile || isConfigFile) {
           needsInit = true
           break
         } else {
@@ -261,34 +279,59 @@ async function createProjectService(
     connection.client.register(DidChangeWatchedFilesNotification.type, {
       watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: '**/package.json' }],
     })
-  } else {
-    watcher = chokidar.watch(
-      [
-        normalizePath(`${folder}/**/${CONFIG_FILE_GLOB}`),
-        normalizePath(`${folder}/**/package.json`),
-      ],
+  } else if (parcel.getBinding()) {
+    let typeMap = {
+      create: FileChangeType.Created,
+      update: FileChangeType.Changed,
+      delete: FileChangeType.Deleted,
+    }
+
+    let subscription = await parcel.subscribe(
+      folder,
+      (err, events) => {
+        onFileEvents(events.map((event) => ({ file: event.path, type: typeMap[event.type] })))
+      },
       {
-        ignorePermissionErrors: true,
-        ignoreInitial: true,
-        ignored: ['**/node_modules/**'],
-        awaitWriteFinish: {
-          stabilityThreshold: 100,
-          pollInterval: 20,
-        },
+        ignore: ignore.map((ignorePattern) =>
+          path.resolve(folder, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, ''))
+        ),
       }
     )
 
-    await new Promise<void>((resolve) => {
-      watcher.on('ready', () => resolve())
+    disposables.push({
+      dispose() {
+        subscription.unsubscribe()
+      },
+    })
+  } else {
+    chokidarWatcher = chokidar.watch([`**/${CONFIG_FILE_GLOB}`, '**/package.json'], {
+      cwd: folder,
+      ignorePermissionErrors: true,
+      ignoreInitial: true,
+      ignored: ignore,
+      awaitWriteFinish: {
+        stabilityThreshold: 100,
+        pollInterval: 20,
+      },
     })
 
-    watcher
+    await new Promise<void>((resolve) => {
+      chokidarWatcher.on('ready', () => resolve())
+    })
+
+    chokidarWatcher
       .on('add', (file) => onFileEvents([{ file, type: FileChangeType.Created }]))
       .on('change', (file) => onFileEvents([{ file, type: FileChangeType.Changed }]))
       .on('unlink', (file) => onFileEvents([{ file, type: FileChangeType.Deleted }]))
+
+    disposables.push({
+      dispose() {
+        chokidarWatcher.close()
+      },
+    })
   }
 
-  function registerCapabilities(watchFiles?: string[]): void {
+  function registerCapabilities(watchFiles: string[] = []): void {
     if (supportsDynamicRegistration(connection, params)) {
       if (registrations) {
         registrations.then((r) => r.dispose())
@@ -310,7 +353,7 @@ async function createProjectService(
         resolveProvider: true,
         triggerCharacters: [...TRIGGER_CHARACTERS, state.separator],
       })
-      if (watchFiles) {
+      if (watchFiles.length > 0) {
         capabilities.add(DidChangeWatchedFilesNotification.type, {
           watchers: watchFiles.map((file) => ({ globPattern: file })),
         })
@@ -323,13 +366,13 @@ async function createProjectService(
   function resetState(): void {
     clearAllDiagnostics(state)
     Object.keys(state).forEach((key) => {
-      if (key !== 'editor') {
+      // Keep `dependencies` to ensure that they are still watched
+      if (key !== 'editor' && key !== 'dependencies') {
         delete state[key]
       }
     })
     state.enabled = false
-    registerCapabilities()
-    // TODO reset watcher (remove config dependencies)
+    registerCapabilities(state.dependencies)
   }
 
   async function tryInit() {
@@ -813,10 +856,10 @@ async function createProjectService(
     }
 
     if (state.dependencies) {
-      watcher?.unwatch(state.dependencies)
+      chokidarWatcher?.unwatch(state.dependencies)
     }
     state.dependencies = getModuleDependencies(state.configPath)
-    watcher?.add(state.dependencies)
+    chokidarWatcher?.add(state.dependencies)
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -837,6 +880,11 @@ async function createProjectService(
   return {
     state,
     tryInit,
+    dispose() {
+      for (let { dispose } of disposables) {
+        dispose()
+      }
+    },
     onUpdateSettings(settings: any): void {
       documentSettingsCache.clear()
       if (state.enabled) {
@@ -1279,7 +1327,9 @@ class TW {
   }
 
   dispose(): void {
-    //
+    for (let [, project] of this.projects) {
+      project.dispose()
+    }
   }
 }
 
