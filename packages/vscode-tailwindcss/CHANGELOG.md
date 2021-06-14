@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.9
+
+- Use VS Code's built-in file watcher
+
 ## 0.6.8
 
 - Add [Astro](https://astro.build/) languages (`astro` and `astro-markdown`)
