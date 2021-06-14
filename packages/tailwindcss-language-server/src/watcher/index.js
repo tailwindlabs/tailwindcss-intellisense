@@ -13,14 +13,17 @@ const uv = (process.versions.uv || '').split('.')[0]
 
 const prebuilds = {
   'darwin-x64': {
-    'node.napi.glibc.node': () => require('./prebuilds/darwin-x64.node.napi.glibc.node'),
+    'node.napi.glibc.node': () =>
+      require('@parcel/watcher/prebuilds/darwin-x64/node.napi.glibc.node'),
   },
   'linux-x64': {
-    'node.napi.glibc.node': () => require('./prebuilds/linux-x64.node.napi.glibc.node'),
-    'node.napi.musl.node': () => require('./prebuilds/linux-x64.node.napi.musl.node'),
+    'node.napi.glibc.node': () =>
+      require('@parcel/watcher/prebuilds/linux-x64/node.napi.glibc.node'),
+    'node.napi.musl.node': () => require('@parcel/watcher/prebuilds/linux-x64/node.napi.musl.node'),
   },
   'win32-x64': {
-    'node.napi.glibc.node': () => require('./prebuilds/win32-x64.node.napi.glibc.node'),
+    'node.napi.glibc.node': () =>
+      require('@parcel/watcher/prebuilds/win32-x64/node.napi.glibc.node'),
   },
 }
 
