@@ -61,7 +61,14 @@ function getColorsInString(str: string): (TinyColor | KeywordColor)[] {
 function getColorFromDecls(
   decls: Record<string, string | string[]>
 ): TinyColor | KeywordColor | null {
-  let props = Object.keys(decls)
+  let props = Object.keys(decls).filter((prop) => {
+    // ignore content: "";
+    if (prop === 'content' && (decls[prop] === '""' || decls[prop] === "''")) {
+      return false
+    }
+    return true
+  })
+
   if (props.length === 0) return null
 
   const nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
