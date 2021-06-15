@@ -74,7 +74,11 @@ function resolve() {
   var parsed = builds.map(parseTags)
   var candidates = parsed.filter(matchTags(runtime, abi))
   var winner = candidates.sort(compareTags(runtime))[0]
-  if (winner) return list[winner.file]()
+  if (winner) {
+    try {
+      return list[winner.file]()
+    } catch (_error) {}
+  }
 }
 
 function parseTags(file) {
