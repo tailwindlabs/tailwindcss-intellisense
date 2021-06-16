@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.11
+
+- Update `@tailwind` completions and diagnostics to account for `@tailwind variants`
+
 ## 0.6.10
 
 - Ignore `content: ""` when determining document colors. This enables color decorators for `before` and `after` variants
