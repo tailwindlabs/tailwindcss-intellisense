@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.10
+
+- Ignore `content: ""` when determining document colors. This enables color decorators for `before` and `after` variants
+
 ## 0.6.9
 
 - Use VS Code's built-in file watcher
