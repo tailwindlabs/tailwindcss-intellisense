@@ -34,7 +34,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
     let valid = [
       'utilities',
       'components',
-      'screens',
+      state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens',
       semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
     ]
 
@@ -43,12 +43,15 @@ export function getInvalidTailwindDirectiveDiagnostics(
         return null
       }
 
-      let message = `'${match.groups.value}' is not a valid group.`
+      let message = `'${match.groups.value}' is not a valid value.`
       let suggestions: string[] = []
 
       if (match.groups.value === 'preflight') {
         suggestions.push('base')
         message += ` Did you mean 'base'?`
+      } else if (match.groups.value === 'screens') {
+        suggestions.push('variants')
+        message += ` Did you mean 'variants'?`
       } else {
         let suggestion = closest(match.groups.value, valid)
         if (suggestion) {

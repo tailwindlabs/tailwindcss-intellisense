@@ -632,16 +632,27 @@ function provideTailwindDirectiveCompletions(
           )})`,
         },
       },
-      {
-        label: 'screens',
-        documentation: {
-          kind: 'markdown' as typeof MarkupKind.Markdown,
-          value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
-            state.version,
-            'functions-and-directives/#tailwind'
-          )})`,
-        },
-      },
+      state.jit && semver.gte(state.version, '2.1.99')
+        ? {
+            label: 'variants',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
+              )})`,
+            },
+          }
+        : {
+            label: 'screens',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#tailwind'
+              )})`,
+            },
+          },
     ].map((item) => ({
       ...item,
       kind: 21,
