@@ -34,10 +34,10 @@ Provides syntax definitions so that Tailwind features are highlighted correctly.
 
 ## Recommended VS Code Settings
 
-VS Code has built-in CSS validation which may display errors when using Tailwind-specific syntax, such as `@apply`. You can disable this with the `css.validate` setting:
+VS Code has built-in CSS validation which may display errors when using Tailwind-specific syntax, such as `@apply`. You can disable this with the `css.lint.unknownAtRules` setting:
 
 ```
-"css.validate": false
+"css.lint.unknownAtRules": "ignore"
 ```
 
 By default VS Code will not trigger completions when editing "string" content, for example within JSX attribute values. Updating the `editor.quickSuggestions` setting may improve your experience:
