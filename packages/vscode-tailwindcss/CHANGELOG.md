@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.12
+
+- Fix hover error (#353)
+
 ## 0.6.11
 
 - Update `@tailwind` completions and diagnostics to account for `@tailwind variants`
