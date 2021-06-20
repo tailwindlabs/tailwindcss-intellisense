@@ -212,15 +212,6 @@ export async function activate(context: ExtensionContext) {
       outputChannel: outputChannel,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
-        async provideHover(document, position, token, next) {
-          let result = await next(document, position, token)
-          result.contents = result.contents.map((content) => {
-            // @ts-ignore
-            content.isTrusted = true
-            return content
-          })
-          return result
-        },
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections
