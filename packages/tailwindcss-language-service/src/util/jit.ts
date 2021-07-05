@@ -47,7 +47,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   return clone
     .toString()
-    .replace(/([^;{}\s])\n}/g, '$1;\n}')
+    .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
     .replace(/^(?:    )+/gm, (indent: string) => ' '.repeat((indent.length / 4) * tabSize))
 }
 
