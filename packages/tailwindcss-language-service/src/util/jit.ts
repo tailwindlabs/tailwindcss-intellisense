@@ -33,10 +33,13 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
   let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
 
-  let clone = root
+  let clone = root.clone()
+
+  clone.walkAtRules('defaults', (node) => {
+    node.remove()
+  })
 
   if (showPixelEquivalents) {
-    clone = root.clone()
     clone.walkDecls((decl) => {
       let px = remToPx(decl.value, rootFontSize)
       if (px) {
