@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.13
+
+- [JIT] Fix missing semi-colons in CSS previews
+- [JIT] Remove `@defaults` from CSS previews
+
 ## 0.6.12
 
 - Fix hover error (#353)
