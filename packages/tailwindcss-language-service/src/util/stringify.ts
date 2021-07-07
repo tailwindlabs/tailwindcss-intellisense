@@ -66,10 +66,7 @@ export function stringifyCss(
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`
   }, '')
-  css += `${indentStr}${augmentClassName(
-    className,
-    obj
-  )} {\n${decls}\n${indentStr}}`
+  css += `${indentStr}${augmentClassName(className, obj)} {\n${decls}\n${indentStr}}`
 
   for (let i = context.length - 1; i >= 0; i--) {
     css += `${indent.repeat(i)}\n}`
