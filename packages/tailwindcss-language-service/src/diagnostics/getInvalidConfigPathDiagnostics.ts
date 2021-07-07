@@ -90,10 +90,11 @@ function validateConfigPath(
       typeof value === 'number' ||
       value instanceof String ||
       value instanceof Number ||
-      Array.isArray(value)
+      Array.isArray(value) ||
+      typeof value === 'function'
     )
   ) {
-    let reason = `'${pathToString(path)}' was found but does not resolve to a string.`
+    let reason = `'${pathToString(path)}' was found but does not resolve to a string, number, array or function.`
 
     if (isObject(value)) {
       let validKeys = Object.keys(value).filter(
