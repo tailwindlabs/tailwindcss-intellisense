@@ -94,7 +94,7 @@ function validateConfigPath(
       typeof value === 'function'
     )
   ) {
-    let reason = `'${pathToString(path)}' was found but does not resolve to a string, number, array or function.`
+    let reason = `'${pathToString(path)}' was found but does not resolve to a valid theme value.`
 
     if (isObject(value)) {
       let validKeys = Object.keys(value).filter(
