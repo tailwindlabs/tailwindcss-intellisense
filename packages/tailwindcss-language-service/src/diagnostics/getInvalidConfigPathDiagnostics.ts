@@ -20,7 +20,7 @@ function pathToString(path: string | string[]): string {
   }, '')
 }
 
-function validateConfigPath(
+export function validateConfigPath(
   state: State,
   path: string | string[],
   base: string[] = []

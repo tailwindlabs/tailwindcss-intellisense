@@ -7,6 +7,7 @@ import { findClassNameAtPosition } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
+import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 
 export async function doHover(
   state: State,
@@ -50,12 +51,14 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
     key = ['theme', ...key]
   }
 
-  const value = stringifyConfigValue(dlv(state.config, key))
+  const value = validateConfigPath(state, key).isValid
+    ? stringifyConfigValue(dlv(state.config, key))
+    : null
 
   if (value === null) return null
 
   return {
-    contents: { kind: 'plaintext', value },
+    contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
     range: {
       start: { line: position.line, character: startChar },
       end: {

@@ -3,17 +3,22 @@ const dlv = require('dlv')
 import escapeClassName from 'css.escape'
 import { ensureArray } from './array'
 import { remToPx } from './remToPx'
+import stringifyObject from 'stringify-object'
+import isObject from './isObject'
 
 export function stringifyConfigValue(x: any): string {
-  if (typeof x === 'string') return x
-  if (typeof x === 'number') return x.toString()
-  if (Array.isArray(x)) {
-    return x
-      .filter((y) => typeof y === 'string')
-      .filter(Boolean)
-      .join(', ')
-  }
-  return null
+  if (isObject(x)) return `${Object.keys(x).length} values`
+  if (typeof x === 'function') return 'ƒ'
+  return stringifyObject(x, {
+    inlineCharacterLimit: Infinity,
+    singleQuotes: false,
+    transform: (obj, prop, originalResult) => {
+      if (typeof obj[prop] === 'function') {
+        return 'ƒ'
+      }
+      return originalResult
+    },
+  })
 }
 
 export function stringifyCss(

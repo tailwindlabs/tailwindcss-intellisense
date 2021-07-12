@@ -27,6 +27,7 @@
     "postcss-selector-parser": "6.0.2",
     "semver": "7.3.2",
     "sift-string": "0.0.2",
+    "stringify-object": "3.3.0",
     "vscode-emmet-helper-bundled": "0.0.1",
     "vscode-languageclient": "7.0.0",
     "vscode-languageserver": "7.0.0",
