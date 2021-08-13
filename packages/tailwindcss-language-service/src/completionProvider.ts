@@ -306,7 +306,7 @@ function provideClassAttributeCompletions(
   context?: CompletionContext
 ): CompletionList {
   let str = document.getText({
-    start: { line: Math.max(position.line - 10, 0), character: 0 },
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - 500)),
     end: position,
   })
 
