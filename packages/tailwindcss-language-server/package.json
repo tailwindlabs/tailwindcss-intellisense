@@ -1,13 +1,14 @@
 {
-  "name": "tailwindcss-language-server",
+  "name": "@tailwindcss/language-server",
   "description": "Tailwind CSS Language Server",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "build": "npm run clean && ncc build src/server.ts -o bin --minify && mv bin/index.js bin/tailwindcss-language-server && npm run hashbang",
     "clean": "rimraf dist",
-    "hashbang": "echo \"#!/usr/bin/env node\n$(cat bin/tailwindcss-language-server)\" > bin/tailwindcss-language-server",
-    "create-notices-file": "node scripts/createNoticesFile.mjs"
+    "hashbang": "node scripts/hashbang.mjs",
+    "create-notices-file": "node scripts/createNoticesFile.mjs",
+    "prepublishOnly": "npm run build"
   },
   "bin": {
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
@@ -16,6 +17,9 @@
     "bin",
     "ThirdPartyNotices.txt"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@ctrl/tinycolor": "3.1.4",
     "@parcel/watcher": "2.0.0-alpha.10",
