@@ -83,7 +83,6 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
 }
 
 export async function activate(context: ExtensionContext) {
-  console.log(Uri.parse(`command:editor.action.addCommentLine`).toString())
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
   let prod = path.join('dist', 'server', 'tailwindServer.js')
 

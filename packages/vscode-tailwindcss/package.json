@@ -198,7 +198,8 @@
     "minify": "glob-exec --foreach --parallel \"dist/**/*.js\" -- \"terser {{file}} --compress --mangle --output {{file.toString()}}\"",
     "package": "vsce package",
     "publish": "vsce publish",
-    "vscode:prepublish": "npm run build",
+    "copy:notices": "cp ../tailwindcss-language-server/ThirdPartyNotices.txt ./dist/ThirdPartyNotices.txt",
+    "vscode:prepublish": "npm run build && npm run copy:notices",
     "clean": "rimraf dist",
     "test": "jest"
   },
