@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.14
+
+- Fix false positive error when using `theme` helper with a function value (thanks @choplin, #365)
+- Improve `theme` helper completion and hover info
+- Use character-based ranges when parsing class lists (#373)
+
 ## 0.6.13
 
 - [JIT] Fix missing semi-colons in CSS previews
