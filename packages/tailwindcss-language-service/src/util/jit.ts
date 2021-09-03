@@ -90,7 +90,7 @@ export function getRuleContext(state: State, rule: Rule, className: string): str
   let context: string[] = [replaceClassName(state, rule.selector, className, '__placeholder__')]
 
   let p: Container = rule
-  while (p.parent.type !== 'root') {
+  while (p.parent && p.parent.type !== 'root') {
     p = p.parent
     if (p.type === 'atrule') {
       // @ts-ignore
