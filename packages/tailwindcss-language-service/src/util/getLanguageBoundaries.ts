@@ -9,10 +9,7 @@ export interface LanguageBoundaries {
   css: Range[]
 }
 
-export function getLanguageBoundaries(
-  state: State,
-  doc: TextDocument
-): LanguageBoundaries | null {
+export function getLanguageBoundaries(state: State, doc: TextDocument): LanguageBoundaries | null {
   if (isVueDoc(doc)) {
     let text = doc.getText()
     let blocks = findAll(
@@ -23,10 +20,7 @@ export function getLanguageBoundaries(
     let cssRanges: Range[] = []
     for (let i = 0; i < blocks.length; i++) {
       let range = {
-        start: indexToPosition(
-          text,
-          blocks[i].index + blocks[i].groups.open.length
-        ),
+        start: indexToPosition(text, blocks[i].index + blocks[i].groups.open.length),
         end: indexToPosition(
           text,
           blocks[i].index + blocks[i][0].length - blocks[i].groups.close.length
@@ -48,7 +42,7 @@ export function getLanguageBoundaries(
   if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
     let text = doc.getText()
     let styleBlocks = findAll(
-      /(?<open><style(?:\s[^>]*>|>)).*?(?<close><\/style>|$)/gis,
+      /(?<open><style(?:\s[^>]*[^\/]>|>|[^\/]>)).*?(?<close><\/style>|$)/gis,
       text
     )
     let htmlRanges: Range[] = []
@@ -61,15 +55,10 @@ export function getLanguageBoundaries(
         end: indexToPosition(text, styleBlocks[i].index),
       })
       cssRanges.push({
-        start: indexToPosition(
-          text,
-          styleBlocks[i].index + styleBlocks[i].groups.open.length
-        ),
+        start: indexToPosition(text, styleBlocks[i].index + styleBlocks[i].groups.open.length),
         end: indexToPosition(
           text,
-          styleBlocks[i].index +
-            styleBlocks[i][0].length -
-            styleBlocks[i].groups.close.length
+          styleBlocks[i].index + styleBlocks[i][0].length - styleBlocks[i].groups.close.length
         ),
       })
       currentIndex = styleBlocks[i].index + styleBlocks[i][0].length
