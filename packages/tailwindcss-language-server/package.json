@@ -2,7 +2,7 @@
   "name": "@tailwindcss/language-server",
   "description": "Tailwind CSS Language Server",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "build": "npm run clean && ncc build src/server.ts -o bin --minify && mv bin/index.js bin/tailwindcss-language-server && npm run hashbang",
     "clean": "rimraf dist",
