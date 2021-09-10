@@ -414,6 +414,7 @@ async function createProjectService(
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
+        dot: true,
         concurrency: Math.max(os.cpus().length, 1),
       })
     )
