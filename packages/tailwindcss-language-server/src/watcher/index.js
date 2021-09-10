@@ -70,6 +70,7 @@ exports.unsubscribe = (dir, fn, opts) => {
 function resolve() {
   // Find most specific flavor first
   var list = prebuilds[platform + '-' + arch]
+  if (!list) return
   var builds = Object.keys(list)
   var parsed = builds.map(parseTags)
   var candidates = parsed.filter(matchTags(runtime, abi))
