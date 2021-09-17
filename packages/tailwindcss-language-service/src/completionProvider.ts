@@ -33,6 +33,7 @@ import { createMultiRegexp } from './util/createMultiRegexp'
 import * as jit from './util/jit'
 import { TinyColor } from '@ctrl/tinycolor'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
+import * as culori from 'culori'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -167,6 +168,57 @@ export function completionsFromClassList(
             } as CompletionItem
           })
       )
+    }
+
+    if (state.jitContext.completions) {
+      return {
+        isIncomplete: false,
+        items: items.concat(
+          state.jitContext.completions().map((item, index) => {
+            let color =
+              Array.isArray(item) && typeof item[1].color === 'string' ? item[1].color.trim() : null
+
+            let kind: CompletionItemKind = color ? 16 : 21
+
+            if (color) {
+              let parsedColor = culori.parse(color)
+              if (parsedColor) {
+                if (color.startsWith('#')) {
+                  color =
+                    parsedColor.alpha === 1 || parsedColor.alpha === undefined
+                      ? color.length === 5
+                        ? color.slice(0, -1)
+                        : color.length === 9
+                        ? color.slice(0, -2)
+                        : color
+                      : culori.formatRgb(parsedColor)
+                } else if (parsedColor.mode === 'hsl') {
+                  color = culori.formatHsl(parsedColor)
+                } else if (parsedColor.mode === 'rgb') {
+                  color = culori.formatRgb(parsedColor)
+                }
+              } else {
+                color = null
+              }
+            }
+
+            let className = typeof item === 'string' ? item : item[0]
+            let documentation = color
+
+            return {
+              label: className,
+              kind,
+              documentation,
+              sortText: naturalExpand(index),
+              data: [...existingVariants, important ? `!${className}` : className],
+              textEdit: {
+                newText: className,
+                range: replacementRange,
+              },
+            } as CompletionItem
+          })
+        ),
+      }
     }
 
     return {

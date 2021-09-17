@@ -150,6 +150,15 @@ function first<T>(...options: Array<() => T>): T {
   }
 }
 
+function firstOptional<T>(...options: Array<() => T>): T | undefined {
+  for (let i = 0; i < options.length; i++) {
+    let option = options[i]
+    try {
+      return option()
+    } catch (_) {}
+  }
+}
+
 interface ProjectService {
   state: State
   tryInit: () => Promise<void>
@@ -528,8 +537,8 @@ async function createProjectService(
       }
 
       if (semver.gte(tailwindcssVersion, '1.99.0')) {
-        applyComplexClasses = __non_webpack_require__(
-          resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules')
+        applyComplexClasses = firstOptional(() =>
+          __non_webpack_require__(resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules'))
         )
       } else if (semver.gte(tailwindcssVersion, '1.7.0')) {
         applyComplexClasses = __non_webpack_require__(
@@ -551,6 +560,13 @@ async function createProjectService(
 
       try {
         let createContext = first(
+          () => {
+            let createContextFn = __non_webpack_require__(
+              resolveFrom(configDir, 'tailwindcss/lib/lib/setupContextUtils')
+            ).createContext
+            assert.strictEqual(typeof createContextFn, 'function')
+            return (state) => createContextFn(state.config)
+          },
           () => {
             let createContextFn = __non_webpack_require__(
               resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils')
@@ -582,17 +598,30 @@ async function createProjectService(
 
         jitModules = {
           generateRules: {
-            module: __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
-            ).generateRules,
+            module: first(
+              () =>
+                __non_webpack_require__(resolveFrom(configDir, 'tailwindcss/lib/lib/generateRules'))
+                  .generateRules,
+              () =>
+                __non_webpack_require__(
+                  resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
+                ).generateRules
+            ),
           },
           createContext: {
             module: createContext,
           },
           expandApplyAtRules: {
-            module: __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules')
-            ).default,
+            module: first(
+              () =>
+                __non_webpack_require__(
+                  resolveFrom(configDir, 'tailwindcss/lib/lib/expandApplyAtRules')
+                ).default,
+              () =>
+                __non_webpack_require__(
+                  resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules')
+                ).default
+            ),
           },
         }
       } catch (_) {
@@ -753,7 +782,8 @@ async function createProjectService(
       }
       delete exports.mode
 
-      if (state.modules.jit && mode === 'jit') {
+      // TODO
+      if (false || (state.modules.jit && mode === 'jit')) {
         state.jit = true
         exports.variants = []
 
