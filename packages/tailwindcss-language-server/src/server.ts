@@ -268,7 +268,6 @@ async function createProjectService(
 
   if (params.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
     connection.onDidChangeWatchedFiles(({ changes }) => {
-      console.log('watched file changed')
       onFileEvents(
         changes.map(({ uri, type }) => ({
           file: URI.parse(uri).fsPath,
