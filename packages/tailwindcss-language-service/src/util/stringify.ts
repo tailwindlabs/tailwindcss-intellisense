@@ -5,6 +5,8 @@ import { ensureArray } from './array'
 import { remToPx } from './remToPx'
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
+import { getColorsInString } from './color'
+import { TinyColor } from '@ctrl/tinycolor'
 
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
@@ -27,10 +29,12 @@ export function stringifyCss(
   {
     tabSize = 2,
     showPixelEquivalents = false,
+    showColorEquivalents = false,
     rootFontSize = 16,
   }: Partial<{
     tabSize: number
     showPixelEquivalents: boolean
+    showColorEquivalents: boolean
     rootFontSize: number
   }> = {}
 ): string {
@@ -66,7 +70,14 @@ export function stringifyCss(
     const propStr = ensureArray(obj[curr])
       .map((val) => {
         const px = showPixelEquivalents ? remToPx(val, rootFontSize) : undefined
-        return `${indentStr + indent}${curr}: ${val}${px ? `/* ${px} */` : ''};`
+        let color = showColorEquivalents ? getColorsInString(val) : undefined
+        let hex = ''
+        if(color) {
+          hex = color.map(c => {
+            return c instanceof TinyColor ? c.toString() : c
+          }).join(' ')
+        }
+        return `${indentStr + indent}${curr}: ${val}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`
       })
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`

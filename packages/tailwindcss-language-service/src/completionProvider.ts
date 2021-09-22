@@ -11,7 +11,7 @@ import type {
 } from 'vscode-languageserver'
 const dlv = require('dlv')
 import removeMeta from './util/removeMeta'
-import { getColor, getColorFromValue } from './util/color'
+import { getColor, getColorFromValue, getColorsInString } from './util/color'
 import { isHtmlContext } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
@@ -217,7 +217,7 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = 16
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = culori.formatRgb(color) + '\n' + culori.formatHex(color)
                 }
               }
 
@@ -298,7 +298,7 @@ export function completionsFromClassList(
             if (color !== null) {
               kind = 16
               if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                documentation = culori.formatRgb(color)
+                documentation = culori.formatRgb(color) + '\n' + culori.formatHex(color)
               }
             }
 
@@ -587,7 +587,7 @@ function provideCssHelperCompletions(
         detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
         documentation:
           color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-            ? culori.formatRgb(color)
+            ? culori.formatRgb(color) + '\n' + culori.formatHex(color)
             : null,
         textEdit: {
           newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
@@ -1104,6 +1104,7 @@ export async function resolveCompletionItem(
       const css = stringifyCss(item.data.join(':'), className, {
         tabSize: dlv(settings, 'editor.tabSize', 2),
         showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
+        showColorEquivalents: dlv(settings, 'tailwindCSS.showColorEquivalents', true),
         rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
       })
       if (css) {
@@ -1137,8 +1138,9 @@ function stringifyDecls(
   obj: any,
   {
     showPixelEquivalents = false,
+    showColorEquivalents = false,
     rootFontSize = 16,
-  }: Partial<{ showPixelEquivalents: boolean; rootFontSize: number }> = {}
+  }: Partial<{ showPixelEquivalents: boolean; showColorEquivalents: boolean; rootFontSize: number }> = {}
 ): string {
   let props = Object.keys(obj)
   let nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
@@ -1152,7 +1154,12 @@ function stringifyDecls(
       ensureArray(obj[prop])
         .map((value) => {
           const px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
-          return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
+          let hex = ''
+          const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
+          if(color instanceof TinyColor) {
+            hex = color.toString() || ''
+          }
+          return `${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`
         })
         .join(' ')
     )
@@ -1167,6 +1174,7 @@ async function getCssDetail(state: State, className: any): Promise<string> {
     const settings = await state.editor.getConfiguration()
     return stringifyDecls(removeMeta(className), {
       showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
+      showColorEquivalents: dlv(settings, 'tailwindCSS.showColorEquivalents', true),
       rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
     })
   }

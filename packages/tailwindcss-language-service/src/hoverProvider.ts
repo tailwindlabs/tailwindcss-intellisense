@@ -111,6 +111,7 @@ async function provideClassNameHover(
     {
       tabSize: dlv(settings, 'editor.tabSize', 2),
       showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
+      showColorEquivalents: dlv(settings, 'tailwindCSS.showColorEquivalents', true),
       rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
     }
   )

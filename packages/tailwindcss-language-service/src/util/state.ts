@@ -42,6 +42,7 @@ export type Settings = {
     classAttributes: string[]
     validate: boolean
     showPixelEquivalents: boolean
+    showColorEquivalents: boolean
     rootFontSize: number
     colorDecorators: boolean
     lint: {

@@ -48,7 +48,7 @@ const colorRegex = new RegExp(
   'gi'
 )
 
-function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
+export function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
   return Array.from(str.matchAll(colorRegex), (match) => {

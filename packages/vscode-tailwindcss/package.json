@@ -229,6 +229,11 @@
           "default": true,
           "markdownDescription": "Show `px` equivalents for `rem` CSS values."
         },
+        "tailwindCSS.showColorEquivalents": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show hex format for color values."
+        },
         "tailwindCSS.rootFontSize": {
           "type": "number",
           "default": 16,

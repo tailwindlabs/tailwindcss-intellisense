@@ -2,6 +2,8 @@ import { State } from './state'
 import type { Container, Document, Root, Rule } from 'postcss'
 import dlv from 'dlv'
 import { remToPx } from './remToPx'
+import {getColorsInString} from './color'
+import { TinyColor } from '@ctrl/tinycolor'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -31,6 +33,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   let settings = await state.editor.getConfiguration(uri)
   let tabSize = dlv(settings, 'editor.tabSize', 2)
   let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
+  let showColorEquivalents = dlv(settings, 'tailwindCSS.showColorEquivalents', true)
   let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
 
   let clone = root.clone()
@@ -44,6 +47,15 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
       let px = remToPx(decl.value, rootFontSize)
       if (px) {
         decl.value = `${decl.value}/* ${px} */`
+      }
+    })
+  }
+
+  if(showColorEquivalents) {
+    clone.walkDecls((decl) => {
+      const color = getColorsInString(decl.value)[0]
+      if(color && color instanceof TinyColor) {
+        decl.value = `${decl.value}/* ${color.toString()} */`
       }
     })
   }
@@ -64,12 +76,18 @@ export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2)
 export async function stringifyDecls(state: State, rule: Rule, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
   let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
+  let showColorEquivalents = dlv(settings, 'tailwindCSS.showColorEquivalents', true)
   let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
 
   let result = []
   rule.walkDecls(({ prop, value }) => {
     let px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
-    result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''};`)
+    let hex = ''
+    const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
+    if(color instanceof TinyColor) {
+      hex = color.toString() || ''
+    }
+    result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`)
   })
   return result.join(' ')
 }
