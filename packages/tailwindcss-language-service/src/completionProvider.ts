@@ -1157,7 +1157,7 @@ function stringifyDecls(
           let hex = ''
           const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
           if(color instanceof TinyColor) {
-            hex = color.toString() || ''
+            hex = color.toString('hex') || ''
           }
           return `${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`
         })

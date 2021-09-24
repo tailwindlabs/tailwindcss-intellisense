@@ -55,7 +55,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
     clone.walkDecls((decl) => {
       const color = getColorsInString(decl.value)[0]
       if(color && color instanceof TinyColor) {
-        decl.value = `${decl.value}/* ${color.toString()} */`
+        decl.value = `${decl.value}/* ${color.toString('hex')} */`
       }
     })
   }
@@ -85,7 +85,7 @@ export async function stringifyDecls(state: State, rule: Rule, uri?: string): Pr
     let hex = ''
     const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
     if(color instanceof TinyColor) {
-      hex = color.toString() || ''
+      hex = color.toString('hex') || ''
     }
     result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`)
   })
