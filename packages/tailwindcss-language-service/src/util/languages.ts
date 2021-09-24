@@ -24,6 +24,7 @@ export const htmlLanguages = [
   'mustache',
   'njk',
   'nunjucks',
+  'phoenix-heex',
   'php',
   'razor',
   'slim',
