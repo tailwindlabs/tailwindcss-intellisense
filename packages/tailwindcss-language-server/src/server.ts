@@ -69,12 +69,15 @@ import {
 } from './lsp/diagnosticsProvider'
 import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
-import { fromRatio, names as namedColors } from '@ctrl/tinycolor'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import * as parcel from './watcher/index.js'
+import { generateRules } from 'tailwindcss-language-service/src/util/jit'
+import { getColor } from 'tailwindcss-language-service/src/util/color'
+import * as culori from 'culori'
+import namedColors from 'color-name'
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 const TRIGGER_CHARACTERS = [
@@ -101,7 +104,7 @@ declare var __non_webpack_require__: typeof require
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
 
-console.log = connection.console.log.bind(connection.console)
+// console.log = connection.console.log.bind(connection.console)
 console.error = connection.console.error.bind(connection.console)
 
 process.on('unhandledRejection', (e: any) => {
@@ -757,6 +760,9 @@ async function createProjectService(
     let presetVariants: any[] = []
     let originalConfig: any
 
+    // TODO
+    let isV3 = semver.gte(tailwindcss.version, '2.99.0') || tailwindcss.version.includes('insiders')
+
     let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
       originalConfig = klona(exports)
 
@@ -783,7 +789,9 @@ async function createProjectService(
       delete exports.mode
 
       // TODO
-      if (false || (state.modules.jit && mode === 'jit')) {
+      let isJit = isV3 || (state.modules.jit && mode === 'jit')
+
+      if (isJit) {
         state.jit = true
         exports.variants = []
 
@@ -858,32 +866,43 @@ async function createProjectService(
     if (state.jit) {
       state.jitContext = state.modules.jit.createContext.module(state)
       state.jitContext.tailwindConfig.separator = state.config.separator
+      if (state.jitContext.completions) {
+        state.coreUtilities = state.jitContext.completions().map((item) => {
+          let className = Array.isArray(item) ? item[0] : item
+          return [className, { color: getColor(state, className) }]
+        })
+      }
     }
 
     let postcssResult: Result
-    try {
-      postcssResult = await postcss
-        .module([
-          // ...state.postcssPlugins.before.map((x) => x()),
-          tailwindcss.module(state.configPath),
-          // ...state.postcssPlugins.after.map((x) => x()),
-        ])
-        .process(
-          [
-            semver.gte(tailwindcss.version, '0.99.0') ? 'base' : 'preflight',
-            'components',
-            'utilities',
-          ]
-            .map((x) => `/*__tw_intellisense_layer_${x}__*/\n@tailwind ${x};`)
-            .join('\n'),
-          {
-            from: undefined,
-          }
-        )
-    } catch (error) {
-      throw error
-    } finally {
+
+    if (state.coreUtilities) {
       hook.unhook()
+    } else {
+      try {
+        postcssResult = await postcss
+          .module([
+            // ...state.postcssPlugins.before.map((x) => x()),
+            tailwindcss.module(state.configPath),
+            // ...state.postcssPlugins.after.map((x) => x()),
+          ])
+          .process(
+            [
+              semver.gte(tailwindcss.version, '0.99.0') ? 'base' : 'preflight',
+              'components',
+              'utilities',
+            ]
+              .map((x) => `/*__tw_intellisense_layer_${x}__*/\n@tailwind ${x};`)
+              .join('\n'),
+            {
+              from: undefined,
+            }
+          )
+      } catch (error) {
+        throw error
+      } finally {
+        hook.unhook()
+      }
     }
 
     if (state.dependencies) {
@@ -895,7 +914,9 @@ async function createProjectService(
     state.configId = getConfigId(state.configPath, state.dependencies)
 
     state.plugins = await getPlugins(originalConfig)
-    state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
+    if (postcssResult) {
+      state.classNames = (await extractClassNames(postcssResult.root)) as ClassNames
+    }
     state.variants = getVariants(state)
 
     let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
@@ -969,16 +990,25 @@ async function createProjectService(
       let currentColor = match[1]
 
       let isNamedColor = colorNames.includes(currentColor)
-      let color = fromRatio({
+
+      let color: culori.RgbColor = {
+        mode: 'rgb',
         r: params.color.red,
         g: params.color.green,
         b: params.color.blue,
-        a: params.color.alpha,
-      })
+        alpha: params.color.alpha,
+      }
 
-      let hexValue = color.toHex8String(
-        !isNamedColor && (currentColor.length === 4 || currentColor.length === 5)
-      )
+      let hexValue = culori.formatHex8(color)
+
+      if (!isNamedColor && (currentColor.length === 4 || currentColor.length === 5)) {
+        let [, ...chars] =
+          hexValue.match(/^#([a-f\d])\1([a-f\d])\2([a-f\d])\3(?:([a-f\d])\4)?$/i) ?? []
+        if (chars.length) {
+          hexValue = `#${chars.filter(Boolean).join('')}`
+        }
+      }
+
       if (hexValue.length === 5) {
         hexValue = hexValue.replace(/f$/, '')
       } else if (hexValue.length === 9) {
@@ -989,8 +1019,12 @@ async function createProjectService(
 
       return [
         hexValue,
-        color.toRgbString().replace(/ /g, ''),
-        color.toHslString().replace(/ /g, ''),
+        culori.formatRgb(color).replace(/ /g, ''),
+        culori
+          .formatHsl(color)
+          .replace(/ /g, '')
+          // round numbers
+          .replace(/\d+\.\d+(%?)/g, (value, suffix) => `${Math.round(parseFloat(value))}${suffix}`),
       ].map((value) => ({ label: `${prefix}-[${value}]` }))
     },
   }

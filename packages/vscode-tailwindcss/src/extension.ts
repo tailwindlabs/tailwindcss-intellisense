@@ -30,7 +30,7 @@ import {
 import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
 import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
-import { names as namedColors } from '@ctrl/tinycolor'
+import namedColors from 'color-name'
 
 const colorNames = Object.keys(namedColors)
 

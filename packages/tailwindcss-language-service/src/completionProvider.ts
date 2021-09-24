@@ -31,7 +31,6 @@ import { flagEnabled } from './util/flagEnabled'
 import { remToPx } from './util/remToPx'
 import { createMultiRegexp } from './util/createMultiRegexp'
 import * as jit from './util/jit'
-import { TinyColor } from '@ctrl/tinycolor'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
 
@@ -90,8 +89,8 @@ export function completionsFromClassList(
             const color = getColor(state, className)
             if (color !== null) {
               kind = 16
-              if (typeof color !== 'string') {
-                documentation = color.toRgbString().replace(/(^rgba\([^)]+) 0\)$/, '$1 0.001)')
+              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                documentation = culori.formatRgb(color)
               }
             }
 
@@ -170,40 +169,17 @@ export function completionsFromClassList(
       )
     }
 
-    if (state.jitContext.completions) {
+    if (state.coreUtilities) {
       return {
         isIncomplete: false,
         items: items.concat(
-          state.jitContext.completions().map((item, index) => {
-            let color =
-              Array.isArray(item) && typeof item[1].color === 'string' ? item[1].color.trim() : null
-
+          state.coreUtilities.map(([className, { color }], index) => {
             let kind: CompletionItemKind = color ? 16 : 21
+            let documentation = null
 
-            if (color) {
-              let parsedColor = culori.parse(color)
-              if (parsedColor) {
-                if (color.startsWith('#')) {
-                  color =
-                    parsedColor.alpha === 1 || parsedColor.alpha === undefined
-                      ? color.length === 5
-                        ? color.slice(0, -1)
-                        : color.length === 9
-                        ? color.slice(0, -2)
-                        : color
-                      : culori.formatRgb(parsedColor)
-                } else if (parsedColor.mode === 'hsl') {
-                  color = culori.formatHsl(parsedColor)
-                } else if (parsedColor.mode === 'rgb') {
-                  color = culori.formatRgb(parsedColor)
-                }
-              } else {
-                color = null
-              }
+            if (color && typeof color !== 'string') {
+              documentation = culori.formatRgb(color)
             }
-
-            let className = typeof item === 'string' ? item : item[0]
-            let documentation = color
 
             return {
               label: className,
@@ -240,8 +216,8 @@ export function completionsFromClassList(
               const color = getColor(state, className)
               if (color !== null) {
                 kind = 16
-                if (typeof color !== 'string' && color.a !== 0) {
-                  documentation = color.toRgbString()
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
                 }
               }
 
@@ -321,8 +297,8 @@ export function completionsFromClassList(
             const color = getColor(state, className)
             if (color !== null) {
               kind = 16
-              if (typeof color !== 'string' && color.a !== 0) {
-                documentation = color.toRgbString()
+              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                documentation = culori.formatRgb(color)
               }
             }
 
@@ -604,7 +580,10 @@ function provideCssHelperCompletions(
         kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
         // VS Code bug causes some values to not display in some cases
         detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-        documentation: color instanceof TinyColor && color.a !== 0 ? color.toRgbString() : null,
+        documentation:
+          color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+            ? culori.formatRgb(color)
+            : null,
         textEdit: {
           newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
           range: {
