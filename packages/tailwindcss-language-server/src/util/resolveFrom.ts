@@ -6,9 +6,7 @@ function createResolver(options: Partial<ResolveOptions> = {}): Resolver {
     fileSystem: new CachedInputFileSystem(fs, 4000),
     useSyncFileSystemCalls: true,
     // cachePredicate: () => false,
-    exportsFields: [],
-    conditionNames: ['node'],
-    extensions: ['.js', '.json', '.node'],
+    conditionNames: ['node', 'require'],
     ...options,
   })
 }

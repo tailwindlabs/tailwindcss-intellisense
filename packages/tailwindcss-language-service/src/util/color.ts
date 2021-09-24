@@ -40,9 +40,9 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?[,\\s]+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+  `(?:^|\\s|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?[,\\s]+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
     colorNames
-  ).join('|')})`,
+  ).join('|')})(?:$|\\s|,)`,
   'gi'
 )
 
@@ -52,7 +52,12 @@ function getColorsInString(str: string): (TinyColor | KeywordColor)[] {
   return (
     str
       .match(colorRegex)
-      ?.map((color) => color.replace(/var\([^)]+\)/, '1'))
+      ?.map((color) =>
+        color
+          .trim()
+          .replace(/^,|,$/g, '')
+          .replace(/var\([^)]+\)/, '1')
+      )
       .map((color) => getKeywordColor(color) ?? new TinyColor(color))
       .filter((color) => (color instanceof TinyColor ? color.isValid : true)) ?? []
   )

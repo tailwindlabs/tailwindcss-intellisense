@@ -39,6 +39,9 @@
     "onStartupFinished"
   ],
   "main": "dist/extension/index.js",
+  "capabilities": {
+    "virtualWorkspaces": false
+  },
   "contributes": {
     "commands": [
       {

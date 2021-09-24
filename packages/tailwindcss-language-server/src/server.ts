@@ -228,13 +228,13 @@ async function createProjectService(
       let file = normalizePath(change.file)
 
       for (let ignorePattern of ignore) {
-        if (minimatch(file, ignorePattern)) {
+        if (minimatch(file, ignorePattern, { dot: true })) {
           continue
         }
       }
 
-      let isConfigFile = minimatch(file, `**/${CONFIG_FILE_GLOB}`)
-      let isPackageFile = minimatch(file, '**/package.json')
+      let isConfigFile = minimatch(file, `**/${CONFIG_FILE_GLOB}`, { dot: true })
+      let isPackageFile = minimatch(file, '**/package.json', { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
 
       if (!isConfigFile && !isPackageFile && !isDependency) continue
@@ -414,6 +414,7 @@ async function createProjectService(
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
+        dot: true,
         concurrency: Math.max(os.cpus().length, 1),
       })
     )
