@@ -92,6 +92,8 @@ const TRIGGER_CHARACTERS = [
   '!',
   // JIT opacity modifiers
   '/',
+  // class name including '-'
+  '-',
 ] as const
 
 const colorNames = Object.keys(namedColors)
