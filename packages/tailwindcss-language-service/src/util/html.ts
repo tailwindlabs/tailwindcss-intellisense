@@ -44,7 +44,7 @@ export function isInsideTag(str: string, tag: string | string[]): boolean {
   let close = 0
   let match: RegExpExecArray
   let tags = Array.isArray(tag) ? tag : [tag]
-  let regex = new RegExp(`<(?<slash>/?)(?:${tags.join('|')})(?:\\s[^>]*[^\/]>|>|[^\/]>)`, 'ig')
+  let regex = new RegExp(`<(?<slash>/?)(?:${tags.join('|')})(?:\\s[^>]*[^\/]>|\\s*>)`, 'ig')
   while ((match = regex.exec(str)) !== null) {
     if (match.groups.slash) {
       close += 1

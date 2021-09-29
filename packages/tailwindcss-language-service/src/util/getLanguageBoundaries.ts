@@ -42,7 +42,7 @@ export function getLanguageBoundaries(state: State, doc: TextDocument): Language
   if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
     let text = doc.getText()
     let styleBlocks = findAll(
-      /(?<open><style(?:\s[^>]*[^\/]>|>|[^\/]>)).*?(?<close><\/style>|$)/gis,
+      /(?<open><style(?:\s[^>]*[^\/]>|\s*>)).*?(?<close><\/style>|$)/gis,
       text
     )
     let htmlRanges: Range[] = []
