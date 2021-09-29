@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.15
+
+- Support config files in hidden (dot) folders (#389)
+- Disable extension in virtual workspaces (#398)
+- Support `exports` fields when resolving dependencies (#412)
+- Add `phoenix-heex` language (#407)
+- Improve color parsing (#415)
+
 ## 0.6.14
 
 - Fix false positive error when using `theme` helper with a function value (thanks @choplin, #365)
