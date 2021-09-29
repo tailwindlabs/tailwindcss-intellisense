@@ -711,6 +711,10 @@ function provideVariantsDirectiveCompletions(
     return null
   }
 
+  if (semver.gte(state.version, '2.99.0')) {
+    return null
+  }
+
   let text = document.getText({
     start: { line: position.line, character: 0 },
     end: position,
@@ -862,29 +866,11 @@ function provideCssDirectiveCompletions(
       label: '@tailwind',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`screens\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
+          state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
+        }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
           'functions-and-directives/#tailwind'
-        )})`,
-      },
-    },
-    {
-      label: '@variants',
-      documentation: {
-        kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and \`group-hover\` versions of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#variants'
-        )})`,
-      },
-    },
-    {
-      label: '@responsive',
-      documentation: {
-        kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#responsive'
         )})`,
       },
     },
@@ -922,6 +908,30 @@ function provideCssDirectiveCompletions(
           },
         ]
       : []),
+    ...(semver.gte(state.version, '2.99.0')
+      ? []
+      : [
+          {
+            label: '@variants',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#variants'
+              )})`,
+            },
+          },
+          {
+            label: '@responsive',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#responsive'
+              )})`,
+            },
+          },
+        ]),
   ]
 
   return {
