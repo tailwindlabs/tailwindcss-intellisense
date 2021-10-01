@@ -24,7 +24,7 @@
     "line-column": "1.0.2",
     "moo": "0.5.1",
     "multi-regexp2": "1.0.3",
-    "postcss": "8.2.6",
+    "postcss": "8.2.10",
     "postcss-selector-parser": "6.0.2",
     "semver": "7.3.2",
     "sift-string": "0.0.2",
