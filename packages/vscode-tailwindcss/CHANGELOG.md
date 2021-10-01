@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+
+- Add support for Tailwind CSS v3 alpha (#424)
+
 ## 0.6.15
 
 - Support config files in hidden (dot) folders (#389)
