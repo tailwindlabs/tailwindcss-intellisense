@@ -760,8 +760,7 @@ async function createProjectService(
     let presetVariants: any[] = []
     let originalConfig: any
 
-    // TODO
-    let isV3 = semver.gte(tailwindcss.version, '2.99.0') || tailwindcss.version.includes('insiders')
+    let isV3 = semver.gte(tailwindcss.version, '2.99.0')
 
     let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
       originalConfig = klona(exports)
@@ -771,7 +770,7 @@ async function createProjectService(
         separator = ':'
       }
       dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
-      exports.purge = []
+      exports[isV3 ? 'content' : 'purge'] = []
 
       let mode: any
       if (Array.isArray(exports.presets)) {
@@ -788,7 +787,6 @@ async function createProjectService(
       }
       delete exports.mode
 
-      // TODO
       let isJit = isV3 || (state.modules.jit && mode === 'jit')
 
       if (isJit) {
@@ -866,9 +864,8 @@ async function createProjectService(
     if (state.jit) {
       state.jitContext = state.modules.jit.createContext.module(state)
       state.jitContext.tailwindConfig.separator = state.config.separator
-      if (state.jitContext.completions) {
-        state.coreUtilities = state.jitContext.completions().map((item) => {
-          let className = Array.isArray(item) ? item[0] : item
+      if (state.jitContext.getClassList) {
+        state.classList = state.jitContext.getClassList().map((className) => {
           return [className, { color: getColor(state, className) }]
         })
       }
@@ -876,7 +873,7 @@ async function createProjectService(
 
     let postcssResult: Result
 
-    if (state.coreUtilities) {
+    if (state.classList) {
       hook.unhook()
     } else {
       try {

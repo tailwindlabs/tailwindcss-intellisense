@@ -92,7 +92,7 @@ export interface State {
   editor?: EditorState
   jit?: boolean
   jitContext?: any
-  coreUtilities?: Array<[string, { color: culori.Color | KeywordColor | null }]>
+  classList?: Array<[string, { color: culori.Color | KeywordColor | null }]>
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 

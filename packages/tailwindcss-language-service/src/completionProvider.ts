@@ -169,11 +169,11 @@ export function completionsFromClassList(
       )
     }
 
-    if (state.coreUtilities) {
+    if (state.classList) {
       return {
         isIncomplete: false,
         items: items.concat(
-          state.coreUtilities.map(([className, { color }], index) => {
+          state.classList.map(([className, { color }], index) => {
             let kind: CompletionItemKind = color ? 16 : 21
             let documentation = null
 
