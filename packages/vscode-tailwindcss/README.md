@@ -6,7 +6,7 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.js` in your workspace.
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.js` or `tailwind.config.cjs` in your workspace.
 
 ## Features
 
