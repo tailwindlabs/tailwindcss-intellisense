@@ -6,7 +6,7 @@ import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-import dlv from 'dlv'
+import semver from 'semver'
 
 export function getInvalidVariantDiagnostics(
   state: State,
@@ -15,6 +15,10 @@ export function getInvalidVariantDiagnostics(
 ): InvalidVariantDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidVariant
   if (severity === 'ignore') return []
+
+  if (semver.gte(state.version, '2.99.0')) {
+    return []
+  }
 
   let diagnostics: InvalidVariantDiagnostic[] = []
   let ranges: Range[] = []

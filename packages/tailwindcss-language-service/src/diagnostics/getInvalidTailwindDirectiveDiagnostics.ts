@@ -27,6 +27,8 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.css)
   }
 
+  let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
+
   ranges.forEach((range) => {
     let text = document.getText(range)
     let matches = findAll(/(?:\s|^)@tailwind\s+(?<value>[^;]+)/g, text)
@@ -34,9 +36,17 @@ export function getInvalidTailwindDirectiveDiagnostics(
     let valid = [
       'utilities',
       'components',
-      state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens',
+      'screens',
       semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
-    ]
+      hasVariantsDirective && 'variants',
+    ].filter(Boolean)
+
+    let suggestable = valid
+
+    if (hasVariantsDirective) {
+      // Don't suggest `screens`, because it's deprecated
+      suggestable = suggestable.filter((value) => value !== 'screens')
+    }
 
     matches.forEach((match) => {
       if (valid.includes(match.groups.value)) {
@@ -49,11 +59,8 @@ export function getInvalidTailwindDirectiveDiagnostics(
       if (match.groups.value === 'preflight') {
         suggestions.push('base')
         message += ` Did you mean 'base'?`
-      } else if (match.groups.value === 'screens') {
-        suggestions.push('variants')
-        message += ` Did you mean 'variants'?`
       } else {
-        let suggestion = closest(match.groups.value, valid)
+        let suggestion = closest(match.groups.value, suggestable)
         if (suggestion) {
           suggestions.push(suggestion)
           message += ` Did you mean '${suggestion}'?`

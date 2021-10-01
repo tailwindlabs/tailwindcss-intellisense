@@ -4,10 +4,9 @@ import {
   getClassNamesInClassList,
   findHelperFunctionsInDocument,
 } from './util/find'
-import { getColor, getColorFromValue, tinyColorToVscodeColor } from './util/color'
+import { getColor, getColorFromValue, culoriColorToVscodeColor } from './util/color'
 import { stringToPath } from './util/stringToPath'
 import type { TextDocument, ColorInformation } from 'vscode-languageserver'
-import { TinyColor } from '@ctrl/tinycolor'
 import dlv from 'dlv'
 
 export async function getDocumentColors(
@@ -25,12 +24,12 @@ export async function getDocumentColors(
     let classNames = getClassNamesInClassList(classList)
     classNames.forEach((className) => {
       let color = getColor(state, className.className)
-      if (color === null || typeof color === 'string' || color.a === 0) {
+      if (color === null || typeof color === 'string' || (color.alpha ?? 1) === 0) {
         return
       }
       colors.push({
         range: className.range,
-        color: tinyColorToVscodeColor(color),
+        color: culoriColorToVscodeColor(color),
       })
     })
   })
@@ -41,8 +40,8 @@ export async function getDocumentColors(
     let base = fn.helper === 'theme' ? ['theme'] : []
     let value = dlv(state.config, [...base, ...keys])
     let color = getColorFromValue(value)
-    if (color instanceof TinyColor && color.a !== 0) {
-      colors.push({ range: fn.valueRange, color: tinyColorToVscodeColor(color) })
+    if (color && typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+      colors.push({ range: fn.valueRange, color: culoriColorToVscodeColor(color) })
     }
   })
 

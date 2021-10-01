@@ -21,7 +21,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "@ctrl/tinycolor": "3.1.4",
     "@parcel/watcher": "2.0.0-alpha.10",
     "@types/debounce": "1.2.0",
     "@types/node": "14.14.34",
@@ -29,6 +28,8 @@
     "@vercel/ncc": "0.28.4",
     "builtin-modules": "3.2.0",
     "chokidar": "3.5.1",
+    "color-name": "1.1.4",
+    "culori": "0.20.1",
     "debounce": "1.2.0",
     "detective": "5.2.0",
     "dlv": "1.1.3",

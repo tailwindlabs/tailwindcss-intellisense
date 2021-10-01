@@ -1,11 +1,12 @@
 const dlv = require('dlv')
 import { State } from './state'
 import removeMeta from './removeMeta'
-import { TinyColor, names as colorNames } from '@ctrl/tinycolor'
 import { ensureArray, dedupe, flatten } from './array'
 import type { Color } from 'vscode-languageserver'
 import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
+import * as culori from 'culori'
+import namedColors from 'color-name'
 
 const COLOR_PROPS = [
   'caret-color',
@@ -24,7 +25,7 @@ const COLOR_PROPS = [
   'text-decoration-color',
 ]
 
-type KeywordColor = 'transparent' | 'currentColor'
+export type KeywordColor = 'transparent' | 'currentColor'
 
 function getKeywordColor(value: unknown): KeywordColor | null {
   if (typeof value !== 'string') return null
@@ -40,13 +41,13 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(?:^|\\s|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?[,\\s]+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
-    colorNames
+  `(?:^|\\s|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+    namedColors
   ).join('|')})(?:$|\\s|,)`,
   'gi'
 )
 
-function getColorsInString(str: string): (TinyColor | KeywordColor)[] {
+function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
   return (
@@ -58,14 +59,14 @@ function getColorsInString(str: string): (TinyColor | KeywordColor)[] {
           .replace(/^,|,$/g, '')
           .replace(/var\([^)]+\)/, '1')
       )
-      .map((color) => getKeywordColor(color) ?? new TinyColor(color))
-      .filter((color) => (color instanceof TinyColor ? color.isValid : true)) ?? []
+      .map((color) => getKeywordColor(color) ?? culori.parse(color))
+      .filter(Boolean) ?? []
   )
 }
 
 function getColorFromDecls(
   decls: Record<string, string | string[]>
-): TinyColor | KeywordColor | null {
+): culori.Color | KeywordColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
     if (prop === 'content' && (decls[prop] === '""' || decls[prop] === "''")) {
@@ -96,7 +97,9 @@ function getColorFromDecls(
 
   // check that all of the values are the same color, ignoring alpha
   const colorStrings = dedupe(
-    colors.map((color) => (color instanceof TinyColor ? `${color.r}-${color.g}-${color.b}` : color))
+    colors.map((color) =>
+      typeof color === 'string' ? color : culori.formatRgb({ ...color, alpha: undefined })
+    )
   )
   if (colorStrings.length !== 1) {
     return null
@@ -107,30 +110,35 @@ function getColorFromDecls(
     return keyword
   }
 
-  const nonKeywordColors = colors.filter((color): color is TinyColor => typeof color !== 'string')
+  const nonKeywordColors = colors.filter(
+    (color): color is culori.Color => typeof color !== 'string'
+  )
 
-  const alphas = dedupe(nonKeywordColors.map((color) => color.a))
+  const alphas = dedupe(nonKeywordColors.map((color) => color.alpha ?? 1))
 
   if (alphas.length === 1) {
     return nonKeywordColors[0]
   }
 
   if (alphas.length === 2 && alphas.includes(0)) {
-    return nonKeywordColors.find((color) => color.a !== 0)
+    return nonKeywordColors.find((color) => (color.alpha ?? 1) !== 0)
   }
 
   return null
 }
 
-export function getColor(state: State, className: string): TinyColor | KeywordColor | null {
+export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
   if (state.jit) {
-    const item = dlv(state.classNames.classNames, [className, '__info'])
-    if (item && item.__rule) {
-      return getColorFromDecls(removeMeta(item))
+    if (state.classNames) {
+      const item = dlv(state.classNames.classNames, [className, '__info'])
+      if (item && item.__rule) {
+        return getColorFromDecls(removeMeta(item))
+      }
     }
 
     let { root, rules } = jit.generateRules(state, [className])
     if (rules.length === 0) return null
+
     let decls: Record<string, string | string[]> = {}
     root.walkDecls((decl) => {
       let value = decls[decl.prop]
@@ -156,7 +164,7 @@ export function getColor(state: State, className: string): TinyColor | KeywordCo
   return getColorFromDecls(removeMeta(item))
 }
 
-export function getColorFromValue(value: unknown): TinyColor | KeywordColor | null {
+export function getColorFromValue(value: unknown): culori.Color | KeywordColor | null {
   if (typeof value !== 'string') return null
   const trimmedValue = value.trim()
   if (trimmedValue.toLowerCase() === 'transparent') {
@@ -168,41 +176,17 @@ export function getColorFromValue(value: unknown): TinyColor | KeywordColor | nu
   if (
     !/^\s*(?:rgba?|hsla?)\s*\([^)]+\)\s*$/.test(trimmedValue) &&
     !/^\s*#[0-9a-f]+\s*$/i.test(trimmedValue) &&
-    !Object.keys(colorNames).includes(trimmedValue)
+    !Object.keys(namedColors).includes(trimmedValue)
   ) {
     return null
   }
-  const color = new TinyColor(trimmedValue)
-  if (color.isValid) {
-    return color
-    // return { red: color.r / 255, green: color.g / 255, blue: color.b / 255, alpha: color.a }
-  }
-  return null
+  const color = culori.parse(trimmedValue)
+  return color ?? null
 }
 
-function createColor(str: string): TinyColor | KeywordColor {
-  let keyword = getKeywordColor(str)
-  if (keyword) {
-    return keyword
-  }
+let toRgb = culori.converter('rgb')
 
-  // matches: rgba(<r>, <g>, <b>, var(--bg-opacity))
-  // TODO: support other formats? e.g. hsla, css level 4
-  const match = str.match(
-    /^\s*rgba\(\s*(?<r>[0-9.]+)\s*,\s*(?<g>[0-9.]+)\s*,\s*(?<b>[0-9.]+)\s*,\s*var/
-  )
-
-  if (match) {
-    return new TinyColor({
-      r: match.groups.r,
-      g: match.groups.g,
-      b: match.groups.b,
-    })
-  }
-
-  return new TinyColor(str)
-}
-
-export function tinyColorToVscodeColor(color: TinyColor): Color {
-  return { red: color.r / 255, green: color.g / 255, blue: color.b / 255, alpha: color.a }
+export function culoriColorToVscodeColor(color: culori.Color): Color {
+  let rgb = toRgb(color)
+  return { red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha ?? 1 }
 }

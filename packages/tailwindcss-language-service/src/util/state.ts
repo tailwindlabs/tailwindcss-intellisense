@@ -1,6 +1,8 @@
 import type { TextDocuments, Connection, Range, SymbolInformation } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { Postcss } from 'postcss'
+import { KeywordColor } from './color'
+import * as culori from 'culori'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -90,6 +92,7 @@ export interface State {
   editor?: EditorState
   jit?: boolean
   jitContext?: any
+  classList?: Array<[string, { color: culori.Color | KeywordColor | null }]>
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 

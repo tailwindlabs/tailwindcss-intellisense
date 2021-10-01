@@ -31,8 +31,8 @@ import { flagEnabled } from './util/flagEnabled'
 import { remToPx } from './util/remToPx'
 import { createMultiRegexp } from './util/createMultiRegexp'
 import * as jit from './util/jit'
-import { TinyColor } from '@ctrl/tinycolor'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
+import * as culori from 'culori'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -89,8 +89,8 @@ export function completionsFromClassList(
             const color = getColor(state, className)
             if (color !== null) {
               kind = 16
-              if (typeof color !== 'string') {
-                documentation = color.toRgbString().replace(/(^rgba\([^)]+) 0\)$/, '$1 0.001)')
+              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                documentation = culori.formatRgb(color)
               }
             }
 
@@ -169,6 +169,34 @@ export function completionsFromClassList(
       )
     }
 
+    if (state.classList) {
+      return {
+        isIncomplete: false,
+        items: items.concat(
+          state.classList.map(([className, { color }], index) => {
+            let kind: CompletionItemKind = color ? 16 : 21
+            let documentation = null
+
+            if (color && typeof color !== 'string') {
+              documentation = culori.formatRgb(color)
+            }
+
+            return {
+              label: className,
+              kind,
+              documentation,
+              sortText: naturalExpand(index),
+              data: [...existingVariants, important ? `!${className}` : className],
+              textEdit: {
+                newText: className,
+                range: replacementRange,
+              },
+            } as CompletionItem
+          })
+        ),
+      }
+    }
+
     return {
       isIncomplete: false,
       items: items
@@ -188,8 +216,8 @@ export function completionsFromClassList(
               const color = getColor(state, className)
               if (color !== null) {
                 kind = 16
-                if (typeof color !== 'string' && color.a !== 0) {
-                  documentation = color.toRgbString()
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
                 }
               }
 
@@ -269,8 +297,8 @@ export function completionsFromClassList(
             const color = getColor(state, className)
             if (color !== null) {
               kind = 16
-              if (typeof color !== 'string' && color.a !== 0) {
-                documentation = color.toRgbString()
+              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                documentation = culori.formatRgb(color)
               }
             }
 
@@ -552,7 +580,10 @@ function provideCssHelperCompletions(
         kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
         // VS Code bug causes some values to not display in some cases
         detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-        documentation: color instanceof TinyColor && color.a !== 0 ? color.toRgbString() : null,
+        documentation:
+          color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+            ? culori.formatRgb(color)
+            : null,
         textEdit: {
           newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
           range: {
@@ -677,6 +708,10 @@ function provideVariantsDirectiveCompletions(
   position: Position
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
+    return null
+  }
+
+  if (semver.gte(state.version, '2.99.0')) {
     return null
   }
 
@@ -831,29 +866,11 @@ function provideCssDirectiveCompletions(
       label: '@tailwind',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`screens\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
+          state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
+        }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
           'functions-and-directives/#tailwind'
-        )})`,
-      },
-    },
-    {
-      label: '@variants',
-      documentation: {
-        kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and \`group-hover\` versions of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#variants'
-        )})`,
-      },
-    },
-    {
-      label: '@responsive',
-      documentation: {
-        kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#responsive'
         )})`,
       },
     },
@@ -891,6 +908,30 @@ function provideCssDirectiveCompletions(
           },
         ]
       : []),
+    ...(semver.gte(state.version, '2.99.0')
+      ? []
+      : [
+          {
+            label: '@variants',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#variants'
+              )})`,
+            },
+          },
+          {
+            label: '@responsive',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#responsive'
+              )})`,
+            },
+          },
+        ]),
   ]
 
   return {
