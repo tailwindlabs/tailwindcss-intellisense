@@ -9,6 +9,7 @@ import * as culori from 'culori'
 import namedColors from 'color-name'
 
 const COLOR_PROPS = [
+  'accent-color',
   'caret-color',
   'color',
   'column-rule-color',
