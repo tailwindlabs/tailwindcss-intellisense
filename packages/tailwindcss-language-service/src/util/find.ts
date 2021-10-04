@@ -174,7 +174,7 @@ async function findCustomClassLists(
 
 export function findClassListsInHtmlRange(doc: TextDocument, range?: Range): DocumentClassList[] {
   const text = doc.getText(range)
-  const matches = findAll(/(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])=['"`{]/g, text)
+  const matches = findAll(/(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])\s*=\s*['"`{]/gi, text)
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
