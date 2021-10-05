@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Feature Request
+    url: https://github.com/tailwindlabs/tailwindcss/discussions/new?category=ideas&title=%5BIntelliSense%5D%20
+    about: 'Suggest any ideas you have using our discussion forums.'
+  - name: Bug Report
+    url: https://github.com/tailwindlabs/tailwindcss-intellisense/issues/new?body=%2A%2AWhat%20version%20of%20Tailwind%20CSS%20IntelliSense%20are%20you%20using%3F%2A%2A%0A%0AFor%20example%3A%20v0.7.0%0A%0A%2A%2AWhat%20version%20of%20Tailwind%20CSS%20are%20you%20using%3F%2A%2A%0A%0AFor%20example%3A%20v2.0.4%0A%0A%2A%2AWhat%20package%20manager%20are%20you%20using%3F%2A%2A%0A%0AFor%20example%3A%20npm%2C%20yarn%0A%0A%2A%2AWhat%20operating%20system%20are%20you%20using%3F%2A%2A%0A%0AFor%20example%3A%20macOS%2C%20Windows%0A%0A%2A%2AReproduction%20URL%2A%2A%0A%0AA%20public%20GitHub%20repo%20that%20includes%20a%20minimal%20reproduction%20of%20the%20bug.%20%2A%2APlease%20do%20not%20link%20to%20your%20actual%20project%2A%2A%2C%20what%20we%20need%20instead%20is%20a%20_minimal_%20reproduction%20in%20a%20fresh%20project%20without%20any%20unnecessary%20code.%20This%20means%20it%20doesn%27t%20matter%20if%20your%20real%20project%20is%20private%2Fconfidential%2C%20since%20we%20want%20a%20link%20to%20a%20separate%2C%20isolated%20reproduction%20anyways.%0A%0A%2A%2ADescribe%20your%20issue%2A%2A%0A%0ADescribe%20the%20problem%20you%27re%20seeing%2C%20any%20important%20steps%20to%20reproduce%20and%20what%20behavior%20you%20expect%20instead.
+    about: If you think something is broken with Tailwind CSS IntelliSense itself, create a bug report.
