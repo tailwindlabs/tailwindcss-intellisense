@@ -18,6 +18,7 @@ export function setPnpApi(pnpApi: any): void {
 }
 
 export default function resolveFrom(from?: string, id?: string): string {
+  if (id.startsWith('\\\\')) return id
   let result = resolver.resolveSync({}, from, id)
   if (result === false) throw Error()
   // https://github.com/webpack/enhanced-resolve/issues/282

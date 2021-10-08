@@ -430,7 +430,6 @@ async function createProjectService(
         concurrency: Math.max(os.cpus().length, 1),
       })
     )
-      .map(normalizePath)
       .sort((a: string, b: string) => a.split('/').length - b.split('/').length)
       .map(path.normalize)
 
