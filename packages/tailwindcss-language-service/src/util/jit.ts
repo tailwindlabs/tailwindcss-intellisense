@@ -1,5 +1,5 @@
 import { State } from './state'
-import type { Container, Root, Rule } from 'postcss'
+import type { Container, Document, Root, Rule } from 'postcss'
 import dlv from 'dlv'
 import { remToPx } from './remToPx'
 
@@ -89,7 +89,7 @@ function replaceClassName(state: State, selector: string, find: string, replace:
 export function getRuleContext(state: State, rule: Rule, className: string): string[] {
   let context: string[] = [replaceClassName(state, rule.selector, className, '__placeholder__')]
 
-  let p: Container = rule
+  let p: Container | Document = rule
   while (p.parent && p.parent.type !== 'root') {
     p = p.parent
     if (p.type === 'atrule') {

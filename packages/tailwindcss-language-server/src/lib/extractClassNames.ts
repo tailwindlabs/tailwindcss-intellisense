@@ -1,7 +1,7 @@
 import selectorParser from 'postcss-selector-parser'
 import dset from 'dset'
 import dlv from 'dlv'
-import type { Container, Node, Root, AtRule } from 'postcss'
+import type { Container, Node, Root, AtRule, Document } from 'postcss'
 
 function isAtRule(node: Node): node is AtRule {
   return node.type === 'atrule'
@@ -84,7 +84,7 @@ async function process(root: Root) {
       }
     })
 
-    let p: Container = rule
+    let p: Container | Document = rule
     const keys = []
     while (p.parent.type !== 'root') {
       p = p.parent
