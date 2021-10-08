@@ -42,9 +42,9 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(?:^|\\s|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
     namedColors
-  ).join('|')})(?:$|\\s|,)`,
+  ).join('|')})(?:$|\\s|\\)|,)`,
   'gi'
 )
 
@@ -57,7 +57,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
       ?.map((color) =>
         color
           .trim()
-          .replace(/^,|,$/g, '')
+          .replace(/^[,(]|[,)]$/g, '')
           .replace(/var\([^)]+\)/, '1')
       )
       .map((color) => getKeywordColor(color) ?? culori.parse(color))
