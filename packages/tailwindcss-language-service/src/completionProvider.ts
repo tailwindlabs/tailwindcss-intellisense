@@ -334,7 +334,7 @@ async function provideClassAttributeCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   let str = document.getText({
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - 500)),
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - 1000)),
     end: position,
   })
 
@@ -400,8 +400,8 @@ async function provideCustomClassNameCompletions(
   const positionOffset = document.offsetAt(position)
 
   const searchRange: Range = {
-    start: document.positionAt(Math.max(0, positionOffset - 500)),
-    end: document.positionAt(positionOffset + 500),
+    start: document.positionAt(Math.max(0, positionOffset - 1000)),
+    end: document.positionAt(positionOffset + 1000),
   }
 
   let str = document.getText(searchRange)

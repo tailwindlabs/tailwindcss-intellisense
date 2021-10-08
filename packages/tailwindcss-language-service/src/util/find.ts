@@ -379,8 +379,8 @@ export async function findClassNameAtPosition(
   let classNames = []
   const positionOffset = doc.offsetAt(position)
   const searchRange: Range = {
-    start: doc.positionAt(Math.max(0, positionOffset - 500)),
-    end: doc.positionAt(positionOffset + 500),
+    start: doc.positionAt(Math.max(0, positionOffset - 1000)),
+    end: doc.positionAt(positionOffset + 1000),
   }
 
   if (isCssContext(state, doc, position)) {
