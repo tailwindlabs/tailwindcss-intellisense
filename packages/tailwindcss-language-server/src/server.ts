@@ -104,7 +104,7 @@ declare var __non_webpack_require__: typeof require
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
 
-// console.log = connection.console.log.bind(connection.console)
+console.log = connection.console.log.bind(connection.console)
 console.error = connection.console.error.bind(connection.console)
 
 process.on('unhandledRejection', (e: any) => {
