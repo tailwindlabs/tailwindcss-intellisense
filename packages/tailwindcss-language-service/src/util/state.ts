@@ -39,6 +39,7 @@ export type Settings = {
   tailwindCSS: {
     emmetCompletions: boolean
     includeLanguages: Record<string, string>
+    classAttributes: string[]
     validate: boolean
     showPixelEquivalents: boolean
     rootFontSize: number

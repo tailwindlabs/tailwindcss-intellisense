@@ -81,6 +81,18 @@
           "default": {},
           "markdownDescription": "Enable features in languages that are not supported by default. Add a mapping here between the new language and an already supported language.\n E.g.: `{\"plaintext\": \"html\"}`"
         },
+        "tailwindCSS.classAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "class",
+            "className",
+            "ngClass"
+          ],
+          "markdownDescription": "The HTML attributes for which to provide class completions, hover previews, linting etc."
+        },
         "tailwindCSS.colorDecorators": {
           "type": "boolean",
           "default": true,

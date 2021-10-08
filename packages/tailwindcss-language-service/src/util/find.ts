@@ -172,16 +172,31 @@ async function findCustomClassLists(
   return result
 }
 
-export function findClassListsInHtmlRange(doc: TextDocument, range?: Range): DocumentClassList[] {
+export function matchClassAttributes(text: string, attributes: string[]): RegExpMatchArray[] {
+  const attrs = attributes.filter((x) => typeof x === 'string').flatMap((a) => [a, `\\[${a}\\]`])
+  const re = /(?:\s|:|\()(ATTRS)\s*=\s*['"`{]/
+  return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
+}
+
+export async function findClassListsInHtmlRange(
+  state: State,
+  doc: TextDocument,
+  range?: Range
+): Promise<DocumentClassList[]> {
   const text = doc.getText(range)
-  const matches = findAll(/(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])\s*=\s*['"`{]/gi, text)
+
+  const matches = matchClassAttributes(
+    text,
+    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes
+  )
+
   const result: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
 
     let lexer =
-      match[0][0] === ':' || match[0].trim().startsWith('[ngClass]')
+      match[0][0] === ':' || (match[1].startsWith('[') && match[1].endsWith(']'))
         ? getComputedClassAttributeLexer()
         : getClassAttributeLexer()
     lexer.reset(subtext)
@@ -273,7 +288,7 @@ export async function findClassListsInRange(
   if (mode === 'css') {
     classLists = findClassListsInCssRange(doc, range)
   } else {
-    classLists = findClassListsInHtmlRange(doc, range)
+    classLists = await findClassListsInHtmlRange(state, doc, range)
   }
   return [...classLists, ...(includeCustom ? await findCustomClassLists(state, doc, range) : [])]
 }
@@ -290,7 +305,9 @@ export async function findClassListsInDocument(
   if (!boundaries) return []
 
   return flatten([
-    ...boundaries.html.map((range) => findClassListsInHtmlRange(doc, range)),
+    ...(await Promise.all(
+      boundaries.html.map((range) => findClassListsInHtmlRange(state, doc, range))
+    )),
     ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
     await findCustomClassLists(state, doc),
   ])

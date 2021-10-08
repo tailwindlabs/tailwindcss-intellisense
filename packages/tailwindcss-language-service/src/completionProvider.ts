@@ -14,7 +14,7 @@ import removeMeta from './util/removeMeta'
 import { getColor, getColorFromValue } from './util/color'
 import { isHtmlContext } from './util/html'
 import { isCssContext } from './util/css'
-import { findLast } from './util/find'
+import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
@@ -327,25 +327,30 @@ export function completionsFromClassList(
   }
 }
 
-function provideClassAttributeCompletions(
+async function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
   position: Position,
   context?: CompletionContext
-): CompletionList {
+): Promise<CompletionList> {
   let str = document.getText({
     start: document.positionAt(Math.max(0, document.offsetAt(position) - 500)),
     end: position,
   })
 
-  const match = findLast(/(?:\s|:|\()(?:class(?:Name)?|\[ngClass\])\s*=\s*['"`{]/gi, str)
+  let matches = matchClassAttributes(
+    str,
+    (await state.editor.getConfiguration(document.uri)).tailwindCSS.classAttributes
+  )
 
-  if (match === null) {
+  if (matches.length === 0) {
     return null
   }
 
+  let match = matches[matches.length - 1]
+
   const lexer =
-    match[0][0] === ':' || match[0].trim().startsWith('[ngClass]')
+    match[0][0] === ':' || (match[1].startsWith('[') && match[1].endsWith(']'))
       ? getComputedClassAttributeLexer()
       : getClassAttributeLexer()
   lexer.reset(str.substr(match.index + match[0].length - 1))
@@ -490,12 +495,12 @@ function provideAtApplyCompletions(
   )
 }
 
-function provideClassNameCompletions(
+async function provideClassNameCompletions(
   state: State,
   document: TextDocument,
   position: Position,
   context?: CompletionContext
-): CompletionList {
+): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
     return provideAtApplyCompletions(state, document, position)
   }
@@ -1035,7 +1040,7 @@ export async function doComplete(
   if (state === null) return { items: [], isIncomplete: false }
 
   const result =
-    provideClassNameCompletions(state, document, position, context) ||
+    (await provideClassNameCompletions(state, document, position, context)) ||
     provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||

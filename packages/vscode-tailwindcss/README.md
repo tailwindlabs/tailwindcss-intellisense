@@ -66,6 +66,10 @@ This setting allows you to add additional language support. The key of each entr
 
 Enable completions when using [Emmet](https://emmet.io/)-style syntax, for example `div.bg-red-500.uppercase`. **Default: `false`**
 
+### `tailwindCSS.classAttributes`
+
+The HTML attributes for which to provide class completions, hover previews, linting etc. **Default: `class`, `className`, `ngClass`**
+
 ### `tailwindCSS.colorDecorators`
 
 Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions. **Default: `true`**
