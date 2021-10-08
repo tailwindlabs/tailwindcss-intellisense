@@ -51,18 +51,10 @@ const colorRegex = new RegExp(
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
-  return (
-    str
-      .match(colorRegex)
-      ?.map((color) =>
-        color
-          .trim()
-          .replace(/^[,(]|[,)]$/g, '')
-          .replace(/var\([^)]+\)/, '1')
-      )
-      .map((color) => getKeywordColor(color) ?? culori.parse(color))
-      .filter(Boolean) ?? []
-  )
+  return Array.from(str.matchAll(colorRegex), (match) => {
+    let color = match[1].replace(/var\([^)]+\)/, '1')
+    return getKeywordColor(color) ?? culori.parse(color)
+  }).filter(Boolean)
 }
 
 function getColorFromDecls(
