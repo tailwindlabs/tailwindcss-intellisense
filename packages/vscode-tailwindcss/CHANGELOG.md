@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.1
+
+- Add [`tailwindCSS.classAttributes` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssclassattributes) (#350)
+- Fix resolution of WSL files on Windows (#411)
+- Show color decorators for `accent-*` classes
+- Support attributes with whitespace around the `=` character (#426)
+- Fix color decorators for `var()` fallbacks (#423)
+- Increase class list search range (#414)
+
 ## 0.7.0
 
 - Add support for Tailwind CSS v3 alpha (#424)
