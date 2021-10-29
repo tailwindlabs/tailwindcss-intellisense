@@ -176,6 +176,29 @@ interface ProjectService {
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
 }
 
+function getMode(config: any): unknown {
+  if (typeof config.mode !== 'undefined') {
+    return config.mode
+  }
+  if (Array.isArray(config.presets)) {
+    for (let i = config.presets.length - 1; i >= 0; i--) {
+      let mode = getMode(config.presets[i])
+      if (typeof mode !== 'undefined') {
+        return mode
+      }
+    }
+  }
+}
+
+function deleteMode(config: any): void {
+  delete config.mode
+  if (Array.isArray(config.presets)) {
+    for (let preset of config.presets) {
+      deleteMode(preset)
+    }
+  }
+}
+
 async function createProjectService(
   folder: string,
   connection: Connection,
@@ -755,7 +778,6 @@ async function createProjectService(
     const sepLocation = semver.gte(tailwindcss.version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
-    let presetModes: any[] = []
     let presetVariants: any[] = []
     let originalConfig: any
 
@@ -771,20 +793,8 @@ async function createProjectService(
       dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
       exports[isV3 ? 'content' : 'purge'] = []
 
-      let mode: any
-      if (Array.isArray(exports.presets)) {
-        for (let preset of exports.presets) {
-          if (typeof preset.mode !== 'undefined') {
-            mode = preset.mode
-          }
-          presetModes.push(preset.mode)
-          delete preset.mode
-        }
-      }
-      if (typeof exports.mode !== 'undefined') {
-        mode = exports.mode
-      }
-      delete exports.mode
+      let mode = getMode(exports)
+      deleteMode(exports)
 
       let isJit = isV3 || (state.modules.jit && mode === 'jit')
 
