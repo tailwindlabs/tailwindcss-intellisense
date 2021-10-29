@@ -857,17 +857,22 @@ async function createProjectService(
       throw new SilentError(`Failed to load config file: ${state.configPath}`)
     }
 
-    state.config = resolveConfig.module(originalConfig)
-    state.separator = state.config.separator
+    try {
+      state.config = resolveConfig.module(originalConfig)
+      state.separator = state.config.separator
 
-    if (state.jit) {
-      state.jitContext = state.modules.jit.createContext.module(state)
-      state.jitContext.tailwindConfig.separator = state.config.separator
-      if (state.jitContext.getClassList) {
-        state.classList = state.jitContext.getClassList().map((className) => {
-          return [className, { color: getColor(state, className) }]
-        })
+      if (state.jit) {
+        state.jitContext = state.modules.jit.createContext.module(state)
+        state.jitContext.tailwindConfig.separator = state.config.separator
+        if (state.jitContext.getClassList) {
+          state.classList = state.jitContext.getClassList().map((className) => {
+            return [className, { color: getColor(state, className) }]
+          })
+        }
       }
+    } catch (error) {
+      hook.unhook()
+      throw error
     }
 
     let postcssResult: Result
