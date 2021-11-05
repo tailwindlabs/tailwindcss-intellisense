@@ -62,7 +62,10 @@ function getColorFromDecls(
 ): culori.Color | KeywordColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
-    if (prop === 'content' && (decls[prop] === '""' || decls[prop] === "''")) {
+    if (
+      prop === 'content' &&
+      (decls[prop] === '""' || decls[prop] === "''" || decls[prop] === 'var(--tw-content)')
+    ) {
       return false
     }
     return true
