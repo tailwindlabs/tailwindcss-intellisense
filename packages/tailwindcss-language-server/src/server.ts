@@ -879,6 +879,9 @@ async function createProjectService(
             return [className, { color: getColor(state, className) }]
           })
         }
+      } else {
+        delete state.jitContext
+        delete state.classList
       }
     } catch (error) {
       hook.unhook()
