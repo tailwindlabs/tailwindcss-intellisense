@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2
+
+- Update CSS syntax definitions
+- Fix compatibility with Tailwind `v3.0.0-alpha.2`
+- Fix error when switching from JIT mode to AOT mode
+- Fix stale error messages when resolving a config file error
+- Fix mode detection when using nested presets (#431)
+
 ## 0.7.1
 
 - Add [`tailwindCSS.classAttributes` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssclassattributes) (#350)
