@@ -1,0 +1,121 @@
+{
+  "scopeName": "tailwindcss.at-rules.scss.injection",
+  "fileTypes": [],
+  "injectionSelector": "L:source.css.scss -comment",
+  "name": "TailwindCSS",
+  "patterns": [
+    {
+      "begin": "(?i)((@)tailwind)(?=\\s|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.tailwind.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.tailwind.tailwind"
+        }
+      },
+      "name": "meta.at-rule.tailwind.css",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#escapes"
+        },
+        {
+          "match": "[^\\s;]+?",
+          "name": "entity.name.function.scss"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)screen)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.screen.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "\\s*(?={)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "match": "[^\\s{]+?",
+          "name": "entity.name.function.scss"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)layer)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.layer.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "\\s*(?={)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "match": "[^\\s{]+?",
+          "name": "entity.name.function.scss"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)variants)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.variants.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "\\s*(?={)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#commas"
+        },
+        {
+          "match": "[^\\s{,]+?",
+          "name": "entity.name.function.scss"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)responsive)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.responsive.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "\\s*(?={)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        }
+      ]
+    }
+  ]
+}

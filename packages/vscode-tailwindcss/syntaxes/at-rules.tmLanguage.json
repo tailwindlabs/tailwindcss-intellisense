@@ -1,0 +1,201 @@
+{
+  "scopeName": "tailwindcss.at-rules.injection",
+  "fileTypes": [],
+  "injectionSelector": "L:source.css -comment -source.css.scss",
+  "name": "TailwindCSS",
+  "patterns": [
+    {
+      "begin": "(?i)((@)tailwind)(?=\\s|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.tailwind.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.tailwind.tailwind"
+        }
+      },
+      "name": "meta.at-rule.tailwind.css",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#escapes"
+        },
+        {
+          "match": "[^\\s;]+?",
+          "name": "variable.parameter.tailwind.tailwind"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)screen)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.screen.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "match": "[^\\s{]+?",
+          "name": "variable.parameter.screen.tailwind"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.screen.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.screen.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.screen.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)layer)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.layer.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "match": "[^\\s{]+?",
+          "name": "variable.parameter.layer.tailwind"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.layer.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.layer.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.layer.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)variants)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.variants.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#commas"
+        },
+        {
+          "match": "[^\\s{,]+?",
+          "name": "variable.parameter.variants.tailwind"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.variants.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.variants.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.variants.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)responsive)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.responsive.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.responsive.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.responsive.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.responsive.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

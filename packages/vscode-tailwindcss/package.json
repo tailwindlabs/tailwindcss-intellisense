@@ -52,12 +52,50 @@
     ],
     "grammars": [
       {
-        "scopeName": "tailwindcss.injection",
-        "path": "./syntaxes/tailwind.tmLanguage.json",
+        "scopeName": "tailwindcss.at-rules.injection",
+        "path": "./syntaxes/at-rules.tmLanguage.json",
         "injectTo": [
           "source.css",
-          "source.css.scss",
-          "source.css.less",
+          "source.css.postcss",
+          "source.vue",
+          "source.svelte",
+          "text.html"
+        ]
+      },
+      {
+        "scopeName": "tailwindcss.at-rules.scss.injection",
+        "path": "./syntaxes/at-rules.scss.tmLanguage.json",
+        "injectTo": [
+          "source.css.scss"
+        ]
+      },
+      {
+        "scopeName": "tailwindcss.at-apply.injection",
+        "path": "./syntaxes/at-apply.tmLanguage.json",
+        "injectTo": [
+          "source.css",
+          "source.css.postcss",
+          "source.vue",
+          "source.svelte",
+          "text.html"
+        ]
+      },
+      {
+        "scopeName": "tailwindcss.theme-fn.injection",
+        "path": "./syntaxes/theme-fn.tmLanguage.json",
+        "injectTo": [
+          "source.css",
+          "source.css.postcss",
+          "source.vue",
+          "source.svelte",
+          "text.html"
+        ]
+      },
+      {
+        "scopeName": "tailwindcss.screen-fn.injection",
+        "path": "./syntaxes/screen-fn.tmLanguage.json",
+        "injectTo": [
+          "source.css",
           "source.css.postcss",
           "source.vue",
           "source.svelte",

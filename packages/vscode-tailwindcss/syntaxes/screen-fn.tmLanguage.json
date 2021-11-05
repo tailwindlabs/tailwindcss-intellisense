@@ -1,0 +1,37 @@
+{
+  "scopeName": "tailwindcss.screen-fn.injection",
+  "fileTypes": [],
+  "injectionSelector": "L:meta.property-value.css -comment, meta.at-rule.media.header.css -comment",
+  "name": "TailwindCSS",
+  "patterns": [
+    {
+      "begin": "(?i)(?<![\\w-])(screen)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.screen.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+?",
+          "name": "variable.parameter.screen.tailwind"
+        }
+      ]
+    }
+  ]
+}

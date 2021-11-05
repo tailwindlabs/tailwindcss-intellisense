@@ -1,0 +1,60 @@
+{
+  "scopeName": "tailwindcss.theme-fn.injection",
+  "fileTypes": [],
+  "injectionSelector": "L:meta.property-list.css -comment",
+  "name": "TailwindCSS",
+  "patterns": [
+    {
+      "begin": "(?i)(?<![\\w-])(config)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.config.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+",
+          "name": "variable.parameter.screen.tailwind"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(theme)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.theme.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+",
+          "name": "variable.parameter.screen.tailwind"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "scopeName": "tailwindcss.at-apply.injection",
+  "fileTypes": [],
+  "injectionSelector": "L:meta.property-list.css -comment, meta.property-list.scss -comment",
+  "name": "TailwindCSS",
+  "patterns": [
+    {
+      "name": "meta.at-rule.apply.tailwind",
+      "begin": "(@)apply\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.at-rule.apply.tailwind"
+        },
+        "1": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": ";|(?=[}])",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.apply.tailwind"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "match": "!\\s*important(?![\\w-])",
+          "name": "keyword.other.important.css"
+        },
+        {
+          "match": "[^\\s;]+?",
+          "name": "entity.other.attribute-name.class.css"
+        }
+      ]
+    }
+  ]
+}
