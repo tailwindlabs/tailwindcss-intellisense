@@ -39,7 +39,7 @@ import chokidar, { FSWatcher } from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
-import { /*postcssFallback,*/ Result } from 'postcss'
+import { /*postcssFallback,*/ AtRule, Container, Node, Result } from 'postcss'
 // import tailwindcssFallback from 'tailwindcss'
 // import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import Module from 'module'
@@ -1096,6 +1096,10 @@ function runPlugin(
   } catch (_) {}
 }
 
+function isAtRule(node: Node): node is AtRule {
+  return node.type === 'atrule'
+}
+
 function getVariants(state: State): Record<string, string> {
   if (state.jit) {
     function escape(className: string): string {
@@ -1153,18 +1157,36 @@ function getVariants(state: State): Record<string, string> {
         let definitions = []
 
         for (let fn of fns) {
+          let definition: string
           let container = root.clone()
-          fn({
+          let returnValue = fn({
             container,
             separator: state.separator,
             modifySelectors,
+            format: (def: string) => {
+              definition = def.replace(/:merge\(([^)]+)\)/g, '$1')
+            },
+            wrap: (rule: Container) => {
+              if (isAtRule(rule)) {
+                definition = `@${rule.name} ${rule.params}`
+              }
+            },
           })
+
+          if (!definition) {
+            definition = returnValue
+          }
+
+          if (definition) {
+            definitions.push(definition)
+            continue
+          }
 
           container.walkDecls((decl) => {
             decl.remove()
           })
 
-          let definition = container
+          definition = container
             .toString()
             .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
             .replace(/(?<!\\)[{}]/g, '')
