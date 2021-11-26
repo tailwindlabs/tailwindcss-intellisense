@@ -35,7 +35,7 @@ import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as os from 'os'
 import * as fs from 'fs'
-import chokidar, { FSWatcher } from 'chokidar'
+import type * as chokidar from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
@@ -247,7 +247,7 @@ async function createProjectService(
   const documentSettingsCache: Map<string, Settings> = new Map()
   let registrations: Promise<BulkUnregistration>
 
-  let chokidarWatcher: FSWatcher
+  let chokidarWatcher: chokidar.FSWatcher
   let ignore = [
     '**/.git/objects/**',
     '**/.git/subtree-cache/**',
@@ -339,7 +339,8 @@ async function createProjectService(
       },
     })
   } else {
-    chokidarWatcher = chokidar.watch([`**/${CONFIG_FILE_GLOB}`, '**/package.json'], {
+    let watch: typeof chokidar.watch = require('chokidar').watch
+    chokidarWatcher = watch([`**/${CONFIG_FILE_GLOB}`, '**/package.json'], {
       cwd: folder,
       ignorePermissionErrors: true,
       ignoreInitial: true,

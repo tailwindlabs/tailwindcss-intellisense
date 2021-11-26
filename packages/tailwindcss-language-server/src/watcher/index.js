@@ -12,6 +12,10 @@ const armv = process.env.ARM_VERSION || (arch === 'arm64' ? '8' : vars.arm_versi
 const uv = (process.versions.uv || '').split('.')[0]
 
 const prebuilds = {
+  'darwin-arm64': {
+    'node.napi.glibc.node': () =>
+      require('@parcel/watcher/prebuilds/darwin-arm64/node.napi.glibc.node'),
+  },
   'darwin-x64': {
     'node.napi.glibc.node': () =>
       require('@parcel/watcher/prebuilds/darwin-x64/node.napi.glibc.node'),
@@ -68,9 +72,13 @@ exports.unsubscribe = (dir, fn, opts) => {
 }
 
 function resolve() {
+  // Find matching "prebuilds/<platform>-<arch>" directory
+  var tuples = Object.keys(prebuilds).map(parseTuple)
+  var tuple = tuples.filter(matchTuple(platform, arch)).sort(compareTuples)[0]
+  if (!tuple) return
+
   // Find most specific flavor first
-  var list = prebuilds[platform + '-' + arch]
-  if (!list) return
+  var list = prebuilds[tuple.name]
   var builds = Object.keys(list)
   var parsed = builds.map(parseTags)
   var candidates = parsed.filter(matchTags(runtime, abi))
@@ -80,6 +88,34 @@ function resolve() {
       return list[winner.file]()
     } catch (_error) {}
   }
+}
+
+function parseTuple(name) {
+  // Example: darwin-x64+arm64
+  var arr = name.split('-')
+  if (arr.length !== 2) return
+
+  var platform = arr[0]
+  var architectures = arr[1].split('+')
+
+  if (!platform) return
+  if (!architectures.length) return
+  if (!architectures.every(Boolean)) return
+
+  return { name, platform, architectures }
+}
+
+function matchTuple(platform, arch) {
+  return function (tuple) {
+    if (tuple == null) return false
+    if (tuple.platform !== platform) return false
+    return tuple.architectures.includes(arch)
+  }
+}
+
+function compareTuples(a, b) {
+  // Prefer single-arch prebuilds over multi-arch
+  return a.architectures.length - b.architectures.length
 }
 
 function parseTags(file) {
