@@ -123,13 +123,19 @@ export function completionsFromClassList(
     let items: CompletionItem[] = []
 
     if (!important) {
+      let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+
       items.push(
         ...Object.entries(state.variants)
           .filter(([variant]) => !existingVariants.includes(variant))
           .map(([variant, definition], index) => {
-            let resultingVariants = [...existingVariants, variant].sort(
-              (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
-            )
+            let resultingVariants = [...existingVariants, variant]
+
+            if (shouldSortVariants) {
+              resultingVariants = resultingVariants.sort(
+                (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+              )
+            }
 
             return {
               label: variant + sep,
@@ -146,7 +152,7 @@ export function completionsFromClassList(
                 range: replacementRange,
               },
               additionalTextEdits:
-                resultingVariants.length > 1
+                shouldSortVariants && resultingVariants.length > 1
                   ? [
                       {
                         newText:

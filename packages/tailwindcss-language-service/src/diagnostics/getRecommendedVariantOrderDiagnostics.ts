@@ -5,6 +5,7 @@ import { findClassListsInDocument, getClassNamesInClassList } from '../util/find
 import * as jit from '../util/jit'
 import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
 import { equalExact } from '../util/array'
+import semver from 'semver'
 
 export async function getRecommendedVariantOrderDiagnostics(
   state: State,
@@ -12,6 +13,8 @@ export async function getRecommendedVariantOrderDiagnostics(
   settings: Settings
 ): Promise<RecommendedVariantOrderDiagnostic[]> {
   if (!state.jit) return []
+
+  if (semver.gte(state.version, '2.99.0')) return []
 
   let severity = settings.tailwindCSS.lint.recommendedVariantOrder
   if (severity === 'ignore') return []
