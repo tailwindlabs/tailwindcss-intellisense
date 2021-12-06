@@ -876,9 +876,12 @@ async function createProjectService(
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator
         if (state.jitContext.getClassList) {
-          state.classList = state.jitContext.getClassList().map((className) => {
-            return [className, { color: getColor(state, className) }]
-          })
+          state.classList = state.jitContext
+            .getClassList()
+            .filter((className) => className !== '*')
+            .map((className) => {
+              return [className, { color: getColor(state, className) }]
+            })
         }
       } else {
         delete state.jitContext
