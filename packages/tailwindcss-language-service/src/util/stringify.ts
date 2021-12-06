@@ -6,7 +6,7 @@ import { remToPx } from './remToPx'
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
 import { getColorsInString } from './color'
-import { TinyColor } from '@ctrl/tinycolor'
+import * as culori from 'culori'
 
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
@@ -74,7 +74,7 @@ export function stringifyCss(
         let hex = ''
         if(color) {
           hex = color.map(c => {
-            return c instanceof TinyColor ? c.toString('hex') : c
+            return c ? culori.formatHex(c) : c
           }).join(' ')
         }
         return `${indentStr + indent}${curr}: ${val}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`

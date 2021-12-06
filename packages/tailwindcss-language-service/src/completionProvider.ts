@@ -1156,8 +1156,8 @@ function stringifyDecls(
           const px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
           let hex = ''
           const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
-          if(color instanceof TinyColor) {
-            hex = color.toString('hex') || ''
+          if(color) {
+            hex = culori.formatHex(color) || ''
           }
           return `${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`
         })

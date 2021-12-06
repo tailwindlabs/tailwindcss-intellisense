@@ -3,7 +3,7 @@ import type { Container, Document, Root, Rule } from 'postcss'
 import dlv from 'dlv'
 import { remToPx } from './remToPx'
 import {getColorsInString} from './color'
-import { TinyColor } from '@ctrl/tinycolor'
+import * as culori from 'culori'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -54,8 +54,8 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   if(showColorEquivalents) {
     clone.walkDecls((decl) => {
       const color = getColorsInString(decl.value)[0]
-      if(color && color instanceof TinyColor) {
-        decl.value = `${decl.value}/* ${color.toString('hex')} */`
+      if(color) {
+        decl.value = `${decl.value}/* ${culori.formatHex(color)} */`
       }
     })
   }
@@ -84,8 +84,8 @@ export async function stringifyDecls(state: State, rule: Rule, uri?: string): Pr
     let px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
     let hex = ''
     const color = showColorEquivalents ? getColorsInString(value)[0] : undefined
-    if(color instanceof TinyColor) {
-      hex = color.toString('hex') || ''
+    if(color) {
+      hex = culori.formatHex(color) || ''
     }
     result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''}${hex ? `/* ${hex} */` : ''};`)
   })
