@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3
+
+- Disable variant order linting and automatic sorting when using Tailwind v3
+- Exclude the global selector (`*`) from class completions
+
 ## 0.7.2
 
 - Update CSS syntax definitions
@@ -111,7 +116,7 @@
 
 ## 0.5.9
 
-- Add `focus-visible`, `checked`, `motion-safe`, `motion-reduce`, and `dark`  to `@variants` completions
+- Add `focus-visible`, `checked`, `motion-safe`, `motion-reduce`, and `dark` to `@variants` completions
 - Add `showPixelEquivalents` and `rootFontSize` settings (#200)
 
 ## 0.5.8
