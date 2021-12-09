@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.4
+
+- Update icon
+- Update readme banner image
+
 ## 0.7.3
 
 - Disable variant order linting and automatic sorting when using Tailwind v3
