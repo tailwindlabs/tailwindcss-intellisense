@@ -19,6 +19,7 @@ export type ClassNames = {
 
 export type EditorState = {
   connection: Connection
+  folder: string
   documents: TextDocuments<TextDocument>
   globalSettings: Settings
   userLanguages: Record<string, string>
@@ -55,6 +56,9 @@ export type Settings = {
     }
     experimental: {
       classRegex: string[]
+    }
+    files: {
+      exclude: string[]
     }
   }
 }

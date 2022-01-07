@@ -31,6 +31,7 @@ import { languages as defaultLanguages } from 'tailwindcss-language-service/src/
 import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
+import minimatch from 'minimatch'
 
 const colorNames = Object.keys(namedColors)
 
@@ -82,6 +83,45 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   return isObject(langs) ? langs : {}
 }
 
+function getExcludePatterns(folder: WorkspaceFolder): string[] {
+  let globalExclude = Workspace.getConfiguration('files', folder).get('exclude')
+  let exclude = Object.entries(globalExclude)
+    .filter(([, value]) => value)
+    .map(([key]) => key)
+
+  return [
+    ...exclude,
+    ...(<string[]>Workspace.getConfiguration('tailwindCSS', folder).get('files.exclude')),
+  ]
+}
+
+function isExcluded(file: string, folder: WorkspaceFolder): boolean {
+  let exclude = getExcludePatterns(folder)
+
+  for (let pattern of exclude) {
+    if (minimatch(file, path.join(folder.uri.fsPath, pattern))) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function mergeExcludes(settings, scope) {
+  // merge `files.exclude` into `tailwindCSS.files.exclude`
+  let globalExclude = Object.entries(Workspace.getConfiguration('files', scope).get('exclude'))
+    .filter(([, value]) => value)
+    .map(([key]) => key)
+
+  return {
+    ...settings,
+    files: {
+      ...settings.files,
+      exclude: [...globalExclude, ...settings.files.exclude],
+    },
+  }
+}
+
 export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
   let prod = path.join('dist', 'server', 'tailwindServer.js')
@@ -108,8 +148,10 @@ export async function activate(context: ExtensionContext) {
     if (!folder) {
       return
     }
-    folder = getOuterMostWorkspaceFolder(folder)
-    bootWorkspaceClient(folder)
+    if (!isExcluded(uri.fsPath, folder)) {
+      folder = getOuterMostWorkspaceFolder(folder)
+      bootWorkspaceClient(folder)
+    }
   })
 
   context.subscriptions.push(watcher)
@@ -180,7 +222,7 @@ export async function activate(context: ExtensionContext) {
 
     let configuration = {
       editor: Workspace.getConfiguration('editor', folder),
-      tailwindCSS: Workspace.getConfiguration('tailwindCSS', folder),
+      tailwindCSS: mergeExcludes(Workspace.getConfiguration('tailwindCSS', folder), folder),
     }
 
     let inspectPort = configuration.tailwindCSS.get('inspectPort')
@@ -309,7 +351,13 @@ export async function activate(context: ExtensionContext) {
                   }
                 }
               }
-              return Workspace.getConfiguration(section, scope)
+              let settings = Workspace.getConfiguration(section, scope)
+
+              if (section === 'tailwindCSS') {
+                return mergeExcludes(settings, scope)
+              }
+
+              return settings
             })
           },
         },
@@ -375,7 +423,7 @@ export async function activate(context: ExtensionContext) {
 
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_FILE_GLOB}`),
-      '**/node_modules/**',
+      `{${getExcludePatterns(folder).join(',')}}`,
       1
     )
 

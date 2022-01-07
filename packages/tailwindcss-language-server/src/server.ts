@@ -78,6 +78,9 @@ import * as culori from 'culori'
 import namedColors from 'color-name'
 import preflight from './lib/preflight'
 import tailwindPlugins from './lib/plugins'
+import isExcluded from './util/isExcluded'
+import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
+import { equal } from 'tailwindcss-language-service/src/util/array'
 
 let oldReadFileSync = fs.readFileSync
 // @ts-ignore
@@ -120,14 +123,6 @@ console.error = connection.console.error.bind(connection.console)
 process.on('unhandledRejection', (e: any) => {
   connection.console.error(formatError(`Unhandled exception`, e))
 })
-
-function normalizeFileNameToFsPath(fileName: string) {
-  return URI.file(fileName).fsPath
-}
-
-function getFileFsPath(documentUri: string): string {
-  return URI.parse(documentUri).fsPath
-}
 
 function deletePropertyPath(obj: any, path: string | string[]): void {
   if (typeof path === 'string') {
@@ -220,6 +215,7 @@ async function createProjectService(
     enabled: false,
     editor: {
       connection,
+      folder,
       globalSettings: params.initializationOptions.configuration as Settings,
       userLanguages: params.initializationOptions.userLanguages
         ? params.initializationOptions.userLanguages
@@ -258,12 +254,7 @@ async function createProjectService(
   let registrations: Promise<BulkUnregistration>
 
   let chokidarWatcher: chokidar.FSWatcher
-  let ignore = [
-    '**/.git/objects/**',
-    '**/.git/subtree-cache/**',
-    '**/node_modules/**',
-    '**/.hg/store/**',
-  ]
+  let ignore = state.editor.globalSettings.tailwindCSS.files.exclude
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -456,7 +447,7 @@ async function createProjectService(
     let [configPath] = (
       await glob([`**/${CONFIG_FILE_GLOB}`], {
         cwd: folder,
-        ignore: ['**/node_modules'],
+        ignore: state.editor.globalSettings.tailwindCSS.files.exclude,
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
@@ -989,25 +980,33 @@ async function createProjectService(
     },
     onUpdateSettings(settings: any): void {
       documentSettingsCache.clear()
-      if (state.enabled) {
-        updateAllDiagnostics(state)
-      }
-      if (settings.editor.colorDecorators) {
-        registerCapabilities(state.dependencies)
+      let previousExclude = state.editor.globalSettings.tailwindCSS.files.exclude
+      state.editor.globalSettings = settings
+      if (!equal(previousExclude, settings.tailwindCSS.files.exclude)) {
+        tryInit()
       } else {
-        connection.sendNotification('@/tailwindCSS/clearColors')
+        if (state.enabled) {
+          updateAllDiagnostics(state)
+        }
+        if (settings.editor.colorDecorators) {
+          registerCapabilities(state.dependencies)
+        } else {
+          connection.sendNotification('@/tailwindCSS/clearColors')
+        }
       }
     },
-    onHover(params: TextDocumentPositionParams): Promise<Hover> {
+    async onHover(params: TextDocumentPositionParams): Promise<Hover> {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
+      if (await isExcluded(state, document)) return null
       return doHover(state, document, params.position)
     },
-    onCompletion(params: CompletionParams): Promise<CompletionList> {
+    async onCompletion(params: CompletionParams): Promise<CompletionList> {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
+      if (await isExcluded(state, document)) return null
       return doComplete(state, document, params.position, params.context)
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
@@ -1026,6 +1025,7 @@ async function createProjectService(
       if (!state.enabled) return []
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return []
+      if (await isExcluded(state, document)) return null
       return getDocumentColors(state, document)
     },
     async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
