@@ -2,6 +2,16 @@
  * Adapted from: https://github.com/elastic/require-in-the-middle
  */
 import Module from 'module'
+import plugins from './plugins'
+
+let bundledModules = {
+  ...plugins,
+  'tailwindcss/colors': require('tailwindcss/colors'),
+  'tailwindcss/defaultConfig': require('tailwindcss/defaultConfig'),
+  'tailwindcss/defaultTheme': require('tailwindcss/defaultTheme'),
+  'tailwindcss/resolveConfig': require('tailwindcss/resolveConfig'),
+  'tailwindcss/plugin': require('tailwindcss/plugin'),
+}
 
 export default class Hook {
   cache = {}
@@ -31,8 +41,22 @@ export default class Hook {
         return self._origRequire.apply(this, arguments)
       }
 
-      // @ts-ignore
-      let filename = Module._resolveFilename(request, this)
+      let filename
+
+      if (bundledModules.hasOwnProperty(request)) {
+        try {
+          // @ts-ignore
+          filename = Module._resolveFilename(request, this)
+        } catch (_) {
+          // if (plugins.hasOwnProperty(request)) {
+          //   console.log(`Using bundled version of \`${request}\`: v${plugins[request].version}`)
+          // }
+          return bundledModules[request].module || bundledModules[request]
+        }
+      } else {
+        // @ts-ignore
+        filename = Module._resolveFilename(request, this)
+      }
 
       // return known patched modules immediately
       if (self.cache.hasOwnProperty(filename)) {

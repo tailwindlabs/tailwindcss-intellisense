@@ -39,9 +39,7 @@ import type * as chokidar from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
-import { /*postcssFallback,*/ AtRule, Container, Node, Result } from 'postcss'
-// import tailwindcssFallback from 'tailwindcss'
-// import resolveConfigFallback from 'tailwindcss/resolveConfig'
+import { AtRule, Container, Node, Result } from 'postcss'
 import Module from 'module'
 import Hook from './lib/hook'
 import semver from 'semver'
@@ -78,8 +76,20 @@ import { generateRules } from 'tailwindcss-language-service/src/util/jit'
 import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
+import preflight from './lib/preflight'
+import tailwindPlugins from './lib/plugins'
+
+let oldReadFileSync = fs.readFileSync
+// @ts-ignore
+fs.readFileSync = function (filename, ...args) {
+  if (filename === path.join(__dirname, 'css/preflight.css')) {
+    return preflight
+  }
+  return oldReadFileSync(filename, ...args)
+}
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
+const PACKAGE_GLOB = '{package.json,package-lock.json,yarn.lock,pnpm-lock.yaml}'
 const TRIGGER_CHARACTERS = [
   // class attributes
   '"',
@@ -269,7 +279,7 @@ async function createProjectService(
       }
 
       let isConfigFile = minimatch(file, `**/${CONFIG_FILE_GLOB}`, { dot: true })
-      let isPackageFile = minimatch(file, '**/package.json', { dot: true })
+      let isPackageFile = minimatch(file, `**/${PACKAGE_GLOB}`, { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
 
       if (!isConfigFile && !isPackageFile && !isDependency) continue
@@ -312,7 +322,7 @@ async function createProjectService(
     })
 
     connection.client.register(DidChangeWatchedFilesNotification.type, {
-      watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: '**/package.json' }],
+      watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: `**/${PACKAGE_GLOB}` }],
     })
   } else if (parcel.getBinding()) {
     let typeMap = {
@@ -340,7 +350,7 @@ async function createProjectService(
     })
   } else {
     let watch: typeof chokidar.watch = require('chokidar').watch
-    chokidarWatcher = watch([`**/${CONFIG_FILE_GLOB}`, '**/package.json'], {
+    chokidarWatcher = watch([`**/${CONFIG_FILE_GLOB}`, `**/${PACKAGE_GLOB}`], {
       cwd: folder,
       ignorePermissionErrors: true,
       ignoreInitial: true,
@@ -493,6 +503,7 @@ async function createProjectService(
     let jitModules: typeof state.modules.jit
     let tailwindcssVersion: string | undefined
     let postcssVersion: string | undefined
+    let pluginVersions: string | undefined
     let browserslist: string[] | undefined
     let resolveConfigFn: (config: any) => any
     let featureFlags: FeatureFlags = { future: [], experimental: [] }
@@ -511,13 +522,25 @@ async function createProjectService(
       postcssVersion = __non_webpack_require__(postcssPkgPath).version
       tailwindcssVersion = __non_webpack_require__(tailwindcssPkgPath).version
 
+      pluginVersions = Object.keys(tailwindPlugins)
+        .map((plugin) => {
+          try {
+            return __non_webpack_require__(resolveFrom(configDir, `${plugin}/package.json`)).version
+          } catch (_) {
+            return ''
+          }
+        })
+        .join(',')
+
       if (
         state.enabled &&
         postcssVersion === state.modules.postcss.version &&
         tailwindcssVersion === state.modules.tailwindcss.version &&
+        pluginVersions === state.pluginVersions &&
         configPath === state.configPath &&
         configId === state.configId
       ) {
+        console.log('short circuit')
         return
       }
 
@@ -674,17 +697,25 @@ async function createProjectService(
         } catch (_) {}
       }
     } catch (error) {
-      throw new SilentError(error.message)
-      // TODO: force mode
-      // tailwindcss = tailwindcssFallback
-      // resolveConfigFn = resolveConfigFallback
-      // postcss = postcssFallback
-      // applyComplexClasses = require('tailwindcss/lib/lib/substituteClassApplyAtRules')
-      // tailwindcssVersion = '2.0.3'
-      // postcssVersion = '8.2.6'
-      // console.log(
-      //   `Failed to load workspace modules. Initializing with tailwindcss v${tailwindcssVersion}`
-      // )
+      tailwindcss = require('tailwindcss')
+      resolveConfigFn = require('tailwindcss/resolveConfig')
+      postcss = require('postcss')
+      tailwindcssVersion = require('tailwindcss/package.json').version
+      postcssVersion = require('postcss/package.json').version
+      postcssSelectorParser = require('postcss-selector-parser')
+      jitModules = {
+        generateRules: { module: require('tailwindcss/lib/lib/generateRules').generateRules },
+        createContext: {
+          module: (state) =>
+            require('tailwindcss/lib/lib/setupContextUtils').createContext(state.config),
+        },
+        expandApplyAtRules: {
+          module: require('tailwindcss/lib/lib/expandApplyAtRules').default,
+        },
+      }
+      console.log('Failed to load workspace modules.')
+      console.log(`Using bundled version of \`tailwindcss\`: v${tailwindcssVersion}`)
+      console.log(`Using bundled version of \`postcss\`: v${postcssVersion}`)
     }
 
     state.configPath = configPath
@@ -698,6 +729,7 @@ async function createProjectService(
     state.browserslist = browserslist
     state.featureFlags = featureFlags
     state.version = tailwindcssVersion
+    state.pluginVersions = pluginVersions
 
     try {
       state.corePlugins = Object.keys(

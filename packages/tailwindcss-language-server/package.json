@@ -22,6 +22,10 @@
   },
   "devDependencies": {
     "@parcel/watcher": "2.0.3",
+    "@tailwindcss/aspect-ratio": "0.4.0",
+    "@tailwindcss/forms": "0.4.0",
+    "@tailwindcss/line-clamp": "0.3.0",
+    "@tailwindcss/typography": "0.5.0",
     "@types/debounce": "1.2.0",
     "@types/node": "14.14.34",
     "@types/vscode": "1.52.0",
@@ -50,6 +54,7 @@
     "rimraf": "3.0.2",
     "semver": "7.3.2",
     "stack-trace": "0.0.10",
+    "tailwindcss": "3.0.11",
     "terser": "4.6.12",
     "typescript": "4.2.4",
     "vscode-languageserver": "7.0.0",
