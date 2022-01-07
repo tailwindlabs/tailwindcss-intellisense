@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.5
+
+- Add bundled version of `tailwindcss`. The extension will use this version if `tailwindcss` cannot be resolved within the workspace
+- Add [`tailwindCSS.files.exclude` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssfilesexclude)
+
 ## 0.7.4
 
 - Update icon
