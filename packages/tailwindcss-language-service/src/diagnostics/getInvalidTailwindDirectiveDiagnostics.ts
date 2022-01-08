@@ -27,7 +27,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.css)
   }
 
-  const notSemicolonLanguages = ["sass"]
+  const notSemicolonLanguages = ["sass", "sugarss", "stylus"]
   let regex: RegExp
   if (
     notSemicolonLanguages.includes(doc.languageId) ||
