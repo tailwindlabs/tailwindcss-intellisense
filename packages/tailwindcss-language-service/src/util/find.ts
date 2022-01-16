@@ -174,7 +174,7 @@ async function findCustomClassLists(
 
 export function matchClassAttributes(text: string, attributes: string[]): RegExpMatchArray[] {
   const attrs = attributes.filter((x) => typeof x === 'string').flatMap((a) => [a, `\\[${a}\\]`])
-  const re = /(?:\s|:|\()(ATTRS)\s*=\s*['"`{]/
+  const re = /(?:\s|:|\()(ATTRS)\s*\+?=\s*['"`{]/
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
