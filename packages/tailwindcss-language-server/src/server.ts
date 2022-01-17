@@ -78,7 +78,7 @@ import * as culori from 'culori'
 import namedColors from 'color-name'
 import preflight from './lib/preflight'
 import tailwindPlugins from './lib/plugins'
-import isExcluded from './util/isExcluded'
+import isExcluded, { DEFAULT_FILES_EXCLUDE } from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
 import { equal } from 'tailwindcss-language-service/src/util/array'
 
@@ -109,7 +109,6 @@ const TRIGGER_CHARACTERS = [
   // JIT opacity modifiers
   '/',
 ] as const
-const DEFAULT_FILES_EXCLUDE = ['**/.git/**', '**/.svn/**', '**/.hg/**', '**/node_modules/**']
 
 const colorNames = Object.keys(namedColors)
 
