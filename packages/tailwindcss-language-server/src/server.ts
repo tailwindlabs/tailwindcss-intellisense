@@ -211,12 +211,33 @@ async function createProjectService(
   documentService: DocumentService
 ): Promise<ProjectService> {
   const disposables: Disposable[] = []
+  const documentSettingsCache: Map<string, Settings> = new Map()
+
+  async function getConfiguration(uri?: string) {
+    if (documentSettingsCache.has(uri)) {
+      return documentSettingsCache.get(uri)
+    }
+    let [editor, tailwindCSS] = await Promise.all([
+      connection.workspace.getConfiguration({
+        section: 'editor',
+        scopeUri: uri,
+      }),
+      connection.workspace.getConfiguration({
+        section: 'tailwindCSS',
+        scopeUri: uri,
+      }),
+    ])
+    let config: Settings = { editor, tailwindCSS }
+    documentSettingsCache.set(uri, config)
+    return config
+  }
+
   const state: State = {
     enabled: false,
     editor: {
       connection,
       folder,
-      globalSettings: params.initializationOptions.configuration as Settings,
+      globalSettings: await getConfiguration(),
       userLanguages: params.initializationOptions.userLanguages
         ? params.initializationOptions.userLanguages
         : {},
@@ -226,35 +247,17 @@ async function createProjectService(
         diagnosticRelatedInformation: true,
       },
       documents: documentService.documents,
-      getConfiguration: async (uri?: string) => {
-        if (documentSettingsCache.has(uri)) {
-          return documentSettingsCache.get(uri)
-        }
-        let [editor, tailwindCSS] = await Promise.all([
-          connection.workspace.getConfiguration({
-            section: 'editor',
-            scopeUri: uri,
-          }),
-          connection.workspace.getConfiguration({
-            section: 'tailwindCSS',
-            scopeUri: uri,
-          }),
-        ])
-        let config: Settings = { editor, tailwindCSS }
-        documentSettingsCache.set(uri, config)
-        return config
-      },
+      getConfiguration,
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
     },
   }
 
-  const documentSettingsCache: Map<string, Settings> = new Map()
   let registrations: Promise<BulkUnregistration>
 
   let chokidarWatcher: chokidar.FSWatcher
-  let ignore = state.editor.globalSettings.tailwindCSS.files.exclude
+  let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? []
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -447,7 +450,7 @@ async function createProjectService(
     let [configPath] = (
       await glob([`**/${CONFIG_FILE_GLOB}`], {
         cwd: folder,
-        ignore: state.editor.globalSettings.tailwindCSS.files.exclude,
+        ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? [],
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
@@ -980,9 +983,9 @@ async function createProjectService(
     },
     onUpdateSettings(settings: any): void {
       documentSettingsCache.clear()
-      let previousExclude = state.editor.globalSettings.tailwindCSS.files.exclude
+      let previousExclude = state.editor.globalSettings.tailwindCSS.files?.exclude ?? []
       state.editor.globalSettings = settings
-      if (!equal(previousExclude, settings.tailwindCSS.files.exclude)) {
+      if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? [])) {
         tryInit()
       } else {
         if (state.enabled) {
