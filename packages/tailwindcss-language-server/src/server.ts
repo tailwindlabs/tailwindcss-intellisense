@@ -391,7 +391,7 @@ async function createProjectService(
       capabilities.add(CompletionRequest.type, {
         documentSelector: null,
         resolveProvider: true,
-        triggerCharacters: [...TRIGGER_CHARACTERS, state.separator],
+        triggerCharacters: [...TRIGGER_CHARACTERS, state.separator].filter(Boolean),
       })
       if (watchFiles.length > 0) {
         capabilities.add(DidChangeWatchedFilesNotification.type, {
