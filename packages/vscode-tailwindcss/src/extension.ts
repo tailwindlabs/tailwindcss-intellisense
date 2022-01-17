@@ -243,7 +243,7 @@ export async function activate(context: ExtensionContext) {
       documentSelector: languages.get(folder.uri.toString()).map((language) => ({
         scheme: 'file',
         language,
-        pattern: `${folder.uri.fsPath}/**/*`,
+        pattern: `${folder.uri.fsPath.replace(/[\[\]\{\}]/g, '?')}/**/*`,
       })),
       diagnosticCollectionName: CLIENT_ID,
       workspaceFolder: folder,
