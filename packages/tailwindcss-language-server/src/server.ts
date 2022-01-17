@@ -535,7 +535,6 @@ async function createProjectService(
         configPath === state.configPath &&
         configId === state.configId
       ) {
-        console.log('short circuit')
         return
       }
 
