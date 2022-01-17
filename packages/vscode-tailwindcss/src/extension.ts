@@ -18,6 +18,7 @@ import {
   TextEditorDecorationType,
   RelativePattern,
   ConfigurationScope,
+  WorkspaceConfiguration,
 } from 'vscode'
 import {
   LanguageClient,
@@ -83,15 +84,16 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   return isObject(langs) ? langs : {}
 }
 
-function getExcludePatterns(folder: WorkspaceFolder): string[] {
-  let globalExclude = Workspace.getConfiguration('files', folder).get('exclude')
-  let exclude = Object.entries(globalExclude)
-    .filter(([, value]) => value)
+function getGlobalExcludePatterns(scope: ConfigurationScope): string[] {
+  return Object.entries(Workspace.getConfiguration('files', scope).get('exclude'))
+    .filter(([, value]) => value === true)
     .map(([key]) => key)
+}
 
+function getExcludePatterns(scope: ConfigurationScope): string[] {
   return [
-    ...exclude,
-    ...(<string[]>Workspace.getConfiguration('tailwindCSS', folder).get('files.exclude')),
+    ...getGlobalExcludePatterns(scope),
+    ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')),
   ]
 }
 
@@ -107,17 +109,12 @@ function isExcluded(file: string, folder: WorkspaceFolder): boolean {
   return false
 }
 
-function mergeExcludes(settings, scope) {
-  // merge `files.exclude` into `tailwindCSS.files.exclude`
-  let globalExclude = Object.entries(Workspace.getConfiguration('files', scope).get('exclude'))
-    .filter(([, value]) => value)
-    .map(([key]) => key)
-
+function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope) {
   return {
     ...settings,
     files: {
       ...settings.files,
-      exclude: [...globalExclude, ...settings.files.exclude],
+      exclude: [...getGlobalExcludePatterns(scope), ...settings.files.exclude],
     },
   }
 }
