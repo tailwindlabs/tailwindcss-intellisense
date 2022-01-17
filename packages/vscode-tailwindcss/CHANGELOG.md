@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.6
+
+- Fix `files.exclude` configuration resolution (#464)
+- Ensure `files.exclude` configuration changes are synchronized
+- [LSP] Remove `InitializeParams.initializationOptions` requirement
+
 ## 0.7.5
 
 - Add bundled version of `tailwindcss`. The extension will use this version if `tailwindcss` cannot be resolved within the workspace
