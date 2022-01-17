@@ -363,7 +363,7 @@ export async function activate(context: ExtensionContext) {
         userLanguages: getUserLanguages(folder),
       },
       synchronize: {
-        configurationSection: ['editor', 'tailwindCSS'],
+        configurationSection: ['files', 'editor', 'tailwindCSS'],
       },
     }
 
