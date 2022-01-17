@@ -109,6 +109,7 @@ const TRIGGER_CHARACTERS = [
   // JIT opacity modifiers
   '/',
 ] as const
+const DEFAULT_FILES_EXCLUDE = ['**/.git/**', '**/.svn/**', '**/.hg/**', '**/node_modules/**']
 
 const colorNames = Object.keys(namedColors)
 
@@ -257,7 +258,7 @@ async function createProjectService(
   let registrations: Promise<BulkUnregistration>
 
   let chokidarWatcher: chokidar.FSWatcher
-  let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? []
+  let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -450,7 +451,7 @@ async function createProjectService(
     let [configPath] = (
       await glob([`**/${CONFIG_FILE_GLOB}`], {
         cwd: folder,
-        ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? [],
+        ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE,
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
@@ -983,9 +984,10 @@ async function createProjectService(
     },
     onUpdateSettings(settings: any): void {
       documentSettingsCache.clear()
-      let previousExclude = state.editor.globalSettings.tailwindCSS.files?.exclude ?? []
+      let previousExclude =
+        state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
       state.editor.globalSettings = settings
-      if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? [])) {
+      if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE)) {
         tryInit()
       } else {
         if (state.enabled) {
