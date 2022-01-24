@@ -980,11 +980,11 @@ async function createProjectService(
         dispose()
       }
     },
-    onUpdateSettings(settings: any): void {
+    async onUpdateSettings(settings: any): Promise<void> {
       documentSettingsCache.clear()
       let previousExclude =
         state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
-      state.editor.globalSettings = settings
+      state.editor.globalSettings = await state.editor.getConfiguration()
       if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE)) {
         tryInit()
       } else {

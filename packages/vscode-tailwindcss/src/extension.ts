@@ -88,12 +88,15 @@ function getGlobalExcludePatterns(scope: ConfigurationScope): string[] {
   return Object.entries(Workspace.getConfiguration('files', scope).get('exclude'))
     .filter(([, value]) => value === true)
     .map(([key]) => key)
+    .filter(Boolean)
 }
 
 function getExcludePatterns(scope: ConfigurationScope): string[] {
   return [
     ...getGlobalExcludePatterns(scope),
-    ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')),
+    ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')).filter(
+      Boolean
+    ),
   ]
 }
 
@@ -109,12 +112,12 @@ function isExcluded(file: string, folder: WorkspaceFolder): boolean {
   return false
 }
 
-function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope) {
+function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope): any {
   return {
     ...settings,
     files: {
       ...settings.files,
-      exclude: [...getGlobalExcludePatterns(scope), ...settings.files.exclude],
+      exclude: getExcludePatterns(scope),
     },
   }
 }
