@@ -5,9 +5,9 @@ function createResolver(options: Partial<ResolveOptions> = {}): Resolver {
   return ResolverFactory.createResolver({
     fileSystem: new CachedInputFileSystem(fs, 4000),
     useSyncFileSystemCalls: true,
-    // cachePredicate: () => false,
     conditionNames: ['node', 'require'],
-    ...options,
+    extensions: ['.js', '.ts', '.json', '.node'],
+    ...options
   })
 }
 
