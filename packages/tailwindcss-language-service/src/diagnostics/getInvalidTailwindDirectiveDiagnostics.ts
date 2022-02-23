@@ -30,8 +30,9 @@ export function getInvalidTailwindDirectiveDiagnostics(
   let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']
   let regex: RegExp
   if (
-    notSemicolonLanguages.includes(doc.languageId) ||
-    (state.editor && notSemicolonLanguages.includes(state.editor.userLanguages[doc.languageId]))
+    notSemicolonLanguages.includes(document.languageId) ||
+    (state.editor &&
+      notSemicolonLanguages.includes(state.editor.userLanguages[document.languageId]))
   ) {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^\n]+)/g
   } else {
