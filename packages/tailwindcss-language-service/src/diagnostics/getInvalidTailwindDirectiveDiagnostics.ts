@@ -27,7 +27,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.css)
   }
 
-  const notSemicolonLanguages = ["sass", "sugarss", "stylus"]
+  let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']
   let regex: RegExp
   if (
     notSemicolonLanguages.includes(doc.languageId) ||
@@ -37,7 +37,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
   } else {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
   }
-  
+
   let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
 
   ranges.forEach((range) => {
