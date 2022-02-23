@@ -27,11 +27,23 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.css)
   }
 
+  let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']
+  let regex: RegExp
+  if (
+    notSemicolonLanguages.includes(document.languageId) ||
+    (state.editor &&
+      notSemicolonLanguages.includes(state.editor.userLanguages[document.languageId]))
+  ) {
+    regex = /(?:\s|^)@tailwind\s+(?<value>[^\n]+)/g
+  } else {
+    regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
+  }
+
   let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
 
   ranges.forEach((range) => {
     let text = document.getText(range)
-    let matches = findAll(/(?:\s|^)@tailwind\s+(?<value>[^;]+)/g, text)
+    let matches = findAll(regex, text)
 
     let valid = [
       'utilities',
