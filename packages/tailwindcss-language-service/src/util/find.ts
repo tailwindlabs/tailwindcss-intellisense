@@ -133,19 +133,19 @@ async function findCustomClassLists(
     try {
       let [containerRegex, classRegex] = Array.isArray(regexes[i]) ? regexes[i] : [regexes[i]]
 
-      containerRegex = createMultiRegexp(containerRegex)
+      let containerRegex2 = createMultiRegexp(containerRegex)
       let containerMatch
 
-      while ((containerMatch = containerRegex.exec(text)) !== null) {
+      while ((containerMatch = containerRegex2.exec(text)) !== null) {
         const searchStart = doc.offsetAt(range?.start || { line: 0, character: 0 })
         const matchStart = searchStart + containerMatch.start
         const matchEnd = searchStart + containerMatch.end
 
         if (classRegex) {
-          classRegex = createMultiRegexp(classRegex)
+          let classRegex2 = createMultiRegexp(classRegex)
           let classMatch
 
-          while ((classMatch = classRegex.exec(containerMatch.match)) !== null) {
+          while ((classMatch = classRegex2.exec(containerMatch.match)) !== null) {
             const classMatchStart = matchStart + classMatch.start
             const classMatchEnd = matchStart + classMatch.end
             result.push({
