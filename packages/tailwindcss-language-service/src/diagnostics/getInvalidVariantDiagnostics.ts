@@ -28,7 +28,7 @@ export function getInvalidVariantDiagnostics(
   } else {
     let boundaries = getLanguageBoundaries(state, document)
     if (!boundaries) return []
-    ranges.push(...boundaries.css)
+    ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
   let possibleVariants = Object.keys(state.variants)

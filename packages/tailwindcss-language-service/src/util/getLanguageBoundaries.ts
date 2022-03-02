@@ -1,78 +1,153 @@
 import type { TextDocument, Range } from 'vscode-languageserver'
 import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
 import { State } from './state'
-import { findAll, indexToPosition } from './find'
+import { indexToPosition } from './find'
 import { isJsDoc } from './js'
+import moo from 'moo'
+import Cache from 'tmp-cache'
 
-export interface LanguageBoundaries {
-  html: Range[]
-  css: Range[]
+export type LanguageBoundary = { type: 'html' | 'js' | 'css' | string; range: Range }
+
+let text = { text: { match: /[^]/, lineBreaks: true } }
+
+let states = {
+  main: {
+    cssBlockStart: { match: '<style', push: 'cssBlock' },
+    jsBlockStart: { match: '<script', push: 'jsBlock' },
+    ...text,
+  },
+  cssBlock: {
+    styleStart: { match: '>', next: 'style' },
+    cssBlockEnd: { match: '/>', pop: 1 },
+    attrStartDouble: { match: '"', push: 'attrDouble' },
+    attrStartSingle: { match: "'", push: 'attrSingle' },
+    interp: { match: '{', push: 'interp' },
+    ...text,
+  },
+  jsBlock: {
+    scriptStart: { match: '>', next: 'script' },
+    jsBlockEnd: { match: '/>', pop: 1 },
+    langAttrStartDouble: { match: 'lang="', push: 'langAttrDouble' },
+    langAttrStartSingle: { match: "lang='", push: 'langAttrSingle' },
+    attrStartDouble: { match: '"', push: 'attrDouble' },
+    attrStartSingle: { match: "'", push: 'attrSingle' },
+    interp: { match: '{', push: 'interp' },
+    ...text,
+  },
+  interp: {
+    interp: { match: '{', push: 'interp' },
+    end: { match: '}', pop: 1 },
+    ...text,
+  },
+  langAttrDouble: {
+    langAttrEnd: { match: '"', pop: 1 },
+    lang: { match: /[^"]+/, lineBreaks: true },
+  },
+  langAttrSingle: {
+    langAttrEnd: { match: "'", pop: 1 },
+    lang: { match: /[^']+/, lineBreaks: true },
+  },
+  attrDouble: {
+    attrEnd: { match: '"', pop: 1 },
+    ...text,
+  },
+  attrSingle: {
+    attrEnd: { match: "'", pop: 1 },
+    ...text,
+  },
+  style: {
+    cssBlockEnd: { match: '</style>', pop: 1 },
+    ...text,
+  },
+  script: {
+    jsBlockEnd: { match: '</script>', pop: 1 },
+    ...text,
+  },
 }
 
-export function getLanguageBoundaries(state: State, doc: TextDocument): LanguageBoundaries | null {
-  if (isVueDoc(doc)) {
-    let text = doc.getText()
-    let blocks = findAll(
-      /(?<open><(?<type>template|style|script)\b[^>]*>).*?(?<close><\/\k<type>>|$)/gis,
-      text
-    )
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    for (let i = 0; i < blocks.length; i++) {
-      let range = {
-        start: indexToPosition(text, blocks[i].index + blocks[i].groups.open.length),
-        end: indexToPosition(
-          text,
-          blocks[i].index + blocks[i][0].length - blocks[i].groups.close.length
-        ),
-      }
-      if (blocks[i].groups.type === 'style') {
-        cssRanges.push(range)
-      } else {
-        htmlRanges.push(range)
-      }
-    }
+let vueStates = {
+  ...states,
+  main: {
+    htmlBlockStart: { match: '<template', push: 'htmlBlock' },
+    ...states.main,
+  },
+  htmlBlock: {
+    htmlStart: { match: '>', next: 'html' },
+    htmlBlockEnd: { match: '/>', pop: 1 },
+    attrStartDouble: { match: '"', push: 'attrDouble' },
+    attrStartSingle: { match: "'", push: 'attrSingle' },
+    interp: { match: '{', push: 'interp' },
+    ...text,
+  },
+  html: {
+    htmlBlockEnd: { match: '</template>', pop: 1 },
+    ...text,
+  },
+}
 
-    return {
-      html: htmlRanges,
-      css: cssRanges,
-    }
+let defaultLexer = moo.states(states)
+let vueLexer = moo.states(vueStates)
+
+let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000 })
+
+export function getLanguageBoundaries(
+  state: State,
+  doc: TextDocument,
+  text: string = doc.getText()
+): LanguageBoundary[] | null {
+  let cacheKey = `${doc.languageId}:${text}`
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey)
   }
 
-  if (isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)) {
-    let text = doc.getText()
-    let styleBlocks = findAll(
-      /(?<open><style(?:\s[^>]*[^\/]>|\s*>)).*?(?<close><\/style>|$)/gis,
-      text
-    )
-    let htmlRanges: Range[] = []
-    let cssRanges: Range[] = []
-    let currentIndex = 0
+  let defaultType = isVueDoc(doc)
+    ? 'none'
+    : isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)
+    ? 'html'
+    : null
 
-    for (let i = 0; i < styleBlocks.length; i++) {
-      htmlRanges.push({
-        start: indexToPosition(text, currentIndex),
-        end: indexToPosition(text, styleBlocks[i].index),
-      })
-      cssRanges.push({
-        start: indexToPosition(text, styleBlocks[i].index + styleBlocks[i].groups.open.length),
-        end: indexToPosition(
-          text,
-          styleBlocks[i].index + styleBlocks[i][0].length - styleBlocks[i].groups.close.length
-        ),
-      })
-      currentIndex = styleBlocks[i].index + styleBlocks[i][0].length
-    }
-    htmlRanges.push({
-      start: indexToPosition(text, currentIndex),
-      end: indexToPosition(text, text.length),
-    })
-
-    return {
-      html: htmlRanges,
-      css: cssRanges,
-    }
+  if (defaultType === null) {
+    cache.set(cacheKey, null)
+    return null
   }
 
-  return null
+  let lexer = defaultType === 'none' ? vueLexer : defaultLexer
+  lexer.reset(text)
+
+  let type = defaultType
+  let boundaries: LanguageBoundary[] = [
+    { type: defaultType, range: { start: { line: 0, character: 0 }, end: undefined } },
+  ]
+  let offset = 0
+
+  try {
+    for (let token of lexer) {
+      if (token.type.endsWith('BlockStart')) {
+        let position = indexToPosition(text, offset)
+        if (!boundaries[boundaries.length - 1].range.end) {
+          boundaries[boundaries.length - 1].range.end = position
+        }
+        type = token.type.replace(/BlockStart$/, '')
+        boundaries.push({ type, range: { start: position, end: undefined } })
+      } else if (token.type.endsWith('BlockEnd')) {
+        let position = indexToPosition(text, offset)
+        boundaries[boundaries.length - 1].range.end = position
+        boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
+      } else if (token.type === 'lang') {
+        boundaries[boundaries.length - 1].type = token.text
+      }
+      offset += token.text.length
+    }
+  } catch {
+    cache.set(cacheKey, null)
+    return null
+  }
+
+  if (!boundaries[boundaries.length - 1].range.end) {
+    boundaries[boundaries.length - 1].range.end = indexToPosition(text, offset)
+  }
+
+  cache.set(cacheKey, boundaries)
+
+  return boundaries
 }

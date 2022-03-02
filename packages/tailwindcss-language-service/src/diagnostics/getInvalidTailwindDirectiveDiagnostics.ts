@@ -24,7 +24,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
   } else {
     let boundaries = getLanguageBoundaries(state, document)
     if (!boundaries) return []
-    ranges.push(...boundaries.css)
+    ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
   let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']

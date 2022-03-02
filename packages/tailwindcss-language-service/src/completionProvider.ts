@@ -20,7 +20,7 @@ import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
-import { isJsContext } from './util/js'
+import { isJsDoc, isJsxContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import semver from 'semver'
 import { docsUrl } from './util/docsUrl'
@@ -511,7 +511,7 @@ async function provideClassNameCompletions(
     return provideAtApplyCompletions(state, document, position)
   }
 
-  if (isHtmlContext(state, document, position) || isJsContext(state, document, position)) {
+  if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
     return provideClassAttributeCompletions(state, document, position, context)
   }
 
@@ -973,8 +973,8 @@ async function provideEmmetCompletions(
   let settings = await state.editor.getConfiguration(document.uri)
   if (settings.tailwindCSS.emmetCompletions !== true) return null
 
-  const isHtml = isHtmlContext(state, document, position)
-  const isJs = !isHtml && isJsContext(state, document, position)
+  const isHtml = !isJsDoc(state, document) && isHtmlContext(state, document, position)
+  const isJs = isJsDoc(state, document) || isJsxContext(state, document, position)
 
   const syntax = isHtml ? 'html' : isJs ? 'jsx' : null
 
