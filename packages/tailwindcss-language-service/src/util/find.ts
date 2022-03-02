@@ -4,7 +4,7 @@ import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext } from './html'
 import { isWithinRange } from './isWithinRange'
-import { isJsContext } from './js'
+import { isJsxContext } from './js'
 import { flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
@@ -306,9 +306,13 @@ export async function findClassListsInDocument(
 
   return flatten([
     ...(await Promise.all(
-      boundaries.html.map((range) => findClassListsInHtmlRange(state, doc, range))
+      boundaries
+        .filter((b) => b.type === 'html' || b.type === 'jsx')
+        .map(({ range }) => findClassListsInHtmlRange(state, doc, range))
     )),
-    ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
+    ...boundaries
+      .filter((b) => b.type === 'css')
+      .map(({ range }) => findClassListsInCssRange(doc, range)),
     await findCustomClassLists(state, doc),
   ])
 }
@@ -324,7 +328,11 @@ export function findHelperFunctionsInDocument(
   let boundaries = getLanguageBoundaries(state, doc)
   if (!boundaries) return []
 
-  return flatten(boundaries.css.map((range) => findHelperFunctionsInRange(doc, range)))
+  return flatten(
+    boundaries
+      .filter((b) => b.type === 'css')
+      .map(({ range }) => findHelperFunctionsInRange(doc, range))
+  )
 }
 
 export function findHelperFunctionsInRange(
@@ -385,7 +393,7 @@ export async function findClassNameAtPosition(
 
   if (isCssContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')
-  } else if (isHtmlContext(state, doc, position) || isJsContext(state, doc, position)) {
+  } else if (isHtmlContext(state, doc, position) || isJsxContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
   }
 

@@ -24,7 +24,7 @@ export function getInvalidScreenDiagnostics(
   } else {
     let boundaries = getLanguageBoundaries(state, document)
     if (!boundaries) return []
-    ranges.push(...boundaries.css)
+    ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
   ranges.forEach((range) => {
