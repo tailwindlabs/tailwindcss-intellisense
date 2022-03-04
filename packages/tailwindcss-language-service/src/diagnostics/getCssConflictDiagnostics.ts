@@ -20,47 +20,47 @@ export async function getCssConflictDiagnostics(
   const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
-    const classNames = getClassNamesInClassList(classList)
+    const classNames = Array.isArray(classList)
+      ? classList.flatMap(getClassNamesInClassList)
+      : getClassNamesInClassList(classList)
 
     classNames.forEach((className, index) => {
       if (state.jit) {
         let { rules } = jit.generateRules(state, [className.className])
-        if (rules.length !== 1) {
+        if (rules.length === 0) {
           return
         }
-        let rule = rules[0]
-        let context: string[]
-        let properties = []
-        rule.walkDecls(({ prop }) => {
-          properties.push(prop)
+
+        let info: Array<{ context: string[]; properties: string[] }> = rules.map((rule) => {
+          let properties: string[] = []
+          rule.walkDecls(({ prop }) => {
+            properties.push(prop)
+          })
+          let context = jit.getRuleContext(state, rule, className.className)
+          return { context, properties }
         })
 
         let otherClassNames = classNames.filter((_className, i) => i !== index)
 
         let conflictingClassNames = otherClassNames.filter((otherClassName) => {
-          let { rules } = jit.generateRules(state, [otherClassName.className])
-          if (rules.length !== 1) {
+          let { rules: otherRules } = jit.generateRules(state, [otherClassName.className])
+          if (otherRules.length !== rules.length) {
             return false
           }
 
-          let otherRule = rules[0]
-
-          let otherProperties = []
-          otherRule.walkDecls(({ prop }) => {
-            otherProperties.push(prop)
-          })
-
-          if (!equal(properties, otherProperties)) {
-            return false
-          }
-
-          if (!context) {
-            context = jit.getRuleContext(state, rule, className.className)
-          }
-          let otherContext = jit.getRuleContext(state, otherRule, otherClassName.className)
-
-          if (!equal(context, otherContext)) {
-            return false
+          for (let i = 0; i < otherRules.length; i++) {
+            let rule = otherRules[i]
+            let properties: string[] = []
+            rule.walkDecls(({ prop }) => {
+              properties.push(prop)
+            })
+            if (!equal(info[i].properties, properties)) {
+              return false
+            }
+            let context = jit.getRuleContext(state, rule, otherClassName.className)
+            if (!equal(info[i].context, context)) {
+              return false
+            }
           }
 
           return true
@@ -77,9 +77,7 @@ export async function getCssConflictDiagnostics(
             severity === 'error'
               ? 1 /* DiagnosticSeverity.Error */
               : 2 /* DiagnosticSeverity.Warning */,
-          message: `'${className.className}' applies the same CSS ${
-            properties.length === 1 ? 'property' : 'properties'
-          } as ${joinWithAnd(
+          message: `'${className.className}' applies the same CSS properties as ${joinWithAnd(
             conflictingClassNames.map(
               (conflictingClassName) => `'${conflictingClassName.className}'`
             )

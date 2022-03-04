@@ -1,8 +1,9 @@
 import type { TextDocument, Position } from 'vscode-languageserver'
-import { isInsideTag, isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
+import { isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
 import { isJsDoc } from './js'
 import { State } from './state'
 import { cssLanguages } from './languages'
+import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
@@ -23,7 +24,9 @@ export function isCssContext(state: State, doc: TextDocument, position: Position
       end: position,
     })
 
-    return isInsideTag(str, ['style'])
+    let boundaries = getLanguageBoundaries(state, doc, str)
+
+    return boundaries ? boundaries[boundaries.length - 1].type === 'css' : false
   }
 
   return false

@@ -4,7 +4,7 @@ import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext } from './html'
 import { isWithinRange } from './isWithinRange'
-import { isJsContext } from './js'
+import { isJsxContext } from './js'
 import { flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
@@ -77,7 +77,15 @@ export async function findClassNamesInRange(
   includeCustom: boolean = true
 ): Promise<DocumentClassName[]> {
   const classLists = await findClassListsInRange(state, doc, range, mode, includeCustom)
-  return flatten(classLists.map(getClassNamesInClassList))
+  return flatten(
+    classLists.flatMap((classList) => {
+      if (Array.isArray(classList)) {
+        return classList.map(getClassNamesInClassList)
+      } else {
+        return [getClassNamesInClassList(classList)]
+      }
+    })
+  )
 }
 
 export async function findClassNamesInDocument(
@@ -85,7 +93,15 @@ export async function findClassNamesInDocument(
   doc: TextDocument
 ): Promise<DocumentClassName[]> {
   const classLists = await findClassListsInDocument(state, doc)
-  return flatten(classLists.map(getClassNamesInClassList))
+  return flatten(
+    classLists.flatMap((classList) => {
+      if (Array.isArray(classList)) {
+        return classList.map(getClassNamesInClassList)
+      } else {
+        return [getClassNamesInClassList(classList)]
+      }
+    })
+  )
 }
 
 export function findClassListsInCssRange(doc: TextDocument, range?: Range): DocumentClassList[] {
@@ -133,19 +149,19 @@ async function findCustomClassLists(
     try {
       let [containerRegex, classRegex] = Array.isArray(regexes[i]) ? regexes[i] : [regexes[i]]
 
-      containerRegex = createMultiRegexp(containerRegex)
+      let containerRegex2 = createMultiRegexp(containerRegex)
       let containerMatch
 
-      while ((containerMatch = containerRegex.exec(text)) !== null) {
+      while ((containerMatch = containerRegex2.exec(text)) !== null) {
         const searchStart = doc.offsetAt(range?.start || { line: 0, character: 0 })
         const matchStart = searchStart + containerMatch.start
         const matchEnd = searchStart + containerMatch.end
 
         if (classRegex) {
-          classRegex = createMultiRegexp(classRegex)
+          let classRegex2 = createMultiRegexp(classRegex)
           let classMatch
 
-          while ((classMatch = classRegex.exec(containerMatch.match)) !== null) {
+          while ((classMatch = classRegex2.exec(containerMatch.match)) !== null) {
             const classMatchStart = matchStart + classMatch.start
             const classMatchEnd = matchStart + classMatch.end
             result.push({
@@ -182,7 +198,7 @@ export async function findClassListsInHtmlRange(
   state: State,
   doc: TextDocument,
   range?: Range
-): Promise<DocumentClassList[]> {
+): Promise<Array<DocumentClassList | DocumentClassList[]>> {
   const text = doc.getText(range)
 
   const matches = matchClassAttributes(
@@ -190,7 +206,7 @@ export async function findClassListsInHtmlRange(
     (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes
   )
 
-  const result: DocumentClassList[] = []
+  const result: Array<DocumentClassList | DocumentClassList[]> = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
@@ -201,9 +217,11 @@ export async function findClassListsInHtmlRange(
         : getClassAttributeLexer()
     lexer.reset(subtext)
 
-    let classLists: { value: string; offset: number }[] = []
-    let token: moo.Token
+    let classLists: Array<{ value: string; offset: number } | { value: string; offset: number }[]> =
+      []
+    let rootClassList: { value: string; offset: number }[] = []
     let currentClassList: { value: string; offset: number }
+    let depth = 0
 
     try {
       for (let token of lexer) {
@@ -218,56 +236,53 @@ export async function findClassListsInHtmlRange(
           }
         } else {
           if (currentClassList) {
-            classLists.push({
-              value: currentClassList.value,
-              offset: currentClassList.offset,
-            })
+            if (depth === 0) {
+              rootClassList.push({
+                value: currentClassList.value,
+                offset: currentClassList.offset,
+              })
+            } else {
+              classLists.push({
+                value: currentClassList.value,
+                offset: currentClassList.offset,
+              })
+            }
           }
           currentClassList = undefined
+        }
+        if (token.type === 'lbrace') {
+          depth += 1
+        } else if (token.type === 'rbrace') {
+          depth -= 1
         }
       }
     } catch (_) {}
 
     if (currentClassList) {
-      classLists.push({
-        value: currentClassList.value,
-        offset: currentClassList.offset,
-      })
+      if (depth === 0) {
+        rootClassList.push({
+          value: currentClassList.value,
+          offset: currentClassList.offset,
+        })
+      } else {
+        classLists.push({
+          value: currentClassList.value,
+          offset: currentClassList.offset,
+        })
+      }
     }
+
+    classLists.push(rootClassList)
 
     result.push(
       ...classLists
-        .map(({ value, offset }) => {
-          if (value.trim() === '') {
-            return null
-          }
-
-          const before = value.match(/^\s*/)
-          const beforeOffset = before === null ? 0 : before[0].length
-          const after = value.match(/\s*$/)
-          const afterOffset = after === null ? 0 : -after[0].length
-
-          const start = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + beforeOffset
-          )
-          const end = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + value.length + afterOffset
-          )
-
-          return {
-            classList: value.substr(beforeOffset, value.length + afterOffset),
-            range: {
-              start: {
-                line: (range?.start.line || 0) + start.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
-              },
-              end: {
-                line: (range?.start.line || 0) + end.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
-              },
-            },
+        .map((classList) => {
+          if (Array.isArray(classList)) {
+            return classList
+              .map((classList) => resolveClassList(classList, text, match, range))
+              .filter((x) => x !== null)
+          } else {
+            return resolveClassList(classList, text, match, range)
           }
         })
         .filter((x) => x !== null)
@@ -277,14 +292,51 @@ export async function findClassListsInHtmlRange(
   return result
 }
 
+function resolveClassList(
+  classList: { value: string; offset: number },
+  text: string,
+  match: RegExpMatchArray,
+  range?: Range
+): DocumentClassList {
+  let { value, offset } = classList
+  if (value.trim() === '') {
+    return null
+  }
+
+  const before = value.match(/^\s*/)
+  const beforeOffset = before === null ? 0 : before[0].length
+  const after = value.match(/\s*$/)
+  const afterOffset = after === null ? 0 : -after[0].length
+
+  const start = indexToPosition(text, match.index + match[0].length - 1 + offset + beforeOffset)
+  const end = indexToPosition(
+    text,
+    match.index + match[0].length - 1 + offset + value.length + afterOffset
+  )
+
+  return {
+    classList: value.substr(beforeOffset, value.length + afterOffset),
+    range: {
+      start: {
+        line: (range?.start.line || 0) + start.line,
+        character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
+      },
+      end: {
+        line: (range?.start.line || 0) + end.line,
+        character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
+      },
+    },
+  }
+}
+
 export async function findClassListsInRange(
   state: State,
   doc: TextDocument,
   range?: Range,
   mode?: 'html' | 'css',
   includeCustom: boolean = true
-): Promise<DocumentClassList[]> {
-  let classLists: DocumentClassList[]
+): Promise<Array<DocumentClassList | DocumentClassList[]>> {
+  let classLists: Array<DocumentClassList | DocumentClassList[]>
   if (mode === 'css') {
     classLists = findClassListsInCssRange(doc, range)
   } else {
@@ -296,7 +348,7 @@ export async function findClassListsInRange(
 export async function findClassListsInDocument(
   state: State,
   doc: TextDocument
-): Promise<DocumentClassList[]> {
+): Promise<Array<DocumentClassList | DocumentClassList[]>> {
   if (isCssDoc(state, doc)) {
     return findClassListsInCssRange(doc)
   }
@@ -306,9 +358,13 @@ export async function findClassListsInDocument(
 
   return flatten([
     ...(await Promise.all(
-      boundaries.html.map((range) => findClassListsInHtmlRange(state, doc, range))
+      boundaries
+        .filter((b) => b.type === 'html' || b.type === 'jsx')
+        .map(({ range }) => findClassListsInHtmlRange(state, doc, range))
     )),
-    ...boundaries.css.map((range) => findClassListsInCssRange(doc, range)),
+    ...boundaries
+      .filter((b) => b.type === 'css')
+      .map(({ range }) => findClassListsInCssRange(doc, range)),
     await findCustomClassLists(state, doc),
   ])
 }
@@ -324,7 +380,11 @@ export function findHelperFunctionsInDocument(
   let boundaries = getLanguageBoundaries(state, doc)
   if (!boundaries) return []
 
-  return flatten(boundaries.css.map((range) => findHelperFunctionsInRange(doc, range)))
+  return flatten(
+    boundaries
+      .filter((b) => b.type === 'css')
+      .map(({ range }) => findHelperFunctionsInRange(doc, range))
+  )
 }
 
 export function findHelperFunctionsInRange(
@@ -385,7 +445,7 @@ export async function findClassNameAtPosition(
 
   if (isCssContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')
-  } else if (isHtmlContext(state, doc, position) || isJsContext(state, doc, position)) {
+  } else if (isHtmlContext(state, doc, position) || isJsxContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
   }
 

@@ -43,7 +43,9 @@ export async function provideInvalidApplyCodeActions(
   if (!isCssDoc(state, document)) {
     let languageBoundaries = getLanguageBoundaries(state, document)
     if (!languageBoundaries) return []
-    cssRange = languageBoundaries.css.find((range) => isWithinRange(diagnostic.range.start, range))
+    cssRange = languageBoundaries
+      .filter((b) => b.type === 'css')
+      .find(({ range }) => isWithinRange(diagnostic.range.start, range))?.range
     if (!cssRange) return []
     cssText = document.getText(cssRange)
   }

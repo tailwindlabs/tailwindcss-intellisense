@@ -1,6 +1,7 @@
 import type { TextDocument, Position } from 'vscode-languageserver'
 import { State } from './state'
 import { htmlLanguages } from './languages'
+import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function isHtmlDoc(state: State, doc: TextDocument): boolean {
   const userHtmlLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
@@ -24,33 +25,7 @@ export function isHtmlContext(state: State, doc: TextDocument, position: Positio
     end: position,
   })
 
-  if (isHtmlDoc(state, doc) && !isInsideTag(str, ['script', 'style'])) {
-    return true
-  }
+  let boundaries = getLanguageBoundaries(state, doc, str)
 
-  if (isVueDoc(doc)) {
-    return isInsideTag(str, ['template'])
-  }
-
-  if (isSvelteDoc(doc)) {
-    return !isInsideTag(str, ['script', 'style'])
-  }
-
-  return false
-}
-
-export function isInsideTag(str: string, tag: string | string[]): boolean {
-  let open = 0
-  let close = 0
-  let match: RegExpExecArray
-  let tags = Array.isArray(tag) ? tag : [tag]
-  let regex = new RegExp(`<(?<slash>/?)(?:${tags.join('|')})(?:\\s[^>]*[^\/]>|\\s*>)`, 'ig')
-  while ((match = regex.exec(str)) !== null) {
-    if (match.groups.slash) {
-      close += 1
-    } else {
-      open += 1
-    }
-  }
-  return open > 0 && open > close
+  return boundaries ? boundaries[boundaries.length - 1].type === 'html' : false
 }

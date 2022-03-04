@@ -9,6 +9,7 @@ export const htmlLanguages = [
   'erb',
   'gohtml',
   'GoHTML',
+  'gohtmltmpl',
   'haml',
   'handlebars',
   'hbs',

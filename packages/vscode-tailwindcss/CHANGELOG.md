@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.7
+
+- Fix activation for projects with square brackets in their path
+
 ## 0.7.6
 
 - Fix `files.exclude` configuration resolution (#464)
