@@ -41,6 +41,8 @@ export type Settings = {
     emmetCompletions: boolean
     includeLanguages: Record<string, string>
     classAttributes: string[]
+    suggest: boolean
+    hover: boolean
     validate: boolean
     showPixelEquivalents: boolean
     rootFontSize: number
