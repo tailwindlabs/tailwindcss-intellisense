@@ -84,15 +84,19 @@ import preflight from 'tailwindcss/lib/css/preflight.css'
 
 // @ts-ignore
 global.__preflight = preflight
-eval(`
-  let oldReadFileSync = require('fs').readFileSync
-  require('fs').readFileSync = function (filename, ...args) {
-    if (filename === require('path').join(__dirname, 'css/preflight.css')) {
-      return global.__preflight
+new Function(
+  'require',
+  '__dirname',
+  `
+    let oldReadFileSync = require('fs').readFileSync
+    require('fs').readFileSync = function (filename, ...args) {
+      if (filename === require('path').join(__dirname, 'css/preflight.css')) {
+        return global.__preflight
+      }
+      return oldReadFileSync(filename, ...args)
     }
-    return oldReadFileSync(filename, ...args)
-  }
-`)
+  `
+)(require, __dirname)
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 const PACKAGE_GLOB = '{package.json,package-lock.json,yarn.lock,pnpm-lock.yaml}'
