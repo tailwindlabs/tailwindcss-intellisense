@@ -117,7 +117,6 @@ function getDocumentContext(
 
 async function withDocumentAndSettings<T>(
   uri: string,
-  augmentCss: boolean,
   callback: (result: {
     document: TextDocument
     settings: LanguageSettings | undefined
@@ -128,13 +127,13 @@ async function withDocumentAndSettings<T>(
     return null
   }
   return await callback({
-    document: augmentCss ? createVirtualCssDocument(document) : document,
+    document: createVirtualCssDocument(document),
     settings: await getDocumentSettings(document),
   })
 }
 
 connection.onCompletion(async ({ textDocument, position }, _token) =>
-  withDocumentAndSettings(textDocument.uri, true, ({ document, settings }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document, settings }) =>
     cssLanguageService.doComplete2(
       document,
       position,
@@ -146,43 +145,43 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
 )
 
 connection.onHover(({ textDocument, position }, _token) =>
-  withDocumentAndSettings(textDocument.uri, true, ({ document, settings }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document, settings }) =>
     cssLanguageService.doHover(document, position, stylesheets.get(document), settings?.hover)
   )
 )
 
 connection.onFoldingRanges(({ textDocument }, _token) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.getFoldingRanges(document)
   )
 )
 
 connection.onDocumentColor(({ textDocument }) =>
-  withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDocumentColors(document, stylesheets.get(document))
   )
 )
 
 connection.onColorPresentation(({ textDocument, color, range }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.getColorPresentations(document, stylesheets.get(document), color, range)
   )
 )
 
 connection.onDefinition(({ textDocument, position }) =>
-  withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDefinition(document, position, stylesheets.get(document))
   )
 )
 
 connection.onDocumentHighlight(({ textDocument, position }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDocumentHighlights(document, position, stylesheets.get(document))
   )
 )
 
 connection.onDocumentSymbol(({ textDocument }) =>
-  withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDocumentSymbols(document, stylesheets.get(document)).map((symbol) => {
       if (symbol.name === '@media (_)') {
         let doc = documents.get(symbol.location.uri)
@@ -198,25 +197,25 @@ connection.onDocumentSymbol(({ textDocument }) =>
 )
 
 connection.onSelectionRanges(({ textDocument, positions }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.getSelectionRanges(document, positions, stylesheets.get(document))
   )
 )
 
 connection.onReferences(({ textDocument, position }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findReferences(document, position, stylesheets.get(document))
   )
 )
 
 connection.onCodeAction(({ textDocument, range, context }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.doCodeActions2(document, range, context, stylesheets.get(document))
   )
 )
 
 connection.onDocumentLinks(({ textDocument }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDocumentLinks2(
       document,
       stylesheets.get(document),
@@ -226,7 +225,7 @@ connection.onDocumentLinks(({ textDocument }) =>
 )
 
 connection.onRenameRequest(({ textDocument, position, newName }) =>
-  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+  withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.doRename(document, position, newName, stylesheets.get(document))
   )
 )
@@ -311,10 +310,10 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
   return TextDocument.create(
     textDocument.uri,
     textDocument.languageId,
-    0,
+    textDocument.version,
     textDocument
       .getText()
-      .replace(/@screen(\s+[^{]+){/, replace(-2))
+      .replace(/@screen(\s+[^{]+){/g, replace(-2))
       .replace(/@variants(\s+[^{]+){/g, replace())
       .replace(/@responsive(\s*){/g, replace())
       .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
