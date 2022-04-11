@@ -17,6 +17,26 @@ import { getLanguageModelCache } from './languageModelCache'
 import { Stylesheet } from 'vscode-css-languageservice'
 
 let connection = createConnection(ProposedFeatures.all)
+
+console.log = connection.console.log.bind(connection.console)
+console.error = connection.console.error.bind(connection.console)
+
+function formatError(message: string, err: any): string {
+  if (err instanceof Error) {
+    let error = <Error>err
+    return `${message}: ${error.message}\n${error.stack}`
+  } else if (typeof err === 'string') {
+    return `${message}: ${err}`
+  } else if (err) {
+    return `${message}: ${err.toString()}`
+  }
+  return message
+}
+
+process.on('unhandledRejection', (e: any) => {
+  connection.console.error(formatError(`Unhandled exception`, e))
+})
+
 let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 
 let cssLanguageService = getCSSLanguageService()
