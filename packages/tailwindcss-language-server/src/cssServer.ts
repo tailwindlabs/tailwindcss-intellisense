@@ -33,17 +33,18 @@ connection.onInitialize((params: InitializeParams) => {
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Full,
-      completionProvider: { resolveProvider: false },
+      completionProvider: { resolveProvider: false, triggerCharacters: ['/', '-', ':'] },
       hoverProvider: true,
       foldingRangeProvider: true,
-      colorProvider: true,
+      colorProvider: {},
       definitionProvider: true,
       documentHighlightProvider: true,
       documentSymbolProvider: true,
       selectionRangeProvider: true,
       referencesProvider: true,
-      codeActionProvider: { resolveProvider: false },
+      codeActionProvider: true,
       documentLinkProvider: { resolveProvider: false },
+      renameProvider: true,
     },
   }
 })
@@ -216,6 +217,17 @@ connection.onDocumentLinks(({ textDocument }) =>
       document,
       cssLanguageService.parseStylesheet(document),
       getDocumentContext(document.uri, workspaceFolders)
+    )
+  )
+)
+
+connection.onRenameRequest(({ textDocument, position, newName }) =>
+  withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
+    cssLanguageService.doRename(
+      document,
+      position,
+      newName,
+      cssLanguageService.parseStylesheet(document)
     )
   )
 )
