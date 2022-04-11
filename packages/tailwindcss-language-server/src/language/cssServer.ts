@@ -10,6 +10,8 @@ import {
   TextDocuments,
   TextDocumentSyncKind,
   WorkspaceFolder,
+  Disposable,
+  ConfigurationRequest,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
@@ -116,7 +118,10 @@ function getDocumentContext(
 async function withDocumentAndSettings<T>(
   uri: string,
   augmentCss: boolean,
-  callback: (result: { document: TextDocument; settings: LanguageSettings }) => T | Promise<T>
+  callback: (result: {
+    document: TextDocument
+    settings: LanguageSettings | undefined
+  }) => T | Promise<T>
 ): Promise<T> {
   let document = documents.get(uri)
   if (!document) {
@@ -124,7 +129,7 @@ async function withDocumentAndSettings<T>(
   }
   return await callback({
     document: augmentCss ? createVirtualCssDocument(document) : document,
-    settings: await getDocumentSettings(uri),
+    settings: await getDocumentSettings(document),
   })
 }
 
@@ -135,14 +140,14 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
       position,
       stylesheets.get(document),
       getDocumentContext(document.uri, workspaceFolders),
-      settings.completion
+      settings?.completion
     )
   )
 )
 
 connection.onHover(({ textDocument, position }, _token) =>
   withDocumentAndSettings(textDocument.uri, true, ({ document, settings }) =>
-    cssLanguageService.doHover(document, position, stylesheets.get(document), settings.hover)
+    cssLanguageService.doHover(document, position, stylesheets.get(document), settings?.hover)
   )
 )
 
@@ -226,31 +231,69 @@ connection.onRenameRequest(({ textDocument, position, newName }) =>
   )
 )
 
-let documentSettings: Map<string, Thenable<LanguageSettings>> = new Map()
-function getDocumentSettings(resource: string): Thenable<LanguageSettings> {
-  let result = documentSettings.get(resource)
-  if (!result) {
-    result = connection.workspace.getConfiguration({
-      scopeUri: resource,
-      section: 'css',
-    })
-    documentSettings.set(resource, result)
+let documentSettings: { [key: string]: Thenable<LanguageSettings | undefined> } = {}
+documents.onDidClose((e) => {
+  delete documentSettings[e.document.uri]
+})
+function getDocumentSettings(textDocument: TextDocument): Thenable<LanguageSettings | undefined> {
+  let promise = documentSettings[textDocument.uri]
+  if (!promise) {
+    const configRequestParam = {
+      items: [{ scopeUri: textDocument.uri, section: 'css' }],
+    }
+    promise = connection
+      .sendRequest(ConfigurationRequest.type, configRequestParam)
+      .then((s) => s[0])
+    documentSettings[textDocument.uri] = promise
   }
-  return result
+  return promise
 }
 
-connection.onDidChangeConfiguration((_change) => {
-  documentSettings.clear()
-  documents.all().forEach(validateTextDocument)
+connection.onDidChangeConfiguration((change) => {
+  updateConfiguration(<LanguageSettings>change.settings.css)
 })
+
+function updateConfiguration(settings: LanguageSettings) {
+  cssLanguageService.configure(settings)
+  // reset all document settings
+  documentSettings = {}
+  documents.all().forEach(triggerValidation)
+}
+
+const pendingValidationRequests: { [uri: string]: Disposable } = {}
+const validationDelayMs = 500
+
+const timer = {
+  setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+    const handle = setTimeout(callback, ms, ...args)
+    return { dispose: () => clearTimeout(handle) }
+  },
+}
 
 documents.onDidChangeContent((change) => {
-  validateTextDocument(change.document)
+  triggerValidation(change.document)
 })
 
-documents.onDidClose((e) => {
-  documentSettings.delete(e.document.uri)
+documents.onDidClose((event) => {
+  cleanPendingValidation(event.document)
+  connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
 })
+
+function cleanPendingValidation(textDocument: TextDocument): void {
+  const request = pendingValidationRequests[textDocument.uri]
+  if (request) {
+    request.dispose()
+    delete pendingValidationRequests[textDocument.uri]
+  }
+}
+
+function triggerValidation(textDocument: TextDocument): void {
+  cleanPendingValidation(textDocument)
+  pendingValidationRequests[textDocument.uri] = timer.setTimeout(() => {
+    delete pendingValidationRequests[textDocument.uri]
+    validateTextDocument(textDocument)
+  }, validationDelayMs)
+}
 
 function replace(delta = 0) {
   return (_match: string, p1: string) => {
@@ -281,7 +324,7 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   textDocument = createVirtualCssDocument(textDocument)
 
-  let settings = await getDocumentSettings(textDocument.uri)
+  let settings = await getDocumentSettings(textDocument)
 
   // let stylesheet = cssLanguageService.parseStylesheet(textDocument) as any
   // stylesheet.acceptVisitor({

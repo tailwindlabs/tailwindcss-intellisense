@@ -215,6 +215,7 @@ export async function activate(context: ExtensionContext) {
       {
         documentSelector: [{ language: 'tailwindcss' }],
         outputChannelName: 'Tailwind CSS Language Mode',
+        synchronize: { configurationSection: ['css'] },
         middleware: {
           provideCompletionItem(document, position, context, token, next) {
             function updateRanges(item: CompletionItem) {
