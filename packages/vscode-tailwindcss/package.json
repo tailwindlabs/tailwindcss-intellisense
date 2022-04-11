@@ -46,20 +46,16 @@
     "languages": [
       {
         "id": "tailwindcss",
-        "configuration": "./tailwindcss.language.configuration.json",
         "aliases": [
           "Tailwind CSS"
         ],
         "extensions": [
-          ".css",
-          ".pcss",
-          ".postcss"
+          ".css"
         ],
         "mimetypes": [
-          "text/css",
-          "text/x-pcss",
-          "text/pcss"
-        ]
+          "text/css"
+        ],
+        "configuration": "./tailwindcss.language.configuration.json"
       }
     ],
     "commands": [
@@ -71,9 +67,12 @@
     ],
     "grammars": [
       {
+        "language": "tailwindcss",
         "scopeName": "source.css",
         "path": "./syntaxes/source.css.tmLanguage.json",
-        "language": "tailwindcss"
+        "tokenTypes": {
+          "meta.function.url string.quoted": "other"
+        }
       },
       {
         "scopeName": "tailwindcss.at-rules.injection",
