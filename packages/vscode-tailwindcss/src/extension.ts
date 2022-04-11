@@ -6,6 +6,7 @@ import * as path from 'path'
 import {
   workspace as Workspace,
   window as Window,
+  languages as Languages,
   ExtensionContext,
   TextDocument,
   OutputChannel,
@@ -23,6 +24,8 @@ import {
   CompletionItemKind,
   CompletionList,
   ProviderResult,
+  SnippetString,
+  TextEdit,
 } from 'vscode'
 import {
   LanguageClient,
@@ -31,6 +34,7 @@ import {
   TransportKind,
   State as LanguageClientState,
   RevealOutputChannelOn,
+  Disposable,
 } from 'vscode-languageclient/node'
 import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
 import isObject from 'tailwindcss-language-service/src/util/isObject'
@@ -252,7 +256,41 @@ export async function activate(context: ExtensionContext) {
         },
       }
     )
+
+    client.onReady().then(() => {
+      context.subscriptions.push(initCompletionProvider())
+    })
+
     context.subscriptions.push(client.start())
+
+    function initCompletionProvider(): Disposable {
+      const regionCompletionRegExpr = /^(\s*)(\/(\*\s*(#\w*)?)?)?$/
+
+      return Languages.registerCompletionItemProvider(['tailwindcss'], {
+        provideCompletionItems(doc: TextDocument, pos: Position) {
+          let lineUntilPos = doc.getText(new Range(new Position(pos.line, 0), pos))
+          let match = lineUntilPos.match(regionCompletionRegExpr)
+          if (match) {
+            let range = new Range(new Position(pos.line, match[1].length), pos)
+            let beginProposal = new CompletionItem('#region', CompletionItemKind.Snippet)
+            beginProposal.range = range
+            TextEdit.replace(range, '/* #region */')
+            beginProposal.insertText = new SnippetString('/* #region $1*/')
+            beginProposal.documentation = 'Folding Region Start'
+            beginProposal.filterText = match[2]
+            beginProposal.sortText = 'za'
+            let endProposal = new CompletionItem('#endregion', CompletionItemKind.Snippet)
+            endProposal.range = range
+            endProposal.insertText = '/* #endregion */'
+            endProposal.documentation = 'Folding Region End'
+            endProposal.sortText = 'zb'
+            endProposal.filterText = match[2]
+            return [beginProposal, endProposal]
+          }
+          return null
+        },
+      })
+    }
   }
 
   function bootWorkspaceClient(folder: WorkspaceFolder) {
