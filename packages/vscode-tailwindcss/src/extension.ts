@@ -19,6 +19,10 @@ import {
   RelativePattern,
   ConfigurationScope,
   WorkspaceConfiguration,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionList,
+  ProviderResult,
 } from 'vscode'
 import {
   LanguageClient,
@@ -207,6 +211,45 @@ export async function activate(context: ExtensionContext) {
       {
         documentSelector: [{ language: 'tailwindcss' }],
         outputChannelName: 'Tailwind CSS Language Mode',
+        middleware: {
+          provideCompletionItem(document, position, context, token, next) {
+            function updateRanges(item: CompletionItem) {
+              const range = item.range
+              if (
+                range instanceof Range &&
+                range.end.isAfter(position) &&
+                range.start.isBeforeOrEqual(position)
+              ) {
+                item.range = { inserting: new Range(range.start, position), replacing: range }
+              }
+            }
+            function updateLabel(item: CompletionItem) {
+              if (item.kind === CompletionItemKind.Color) {
+                item.label = {
+                  label: item.label as string,
+                  description: item.documentation as string,
+                }
+              }
+            }
+            function updateProposals(
+              r: CompletionItem[] | CompletionList | null | undefined
+            ): CompletionItem[] | CompletionList | null | undefined {
+              if (r) {
+                ;(Array.isArray(r) ? r : r.items).forEach(updateRanges)
+                ;(Array.isArray(r) ? r : r.items).forEach(updateLabel)
+              }
+              return r
+            }
+            const isThenable = <T>(obj: ProviderResult<T>): obj is Thenable<T> =>
+              obj && (<any>obj)['then']
+
+            const r = next(document, position, context, token)
+            if (isThenable<CompletionItem[] | CompletionList | null | undefined>(r)) {
+              return r.then(updateProposals)
+            }
+            return updateProposals(r)
+          },
+        },
       }
     )
     context.subscriptions.push(client.start())
