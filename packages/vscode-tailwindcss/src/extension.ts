@@ -310,7 +310,8 @@ export async function activate(context: ExtensionContext) {
                 return { range, newText: result.additionalTextEdits[0].newText }
               })
             } else {
-              result.insertText = result.label
+              result.insertText =
+                typeof result.label === 'string' ? result.label : result.label.label
               result.additionalTextEdits = []
             }
           }

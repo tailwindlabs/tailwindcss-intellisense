@@ -295,7 +295,7 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/vscode": "1.52.0",
+    "@types/vscode": "1.66.0",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
     "esbuild": "0.14.11",
