@@ -13,6 +13,8 @@ import {
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
+import { getLanguageModelCache } from './languageModelCache'
+import { Stylesheet } from 'vscode-css-languageservice'
 
 let connection = createConnection(ProposedFeatures.all)
 let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
@@ -20,6 +22,16 @@ let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument)
 let cssLanguageService = getCSSLanguageService()
 
 let workspaceFolders: WorkspaceFolder[]
+
+const stylesheets = getLanguageModelCache<Stylesheet>(10, 60, (document) =>
+  cssLanguageService.parseStylesheet(document)
+)
+documents.onDidClose(({ document }) => {
+  stylesheets.onDocumentRemoved(document)
+})
+connection.onShutdown(() => {
+  stylesheets.dispose()
+})
 
 connection.onInitialize((params: InitializeParams) => {
   workspaceFolders = (<any>params).workspaceFolders
@@ -101,7 +113,7 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
     cssLanguageService.doComplete2(
       document,
       position,
-      cssLanguageService.parseStylesheet(document),
+      stylesheets.get(document),
       getDocumentContext(document.uri, workspaceFolders),
       settings.completion
     )
@@ -110,12 +122,7 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
 
 connection.onHover(({ textDocument, position }, _token) =>
   withDocumentAndSettings(textDocument.uri, true, ({ document, settings }) =>
-    cssLanguageService.doHover(
-      document,
-      position,
-      cssLanguageService.parseStylesheet(document),
-      settings.hover
-    )
+    cssLanguageService.doHover(document, position, stylesheets.get(document), settings.hover)
   )
 )
 
@@ -127,87 +134,59 @@ connection.onFoldingRanges(({ textDocument }, _token) =>
 
 connection.onDocumentColor(({ textDocument }) =>
   withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
-    cssLanguageService.findDocumentColors(document, cssLanguageService.parseStylesheet(document))
+    cssLanguageService.findDocumentColors(document, stylesheets.get(document))
   )
 )
 
 connection.onColorPresentation(({ textDocument, color, range }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.getColorPresentations(
-      document,
-      cssLanguageService.parseStylesheet(document),
-      color,
-      range
-    )
+    cssLanguageService.getColorPresentations(document, stylesheets.get(document), color, range)
   )
 )
 
 connection.onDefinition(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
-    cssLanguageService.findDefinition(
-      document,
-      position,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.findDefinition(document, position, stylesheets.get(document))
   )
 )
 
 connection.onDocumentHighlight(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.findDocumentHighlights(
-      document,
-      position,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.findDocumentHighlights(document, position, stylesheets.get(document))
   )
 )
 
 connection.onDocumentSymbol(({ textDocument }) =>
   withDocumentAndSettings(textDocument.uri, true, ({ document }) =>
-    cssLanguageService
-      .findDocumentSymbols(document, cssLanguageService.parseStylesheet(document))
-      .map((symbol) => {
-        if (symbol.name === '@media (_)') {
-          let doc = documents.get(symbol.location.uri)
-          let text = doc.getText(symbol.location.range)
-          let match = text.trim().match(/^(@[^\s]+)([^{]+){/)
-          if (match) {
-            symbol.name = `${match[1]} ${match[2].trim()}`
-          }
+    cssLanguageService.findDocumentSymbols(document, stylesheets.get(document)).map((symbol) => {
+      if (symbol.name === '@media (_)') {
+        let doc = documents.get(symbol.location.uri)
+        let text = doc.getText(symbol.location.range)
+        let match = text.trim().match(/^(@[^\s]+)([^{]+){/)
+        if (match) {
+          symbol.name = `${match[1]} ${match[2].trim()}`
         }
-        return symbol
-      })
+      }
+      return symbol
+    })
   )
 )
 
 connection.onSelectionRanges(({ textDocument, positions }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.getSelectionRanges(
-      document,
-      positions,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.getSelectionRanges(document, positions, stylesheets.get(document))
   )
 )
 
 connection.onReferences(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.findReferences(
-      document,
-      position,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.findReferences(document, position, stylesheets.get(document))
   )
 )
 
 connection.onCodeAction(({ textDocument, range, context }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.doCodeActions2(
-      document,
-      range,
-      context,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.doCodeActions2(document, range, context, stylesheets.get(document))
   )
 )
 
@@ -215,7 +194,7 @@ connection.onDocumentLinks(({ textDocument }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
     cssLanguageService.findDocumentLinks2(
       document,
-      cssLanguageService.parseStylesheet(document),
+      stylesheets.get(document),
       getDocumentContext(document.uri, workspaceFolders)
     )
   )
@@ -223,12 +202,7 @@ connection.onDocumentLinks(({ textDocument }) =>
 
 connection.onRenameRequest(({ textDocument, position, newName }) =>
   withDocumentAndSettings(textDocument.uri, false, ({ document }) =>
-    cssLanguageService.doRename(
-      document,
-      position,
-      newName,
-      cssLanguageService.parseStylesheet(document)
-    )
+    cssLanguageService.doRename(document, position, newName, stylesheets.get(document))
   )
 )
 
