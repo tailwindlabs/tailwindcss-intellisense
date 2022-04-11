@@ -5,7 +5,7 @@ const fs = require('fs')
 const resolve = (...args) => path.resolve(__dirname, ...args)
 
 esbuild.build({
-  entryPoints: [resolve('src/extension.ts'), resolve('src/server.ts')],
+  entryPoints: [resolve('src/extension.ts'), resolve('src/server.ts'), resolve('src/cssServer.ts')],
   bundle: true,
   platform: 'node',
   external: ['vscode', 'pnpapi'],

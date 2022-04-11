@@ -184,6 +184,34 @@ export async function activate(context: ExtensionContext) {
     })
   )
 
+  let cssServerBooted = false
+  function bootCssServer() {
+    if (cssServerBooted) return
+    cssServerBooted = true
+    let client = new LanguageClient(
+      'tailwindcss-intellisense-css',
+      'Tailwind CSS',
+      {
+        run: {
+          module: context.asAbsolutePath(path.join('dist', 'cssServer.js')),
+          transport: TransportKind.ipc,
+        },
+        debug: {
+          module: context.asAbsolutePath(path.join('dist', 'cssServer.js')),
+          transport: TransportKind.ipc,
+          options: {
+            execArgv: ['--nolazy', '--inspect=6051'],
+          },
+        },
+      },
+      {
+        documentSelector: [{ language: 'tailwindcss' }],
+        outputChannelName: 'Tailwind CSS Language Mode',
+      }
+    )
+    context.subscriptions.push(client.start())
+  }
+
   function bootWorkspaceClient(folder: WorkspaceFolder) {
     if (clients.has(folder.uri.toString())) {
       return
@@ -401,6 +429,10 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
+    if (document.languageId === 'tailwindcss') {
+      bootCssServer()
+    }
+
     // We are only interested in language mode text
     if (document.uri.scheme !== 'file') {
       return

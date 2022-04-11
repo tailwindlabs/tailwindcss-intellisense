@@ -1,0 +1,37 @@
+{
+  "comments": {
+    "blockComment": ["/*", "*/"]
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "{", "close": "}", "notIn": ["string", "comment"] },
+    { "open": "[", "close": "]", "notIn": ["string", "comment"] },
+    { "open": "(", "close": ")", "notIn": ["string", "comment"] },
+    { "open": "\"", "close": "\"", "notIn": ["string", "comment"] },
+    { "open": "'", "close": "'", "notIn": ["string", "comment"] },
+    { "open": "/* ", "close": " */", "notIn": ["string"] },
+    { "open": "/*:", "close": " */", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"],
+    ["<", ">"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "(^.*\\{[^}]*$)",
+    "decreaseIndentPattern": "^\\s*\\}"
+  },
+  "folding": {
+    "markers": {
+      "start": "^\\s*\\/\\*\\s*#region\\b\\s*(.*?)\\s*\\*\\/",
+      "end": "^\\s*\\/\\*\\s*#endregion\\b.*\\*\\/"
+    }
+  }
+}

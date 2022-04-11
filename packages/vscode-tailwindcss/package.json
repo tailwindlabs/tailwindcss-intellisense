@@ -43,6 +43,25 @@
     "virtualWorkspaces": false
   },
   "contributes": {
+    "languages": [
+      {
+        "id": "tailwindcss",
+        "configuration": "./tailwindcss.language.configuration.json",
+        "aliases": [
+          "Tailwind CSS"
+        ],
+        "extensions": [
+          ".css",
+          ".pcss",
+          ".postcss"
+        ],
+        "mimetypes": [
+          "text/css",
+          "text/x-pcss",
+          "text/pcss"
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "tailwindCSS.showOutput",
@@ -51,6 +70,11 @@
       }
     ],
     "grammars": [
+      {
+        "scopeName": "source.css",
+        "path": "./syntaxes/source.css.tmLanguage.json",
+        "language": "tailwindcss"
+      },
       {
         "scopeName": "tailwindcss.at-rules.injection",
         "path": "./syntaxes/at-rules.tmLanguage.json",
