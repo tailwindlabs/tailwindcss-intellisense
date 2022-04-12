@@ -47,6 +47,7 @@ let cssLanguageService = getCSSLanguageService()
 let workspaceFolders: WorkspaceFolder[]
 
 let foldingRangeLimit = Number.MAX_VALUE
+const MEDIA_MARKER = '℘'
 
 const stylesheets = getLanguageModelCache<Stylesheet>(10, 60, (document) =>
   cssLanguageService.parseStylesheet(document)
@@ -192,7 +193,7 @@ connection.onDocumentHighlight(({ textDocument, position }) =>
 connection.onDocumentSymbol(({ textDocument }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
     cssLanguageService.findDocumentSymbols(document, stylesheets.get(document)).map((symbol) => {
-      if (symbol.name === '@media (_)') {
+      if (symbol.name === `@media (${MEDIA_MARKER})`) {
         let doc = documents.get(symbol.location.uri)
         let text = doc.getText(symbol.location.range)
         let match = text.trim().match(/^(@[^\s]+)([^{]+){/)
@@ -307,11 +308,11 @@ function replace(delta = 0) {
   return (_match: string, p1: string) => {
     let lines = p1.split('\n')
     if (lines.length > 1) {
-      return `@media(_)${'\n'.repeat(lines.length - 1)}${' '.repeat(
+      return `@media(${MEDIA_MARKER})${'\n'.repeat(lines.length - 1)}${' '.repeat(
         lines[lines.length - 1].length
       )}{`
     }
-    return `@media(_)${' '.repeat(p1.length + delta)}{`
+    return `@media(${MEDIA_MARKER})${' '.repeat(p1.length + delta)}{`
   }
 }
 
