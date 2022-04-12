@@ -96,8 +96,10 @@ export function getLanguageBoundaries(
   text: string = doc.getText()
 ): LanguageBoundary[] | null {
   let cacheKey = `${doc.languageId}:${text}`
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey)
+
+  let cachedBoundaries = cache.get(cacheKey)
+  if (cachedBoundaries !== undefined) {
+    return cachedBoundaries
   }
 
   let defaultType = isVueDoc(doc)
