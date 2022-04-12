@@ -353,6 +353,10 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
       .replace(/@variants(\s+[^{]+){/g, replace())
       .replace(/@responsive(\s*){/g, replace())
       .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
+      .replace(
+        /@media(\s+screen\s*\([^)]+\))/g,
+        (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`
+      )
   )
 }
 
