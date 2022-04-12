@@ -12,6 +12,7 @@ import {
   WorkspaceFolder,
   Disposable,
   ConfigurationRequest,
+  CompletionItemKind,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
@@ -143,15 +144,40 @@ async function withDocumentAndSettings<T>(
 }
 
 connection.onCompletion(async ({ textDocument, position }, _token) =>
-  withDocumentAndSettings(textDocument.uri, ({ document, settings }) =>
-    cssLanguageService.doComplete2(
+  withDocumentAndSettings(textDocument.uri, async ({ document, settings }) => {
+    let result = await cssLanguageService.doComplete2(
       document,
       position,
       stylesheets.get(document),
       getDocumentContext(document.uri, workspaceFolders),
       settings?.completion
     )
-  )
+    return {
+      isIncomplete: result.isIncomplete,
+      items: result.items.flatMap((item) => {
+        // Add the `theme()` function
+        if (item.kind === CompletionItemKind.Function && item.label === 'calc()') {
+          return [
+            item,
+            {
+              ...item,
+              label: 'theme()',
+              documentation: {
+                kind: 'markdown',
+                value:
+                  'Use the `theme()` function to access your Tailwind config values using dot notation.',
+              },
+              textEdit: {
+                ...item.textEdit,
+                newText: item.textEdit.newText.replace(/^calc\(/, 'theme('),
+              },
+            },
+          ]
+        }
+        return item
+      }),
+    }
+  })
 )
 
 connection.onHover(({ textDocument, position }, _token) =>
