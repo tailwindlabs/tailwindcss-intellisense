@@ -17,6 +17,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
 import { getLanguageModelCache } from './languageModelCache'
 import { Stylesheet } from 'vscode-css-languageservice'
+import dlv from 'dlv'
 
 let connection = createConnection(ProposedFeatures.all)
 
@@ -45,6 +46,8 @@ let cssLanguageService = getCSSLanguageService()
 
 let workspaceFolders: WorkspaceFolder[]
 
+let foldingRangeLimit = Number.MAX_VALUE
+
 const stylesheets = getLanguageModelCache<Stylesheet>(10, 60, (document) =>
   cssLanguageService.parseStylesheet(document)
 )
@@ -63,6 +66,12 @@ connection.onInitialize((params: InitializeParams) => {
       workspaceFolders.push({ name: '', uri: URI.file(params.rootPath).toString() })
     }
   }
+
+  foldingRangeLimit = dlv(
+    params.capabilities,
+    'textDocument.foldingRange.rangeLimit',
+    Number.MAX_VALUE
+  )
 
   return {
     capabilities: {
@@ -152,7 +161,7 @@ connection.onHover(({ textDocument, position }, _token) =>
 
 connection.onFoldingRanges(({ textDocument }, _token) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.getFoldingRanges(document)
+    cssLanguageService.getFoldingRanges(document, { rangeLimit: foldingRangeLimit })
   )
 )
 
