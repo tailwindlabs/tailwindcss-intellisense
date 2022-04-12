@@ -32,12 +32,24 @@ See the complete CSS for a Tailwind class name by hovering over it.
 
 Provides syntax definitions so that Tailwind features are highlighted correctly.
 
+### Tailwind CSS Language Mode
+
+An alternative to VS Code's built-in CSS language mode which maintains full CSS IntelliSense support even when using Tailwind-specific at-rules.
+
 ## Recommended VS Code Settings
 
-VS Code has built-in CSS validation which may display errors when using Tailwind-specific syntax, such as `@apply`. You can disable this with the `css.validate` setting:
+VS Code has built-in CSS validation which may display errors when using Tailwind-specific at-rules, such as `@apply`. You can disable this with the `css.validate` setting:
 
 ```
 "css.validate": false
+```
+
+Alternatively, you can configure VS Code to use the provided Tailwind CSS language mode by default for all CSS files:
+
+```
+"files.associations": {
+  "*.css": "tailwindcss"
+}
 ```
 
 By default VS Code will not trigger completions when editing "string" content, for example within JSX attribute values. Updating the `editor.quickSuggestions` setting may improve your experience:
