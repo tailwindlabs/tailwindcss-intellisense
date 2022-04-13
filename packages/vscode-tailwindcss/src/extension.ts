@@ -123,8 +123,8 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
 }
 
 export async function activate(context: ExtensionContext) {
-  let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
-  let prod = path.join('dist', 'server', 'tailwindServer.js')
+  let module = context.asAbsolutePath(path.join('dist', 'server.js'))
+  let prod = path.join('dist', 'tailwindServer.js')
 
   try {
     await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))

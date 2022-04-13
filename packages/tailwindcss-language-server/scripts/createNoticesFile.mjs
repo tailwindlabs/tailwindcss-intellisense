@@ -6,9 +6,9 @@ import { fileURLToPath } from 'url'
 
 const exclude = [
   /^@types\//,
+  'esbuild',
   'rimraf',
   'jest',
-  '@vercel/ncc',
   'prettier',
   'terser',
   'typescript',
