@@ -20,7 +20,7 @@ export async function getDocumentColors(
   if (settings.tailwindCSS.colorDecorators === false) return colors
 
   let classLists = await findClassListsInDocument(state, document)
-  classLists.flat().forEach((classList) => {
+  classLists.forEach((classList) => {
     let classNames = getClassNamesInClassList(classList)
     classNames.forEach((className) => {
       let color = getColor(state, className.className)
