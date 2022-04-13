@@ -29,7 +29,7 @@
     "@tailwindcss/typography": "0.5.0",
     "@types/debounce": "1.2.0",
     "@types/node": "14.14.34",
-    "@types/vscode": "1.52.0",
+    "@types/vscode": "1.60.0",
     "builtin-modules": "3.2.0",
     "chokidar": "3.5.1",
     "color-name": "1.1.4",
@@ -57,6 +57,7 @@
     "tailwindcss": "3.0.11",
     "terser": "4.6.12",
     "typescript": "4.2.4",
+    "vscode-css-languageservice": "5.4.1",
     "vscode-languageserver": "7.0.0",
     "vscode-languageserver-textdocument": "1.0.1",
     "vscode-uri": "3.0.2"
