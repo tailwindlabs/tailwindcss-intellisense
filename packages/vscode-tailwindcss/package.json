@@ -49,12 +49,6 @@
         "aliases": [
           "Tailwind CSS"
         ],
-        "extensions": [
-          ".css"
-        ],
-        "mimetypes": [
-          "text/css"
-        ],
         "configuration": "./tailwindcss.language.configuration.json"
       }
     ],
