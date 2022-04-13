@@ -281,7 +281,7 @@
     }
   },
   "scripts": {
-    "_esbuild": "node esbuild.js",
+    "_esbuild": "node ../../esbuild.js src/extension.ts src/server.ts --outdir=dist --external=pnpapi --external=vscode",
     "dev": "concurrently --raw --kill-others \"npm run watch\" \"npm run check -- --watch\"",
     "watch": "npm run clean && npm run _esbuild -- --watch",
     "build": "npm run check && npm run clean && npm run _esbuild -- --minify && mv dist/server.js dist/tailwindServer.js",
@@ -297,7 +297,6 @@
     "@types/vscode": "1.66.0",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
-    "esbuild": "0.14.11",
     "rimraf": "3.0.2",
     "terser": "4.6.12",
     "vsce": "1.87.0",

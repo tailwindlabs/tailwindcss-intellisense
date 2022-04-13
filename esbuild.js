@@ -1,18 +1,25 @@
 const esbuild = require('esbuild')
 const path = require('path')
 const fs = require('fs')
+const mri = require('mri')
 
 const resolve = (...args) => path.resolve(__dirname, ...args)
 
+const args = mri(process.argv.slice(2), {
+  boolean: ['watch', 'minify'],
+  string: ['outfile', 'outdir', 'external'],
+})
+
 esbuild.build({
-  entryPoints: [resolve('src/extension.ts'), resolve('src/server.ts'), resolve('src/cssServer.ts')],
+  entryPoints: args._,
   bundle: true,
   platform: 'node',
-  external: ['vscode', 'pnpapi'],
+  external: [].concat(args.external),
   format: 'cjs',
-  outdir: resolve('dist'),
-  watch: process.argv.includes('--watch'),
-  minify: process.argv.includes('--minify'),
+  outdir: args.outdir,
+  outfile: args.outfile,
+  watch: args.watch,
+  minify: args.minify,
   plugins: [
     {
       name: 'css',
