@@ -20,9 +20,7 @@ export async function getCssConflictDiagnostics(
   const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
-    const classNames = Array.isArray(classList)
-      ? classList.flatMap(getClassNamesInClassList)
-      : getClassNamesInClassList(classList)
+    const classNames = getClassNamesInClassList(classList)
 
     classNames.forEach((className, index) => {
       if (state.jit) {
