@@ -281,7 +281,7 @@
     }
   },
   "scripts": {
-    "_esbuild": "node ../../esbuild.js src/extension.ts src/server.ts --outdir=dist --external=pnpapi --external=vscode",
+    "_esbuild": "node ../../esbuild.js src/extension.ts src/server.ts src/cssServer.ts --outdir=dist --external=pnpapi --external=vscode",
     "dev": "concurrently --raw --kill-others \"npm run watch\" \"npm run check -- --watch\"",
     "watch": "npm run clean && npm run _esbuild -- --watch",
     "build": "npm run check && npm run clean && npm run _esbuild -- --minify && mv dist/server.js dist/tailwindServer.js",
