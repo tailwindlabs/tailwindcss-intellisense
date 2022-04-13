@@ -1,7 +1,7 @@
 import { State } from './util/state'
 import type { Hover, TextDocument, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
-const dlv = require('dlv')
+import dlv from 'dlv'
 import { isCssContext } from './util/css'
 import { findClassNameAtPosition } from './util/find'
 import { validateApply } from './util/validateApply'

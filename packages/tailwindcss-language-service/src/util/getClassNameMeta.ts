@@ -1,6 +1,6 @@
 import { State, ClassNameMeta } from './state'
 import { getClassNameParts } from './getClassNameAtPosition'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 export function getClassNameMeta(
   state: State,

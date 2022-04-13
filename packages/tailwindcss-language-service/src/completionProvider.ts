@@ -9,7 +9,7 @@ import type {
   Position,
   CompletionContext,
 } from 'vscode-languageserver'
-const dlv = require('dlv')
+import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
 import { getColor, getColorFromValue } from './util/color'
 import { isHtmlContext } from './util/html'

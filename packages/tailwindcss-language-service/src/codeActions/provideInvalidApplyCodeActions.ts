@@ -7,7 +7,7 @@ import { getClassNameMeta } from '../util/getClassNameMeta'
 import { getClassNameParts } from '../util/getClassNameAtPosition'
 import { validateApply } from '../util/validateApply'
 import { isWithinRange } from '../util/isWithinRange'
-const dlv = require('dlv')
+import dlv from 'dlv'
 import type { Root, Source } from 'postcss'
 import { absoluteRange } from '../util/absoluteRange'
 import { removeRangesFromString } from '../util/removeRangesFromString'
