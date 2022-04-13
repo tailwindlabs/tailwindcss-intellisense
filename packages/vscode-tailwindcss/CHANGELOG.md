@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+- Revert "Improve conflict diagnostics" (#525)
+
 ## 0.8.0
 
 - Add `gohtmltmpl` to supported languages (#473)
