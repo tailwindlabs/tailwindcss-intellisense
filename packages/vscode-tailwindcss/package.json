@@ -68,8 +68,8 @@
     "grammars": [
       {
         "language": "tailwindcss",
-        "scopeName": "source.css",
-        "path": "./syntaxes/source.css.tmLanguage.json",
+        "scopeName": "source.css.tailwind",
+        "path": "./syntaxes/source.css.tailwind.tmLanguage.json",
         "tokenTypes": {
           "meta.function.url string.quoted": "other"
         }
