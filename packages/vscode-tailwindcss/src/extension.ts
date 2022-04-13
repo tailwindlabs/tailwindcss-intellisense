@@ -193,19 +193,28 @@ export async function activate(context: ExtensionContext) {
   )
 
   let cssServerBooted = false
-  function bootCssServer() {
+  async function bootCssServer() {
     if (cssServerBooted) return
     cssServerBooted = true
+
+    let module = context.asAbsolutePath(path.join('dist', 'cssServer.js'))
+    let prod = path.join('dist', 'tailwindModeServer.js')
+
+    try {
+      await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
+      module = context.asAbsolutePath(prod)
+    } catch (_) {}
+
     let client = new LanguageClient(
       'tailwindcss-intellisense-css',
       'Tailwind CSS',
       {
         run: {
-          module: context.asAbsolutePath(path.join('dist', 'cssServer.js')),
+          module,
           transport: TransportKind.ipc,
         },
         debug: {
-          module: context.asAbsolutePath(path.join('dist', 'cssServer.js')),
+          module,
           transport: TransportKind.ipc,
           options: {
             execArgv: ['--nolazy', '--inspect=6051'],
