@@ -6,7 +6,7 @@ import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 export function getInvalidScreenDiagnostics(
   state: State,

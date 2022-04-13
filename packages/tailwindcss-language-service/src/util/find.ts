@@ -9,7 +9,7 @@ import { flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
-const dlv = require('dlv')
+import dlv from 'dlv'
 import { createMultiRegexp } from './createMultiRegexp'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
