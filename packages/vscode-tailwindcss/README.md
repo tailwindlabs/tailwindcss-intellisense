@@ -94,6 +94,18 @@ Show `px` equivalents for `rem` CSS values in completions and hovers. **Default:
 
 Root font size in pixels. Used to convert `rem` CSS values to their `px` equivalents. See [`tailwindCSS.showPixelEquivalents`](#tailwindcssshowpixelequivalents). **Default: `16`**
 
+### `tailwindCSS.hovers`
+
+Enable hovers. **Default: `true`**
+
+### `tailwindCSS.suggestions`
+
+Enable autocomplete suggestions. **Default: `true`**
+
+### `tailwindCSS.codeActions`
+
+Enable code actions. **Default: `true`**
+
 ### `tailwindCSS.validate`
 
 Enable linting. Rules can be configured individually using the `tailwindcss.lint` settings:

@@ -990,6 +990,8 @@ async function createProjectService(
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
+      let settings = await state.editor.getConfiguration(document.uri)
+      if (!settings.tailwindCSS.hovers) return null
       if (await isExcluded(state, document)) return null
       return doHover(state, document, params.position)
     },
@@ -997,6 +999,8 @@ async function createProjectService(
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
+      let settings = await state.editor.getConfiguration(document.uri)
+      if (!settings.tailwindCSS.suggestions) return null
       if (await isExcluded(state, document)) return null
       return doComplete(state, document, params.position, params.context)
     },
@@ -1004,8 +1008,12 @@ async function createProjectService(
       if (!state.enabled) return null
       return resolveCompletionItem(state, item)
     },
-    onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+    async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
       if (!state.enabled) return null
+      let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return null
+      let settings = await state.editor.getConfiguration(document.uri)
+      if (!settings.tailwindCSS.codeActions) return null
       return doCodeActions(state, params)
     },
     provideDiagnostics: debounce((document: TextDocument) => {

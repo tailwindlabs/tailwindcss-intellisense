@@ -160,6 +160,24 @@
           ],
           "markdownDescription": "The HTML attributes for which to provide class completions, hover previews, linting etc."
         },
+        "tailwindCSS.suggestions": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable autocomplete suggestions.",
+          "scope": "language-overridable"
+        },
+        "tailwindCSS.hovers": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable hovers.",
+          "scope": "language-overridable"
+        },
+        "tailwindCSS.codeActions": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable code actions.",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.colorDecorators": {
           "type": "boolean",
           "default": true,
