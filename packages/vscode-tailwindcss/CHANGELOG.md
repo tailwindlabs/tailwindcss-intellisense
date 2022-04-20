@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2
+
+- Fix language features when nesting `<template>` in Vue files (#532)
+- Add `hovers`, `suggestions`, and `codeActions` settings (#535)
+
 ## 0.8.1
 
 - Revert "Improve conflict diagnostics" (#525)
