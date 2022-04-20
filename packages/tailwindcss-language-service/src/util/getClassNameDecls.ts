@@ -1,7 +1,7 @@
 import { State } from './state'
 import { getClassNameParts } from './getClassNameAtPosition'
 import removeMeta from './removeMeta'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 export function getClassNameDecls(
   state: State,

@@ -9,7 +9,7 @@ import isObject from '../util/isObject'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import { combinations } from '../util/combinations'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 function pathToString(path: string | string[]): string {
   if (typeof path === 'string') return path

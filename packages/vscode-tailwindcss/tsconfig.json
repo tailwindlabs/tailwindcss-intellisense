@@ -18,6 +18,7 @@
   "include": [
     "src",
     "../packages/tailwindcss-language-service",
-    "../packages/tailwindcss-language-server"
+    "../packages/tailwindcss-language-server",
+    "../../types"
   ]
 }

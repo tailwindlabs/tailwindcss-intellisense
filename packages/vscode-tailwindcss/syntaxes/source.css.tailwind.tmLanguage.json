@@ -1,0 +1,9 @@
+{
+  "name": "TailwindCSS",
+  "scopeName": "source.css.tailwind",
+  "patterns": [
+    {
+      "include": "source.css"
+    }
+  ]
+}

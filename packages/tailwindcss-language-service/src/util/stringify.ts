@@ -1,5 +1,5 @@
 import removeMeta from './removeMeta'
-const dlv = require('dlv')
+import dlv from 'dlv'
 import escapeClassName from 'css.escape'
 import { ensureArray } from './array'
 import { remToPx } from './remToPx'

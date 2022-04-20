@@ -81,6 +81,17 @@ let vueStates = {
   },
   html: {
     htmlBlockEnd: { match: '</template>', pop: 1 },
+    nestedBlockStart: { match: '<template', push: 'nestedBlock' },
+    ...text,
+  },
+  nestedBlock: {
+    nestedStart: { match: '>', next: 'nested' },
+    nestedBlockEnd: { match: '/>', pop: 1 },
+    ...text,
+  },
+  nested: {
+    nestedBlockEnd: { match: '</template>', pop: 1 },
+    nestedBlockStart: { match: '<template', push: 'nestedBlock' },
     ...text,
   },
 }
@@ -96,8 +107,10 @@ export function getLanguageBoundaries(
   text: string = doc.getText()
 ): LanguageBoundary[] | null {
   let cacheKey = `${doc.languageId}:${text}`
-  if (cache.has(cacheKey)) {
-    return cache.get(cacheKey)
+
+  let cachedBoundaries = cache.get(cacheKey)
+  if (cachedBoundaries !== undefined) {
+    return cachedBoundaries
   }
 
   let defaultType = isVueDoc(doc)
@@ -122,19 +135,21 @@ export function getLanguageBoundaries(
 
   try {
     for (let token of lexer) {
-      if (token.type.endsWith('BlockStart')) {
-        let position = indexToPosition(text, offset)
-        if (!boundaries[boundaries.length - 1].range.end) {
+      if (!token.type.startsWith('nested')) {
+        if (token.type.endsWith('BlockStart')) {
+          let position = indexToPosition(text, offset)
+          if (!boundaries[boundaries.length - 1].range.end) {
+            boundaries[boundaries.length - 1].range.end = position
+          }
+          type = token.type.replace(/BlockStart$/, '')
+          boundaries.push({ type, range: { start: position, end: undefined } })
+        } else if (token.type.endsWith('BlockEnd')) {
+          let position = indexToPosition(text, offset)
           boundaries[boundaries.length - 1].range.end = position
+          boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
+        } else if (token.type === 'lang') {
+          boundaries[boundaries.length - 1].type = token.text
         }
-        type = token.type.replace(/BlockStart$/, '')
-        boundaries.push({ type, range: { start: position, end: undefined } })
-      } else if (token.type.endsWith('BlockEnd')) {
-        let position = indexToPosition(text, offset)
-        boundaries[boundaries.length - 1].range.end = position
-        boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
-      } else if (token.type === 'lang') {
-        boundaries[boundaries.length - 1].type = token.text
       }
       offset += token.text.length
     }

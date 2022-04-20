@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.1
+
+- Revert "Improve conflict diagnostics" (#525)
+
+## 0.8.0
+
+- Add `gohtmltmpl` to supported languages (#473)
+- Prevent directive errors in non-semicolon languages (#461)
+- Detect conflicting multi-rule classes (#498)
+- Fix classRegex error (#501)
+- Rework language boundary detection (#502)
+- Improve conflict diagnostics (#503)
+- Add Tailwind CSS language mode (#518)
+
 ## 0.7.7
 
 - Fix activation for projects with square brackets in their path

@@ -1,5 +1,5 @@
 import { State } from './state'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 export function flagEnabled(state: State, flag: string) {
   if (state.featureFlags.future.includes(flag)) {

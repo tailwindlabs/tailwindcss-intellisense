@@ -6,6 +6,8 @@
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
   },
   "devDependencies": {
-    "lerna": "^3.22.1"
+    "esbuild": "0.14.11",
+    "lerna": "^3.22.1",
+    "mri": "1.2.0"
   }
 }

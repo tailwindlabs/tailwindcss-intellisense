@@ -6,6 +6,7 @@ import * as path from 'path'
 import {
   workspace as Workspace,
   window as Window,
+  languages as Languages,
   ExtensionContext,
   TextDocument,
   OutputChannel,
@@ -19,6 +20,12 @@ import {
   RelativePattern,
   ConfigurationScope,
   WorkspaceConfiguration,
+  CompletionItem,
+  CompletionItemKind,
+  CompletionList,
+  ProviderResult,
+  SnippetString,
+  TextEdit,
 } from 'vscode'
 import {
   LanguageClient,
@@ -27,6 +34,7 @@ import {
   TransportKind,
   State as LanguageClientState,
   RevealOutputChannelOn,
+  Disposable,
 } from 'vscode-languageclient/node'
 import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
 import isObject from 'tailwindcss-language-service/src/util/isObject'
@@ -123,8 +131,8 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
 }
 
 export async function activate(context: ExtensionContext) {
-  let module = context.asAbsolutePath(path.join('dist', 'server', 'index.js'))
-  let prod = path.join('dist', 'server', 'tailwindServer.js')
+  let module = context.asAbsolutePath(path.join('dist', 'server.js'))
+  let prod = path.join('dist', 'tailwindServer.js')
 
   try {
     await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
@@ -183,6 +191,117 @@ export async function activate(context: ExtensionContext) {
       })
     })
   )
+
+  let cssServerBooted = false
+  async function bootCssServer() {
+    if (cssServerBooted) return
+    cssServerBooted = true
+
+    let module = context.asAbsolutePath(path.join('dist', 'cssServer.js'))
+    let prod = path.join('dist', 'tailwindModeServer.js')
+
+    try {
+      await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
+      module = context.asAbsolutePath(prod)
+    } catch (_) {}
+
+    let client = new LanguageClient(
+      'tailwindcss-intellisense-css',
+      'Tailwind CSS',
+      {
+        run: {
+          module,
+          transport: TransportKind.ipc,
+        },
+        debug: {
+          module,
+          transport: TransportKind.ipc,
+          options: {
+            execArgv: ['--nolazy', '--inspect=6051'],
+          },
+        },
+      },
+      {
+        documentSelector: [{ language: 'tailwindcss' }],
+        outputChannelName: 'Tailwind CSS Language Mode',
+        synchronize: { configurationSection: ['css'] },
+        middleware: {
+          provideCompletionItem(document, position, context, token, next) {
+            function updateRanges(item: CompletionItem) {
+              const range = item.range
+              if (
+                range instanceof Range &&
+                range.end.isAfter(position) &&
+                range.start.isBeforeOrEqual(position)
+              ) {
+                item.range = { inserting: new Range(range.start, position), replacing: range }
+              }
+            }
+            function updateLabel(item: CompletionItem) {
+              if (item.kind === CompletionItemKind.Color) {
+                item.label = {
+                  label: item.label as string,
+                  description: item.documentation as string,
+                }
+              }
+            }
+            function updateProposals(
+              r: CompletionItem[] | CompletionList | null | undefined
+            ): CompletionItem[] | CompletionList | null | undefined {
+              if (r) {
+                ;(Array.isArray(r) ? r : r.items).forEach(updateRanges)
+                ;(Array.isArray(r) ? r : r.items).forEach(updateLabel)
+              }
+              return r
+            }
+            const isThenable = <T>(obj: ProviderResult<T>): obj is Thenable<T> =>
+              obj && (<any>obj)['then']
+
+            const r = next(document, position, context, token)
+            if (isThenable<CompletionItem[] | CompletionList | null | undefined>(r)) {
+              return r.then(updateProposals)
+            }
+            return updateProposals(r)
+          },
+        },
+      }
+    )
+
+    client.onReady().then(() => {
+      context.subscriptions.push(initCompletionProvider())
+    })
+
+    context.subscriptions.push(client.start())
+
+    function initCompletionProvider(): Disposable {
+      const regionCompletionRegExpr = /^(\s*)(\/(\*\s*(#\w*)?)?)?$/
+
+      return Languages.registerCompletionItemProvider(['tailwindcss'], {
+        provideCompletionItems(doc: TextDocument, pos: Position) {
+          let lineUntilPos = doc.getText(new Range(new Position(pos.line, 0), pos))
+          let match = lineUntilPos.match(regionCompletionRegExpr)
+          if (match) {
+            let range = new Range(new Position(pos.line, match[1].length), pos)
+            let beginProposal = new CompletionItem('#region', CompletionItemKind.Snippet)
+            beginProposal.range = range
+            TextEdit.replace(range, '/* #region */')
+            beginProposal.insertText = new SnippetString('/* #region $1*/')
+            beginProposal.documentation = 'Folding Region Start'
+            beginProposal.filterText = match[2]
+            beginProposal.sortText = 'za'
+            let endProposal = new CompletionItem('#endregion', CompletionItemKind.Snippet)
+            endProposal.range = range
+            endProposal.insertText = '/* #endregion */'
+            endProposal.documentation = 'Folding Region End'
+            endProposal.sortText = 'zb'
+            endProposal.filterText = match[2]
+            return [beginProposal, endProposal]
+          }
+          return null
+        },
+      })
+    }
+  }
 
   function bootWorkspaceClient(folder: WorkspaceFolder) {
     if (clients.has(folder.uri.toString())) {
@@ -282,7 +401,8 @@ export async function activate(context: ExtensionContext) {
                 return { range, newText: result.additionalTextEdits[0].newText }
               })
             } else {
-              result.insertText = result.label
+              result.insertText =
+                typeof result.label === 'string' ? result.label : result.label.label
               result.additionalTextEdits = []
             }
           }
@@ -401,6 +521,10 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
+    if (document.languageId === 'tailwindcss') {
+      bootCssServer()
+    }
+
     // We are only interested in language mode text
     if (document.uri.scheme !== 'file') {
       return

@@ -76,20 +76,27 @@ import { generateRules } from 'tailwindcss-language-service/src/util/jit'
 import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
-import preflight from './lib/preflight'
 import tailwindPlugins from './lib/plugins'
 import isExcluded, { DEFAULT_FILES_EXCLUDE } from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
 import { equal } from 'tailwindcss-language-service/src/util/array'
+import preflight from 'tailwindcss/lib/css/preflight.css'
 
-let oldReadFileSync = fs.readFileSync
 // @ts-ignore
-fs.readFileSync = function (filename, ...args) {
-  if (filename === path.join(__dirname, 'css/preflight.css')) {
-    return preflight
-  }
-  return oldReadFileSync(filename, ...args)
-}
+global.__preflight = preflight
+new Function(
+  'require',
+  '__dirname',
+  `
+    let oldReadFileSync = require('fs').readFileSync
+    require('fs').readFileSync = function (filename, ...args) {
+      if (filename === require('path').join(__dirname, 'css/preflight.css')) {
+        return global.__preflight
+      }
+      return oldReadFileSync(filename, ...args)
+    }
+  `
+)(require, __dirname)
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 const PACKAGE_GLOB = '{package.json,package-lock.json,yarn.lock,pnpm-lock.yaml}'
@@ -111,8 +118,6 @@ const TRIGGER_CHARACTERS = [
 ] as const
 
 const colorNames = Object.keys(namedColors)
-
-declare var __non_webpack_require__: typeof require
 
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
@@ -434,9 +439,9 @@ async function createProjectService(
   }
 
   function clearRequireCache(): void {
-    Object.keys(__non_webpack_require__.cache).forEach((key) => {
+    Object.keys(require.cache).forEach((key) => {
       if (!key.endsWith('.node')) {
-        delete __non_webpack_require__.cache[key]
+        delete require.cache[key]
       }
     })
     Object.keys((Module as any)._pathCache).forEach((key) => {
@@ -483,7 +488,7 @@ async function createProjectService(
     )
 
     if (pnpPath) {
-      let pnpApi = __non_webpack_require__(pnpPath)
+      let pnpApi = require(pnpPath)
       pnpApi.setup()
       setPnpApi(pnpApi)
     }
@@ -513,13 +518,13 @@ async function createProjectService(
       const postcssDir = path.dirname(postcssPkgPath)
       const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
 
-      postcssVersion = __non_webpack_require__(postcssPkgPath).version
-      tailwindcssVersion = __non_webpack_require__(tailwindcssPkgPath).version
+      postcssVersion = require(postcssPkgPath).version
+      tailwindcssVersion = require(tailwindcssPkgPath).version
 
       pluginVersions = Object.keys(tailwindPlugins)
         .map((plugin) => {
           try {
-            return __non_webpack_require__(resolveFrom(configDir, `${plugin}/package.json`)).version
+            return require(resolveFrom(configDir, `${plugin}/package.json`)).version
           } catch (_) {
             return ''
           }
@@ -539,32 +544,27 @@ async function createProjectService(
 
       console.log(`Found Tailwind CSS config file: ${configPath}`)
 
-      postcss = __non_webpack_require__(postcssPath)
-      postcssSelectorParser = __non_webpack_require__(postcssSelectorParserPath)
+      postcss = require(postcssPath)
+      postcssSelectorParser = require(postcssSelectorParserPath)
       console.log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
 
-      tailwindcss = __non_webpack_require__(tailwindcssPath)
+      tailwindcss = require(tailwindcssPath)
       console.log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       try {
-        resolveConfigFn = __non_webpack_require__(resolveFrom(tailwindDir, './resolveConfig.js'))
+        resolveConfigFn = require(resolveFrom(tailwindDir, './resolveConfig.js'))
       } catch (_) {
         try {
-          const resolveConfig = __non_webpack_require__(
-            resolveFrom(tailwindDir, './lib/util/resolveConfig.js')
-          )
-          const defaultConfig = __non_webpack_require__(
-            resolveFrom(tailwindDir, './stubs/defaultConfig.stub.js')
-          )
+          const resolveConfig = require(resolveFrom(tailwindDir, './lib/util/resolveConfig.js'))
+          const defaultConfig = require(resolveFrom(tailwindDir, './stubs/defaultConfig.stub.js'))
           resolveConfigFn = (config) => resolveConfig([config, defaultConfig])
         } catch (_) {
           try {
-            const resolveConfig = __non_webpack_require__(
-              resolveFrom(tailwindDir, './lib/util/mergeConfigWithDefaults.js')
-            )
-            const defaultConfig = __non_webpack_require__(
-              resolveFrom(tailwindDir, './defaultConfig.js')
-            )
+            const resolveConfig = require(resolveFrom(
+              tailwindDir,
+              './lib/util/mergeConfigWithDefaults.js'
+            ))
+            const defaultConfig = require(resolveFrom(tailwindDir, './defaultConfig.js'))
             resolveConfigFn = (config) => resolveConfig(config, defaultConfig())
           } catch (_) {
             throw Error('Failed to load resolveConfig function.')
@@ -575,23 +575,19 @@ async function createProjectService(
       if (semver.gte(tailwindcssVersion, '1.4.0') && semver.lte(tailwindcssVersion, '1.99.0')) {
         const browserslistPath = resolveFrom(tailwindDir, 'browserslist')
         // TODO: set path to nearest dir with package.json?
-        browserslist = __non_webpack_require__(browserslistPath)(undefined, { path: folder })
+        browserslist = require(browserslistPath)(undefined, { path: folder })
       }
 
       if (semver.gte(tailwindcssVersion, '1.99.0')) {
         applyComplexClasses = firstOptional(() =>
-          __non_webpack_require__(resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules'))
+          require(resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules'))
         )
       } else if (semver.gte(tailwindcssVersion, '1.7.0')) {
-        applyComplexClasses = __non_webpack_require__(
-          resolveFrom(tailwindDir, './lib/flagged/applyComplexClasses')
-        )
+        applyComplexClasses = require(resolveFrom(tailwindDir, './lib/flagged/applyComplexClasses'))
       }
 
       try {
-        featureFlags = __non_webpack_require__(
-          resolveFrom(tailwindDir, './lib/featureFlags.js')
-        ).default
+        featureFlags = require(resolveFrom(tailwindDir, './lib/featureFlags.js')).default
       } catch (_) {}
 
       // stubs
@@ -603,24 +599,27 @@ async function createProjectService(
       try {
         let createContext = first(
           () => {
-            let createContextFn = __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/lib/setupContextUtils')
-            ).createContext
+            let createContextFn = require(resolveFrom(
+              configDir,
+              'tailwindcss/lib/lib/setupContextUtils'
+            )).createContext
             assert.strictEqual(typeof createContextFn, 'function')
             return (state) => createContextFn(state.config)
           },
           () => {
-            let createContextFn = __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils')
-            ).createContext
+            let createContextFn = require(resolveFrom(
+              configDir,
+              'tailwindcss/lib/jit/lib/setupContextUtils'
+            )).createContext
             assert.strictEqual(typeof createContextFn, 'function')
             return (state) => createContextFn(state.config)
           },
           // TODO: the next two are canary releases only so can probably be removed
           () => {
-            let setupTrackingContext = __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupTrackingContext')
-            ).default
+            let setupTrackingContext = require(resolveFrom(
+              configDir,
+              'tailwindcss/lib/jit/lib/setupTrackingContext'
+            )).default
             assert.strictEqual(typeof setupTrackingContext, 'function')
             return (state) =>
               setupTrackingContext(
@@ -630,9 +629,10 @@ async function createProjectService(
               )(result, root)
           },
           () => {
-            let setupContext = __non_webpack_require__(
-              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext')
-            ).default
+            let setupContext = require(resolveFrom(
+              configDir,
+              'tailwindcss/lib/jit/lib/setupContext'
+            )).default
             assert.strictEqual(typeof setupContext, 'function')
             return (state) => setupContext(state.configPath, tailwindDirectives)(result, root)
           }
@@ -642,12 +642,10 @@ async function createProjectService(
           generateRules: {
             module: first(
               () =>
-                __non_webpack_require__(resolveFrom(configDir, 'tailwindcss/lib/lib/generateRules'))
-                  .generateRules,
+                require(resolveFrom(configDir, 'tailwindcss/lib/lib/generateRules')).generateRules,
               () =>
-                __non_webpack_require__(
-                  resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules')
-                ).generateRules
+                require(resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules'))
+                  .generateRules
             ),
           },
           createContext: {
@@ -656,35 +654,27 @@ async function createProjectService(
           expandApplyAtRules: {
             module: first(
               () =>
-                __non_webpack_require__(
-                  resolveFrom(configDir, 'tailwindcss/lib/lib/expandApplyAtRules')
-                ).default,
+                require(resolveFrom(configDir, 'tailwindcss/lib/lib/expandApplyAtRules')).default,
               () =>
-                __non_webpack_require__(
-                  resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules')
-                ).default
+                require(resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules'))
+                  .default
             ),
           },
         }
       } catch (_) {
         try {
-          let setupContext = __non_webpack_require__(
-            resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext')
-          )
+          let setupContext = require(resolveFrom(configDir, 'tailwindcss/jit/lib/setupContext'))
 
           jitModules = {
             generateRules: {
-              module: __non_webpack_require__(
-                resolveFrom(configDir, 'tailwindcss/jit/lib/generateRules')
-              ).generateRules,
+              module: require(resolveFrom(configDir, 'tailwindcss/jit/lib/generateRules'))
+                .generateRules,
             },
             createContext: {
               module: (state) => setupContext(state.configPath, tailwindDirectives)(result, root),
             },
             expandApplyAtRules: {
-              module: __non_webpack_require__(
-                resolveFrom(configDir, 'tailwindcss/jit/lib/expandApplyAtRules')
-              ),
+              module: require(resolveFrom(configDir, 'tailwindcss/jit/lib/expandApplyAtRules')),
             },
           }
         } catch (_) {}
@@ -726,9 +716,7 @@ async function createProjectService(
 
     try {
       state.corePlugins = Object.keys(
-        __non_webpack_require__(
-          resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/plugins/index.js')
-        )
+        require(resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/plugins/index.js'))
       )
     } catch (_) {}
 
@@ -883,7 +871,7 @@ async function createProjectService(
     })
 
     try {
-      __non_webpack_require__(state.configPath)
+      require(state.configPath)
     } catch (error) {
       hook.unhook()
       throw error
@@ -1318,7 +1306,7 @@ async function getPlugins(config: any) {
         }
         let pkg: any
         try {
-          pkg = __non_webpack_require__(pkg)
+          pkg = require(pkg)
         } catch (_) {
           return {
             name: fnName,

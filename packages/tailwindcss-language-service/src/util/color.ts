@@ -1,4 +1,4 @@
-const dlv = require('dlv')
+import dlv from 'dlv'
 import { State } from './state'
 import removeMeta from './removeMeta'
 import { ensureArray, dedupe, flatten } from './array'

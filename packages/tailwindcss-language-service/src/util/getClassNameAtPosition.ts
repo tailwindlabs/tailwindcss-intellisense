@@ -1,6 +1,6 @@
 import { State } from './state'
 import { combinations } from './combinations'
-const dlv = require('dlv')
+import dlv from 'dlv'
 
 export function getClassNameParts(state: State, className: string): string[] {
   let separator = state.separator

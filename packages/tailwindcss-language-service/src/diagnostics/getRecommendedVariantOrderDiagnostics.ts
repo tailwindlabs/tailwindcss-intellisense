@@ -22,7 +22,7 @@ export async function getRecommendedVariantOrderDiagnostics(
   let diagnostics: RecommendedVariantOrderDiagnostic[] = []
   const classLists = await findClassListsInDocument(state, document)
 
-  classLists.flat().forEach((classList) => {
+  classLists.forEach((classList) => {
     const classNames = getClassNamesInClassList(classList)
     classNames.forEach((className) => {
       let { rules } = jit.generateRules(state, [className.className])
