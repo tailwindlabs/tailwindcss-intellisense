@@ -271,6 +271,12 @@
           "type": "array",
           "scope": "language-overridable"
         },
+        "tailwindCSS.experimental.configFile": {
+          "type": [
+            "string",
+            "object"
+          ]
+        },
         "tailwindCSS.showPixelEquivalents": {
           "type": "boolean",
           "default": true,

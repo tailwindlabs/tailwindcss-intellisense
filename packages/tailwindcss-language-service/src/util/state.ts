@@ -59,6 +59,7 @@ export type Settings = {
     }
     experimental: {
       classRegex: string[]
+      configFile: string | Record<string, string>
     }
     files: {
       exclude: string[]
