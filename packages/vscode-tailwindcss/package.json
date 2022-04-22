@@ -73,7 +73,6 @@
         "path": "./syntaxes/at-rules.tmLanguage.json",
         "injectTo": [
           "source.css",
-          "source.css.postcss",
           "source.vue",
           "source.svelte",
           "text.html"
@@ -84,6 +83,13 @@
         "path": "./syntaxes/at-rules.scss.tmLanguage.json",
         "injectTo": [
           "source.css.scss"
+        ]
+      },
+      {
+        "scopeName": "tailwindcss.at-rules.postcss.injection",
+        "path": "./syntaxes/at-rules.postcss.tmLanguage.json",
+        "injectTo": [
+          "source.css.postcss"
         ]
       },
       {
