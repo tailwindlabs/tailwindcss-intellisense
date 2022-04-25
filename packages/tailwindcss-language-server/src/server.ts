@@ -1437,8 +1437,8 @@ class TW {
         this.documentService,
         () => this.updateCapabilities()
       )
-      await project.tryInit()
       this.projects.set(key, project)
+      await project.tryInit()
     }
   }
 
