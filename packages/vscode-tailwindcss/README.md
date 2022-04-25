@@ -146,6 +146,31 @@ Class variants not in the recommended order (applies in [JIT mode](https://tailw
 
 Enable the Node.js inspector agent for the language server and listen on the specified port. **Default: `null`**
 
+## Experimental Extension Settings
+
+**_Experimental settings may be changed or removed at any time._**
+
+### `tailwindCSS.experimental.configFile`
+
+**Default: `null`**
+
+By default the extension will automatically use the first `tailwind.config.js` or `tailwind.config.cjs` file that it can find to provide Tailwind CSS IntelliSense. Use this setting to manually specify the config file(s) yourself instead.
+
+If your project contains a single Tailwind config file you can specify a string value:
+
+```
+"tailwindCSS.experimental.configFile": ".config/tailwind.config.js"
+```
+
+For projects with multiple config files use an object where each key is a config file path and each value is a glob pattern (or array of glob patterns) representing the set of files that the config file applies to:
+
+```
+"tailwindCSS.experimental.configFile": {
+  "themes/simple/tailwind.config.js": "themes/simple/**",
+  "themes/neon/tailwind.config.js": "themes/neon/**"
+}
+```
+
 ## Troubleshooting
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:

@@ -26,6 +26,7 @@ import {
   DidChangeWatchedFilesNotification,
   FileChangeType,
   Disposable,
+  TextDocumentIdentifier,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -177,6 +178,7 @@ interface ProjectService {
   tryInit: () => Promise<void>
   dispose: () => void
   onUpdateSettings: (settings: any) => void
+  onFileEvents: (changes: Array<{ file: string; type: FileChangeType }>) => void
   onHover(params: TextDocumentPositionParams): Promise<Hover>
   onCompletion(params: CompletionParams): Promise<CompletionList>
   onCompletionResolve(item: CompletionItem): Promise<CompletionItem>
@@ -185,6 +187,8 @@ interface ProjectService {
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
 }
+
+type ProjectConfig = { folder: string; configPath?: string; documentSelector?: string[] }
 
 function getMode(config: any): unknown {
   if (typeof config.mode !== 'undefined') {
@@ -210,11 +214,13 @@ function deleteMode(config: any): void {
 }
 
 async function createProjectService(
-  folder: string,
+  projectConfig: ProjectConfig,
   connection: Connection,
   params: InitializeParams,
-  documentService: DocumentService
+  documentService: DocumentService,
+  updateCapabilities: () => void
 ): Promise<ProjectService> {
+  const folder = projectConfig.folder
   const disposables: Disposable[] = []
   const documentSettingsCache: Map<string, Settings> = new Map()
 
@@ -258,8 +264,6 @@ async function createProjectService(
       },
     },
   }
-
-  let registrations: Promise<BulkUnregistration>
 
   let chokidarWatcher: chokidar.FSWatcher
   let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
@@ -311,15 +315,6 @@ async function createProjectService(
   }
 
   if (params.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-    connection.onDidChangeWatchedFiles(({ changes }) => {
-      onFileEvents(
-        changes.map(({ uri, type }) => ({
-          file: URI.parse(uri).fsPath,
-          type,
-        }))
-      )
-    })
-
     connection.client.register(DidChangeWatchedFilesNotification.type, {
       watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: `**/${PACKAGE_GLOB}` }],
     })
@@ -376,38 +371,6 @@ async function createProjectService(
     })
   }
 
-  function registerCapabilities(watchFiles: string[] = []): void {
-    if (supportsDynamicRegistration(connection, params)) {
-      if (registrations) {
-        registrations.then((r) => r.dispose())
-      }
-
-      let capabilities = BulkRegistration.create()
-
-      capabilities.add(HoverRequest.type, {
-        documentSelector: null,
-      })
-      capabilities.add(DocumentColorRequest.type, {
-        documentSelector: null,
-      })
-      capabilities.add(CodeActionRequest.type, {
-        documentSelector: null,
-      })
-      capabilities.add(CompletionRequest.type, {
-        documentSelector: null,
-        resolveProvider: true,
-        triggerCharacters: [...TRIGGER_CHARACTERS, state.separator].filter(Boolean),
-      })
-      if (watchFiles.length > 0) {
-        capabilities.add(DidChangeWatchedFilesNotification.type, {
-          watchers: watchFiles.map((file) => ({ globPattern: file })),
-        })
-      }
-
-      registrations = connection.client.register(capabilities)
-    }
-  }
-
   function resetState(): void {
     clearAllDiagnostics(state)
     Object.keys(state).forEach((key) => {
@@ -417,7 +380,7 @@ async function createProjectService(
       }
     })
     state.enabled = false
-    registerCapabilities(state.dependencies)
+    updateCapabilities()
   }
 
   async function tryInit() {
@@ -452,19 +415,23 @@ async function createProjectService(
   async function init() {
     clearRequireCache()
 
-    let [configPath] = (
-      await glob([`**/${CONFIG_FILE_GLOB}`], {
-        cwd: folder,
-        ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE,
-        onlyFiles: true,
-        absolute: true,
-        suppressErrors: true,
-        dot: true,
-        concurrency: Math.max(os.cpus().length, 1),
-      })
-    )
-      .sort((a: string, b: string) => a.split('/').length - b.split('/').length)
-      .map(path.normalize)
+    let configPath = projectConfig.configPath
+
+    if (!configPath) {
+      configPath = (
+        await glob([`**/${CONFIG_FILE_GLOB}`], {
+          cwd: folder,
+          ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE,
+          onlyFiles: true,
+          absolute: true,
+          suppressErrors: true,
+          dot: true,
+          concurrency: Math.max(os.cpus().length, 1),
+        })
+      )
+        .sort((a: string, b: string) => a.split('/').length - b.split('/').length)
+        .map(path.normalize)[0]
+    }
 
     if (!configPath) {
       throw new SilentError('No config file found.')
@@ -957,7 +924,7 @@ async function createProjectService(
 
     updateAllDiagnostics(state)
 
-    registerCapabilities(state.dependencies)
+    updateCapabilities()
   }
 
   return {
@@ -980,12 +947,13 @@ async function createProjectService(
           updateAllDiagnostics(state)
         }
         if (settings.editor.colorDecorators) {
-          registerCapabilities(state.dependencies)
+          updateCapabilities()
         } else {
           connection.sendNotification('@/tailwindCSS/clearColors')
         }
       }
     },
+    onFileEvents,
     async onHover(params: TextDocumentPositionParams): Promise<Hover> {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
@@ -1002,11 +970,19 @@ async function createProjectService(
       let settings = await state.editor.getConfiguration(document.uri)
       if (!settings.tailwindCSS.suggestions) return null
       if (await isExcluded(state, document)) return null
-      return doComplete(state, document, params.position, params.context)
+      let result = await doComplete(state, document, params.position, params.context)
+      if (!result) return result
+      return {
+        isIncomplete: result.isIncomplete,
+        items: result.items.map((item) => ({
+          ...item,
+          data: { projectKey: JSON.stringify(projectConfig), originalData: item.data },
+        })),
+      }
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
       if (!state.enabled) return null
-      return resolveCompletionItem(state, item)
+      return resolveCompletionItem(state, { ...item, data: item.data?.originalData })
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
       if (!state.enabled) return null
@@ -1345,6 +1321,7 @@ class TW {
   private projects: Map<string, ProjectService>
   private documentService: DocumentService
   public initializeParams: InitializeParams
+  private registrations: Promise<BulkUnregistration>
 
   constructor(private connection: Connection) {
     this.documentService = new DocumentService(this.connection)
@@ -1358,16 +1335,15 @@ class TW {
     this.initialized = true
 
     // TODO
-    const workspaceFolders =
+    let workspaceFolders: Array<ProjectConfig> =
       false &&
       Array.isArray(this.initializeParams.workspaceFolders) &&
       this.initializeParams.capabilities.workspace?.workspaceFolders
         ? this.initializeParams.workspaceFolders.map((el) => ({
-            name: el.name,
-            fsPath: getFileFsPath(el.uri),
+            folder: getFileFsPath(el.uri),
           }))
         : this.initializeParams.rootPath
-        ? [{ name: '', fsPath: normalizeFileNameToFsPath(this.initializeParams.rootPath) }]
+        ? [{ folder: normalizeFileNameToFsPath(this.initializeParams.rootPath) }]
         : []
 
     if (workspaceFolders.length === 0) {
@@ -1375,13 +1351,64 @@ class TW {
       return
     }
 
+    let configFileOrFiles = dlv(
+      await connection.workspace.getConfiguration('tailwindCSS'),
+      'experimental.configFile',
+      null
+    ) as Settings['tailwindCSS']['experimental']['configFile']
+
+    if (configFileOrFiles) {
+      let base = workspaceFolders[0].folder
+
+      if (
+        typeof configFileOrFiles !== 'string' &&
+        (!isObject(configFileOrFiles) ||
+          !Object.entries(configFileOrFiles).every(([key, value]) => {
+            if (typeof key !== 'string') return false
+            if (Array.isArray(value)) {
+              return value.every((item) => typeof item === 'string')
+            }
+            return typeof value === 'string'
+          }))
+      ) {
+        console.error('Invalid `experimental.configFile` configuration, not initializing.')
+        return
+      }
+
+      let configFiles =
+        typeof configFileOrFiles === 'string' ? { [configFileOrFiles]: '**' } : configFileOrFiles
+
+      workspaceFolders = Object.entries(configFiles).map(
+        ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
+          return {
+            folder: base,
+            configPath: path.join(base, relativeConfigPath),
+            documentSelector: []
+              .concat(relativeDocumentSelectorOrSelectors)
+              .map((selector) => path.join(base, selector)),
+          }
+        }
+      )
+    }
+
     await Promise.all(
-      workspaceFolders.map(async (folder) => {
-        return this.addProject(folder.fsPath, this.initializeParams)
-      })
+      workspaceFolders.map((projectConfig) => this.addProject(projectConfig, this.initializeParams))
     )
 
     this.setupLSPHandlers()
+
+    if (this.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
+      this.connection.onDidChangeWatchedFiles(({ changes }) => {
+        for (let [, project] of this.projects) {
+          project.onFileEvents(
+            changes.map(({ uri, type }) => ({
+              file: URI.parse(uri).fsPath,
+              type,
+            }))
+          )
+        }
+      })
+    }
 
     this.connection.onDidChangeConfiguration(async ({ settings }) => {
       for (let [, project] of this.projects) {
@@ -1394,24 +1421,24 @@ class TW {
     })
 
     this.documentService.onDidChangeContent((change) => {
-      // TODO
-      const project = Array.from(this.projects.values())[0]
-      project?.provideDiagnostics(change.document)
+      this.getProject(change.document)?.provideDiagnostics(change.document)
     })
   }
 
-  private async addProject(folder: string, params: InitializeParams): Promise<void> {
-    if (this.projects.has(folder)) {
-      await this.projects.get(folder).tryInit()
+  private async addProject(projectConfig: ProjectConfig, params: InitializeParams): Promise<void> {
+    let key = JSON.stringify(projectConfig)
+    if (this.projects.has(key)) {
+      await this.projects.get(key).tryInit()
     } else {
       const project = await createProjectService(
-        folder,
+        projectConfig,
         this.connection,
         params,
-        this.documentService
+        this.documentService,
+        () => this.updateCapabilities()
       )
+      this.projects.set(key, project)
       await project.tryInit()
-      this.projects.set(folder, project)
     }
   }
 
@@ -1424,38 +1451,78 @@ class TW {
     this.connection.onCodeAction(this.onCodeAction.bind(this))
   }
 
+  private updateCapabilities() {
+    if (this.registrations) {
+      this.registrations.then((r) => r.dispose())
+    }
+
+    let projects = Array.from(this.projects.values())
+
+    let capabilities = BulkRegistration.create()
+
+    capabilities.add(HoverRequest.type, { documentSelector: null })
+    capabilities.add(DocumentColorRequest.type, { documentSelector: null })
+    capabilities.add(CodeActionRequest.type, { documentSelector: null })
+
+    capabilities.add(CompletionRequest.type, {
+      documentSelector: null,
+      resolveProvider: true,
+      triggerCharacters: [
+        ...TRIGGER_CHARACTERS,
+        ...projects.map((project) => project.state.separator).filter(Boolean),
+      ].filter(Boolean),
+    })
+
+    capabilities.add(DidChangeWatchedFilesNotification.type, {
+      watchers: projects.flatMap((project) =>
+        project.state.dependencies.map((file) => ({ globPattern: file }))
+      ),
+    })
+
+    this.registrations = this.connection.client.register(capabilities)
+  }
+
+  private getProject(document: TextDocumentIdentifier): ProjectService {
+    let fallbackProject: ProjectService
+    for (let [key, project] of this.projects) {
+      let projectConfig = JSON.parse(key) as ProjectConfig
+      if (projectConfig.configPath) {
+        for (let selector of projectConfig.documentSelector) {
+          if (minimatch(URI.parse(document.uri).fsPath, selector)) {
+            return project
+          }
+        }
+      } else {
+        if (!fallbackProject) {
+          fallbackProject = project
+        }
+      }
+    }
+    return fallbackProject
+  }
+
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
-    const project = Array.from(this.projects.values())[0]
-    return project?.onDocumentColor(params) ?? []
+    return this.getProject(params.textDocument)?.onDocumentColor(params) ?? []
   }
 
   async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
-    const project = Array.from(this.projects.values())[0]
-    return project?.onColorPresentation(params) ?? []
+    return this.getProject(params.textDocument)?.onColorPresentation(params) ?? []
   }
 
   async onHover(params: TextDocumentPositionParams): Promise<Hover> {
-    // TODO
-    const project = Array.from(this.projects.values())[0]
-    return project?.onHover(params) ?? null
+    return this.getProject(params.textDocument)?.onHover(params) ?? null
   }
 
   async onCompletion(params: CompletionParams): Promise<CompletionList> {
-    // TODO
-    const project = Array.from(this.projects.values())[0]
-    return project?.onCompletion(params) ?? null
+    return this.getProject(params.textDocument)?.onCompletion(params) ?? null
   }
 
   async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
-    // TODO
-    const project = Array.from(this.projects.values())[0]
-    return project?.onCompletionResolve(item) ?? null
+    return this.projects.get(item.data.projectKey)?.onCompletionResolve(item) ?? null
   }
 
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
-    // TODO
-    const project = Array.from(this.projects.values())[0]
-    return project?.onCodeAction(params) ?? null
+    return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
   listen() {

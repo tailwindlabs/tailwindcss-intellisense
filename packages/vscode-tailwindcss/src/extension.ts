@@ -169,24 +169,30 @@ export async function activate(context: ExtensionContext) {
   // e.g. "plaintext" already exists but you change it from "html" to "css"
   context.subscriptions.push(
     Workspace.onDidChangeConfiguration((event) => {
-      clients.forEach((client, key) => {
+      ;[...clients].forEach(([key, client]) => {
         const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
+        let reboot = false
 
-        if (event.affectsConfiguration('tailwindCSS', folder)) {
+        if (event.affectsConfiguration('tailwindCSS.includeLanguages', folder)) {
           const userLanguages = getUserLanguages(folder)
           if (userLanguages) {
             const userLanguageIds = Object.keys(userLanguages)
             const newLanguages = dedupe([...defaultLanguages, ...userLanguageIds])
             if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
               languages.set(folder.uri.toString(), newLanguages)
-
-              if (client) {
-                clients.delete(folder.uri.toString())
-                client.stop()
-                bootWorkspaceClient(folder)
-              }
+              reboot = true
             }
           }
+        }
+
+        if (event.affectsConfiguration('tailwindCSS.experimental.configFile', folder)) {
+          reboot = true
+        }
+
+        if (reboot && client) {
+          clients.delete(folder.uri.toString())
+          client.stop()
+          bootWorkspaceClient(folder)
         }
       })
     })
