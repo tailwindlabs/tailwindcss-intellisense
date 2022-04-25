@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.3
+
+- Add [`experimental.configFile` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssexperimentalconfigfile) (#541)
+- Fix `@screen` highlighting for Vetur SFC PostCSS styles (#538)
+
 ## 0.8.2
 
 - Fix language features when nesting `<template>` in Vue files (#532)
