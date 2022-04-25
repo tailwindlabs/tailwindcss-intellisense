@@ -265,8 +265,6 @@ async function createProjectService(
     },
   }
 
-  let registrations: Promise<BulkUnregistration>
-
   let chokidarWatcher: chokidar.FSWatcher
   let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
 
