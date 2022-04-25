@@ -1351,9 +1351,11 @@ class TW {
       return
     }
 
-    let {
-      experimental: { configFile: configFileOrFiles },
-    } = (await connection.workspace.getConfiguration('tailwindCSS')) as Settings['tailwindCSS']
+    let configFileOrFiles = dlv(
+      await connection.workspace.getConfiguration('tailwindCSS'),
+      'experimental.configFile',
+      null
+    ) as Settings['tailwindCSS']
 
     if (configFileOrFiles) {
       let base = workspaceFolders[0].folder
