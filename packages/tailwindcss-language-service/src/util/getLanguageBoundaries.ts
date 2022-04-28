@@ -12,7 +12,7 @@ let text = { text: { match: /[^]/, lineBreaks: true } }
 
 let states = {
   main: {
-    cssBlockStart: { match: '<style', push: 'cssBlock' },
+    cssBlockStart: { match: /<style(?=[>\s])/, push: 'cssBlock' },
     jsBlockStart: { match: '<script', push: 'jsBlock' },
     ...text,
   },
