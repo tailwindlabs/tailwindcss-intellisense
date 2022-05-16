@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.4
+
+- Fix overeager `<style>` detection (#543)
+- Fix dependencies `.map()` error
+
 ## 0.8.3
 
 - Add [`experimental.configFile` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssexperimentalconfigfile) (#541)
