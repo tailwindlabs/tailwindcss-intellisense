@@ -207,7 +207,7 @@ export async function findClassListsInHtmlRange(
 
     try {
       for (let token of lexer) {
-        if (token.type === 'classlist') {
+        if (token.type === 'classlist' || token.type.startsWith('arb')) {
           if (currentClassList) {
             currentClassList.value += token.value
           } else {
