@@ -149,6 +149,58 @@ export async function activate(context: ExtensionContext) {
     })
   )
 
+  async function sortSelection(): Promise<void> {
+    let { document, selections } = Window.activeTextEditor
+    if (selections.length === 0) {
+      return
+    }
+    let selectionsJson = JSON.stringify(selections)
+    let uri = document.uri
+    let folder = Workspace.getWorkspaceFolder(uri)
+    if (clients.size === 0 || !folder || isExcluded(uri.fsPath, folder)) {
+      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
+    }
+    folder = getOuterMostWorkspaceFolder(folder)
+    let client = clients.get(folder.uri.toString())
+    if (!client) {
+      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
+    }
+    let ranges = selections.map((selection) => new Range(selection.start, selection.end))
+    let { error, result } = await client.sendRequest('@/tailwindCSS/sortSelection', {
+      uri: uri.toString(),
+      classLists: ranges.map((range) => document.getText(range)),
+    })
+    if (
+      Window.activeTextEditor.document.uri.toString() !== uri.toString() ||
+      JSON.stringify(Window.activeTextEditor.selections) !== selectionsJson
+    ) {
+      return
+    }
+    if (error) {
+      throw Error(
+        {
+          'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
+          unknown: 'An unknown error occurred.',
+        }[error]
+      )
+    }
+    Window.activeTextEditor.edit((builder) => {
+      for (let i = 0; i < ranges.length; i++) {
+        builder.replace(ranges[i], result[i])
+      }
+    })
+  }
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.sortSelection', async () => {
+      try {
+        await sortSelection()
+      } catch (error) {
+        Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${error.message}`)
+      }
+    })
+  )
+
   let watcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
 
   watcher.onDidCreate((uri) => {

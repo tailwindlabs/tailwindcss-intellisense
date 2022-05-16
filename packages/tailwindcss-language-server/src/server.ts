@@ -73,7 +73,7 @@ import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import * as parcel from './watcher/index.js'
-import { generateRules } from 'tailwindcss-language-service/src/util/jit'
+import { bigSign } from 'tailwindcss-language-service/src/util/jit'
 import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
@@ -186,6 +186,7 @@ interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  sortClassLists(classLists: string[]): string[]
 }
 
 type ProjectConfig = { folder: string; configPath?: string; documentSelector?: string[] }
@@ -1052,7 +1053,64 @@ async function createProjectService(
           .replace(/\d+\.\d+(%?)/g, (value, suffix) => `${Math.round(parseFloat(value))}${suffix}`),
       ].map((value) => ({ label: `${prefix}-[${value}]` }))
     },
+    sortClassLists(classLists: string[]): string[] {
+      return classLists.map((classList) => {
+        let result = ''
+        let parts = classList.split(/(\s+)/)
+        let classes = parts.filter((_, i) => i % 2 === 0)
+        let whitespace = parts.filter((_, i) => i % 2 !== 0)
+
+        if (classes[classes.length - 1] === '') {
+          classes.pop()
+        }
+
+        let classNamesWithOrder = state.jitContext.getClassOrder
+          ? state.jitContext.getClassOrder(classes)
+          : getClassOrderPolyfill(state, classes)
+
+        classes = classNamesWithOrder
+          .sort(([, a], [, z]) => {
+            if (a === z) return 0
+            if (a === null) return -1
+            if (z === null) return 1
+            return bigSign(a - z)
+          })
+          .map(([className]) => className)
+
+        for (let i = 0; i < classes.length; i++) {
+          result += `${classes[i]}${whitespace[i] ?? ''}`
+        }
+
+        return result
+      })
+    },
   }
+}
+
+function prefixCandidate(state: State, selector: string) {
+  let prefix = state.config.prefix
+  return typeof prefix === 'function' ? prefix(selector) : prefix + selector
+}
+
+function getClassOrderPolyfill(state: State, classes: string[]): Array<[string, bigint]> {
+  let parasiteUtilities = new Set([prefixCandidate(state, 'group'), prefixCandidate(state, 'peer')])
+
+  let classNamesWithOrder = []
+
+  for (let className of classes) {
+    let order =
+      state.modules.jit.generateRules
+        .module(new Set([className]), state.jitContext)
+        .sort(([a], [z]) => bigSign(z - a))[0]?.[0] ?? null
+
+    if (order === null && parasiteUtilities.has(className)) {
+      order = state.jitContext.layerOrder.components
+    }
+
+    classNamesWithOrder.push([className, order])
+  }
+
+  return classNamesWithOrder
 }
 
 function isObject(value: unknown): boolean {
@@ -1449,6 +1507,19 @@ class TW {
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onRequest((method, params: { uri: string; classLists: string[] }) => {
+      if (method === '@/tailwindCSS/sortSelection') {
+        let project = this.getProject({ uri: params.uri })
+        if (!project) {
+          return { error: 'no-project' }
+        }
+        try {
+          return { result: project.sortClassLists(params.classLists) }
+        } catch {
+          return { error: 'unknown' }
+        }
+      }
+    })
   }
 
   private updateCapabilities() {
