@@ -1474,8 +1474,8 @@ class TW {
     })
 
     capabilities.add(DidChangeWatchedFilesNotification.type, {
-      watchers: projects.flatMap((project) =>
-        project.state.dependencies.map((file) => ({ globPattern: file }))
+      watchers: projects.flatMap(
+        (project) => project.state.dependencies?.map((file) => ({ globPattern: file })) ?? []
       ),
     })
 
