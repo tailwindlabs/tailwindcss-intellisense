@@ -321,7 +321,7 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/vscode": "1.67.0",
+    "@types/vscode": "1.60.0",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
     "rimraf": "3.0.2",
