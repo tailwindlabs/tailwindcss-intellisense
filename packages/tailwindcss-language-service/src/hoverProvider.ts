@@ -28,7 +28,7 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
     end: { line: position.line + 1, character: 0 },
   })
 
-  const match = line.match(/(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/)
+  const match = line.match(/(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/)
 
   if (match === null) return null
 

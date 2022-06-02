@@ -179,7 +179,7 @@ export function getInvalidConfigPathDiagnostics(
   ranges.forEach((range) => {
     let text = document.getText(range)
     let matches = findAll(
-      /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>\)/g,
+      /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/g,
       text
     )
 

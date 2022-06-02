@@ -341,7 +341,7 @@ export function findHelperFunctionsInRange(
 ): DocumentHelperFunction[] {
   const text = doc.getText(range)
   const matches = findAll(
-    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")\)/gm,
+    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")[^)]*\)/gm,
     text
   )
 
