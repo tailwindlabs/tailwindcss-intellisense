@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.6
+
+- Improve `theme` helper detection
+
 ## 0.8.5
 
 - Add support for [arbitrary variants](https://github.com/tailwindlabs/tailwindcss/pull/8299) (#557)
