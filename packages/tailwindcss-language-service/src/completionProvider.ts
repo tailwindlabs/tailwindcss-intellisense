@@ -364,10 +364,10 @@ async function provideClassAttributeCompletions(
   try {
     let tokens = Array.from(lexer)
     let last = tokens[tokens.length - 1]
-    if (last.type.startsWith('start') || last.type === 'classlist') {
+    if (last.type.startsWith('start') || last.type === 'classlist' || last.type.startsWith('arb')) {
       let classList = ''
       for (let i = tokens.length - 1; i >= 0; i--) {
-        if (tokens[i].type === 'classlist') {
+        if (tokens[i].type === 'classlist' || tokens[i].type.startsWith('arb')) {
           classList = tokens[i].value + classList
         } else {
           break

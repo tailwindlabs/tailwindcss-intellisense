@@ -3,6 +3,7 @@ import { lazy } from './lazy'
 
 const classAttributeStates: () => { [x: string]: moo.Rules } = () => ({
   doubleClassList: {
+    arb: { match: new RegExp('(?<!\\\\)\\['), push: 'arbitrary' },
     lbrace: { match: new RegExp('(?<!\\\\)\\{'), push: 'interpBrace' },
     rbrace: { match: new RegExp('(?<!\\\\)\\}'), pop: 1 },
     end: { match: new RegExp('(?<!\\\\)"'), pop: 1 },
@@ -39,6 +40,11 @@ const classAttributeStates: () => { [x: string]: moo.Rules } = () => ({
     startTick: { match: new RegExp('(?<!\\\\)`'), push: 'tickClassList' },
     double: { match: new RegExp('(?<!\\\\)"'), pop: 1 },
     text: { match: new RegExp('[\\s\\S]'), lineBreaks: true },
+  },
+  arbitrary: {
+    arb: { match: new RegExp('(?<!\\\\)\\]'), pop: 1 },
+    space: { match: /\s/, pop: 1, lineBreaks: true },
+    arb2: { match: new RegExp('[\\s\\S]'), lineBreaks: true },
   },
 })
 

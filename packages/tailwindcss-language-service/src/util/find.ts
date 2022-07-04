@@ -207,7 +207,7 @@ export async function findClassListsInHtmlRange(
 
     try {
       for (let token of lexer) {
-        if (token.type === 'classlist') {
+        if (token.type === 'classlist' || token.type.startsWith('arb')) {
           if (currentClassList) {
             currentClassList.value += token.value
           } else {
@@ -341,7 +341,7 @@ export function findHelperFunctionsInRange(
 ): DocumentHelperFunction[] {
   const text = doc.getText(range)
   const matches = findAll(
-    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")\)/gm,
+    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")[^)]*\)/gm,
     text
   )
 

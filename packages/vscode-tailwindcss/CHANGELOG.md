@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.6
+
+- Improve `theme` helper detection
+
+## 0.8.5
+
+- Add support for [arbitrary variants](https://github.com/tailwindlabs/tailwindcss/pull/8299) (#557)
+
+## 0.8.4
+
+- Fix overeager `<style>` detection (#543)
+- Fix dependencies `.map()` error
+
 ## 0.8.3
 
 - Add [`experimental.configFile` setting](https://github.com/tailwindlabs/tailwindcss-intellisense#tailwindcssexperimentalconfigfile) (#541)
