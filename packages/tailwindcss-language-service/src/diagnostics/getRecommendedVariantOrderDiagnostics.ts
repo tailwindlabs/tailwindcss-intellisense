@@ -5,7 +5,7 @@ import { findClassListsInDocument, getClassNamesInClassList } from '../util/find
 import * as jit from '../util/jit'
 import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
 import { equalExact } from '../util/array'
-import semver from 'semver'
+import * as semver from '../util/semver'
 
 export async function getRecommendedVariantOrderDiagnostics(
   state: State,

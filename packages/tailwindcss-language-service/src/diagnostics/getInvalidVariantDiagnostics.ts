@@ -6,7 +6,7 @@ import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-import semver from 'semver'
+import * as semver from '../util/semver'
 
 export function getInvalidVariantDiagnostics(
   state: State,

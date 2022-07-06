@@ -4,7 +4,7 @@ import { InvalidTailwindDirectiveDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
-import semver from 'semver'
+import * as semver from '../util/semver'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 
