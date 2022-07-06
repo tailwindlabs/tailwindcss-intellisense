@@ -14,7 +14,7 @@ import { removeRangesFromString } from '../util/removeRangesFromString'
 import detectIndent from 'detect-indent'
 import isObject from '../util/isObject'
 import { cssObjToAst } from '../util/cssObjToAst'
-import dset from 'dset'
+import { dset } from 'dset'
 import selectorParser from 'postcss-selector-parser'
 import { flatten } from '../util/array'
 
