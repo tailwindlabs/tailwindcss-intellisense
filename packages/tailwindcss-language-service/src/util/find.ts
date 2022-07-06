@@ -11,6 +11,7 @@ import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
 import dlv from 'dlv'
 import { createMultiRegexp } from './createMultiRegexp'
+import { rangesEqual } from './rangesEqual'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -277,6 +278,13 @@ export async function findClassListsInHtmlRange(
   return result
 }
 
+function dedupeClassLists(classLists: DocumentClassList[]): DocumentClassList[] {
+  return classLists.filter(
+    (classList, classListIndex) =>
+      classListIndex === classLists.findIndex((c) => rangesEqual(c.range, classList.range))
+  )
+}
+
 export async function findClassListsInRange(
   state: State,
   doc: TextDocument,
@@ -290,7 +298,10 @@ export async function findClassListsInRange(
   } else {
     classLists = await findClassListsInHtmlRange(state, doc, range)
   }
-  return [...classLists, ...(includeCustom ? await findCustomClassLists(state, doc, range) : [])]
+  return dedupeClassLists([
+    ...classLists,
+    ...(includeCustom ? await findCustomClassLists(state, doc, range) : []),
+  ])
 }
 
 export async function findClassListsInDocument(
@@ -304,17 +315,19 @@ export async function findClassListsInDocument(
   let boundaries = getLanguageBoundaries(state, doc)
   if (!boundaries) return []
 
-  return flatten([
-    ...(await Promise.all(
-      boundaries
-        .filter((b) => b.type === 'html' || b.type === 'jsx')
-        .map(({ range }) => findClassListsInHtmlRange(state, doc, range))
-    )),
-    ...boundaries
-      .filter((b) => b.type === 'css')
-      .map(({ range }) => findClassListsInCssRange(doc, range)),
-    await findCustomClassLists(state, doc),
-  ])
+  return dedupeClassLists(
+    flatten([
+      ...(await Promise.all(
+        boundaries
+          .filter((b) => b.type === 'html' || b.type === 'jsx')
+          .map(({ range }) => findClassListsInHtmlRange(state, doc, range))
+      )),
+      ...boundaries
+        .filter((b) => b.type === 'css')
+        .map(({ range }) => findClassListsInCssRange(doc, range)),
+      await findCustomClassLists(state, doc),
+    ])
+  )
 }
 
 export function findHelperFunctionsInDocument(
