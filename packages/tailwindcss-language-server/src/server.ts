@@ -100,7 +100,7 @@ new Function(
 )(require, __dirname)
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
-const PACKAGE_GLOB = '{package.json,package-lock.json,yarn.lock,pnpm-lock.yaml}'
+const PACKAGE_GLOB = '{package-lock.json,yarn.lock,pnpm-lock.yaml}'
 const TRIGGER_CHARACTERS = [
   // class attributes
   '"',
