@@ -1,11 +1,11 @@
-import { State, Settings } from '../util/state'
 import type { TextDocument } from 'vscode-languageserver'
-import { RecommendedVariantOrderDiagnostic, DiagnosticKind } from './types'
-import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
-import * as jit from '../util/jit'
-import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
 import { equalExact } from '../util/array'
-import semver from 'semver'
+import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
+import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
+import * as jit from '../util/jit'
+import * as semver from '../util/semver'
+import { Settings, State } from '../util/state'
+import { DiagnosticKind, RecommendedVariantOrderDiagnostic } from './types'
 
 export async function getRecommendedVariantOrderDiagnostics(
   state: State,

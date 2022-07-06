@@ -1,12 +1,12 @@
-import { State, Settings } from '../util/state'
-import type { TextDocument, Range, DiagnosticSeverity } from 'vscode-languageserver'
-import { InvalidVariantDiagnostic, DiagnosticKind } from './types'
-import { isCssDoc } from '../util/css'
-import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
-import { findAll, indexToPosition } from '../util/find'
-import { closest } from '../util/closest'
+import type { Range, TextDocument } from 'vscode-languageserver'
 import { absoluteRange } from '../util/absoluteRange'
-import semver from 'semver'
+import { closest } from '../util/closest'
+import { isCssDoc } from '../util/css'
+import { findAll, indexToPosition } from '../util/find'
+import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
+import * as semver from '../util/semver'
+import { Settings, State } from '../util/state'
+import { DiagnosticKind, InvalidVariantDiagnostic } from './types'
 
 export function getInvalidVariantDiagnostics(
   state: State,
