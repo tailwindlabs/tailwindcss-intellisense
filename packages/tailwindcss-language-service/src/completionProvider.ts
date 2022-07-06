@@ -1,38 +1,38 @@
-import * as culori from 'culori'
-import dlv from 'dlv'
-import * as emmetHelper from 'vscode-emmet-helper-bundled'
+import { State } from './util/state'
 import type {
-  CompletionContext,
   CompletionItem,
   CompletionItemKind,
-  CompletionList,
-  MarkupKind,
-  Position,
   Range,
+  MarkupKind,
+  CompletionList,
   TextDocument,
+  Position,
+  CompletionContext,
 } from 'vscode-languageserver'
-import { ensureArray } from './util/array'
-import { getColor, getColorFromValue } from './util/color'
-import { createMultiRegexp } from './util/createMultiRegexp'
-import { isCssContext } from './util/css'
-import { docsUrl } from './util/docsUrl'
-import { findLast, matchClassAttributes } from './util/find'
-import { flagEnabled } from './util/flagEnabled'
-import { getVariantsFromClassName } from './util/getVariantsFromClassName'
-import { isHtmlContext } from './util/html'
-import isObject from './util/isObject'
-import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
-import * as jit from './util/jit'
-import { isJsDoc, isJsxContext } from './util/js'
-import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
-import { naturalExpand } from './util/naturalExpand'
+import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
-import { remToPx } from './util/remToPx'
-import { Screen, stringifyScreen } from './util/screens'
-import * as semver from './util/semver'
-import { State } from './util/state'
+import { getColor, getColorFromValue } from './util/color'
+import { isHtmlContext } from './util/html'
+import { isCssContext } from './util/css'
+import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
+import { stringifyScreen, Screen } from './util/screens'
+import isObject from './util/isObject'
+import * as emmetHelper from 'vscode-emmet-helper-bundled'
+import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
+import { isJsDoc, isJsxContext } from './util/js'
+import { naturalExpand } from './util/naturalExpand'
+import * as semver from './util/semver'
+import { docsUrl } from './util/docsUrl'
+import { ensureArray } from './util/array'
+import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
 import { validateApply } from './util/validateApply'
+import { flagEnabled } from './util/flagEnabled'
+import { remToPx } from './util/remToPx'
+import { createMultiRegexp } from './util/createMultiRegexp'
+import * as jit from './util/jit'
+import { getVariantsFromClassName } from './util/getVariantsFromClassName'
+import * as culori from 'culori'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)

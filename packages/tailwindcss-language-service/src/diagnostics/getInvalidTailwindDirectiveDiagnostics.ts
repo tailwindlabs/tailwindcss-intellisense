@@ -1,12 +1,12 @@
-import type { Range, TextDocument } from 'vscode-languageserver'
-import { absoluteRange } from '../util/absoluteRange'
-import { closest } from '../util/closest'
+import { State, Settings } from '../util/state'
+import type { TextDocument, Range, DiagnosticSeverity } from 'vscode-languageserver'
+import { InvalidTailwindDirectiveDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
-import { findAll, indexToPosition } from '../util/find'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
+import { findAll, indexToPosition } from '../util/find'
 import * as semver from '../util/semver'
-import { Settings, State } from '../util/state'
-import { DiagnosticKind, InvalidTailwindDirectiveDiagnostic } from './types'
+import { closest } from '../util/closest'
+import { absoluteRange } from '../util/absoluteRange'
 
 export function getInvalidTailwindDirectiveDiagnostics(
   state: State,

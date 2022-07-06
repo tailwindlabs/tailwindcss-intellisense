@@ -1,86 +1,87 @@
-import assert from 'assert'
+import './lib/env'
+import {
+  CompletionItem,
+  CompletionList,
+  CompletionParams,
+  Connection,
+  createConnection,
+  DocumentColorParams,
+  ColorInformation,
+  ColorPresentation,
+  Hover,
+  InitializeParams,
+  InitializeResult,
+  TextDocumentPositionParams,
+  TextDocuments,
+  TextDocumentSyncKind,
+  ColorPresentationParams,
+  CodeActionParams,
+  CodeAction,
+  CompletionRequest,
+  DocumentColorRequest,
+  BulkRegistration,
+  CodeActionRequest,
+  BulkUnregistration,
+  HoverRequest,
+  DidChangeWatchedFilesNotification,
+  FileChangeType,
+  Disposable,
+  TextDocumentIdentifier,
+} from 'vscode-languageserver/node'
+import { TextDocument } from 'vscode-languageserver-textdocument'
+import { URI } from 'vscode-uri'
+import { formatError, showError, SilentError } from './util/error'
+import glob from 'fast-glob'
+import normalizePath from 'normalize-path'
+import * as path from 'path'
+import * as os from 'os'
+import * as fs from 'fs'
 import type * as chokidar from 'chokidar'
-import { debounce } from 'debounce'
+import findUp from 'find-up'
+import minimatch from 'minimatch'
+import resolveFrom, { setPnpApi } from './util/resolveFrom'
+import { AtRule, Container, Node, Result } from 'postcss'
+import Module from 'module'
+import Hook from './lib/hook'
+import * as semver from 'tailwindcss-language-service/src/util/semver'
 import dlv from 'dlv'
 import dset from 'dset'
-import glob from 'fast-glob'
-import findUp from 'find-up'
-import * as fs from 'fs'
-import { klona } from 'klona/full'
-import minimatch from 'minimatch'
-import Module from 'module'
-import normalizePath from 'normalize-path'
-import * as os from 'os'
-import * as path from 'path'
 import pkgUp from 'pkg-up'
-import { AtRule, Container, Node, Result } from 'postcss'
 import stackTrace from 'stack-trace'
-import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
+import extractClassNames from './lib/extractClassNames'
+import { klona } from 'klona/full'
+import { doHover } from 'tailwindcss-language-service/src/hoverProvider'
 import {
   doComplete,
   resolveCompletionItem,
 } from 'tailwindcss-language-service/src/completionProvider'
-import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
-import { doHover } from 'tailwindcss-language-service/src/hoverProvider'
-import * as semver from 'tailwindcss-language-service/src/util/semver'
 import {
-  ClassNames,
+  State,
   FeatureFlags,
   Settings,
-  State,
+  ClassNames,
 } from 'tailwindcss-language-service/src/util/state'
-import { TextDocument } from 'vscode-languageserver-textdocument'
 import {
-  BulkRegistration,
-  BulkUnregistration,
-  CodeAction,
-  CodeActionParams,
-  CodeActionRequest,
-  ColorInformation,
-  ColorPresentation,
-  ColorPresentationParams,
-  CompletionItem,
-  CompletionList,
-  CompletionParams,
-  CompletionRequest,
-  Connection,
-  createConnection,
-  DidChangeWatchedFilesNotification,
-  Disposable,
-  DocumentColorParams,
-  DocumentColorRequest,
-  FileChangeType,
-  Hover,
-  HoverRequest,
-  InitializeParams,
-  InitializeResult,
-  TextDocumentIdentifier,
-  TextDocumentPositionParams,
-  TextDocuments,
-  TextDocumentSyncKind,
-} from 'vscode-languageserver/node'
-import { URI } from 'vscode-uri'
-import './lib/env'
-import extractClassNames from './lib/extractClassNames'
-import Hook from './lib/hook'
-import {
-  clearAllDiagnostics,
   provideDiagnostics,
   updateAllDiagnostics,
+  clearAllDiagnostics,
 } from './lsp/diagnosticsProvider'
-import { formatError, showError, SilentError } from './util/error'
+import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
+import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
+import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
-import resolveFrom, { setPnpApi } from './util/resolveFrom'
+import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
-import namedColors from 'color-name'
-import * as culori from 'culori'
-import { equal } from 'tailwindcss-language-service/src/util/array'
+import * as parcel from './watcher/index.js'
+import { generateRules } from 'tailwindcss-language-service/src/util/jit'
 import { getColor } from 'tailwindcss-language-service/src/util/color'
-import preflight from 'tailwindcss/lib/css/preflight.css'
+import * as culori from 'culori'
+import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
 import isExcluded, { DEFAULT_FILES_EXCLUDE } from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
-import * as parcel from './watcher/index.js'
+import { equal } from 'tailwindcss-language-service/src/util/array'
+import preflight from 'tailwindcss/lib/css/preflight.css'
 
 // @ts-ignore
 global.__preflight = preflight

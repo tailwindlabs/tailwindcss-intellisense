@@ -1,7 +1,7 @@
-import { flagEnabled } from './flagEnabled'
-import { getClassNameMeta } from './getClassNameMeta'
-import * as semver from './semver'
 import { State } from './state'
+import { getClassNameMeta } from './getClassNameMeta'
+import { flagEnabled } from './flagEnabled'
+import * as semver from './semver'
 
 export function validateApply(
   state: State,
