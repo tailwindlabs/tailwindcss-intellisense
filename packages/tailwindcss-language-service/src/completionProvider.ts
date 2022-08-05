@@ -29,10 +29,10 @@ import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/l
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 import { remToPx } from './util/remToPx'
-import { createMultiRegexp } from './util/createMultiRegexp'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
+import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -414,28 +414,30 @@ async function provideCustomClassNameCompletions(
 
   for (let i = 0; i < regexes.length; i++) {
     try {
-      let [containerRegex, classRegex] = Array.isArray(regexes[i]) ? regexes[i] : [regexes[i]]
+      let [containerRegexString, classRegexString] = Array.isArray(regexes[i])
+        ? regexes[i]
+        : [regexes[i]]
 
-      containerRegex = createMultiRegexp(containerRegex)
-      let containerMatch
+      let containerRegex = new Regex(containerRegexString, 'g')
+      let containerMatch: ReturnType<Regex['exec']>
 
       while ((containerMatch = containerRegex.exec(str)) !== null) {
         const searchStart = document.offsetAt(searchRange.start)
-        const matchStart = searchStart + containerMatch.start
-        const matchEnd = searchStart + containerMatch.end
+        const matchStart = searchStart + containerMatch.index[1]
+        const matchEnd = matchStart + containerMatch[1].length
         const cursor = document.offsetAt(position)
         if (cursor >= matchStart && cursor <= matchEnd) {
-          let classList
+          let classList: string
 
-          if (classRegex) {
-            classRegex = createMultiRegexp(classRegex)
-            let classMatch
+          if (classRegexString) {
+            let classRegex = new Regex(classRegexString, 'g')
+            let classMatch: ReturnType<Regex['exec']>
 
-            while ((classMatch = classRegex.exec(containerMatch.match)) !== null) {
-              const classMatchStart = matchStart + classMatch.start
-              const classMatchEnd = matchStart + classMatch.end
+            while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
+              const classMatchStart = matchStart + classMatch.index[1]
+              const classMatchEnd = classMatchStart + classMatch[1].length
               if (cursor >= classMatchStart && cursor <= classMatchEnd) {
-                classList = classMatch.match.substr(0, cursor - classMatchStart)
+                classList = classMatch[1].substr(0, cursor - classMatchStart)
               }
             }
 
@@ -443,7 +445,7 @@ async function provideCustomClassNameCompletions(
               throw Error()
             }
           } else {
-            classList = containerMatch.match.substr(0, cursor - matchStart)
+            classList = containerMatch[1].substr(0, cursor - matchStart)
           }
 
           return completionsFromClassList(state, classList, {

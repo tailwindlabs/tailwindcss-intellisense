@@ -10,8 +10,8 @@ import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
 import dlv from 'dlv'
-import { createMultiRegexp } from './createMultiRegexp'
 import { rangesEqual } from './rangesEqual'
+import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -132,25 +132,27 @@ async function findCustomClassLists(
 
   for (let i = 0; i < regexes.length; i++) {
     try {
-      let [containerRegex, classRegex] = Array.isArray(regexes[i]) ? regexes[i] : [regexes[i]]
+      let [containerRegexString, classRegexString] = Array.isArray(regexes[i])
+        ? regexes[i]
+        : [regexes[i]]
 
-      let containerRegex2 = createMultiRegexp(containerRegex)
-      let containerMatch
+      let containerRegex = new Regex(containerRegexString, 'g')
+      let containerMatch: ReturnType<Regex['exec']>
 
-      while ((containerMatch = containerRegex2.exec(text)) !== null) {
+      while ((containerMatch = containerRegex.exec(text)) !== null) {
         const searchStart = doc.offsetAt(range?.start || { line: 0, character: 0 })
-        const matchStart = searchStart + containerMatch.start
-        const matchEnd = searchStart + containerMatch.end
+        const matchStart = searchStart + containerMatch.index[1]
+        const matchEnd = matchStart + containerMatch[1].length
 
-        if (classRegex) {
-          let classRegex2 = createMultiRegexp(classRegex)
-          let classMatch
+        if (classRegexString) {
+          let classRegex = new Regex(classRegexString, 'g')
+          let classMatch: ReturnType<Regex['exec']>
 
-          while ((classMatch = classRegex2.exec(containerMatch.match)) !== null) {
-            const classMatchStart = matchStart + classMatch.start
-            const classMatchEnd = matchStart + classMatch.end
+          while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
+            const classMatchStart = matchStart + classMatch.index[1]
+            const classMatchEnd = classMatchStart + classMatch[1].length
             result.push({
-              classList: classMatch.match,
+              classList: classMatch[1],
               range: {
                 start: doc.positionAt(classMatchStart),
                 end: doc.positionAt(classMatchEnd),
@@ -159,7 +161,7 @@ async function findCustomClassLists(
           }
         } else {
           result.push({
-            classList: containerMatch.match,
+            classList: containerMatch[1],
             range: {
               start: doc.positionAt(matchStart),
               end: doc.positionAt(matchEnd),
