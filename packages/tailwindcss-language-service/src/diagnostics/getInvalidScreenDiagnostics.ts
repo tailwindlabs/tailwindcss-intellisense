@@ -7,6 +7,7 @@ import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import dlv from 'dlv'
+import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidScreenDiagnostics(
   state: State,
@@ -28,7 +29,7 @@ export function getInvalidScreenDiagnostics(
   }
 
   ranges.forEach((range) => {
-    let text = document.getText(range)
+    let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(/(?:\s|^)@screen\s+(?<screen>[^\s{]+)/g, text)
 
     matches.forEach((match) => {

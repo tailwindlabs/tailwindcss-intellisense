@@ -7,6 +7,7 @@ import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import * as semver from '../util/semver'
+import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidVariantDiagnostics(
   state: State,
@@ -38,7 +39,7 @@ export function getInvalidVariantDiagnostics(
   }
 
   ranges.forEach((range) => {
-    let text = document.getText(range)
+    let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
 
     matches.forEach((match) => {

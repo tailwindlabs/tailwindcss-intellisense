@@ -10,6 +10,7 @@ import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import { combinations } from '../util/combinations'
 import dlv from 'dlv'
+import { getTextWithoutComments } from '../util/doc'
 
 function pathToString(path: string | string[]): string {
   if (typeof path === 'string') return path
@@ -177,7 +178,7 @@ export function getInvalidConfigPathDiagnostics(
   }
 
   ranges.forEach((range) => {
-    let text = document.getText(range)
+    let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(
       /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/g,
       text

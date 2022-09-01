@@ -7,6 +7,7 @@ import { findAll, indexToPosition } from '../util/find'
 import * as semver from '../util/semver'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
+import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidTailwindDirectiveDiagnostics(
   state: State,
@@ -42,7 +43,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
   let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
 
   ranges.forEach((range) => {
-    let text = document.getText(range)
+    let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(regex, text)
 
     let valid = [
