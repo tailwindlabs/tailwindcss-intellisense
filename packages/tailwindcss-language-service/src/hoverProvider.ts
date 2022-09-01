@@ -8,6 +8,7 @@ import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
+import { getTextWithoutComments } from './util/doc'
 
 export async function doHover(
   state: State,
@@ -23,10 +24,7 @@ export async function doHover(
 function provideCssHelperHover(state: State, document: TextDocument, position: Position): Hover {
   if (!isCssContext(state, document, position)) return null
 
-  const line = document.getText({
-    start: { line: position.line, character: 0 },
-    end: { line: position.line + 1, character: 0 },
-  })
+  const line = getTextWithoutComments(document, 'css').split('\n')[position.line]
 
   const match = line.match(/(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/)
 

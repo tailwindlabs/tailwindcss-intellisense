@@ -17,6 +17,7 @@ import { cssObjToAst } from '../util/cssObjToAst'
 import { dset } from 'dset'
 import selectorParser from 'postcss-selector-parser'
 import { flatten } from '../util/array'
+import { getTextWithoutComments } from '../util/doc'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
@@ -24,7 +25,7 @@ export async function provideInvalidApplyCodeActions(
   diagnostic: InvalidApplyDiagnostic
 ): Promise<CodeAction[]> {
   let document = state.editor.documents.get(params.textDocument.uri)
-  let documentText = document.getText()
+  let documentText = getTextWithoutComments(document, 'css')
   let cssRange: Range
   let cssText = documentText
   const { postcss } = state.modules
@@ -47,7 +48,7 @@ export async function provideInvalidApplyCodeActions(
       .filter((b) => b.type === 'css')
       .find(({ range }) => isWithinRange(diagnostic.range.start, range))?.range
     if (!cssRange) return []
-    cssText = document.getText(cssRange)
+    cssText = getTextWithoutComments(document, 'css', cssRange)
   }
 
   try {

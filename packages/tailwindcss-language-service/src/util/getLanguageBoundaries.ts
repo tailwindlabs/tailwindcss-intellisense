@@ -5,6 +5,7 @@ import { indexToPosition } from './find'
 import { isJsDoc } from './js'
 import moo from 'moo'
 import Cache from 'tmp-cache'
+import { getTextWithoutComments } from './doc'
 
 export type LanguageBoundary = { type: 'html' | 'js' | 'css' | string; range: Range }
 
@@ -113,16 +114,22 @@ export function getLanguageBoundaries(
     return cachedBoundaries
   }
 
+  let isJs = isJsDoc(state, doc)
+
   let defaultType = isVueDoc(doc)
     ? 'none'
-    : isHtmlDoc(state, doc) || isJsDoc(state, doc) || isSvelteDoc(doc)
+    : isHtmlDoc(state, doc) || isSvelteDoc(doc)
     ? 'html'
+    : isJs
+    ? 'jsx'
     : null
 
   if (defaultType === null) {
     cache.set(cacheKey, null)
     return null
   }
+
+  text = getTextWithoutComments(text, isJs ? 'js' : 'html')
 
   let lexer = defaultType === 'none' ? vueLexer : defaultLexer
   lexer.reset(text)
