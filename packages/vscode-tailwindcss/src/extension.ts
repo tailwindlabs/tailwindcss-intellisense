@@ -273,11 +273,8 @@ export async function activate(context: ExtensionContext) {
       }
     )
 
-    client.onReady().then(() => {
-      context.subscriptions.push(initCompletionProvider())
-    })
-
-    context.subscriptions.push(client.start())
+    await client.start()
+    context.subscriptions.push(initCompletionProvider())
 
     function initCompletionProvider(): Disposable {
       const regionCompletionRegExpr = /^(\s*)(\/(\*\s*(#\w*)?)?)?$/
@@ -498,22 +495,20 @@ export async function activate(context: ExtensionContext) {
 
     let client = new LanguageClient(CLIENT_ID, CLIENT_NAME, serverOptions, clientOptions)
 
-    client.onReady().then(() => {
-      client.onNotification('@/tailwindCSS/error', async ({ message }) => {
-        let action = await Window.showErrorMessage(message, 'Go to output')
-        if (action === 'Go to output') {
-          commands.executeCommand('tailwindCSS.showOutput')
-        }
-      })
+    client.onNotification('@/tailwindCSS/error', async ({ message }) => {
+      let action = await Window.showErrorMessage(message, 'Go to output')
+      if (action === 'Go to output') {
+        commands.executeCommand('tailwindCSS.showOutput')
+      }
+    })
 
-      client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
+    client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
 
-      client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
-        return commands.executeCommand<SymbolInformation[]>(
-          'vscode.executeDocumentSymbolProvider',
-          Uri.parse(uri)
-        )
-      })
+    client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
+      return commands.executeCommand<SymbolInformation[]>(
+        'vscode.executeDocumentSymbolProvider',
+        Uri.parse(uri)
+      )
     })
 
     client.onDidChangeState(({ newState }) => {
