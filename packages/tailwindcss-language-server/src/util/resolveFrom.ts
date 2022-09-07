@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { CachedInputFileSystem, ResolverFactory, Resolver, ResolveOptions } from 'enhanced-resolve'
+import { CachedInputFileSystem, ResolverFactory, Resolver, ResolveOptions } from 'enhanced-resolve-301'
 import { equal } from 'tailwindcss-language-service/src/util/array'
 
 let pnpApi: any
