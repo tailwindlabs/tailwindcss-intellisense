@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.7
+
+- Support `insiders` versions of `tailwindcss` (#571)
+- Deduplicate classlist candidates (#572)
+- Don't watch `package.json` files (#573)
+- Support `require.extensions` mutations (#583)
+- Support `node:` module prefix (#585)
+- Replace `multi-regexp2` with `becke-ch--regex--s0-0-v1--base--pl--lib` (#590)
+- Support Surface templates (#597)
+- Ignore commented out code (#599)
+- Use patched version of `enhanced-resolve` (#600)
+- Guard against optional client capabilities (#602)
+
 ## 0.8.6
 
 - Improve `theme` helper detection
