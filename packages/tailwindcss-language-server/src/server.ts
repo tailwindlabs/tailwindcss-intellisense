@@ -1563,10 +1563,10 @@ class DocumentService {
 function supportsDynamicRegistration(connection: Connection, params: InitializeParams): boolean {
   return (
     connection.onInitialized &&
-    params.capabilities.textDocument.hover.dynamicRegistration &&
-    params.capabilities.textDocument.colorProvider.dynamicRegistration &&
-    params.capabilities.textDocument.codeAction.dynamicRegistration &&
-    params.capabilities.textDocument.completion.dynamicRegistration
+    params.capabilities.textDocument.hover?.dynamicRegistration &&
+    params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
+    params.capabilities.textDocument.codeAction?.dynamicRegistration &&
+    params.capabilities.textDocument.completion?.dynamicRegistration
   )
 }
 
