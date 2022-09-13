@@ -106,11 +106,7 @@ async function provideClassNameHover(
   const css = stringifyCss(
     className.className,
     dlv(state.classNames.classNames, [...parts, '__info']),
-    {
-      tabSize: dlv(settings, 'editor.tabSize', 2),
-      showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
-      rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
-    }
+    settings
   )
 
   if (!css) return null

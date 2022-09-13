@@ -33,38 +33,42 @@ export type EditorState = {
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
 
+export type EditorSettings = {
+  tabSize: number
+}
+
+export type TailwindCssSettings = {
+  emmetCompletions: boolean
+  includeLanguages: Record<string, string>
+  classAttributes: string[]
+  suggestions: boolean
+  hovers: boolean
+  codeActions: boolean
+  validate: boolean
+  showPixelEquivalents: boolean
+  rootFontSize: number
+  colorDecorators: boolean
+  lint: {
+    cssConflict: DiagnosticSeveritySetting
+    invalidApply: DiagnosticSeveritySetting
+    invalidScreen: DiagnosticSeveritySetting
+    invalidVariant: DiagnosticSeveritySetting
+    invalidConfigPath: DiagnosticSeveritySetting
+    invalidTailwindDirective: DiagnosticSeveritySetting
+    recommendedVariantOrder: DiagnosticSeveritySetting
+  }
+  experimental: {
+    classRegex: string[]
+    configFile: string | Record<string, string | string[]>
+  }
+  files: {
+    exclude: string[]
+  }
+}
+
 export type Settings = {
-  editor: {
-    tabSize: number
-  }
-  tailwindCSS: {
-    emmetCompletions: boolean
-    includeLanguages: Record<string, string>
-    classAttributes: string[]
-    suggestions: boolean
-    hovers: boolean
-    codeActions: boolean
-    validate: boolean
-    showPixelEquivalents: boolean
-    rootFontSize: number
-    colorDecorators: boolean
-    lint: {
-      cssConflict: DiagnosticSeveritySetting
-      invalidApply: DiagnosticSeveritySetting
-      invalidScreen: DiagnosticSeveritySetting
-      invalidVariant: DiagnosticSeveritySetting
-      invalidConfigPath: DiagnosticSeveritySetting
-      invalidTailwindDirective: DiagnosticSeveritySetting
-      recommendedVariantOrder: DiagnosticSeveritySetting
-    }
-    experimental: {
-      classRegex: string[]
-      configFile: string | Record<string, string | string[]>
-    }
-    files: {
-      exclude: string[]
-    }
-  }
+  editor: EditorSettings
+  tailwindCSS: TailwindCssSettings
 }
 
 export interface FeatureFlags {
