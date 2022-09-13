@@ -150,7 +150,8 @@
           "default": [
             "**/.git/**",
             "**/node_modules/**",
-            "**/.hg/**"
+            "**/.hg/**",
+            "**/.svn/**"
           ],
           "markdownDescription": "Configure glob patterns to exclude from all IntelliSense features. Inherits all glob patterns from the `#files.exclude#` setting."
         },

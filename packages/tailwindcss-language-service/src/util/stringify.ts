@@ -5,6 +5,7 @@ import { ensureArray } from './array'
 import { remToPx } from './remToPx'
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
+import { Settings } from './state'
 
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
@@ -21,37 +22,17 @@ export function stringifyConfigValue(x: any): string {
   })
 }
 
-export function stringifyCss(
-  className: string,
-  obj: any,
-  {
-    tabSize = 2,
-    showPixelEquivalents = false,
-    rootFontSize = 16,
-  }: Partial<{
-    tabSize: number
-    showPixelEquivalents: boolean
-    rootFontSize: number
-  }> = {}
-): string {
+export function stringifyCss(className: string, obj: any, settings: Settings): string {
   if (obj.__rule !== true && !Array.isArray(obj)) return null
 
   if (Array.isArray(obj)) {
-    const rules = obj
-      .map((x) =>
-        stringifyCss(className, x, {
-          tabSize,
-          showPixelEquivalents,
-          rootFontSize,
-        })
-      )
-      .filter(Boolean)
+    const rules = obj.map((x) => stringifyCss(className, x, settings)).filter(Boolean)
     if (rules.length === 0) return null
     return rules.join('\n\n')
   }
 
   let css = ``
-  const indent = ' '.repeat(tabSize)
+  const indent = ' '.repeat(settings.editor.tabSize)
 
   const context = dlv(obj, '__context', [])
   const props = Object.keys(removeMeta(obj))
@@ -65,7 +46,9 @@ export function stringifyCss(
   const decls = props.reduce((acc, curr, i) => {
     const propStr = ensureArray(obj[curr])
       .map((val) => {
-        const px = showPixelEquivalents ? remToPx(val, rootFontSize) : undefined
+        const px = settings.tailwindCSS.showPixelEquivalents
+          ? remToPx(val, settings.tailwindCSS.rootFontSize)
+          : undefined
         return `${indentStr + indent}${curr}: ${val}${px ? `/* ${px} */` : ''};`
       })
       .join('\n')

@@ -124,7 +124,7 @@ async function findCustomClassLists(
   range?: Range
 ): Promise<DocumentClassList[]> {
   const settings = await state.editor.getConfiguration(doc.uri)
-  const regexes = dlv(settings, 'tailwindCSS.experimental.classRegex', [])
+  const regexes = settings.tailwindCSS.experimental.classRegex
 
   if (!Array.isArray(regexes) || regexes.length === 0) return []
 

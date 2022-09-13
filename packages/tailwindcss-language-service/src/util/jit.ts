@@ -29,19 +29,15 @@ export function generateRules(state: State, classNames: string[]): { root: Root;
 
 export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
-  let tabSize = dlv(settings, 'editor.tabSize', 2)
-  let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
-  let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
-
   let clone = root.clone()
 
   clone.walkAtRules('defaults', (node) => {
     node.remove()
   })
 
-  if (showPixelEquivalents) {
+  if (settings.tailwindCSS.showPixelEquivalents) {
     clone.walkDecls((decl) => {
-      let px = remToPx(decl.value, rootFontSize)
+      let px = remToPx(decl.value, settings.tailwindCSS.rootFontSize)
       if (px) {
         decl.value = `${decl.value}/* ${px} */`
       }
@@ -51,7 +47,9 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   return clone
     .toString()
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
-    .replace(/^(?:    )+/gm, (indent: string) => ' '.repeat((indent.length / 4) * tabSize))
+    .replace(/^(?:    )+/gm, (indent: string) =>
+      ' '.repeat((indent.length / 4) * settings.editor.tabSize)
+    )
 }
 
 export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2): string {
@@ -63,12 +61,12 @@ export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2)
 
 export async function stringifyDecls(state: State, rule: Rule, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
-  let showPixelEquivalents = dlv(settings, 'tailwindCSS.showPixelEquivalents', true)
-  let rootFontSize = dlv(settings, 'tailwindCSS.rootFontSize', 16)
 
   let result = []
   rule.walkDecls(({ prop, value }) => {
-    let px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
+    let px = settings.tailwindCSS.showPixelEquivalents
+      ? remToPx(value, settings.tailwindCSS.rootFontSize)
+      : undefined
     result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''};`)
   })
   return result.join(' ')

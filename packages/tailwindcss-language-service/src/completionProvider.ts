@@ -1,4 +1,4 @@
-import { State } from './util/state'
+import { Settings, State } from './util/state'
 import type {
   CompletionItem,
   CompletionItemKind,
@@ -400,7 +400,7 @@ async function provideCustomClassNameCompletions(
   position: Position
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
-  const regexes = dlv(settings, 'tailwindCSS.experimental.classRegex', [])
+  const regexes = settings.tailwindCSS.experimental.classRegex
   if (regexes.length === 0) return null
 
   const positionOffset = document.offsetAt(position)
@@ -1109,11 +1109,7 @@ export async function resolveCompletionItem(
     item.detail = await getCssDetail(state, className)
     if (!item.documentation) {
       const settings = await state.editor.getConfiguration()
-      const css = stringifyCss(item.data.join(':'), className, {
-        tabSize: dlv(settings, 'editor.tabSize', 2),
-        showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
-        rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
-      })
+      const css = stringifyCss(item.data.join(':'), className, settings)
       if (css) {
         item.documentation = {
           kind: 'markdown' as typeof MarkupKind.Markdown,
@@ -1141,13 +1137,7 @@ function isContextItem(state: State, keys: string[]): boolean {
   return isObject(item.__info) && !item.__info.__rule
 }
 
-function stringifyDecls(
-  obj: any,
-  {
-    showPixelEquivalents = false,
-    rootFontSize = 16,
-  }: Partial<{ showPixelEquivalents: boolean; rootFontSize: number }> = {}
-): string {
+function stringifyDecls(obj: any, settings: Settings): string {
   let props = Object.keys(obj)
   let nonCustomProps = props.filter((prop) => !prop.startsWith('--'))
 
@@ -1159,7 +1149,9 @@ function stringifyDecls(
     .map((prop) =>
       ensureArray(obj[prop])
         .map((value) => {
-          const px = showPixelEquivalents ? remToPx(value, rootFontSize) : undefined
+          const px = settings.tailwindCSS.showPixelEquivalents
+            ? remToPx(value, settings.tailwindCSS.rootFontSize)
+            : undefined
           return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
         })
         .join(' ')
@@ -1173,10 +1165,7 @@ async function getCssDetail(state: State, className: any): Promise<string> {
   }
   if (className.__rule === true) {
     const settings = await state.editor.getConfiguration()
-    return stringifyDecls(removeMeta(className), {
-      showPixelEquivalents: dlv(settings, 'tailwindCSS.showPixelEquivalents', true),
-      rootFontSize: dlv(settings, 'tailwindCSS.rootFontSize', 16),
-    })
+    return stringifyDecls(removeMeta(className), settings)
   }
   return null
 }

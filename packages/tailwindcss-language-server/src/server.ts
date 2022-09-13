@@ -78,10 +78,11 @@ import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
-import isExcluded, { DEFAULT_FILES_EXCLUDE } from './util/isExcluded'
+import isExcluded from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
 import { equal } from 'tailwindcss-language-service/src/util/array'
 import preflight from 'tailwindcss/lib/css/preflight.css'
+import merge from 'deepmerge'
 
 // @ts-ignore
 global.__preflight = preflight
@@ -238,7 +239,42 @@ async function createProjectService(
         scopeUri: uri,
       }),
     ])
-    let config: Settings = { editor, tailwindCSS }
+    editor = isObject(editor) ? editor : {}
+    tailwindCSS = isObject(tailwindCSS) ? tailwindCSS : {}
+
+    let config: Settings = merge<Settings>(
+      {
+        editor: { tabSize: 2 },
+        tailwindCSS: {
+          emmetCompletions: false,
+          classAttributes: ['class', 'className', 'ngClass'],
+          codeActions: true,
+          hovers: true,
+          suggestions: true,
+          validate: true,
+          colorDecorators: true,
+          rootFontSize: 16,
+          lint: {
+            cssConflict: 'warning',
+            invalidApply: 'error',
+            invalidScreen: 'error',
+            invalidVariant: 'error',
+            invalidConfigPath: 'error',
+            invalidTailwindDirective: 'error',
+            recommendedVariantOrder: 'warning',
+          },
+          showPixelEquivalents: true,
+          includeLanguages: {},
+          files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+          experimental: {
+            classRegex: [],
+            configFile: null,
+          },
+        },
+      },
+      { editor, tailwindCSS },
+      { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray }
+    )
     documentSettingsCache.set(uri, config)
     return config
   }
@@ -266,7 +302,7 @@ async function createProjectService(
   }
 
   let chokidarWatcher: chokidar.FSWatcher
-  let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
+  let ignore = state.editor.globalSettings.tailwindCSS.files.exclude
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -421,7 +457,7 @@ async function createProjectService(
       configPath = (
         await glob([`**/${CONFIG_FILE_GLOB}`], {
           cwd: folder,
-          ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE,
+          ignore: state.editor.globalSettings.tailwindCSS.files.exclude,
           onlyFiles: true,
           absolute: true,
           suppressErrors: true,
@@ -937,10 +973,9 @@ async function createProjectService(
     },
     async onUpdateSettings(settings: any): Promise<void> {
       documentSettingsCache.clear()
-      let previousExclude =
-        state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
+      let previousExclude = state.editor.globalSettings.tailwindCSS.files.exclude
       state.editor.globalSettings = await state.editor.getConfiguration()
-      if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE)) {
+      if (!equal(previousExclude, settings.tailwindCSS.files.exclude)) {
         tryInit()
       } else {
         if (state.enabled) {
