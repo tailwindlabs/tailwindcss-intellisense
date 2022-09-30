@@ -1417,10 +1417,10 @@ class TW {
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.join(base, relativeConfigPath),
+            configPath: path.resolve(base, relativeConfigPath),
             documentSelector: []
               .concat(relativeDocumentSelectorOrSelectors)
-              .map((selector) => path.join(base, selector)),
+              .map((selector) => path.resolve(base, selector)),
           }
         }
       )
