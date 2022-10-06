@@ -179,42 +179,49 @@ export function getInvalidConfigPathDiagnostics(
 
   ranges.forEach((range) => {
     let text = getTextWithoutComments(document, 'css', range)
-    let matches = findAll(
-      /(?<prefix>\s|^)(?<helper>config|theme)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/g,
-      text
-    )
+    let matches = findAll(/(?<prefix>\s|^)(?<helper>config|theme)\((?<path>[^)]*)\)/g, text)
 
     matches.forEach((match) => {
-      let base = match.groups.helper === 'theme' ? ['theme'] : []
-      let result = validateConfigPath(state, match.groups.key, base)
-
-      if (result.isValid === true) {
-        return null
+      let path = match.groups.path.replace(/^['"]+|['"]+$/g, '')
+      let alpha: string
+      let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]+))$/)
+      if (matches) {
+        path = matches[1]
+        alpha = matches[2]
       }
+      console.log({ path, alpha })
+      return
 
-      let startIndex =
-        match.index +
-        match.groups.prefix.length +
-        match.groups.helper.length +
-        1 + // open paren
-        match.groups.quote.length
+      // let base = match.groups.helper === 'theme' ? ['theme'] : []
+      // let result = validateConfigPath(state, match.groups.path, base)
 
-      diagnostics.push({
-        code: DiagnosticKind.InvalidConfigPath,
-        range: absoluteRange(
-          {
-            start: indexToPosition(text, startIndex),
-            end: indexToPosition(text, startIndex + match.groups.key.length),
-          },
-          range
-        ),
-        severity:
-          severity === 'error'
-            ? 1 /* DiagnosticSeverity.Error */
-            : 2 /* DiagnosticSeverity.Warning */,
-        message: result.reason,
-        suggestions: result.suggestions,
-      })
+      // if (result.isValid === true) {
+      //   return null
+      // }
+
+      // let startIndex =
+      //   match.index +
+      //   match.groups.prefix.length +
+      //   match.groups.helper.length +
+      //   1 + // open paren
+      //   match.groups.innerPrefix.length
+
+      // diagnostics.push({
+      //   code: DiagnosticKind.InvalidConfigPath,
+      //   range: absoluteRange(
+      //     {
+      //       start: indexToPosition(text, startIndex),
+      //       end: indexToPosition(text, startIndex + match.groups.path.length),
+      //     },
+      //     range
+      //   ),
+      //   severity:
+      //     severity === 'error'
+      //       ? 1 /* DiagnosticSeverity.Error */
+      //       : 2 /* DiagnosticSeverity.Warning */,
+      //   message: result.reason,
+      //   suggestions: result.suggestions,
+      // })
     })
   })
 

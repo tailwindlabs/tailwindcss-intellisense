@@ -537,14 +537,26 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/\b(?<helper>config|theme)\(['"](?<keys>[^'"]*)$/)
+    .match(/\b(?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
 
   if (match === null) {
     return null
   }
 
+  let alpha: string
+  let path = match.groups.path.replace(/^['"]+/g, '')
+  let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]*))$/)
+  if (matches) {
+    path = matches[1]
+    alpha = matches[2]
+  }
+
+  if (alpha !== undefined) {
+    return null
+  }
+
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
-  let parts = match.groups.keys.split(/([\[\].]+)/)
+  let parts = path.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
   let separators = parts.filter((_, i) => i % 2 !== 0)
   // let obj =

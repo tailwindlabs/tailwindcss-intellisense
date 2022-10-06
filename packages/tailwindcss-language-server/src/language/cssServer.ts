@@ -357,6 +357,7 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@media(\s+screen\s*\([^)]+\))/g,
         (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`
       )
+      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
   )
 }
 
