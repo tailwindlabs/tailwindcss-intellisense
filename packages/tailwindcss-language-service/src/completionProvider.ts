@@ -979,6 +979,49 @@ function provideCssDirectiveCompletions(
   }
 }
 
+function provideConfigDirectiveCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position
+): CompletionList {
+  let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
+  let match = text.match(/(?:\b|^)@config\s*(?<partial>'[^']*|"[^"]*)$/)
+  if (!match) {
+    return null
+  }
+  let partial = match.groups.partial.slice(1) // remove quote
+  let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
+  let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
+
+  return {
+    isIncomplete: false,
+    items: state.editor
+      .readDirectory(document, valueBeforeLastSlash || '.')
+      .filter(
+        ([name, type]) =>
+          !name.startsWith('.') &&
+          (type.isDirectory || (!type.isDirectory && /\.[mc]?js$/.test(name)))
+      )
+      .map(([name, type]) => ({
+        label: type.isDirectory ? name + '/' : name,
+        kind: type.isDirectory ? 19 : 17,
+        textEdit: {
+          newText: type.isDirectory ? name + '/' : name,
+          range: {
+            start: {
+              line: position.line,
+              character: position.character - valueAfterLastSlash.length,
+            },
+            end: position,
+          },
+        },
+        command: type.isDirectory
+          ? { command: 'editor.action.triggerSuggest', title: '' }
+          : undefined,
+      })),
+  }
+}
+
 async function provideEmmetCompletions(
   state: State,
   document: TextDocument,
@@ -1067,6 +1110,7 @@ export async function doComplete(
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
+    provideConfigDirectiveCompletions(state, document, position) ||
     (await provideCustomClassNameCompletions(state, document, position))
 
   if (result) return result

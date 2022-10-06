@@ -299,6 +299,17 @@ async function createProjectService(
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
+      readDirectory(document, directory) {
+        try {
+          return fs
+            .readdirSync(path.resolve(path.dirname(getFileFsPath(document.uri)), directory), {
+              withFileTypes: true,
+            })
+            .map((dirent) => [dirent.name, { isDirectory: dirent.isDirectory() }])
+        } catch {
+          return []
+        }
+      },
     },
   }
 
