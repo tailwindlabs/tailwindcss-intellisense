@@ -14,8 +14,8 @@ export function getVariantsFromClassName(
     if (
       allVariants.includes(part) ||
       (state.jit &&
-        part.startsWith('[') &&
-        part.endsWith(']') &&
+        ((part.includes('[') && part.endsWith(']')) ||
+          (part.includes('<') && part.includes('>'))) &&
         jit.generateRules(state, [`${part}${state.separator}[color:red]`]).rules.length > 0)
     ) {
       variants.add(part)
