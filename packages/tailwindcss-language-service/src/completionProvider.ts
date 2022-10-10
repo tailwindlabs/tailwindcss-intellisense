@@ -979,11 +979,15 @@ function provideCssDirectiveCompletions(
   }
 }
 
-function provideConfigDirectiveCompletions(
+async function provideConfigDirectiveCompletions(
   state: State,
   document: TextDocument,
   position: Position
-): CompletionList {
+): Promise<CompletionList> {
+  if (!isCssContext(state, document, position)) {
+    return null
+  }
+
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
   let match = text.match(/(?:\b|^)@config\s*(?<partial>'[^']*|"[^"]*)$/)
   if (!match) {
@@ -995,13 +999,12 @@ function provideConfigDirectiveCompletions(
 
   return {
     isIncomplete: false,
-    items: state.editor
-      .readDirectory(document, valueBeforeLastSlash || '.')
-      .filter(
-        ([name, type]) =>
-          !name.startsWith('.') &&
-          (type.isDirectory || (!type.isDirectory && /\.[mc]?js$/.test(name)))
-      )
+    items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
+      // .filter(
+      //   ([name, type]) =>
+      //     !name.startsWith('.') &&
+      //     (type.isDirectory || (!type.isDirectory && /\.[mc]?js$/.test(name)))
+      // )
       .map(([name, type]) => ({
         label: type.isDirectory ? name + '/' : name,
         kind: type.isDirectory ? 19 : 17,
@@ -1110,7 +1113,7 @@ export async function doComplete(
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
-    provideConfigDirectiveCompletions(state, document, position) ||
+    (await provideConfigDirectiveCompletions(state, document, position)) ||
     (await provideCustomClassNameCompletions(state, document, position))
 
   if (result) return result
