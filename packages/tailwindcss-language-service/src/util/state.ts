@@ -76,6 +76,13 @@ export interface FeatureFlags {
   experimental: string[]
 }
 
+export interface Variant {
+  name: string
+  values: string[]
+  isArbitrary: boolean
+  selectors: (params?: { value?: string; label?: string }) => string[]
+}
+
 export interface State {
   enabled: boolean
   configPath?: string
@@ -86,7 +93,7 @@ export interface State {
   dependencies?: string[]
   plugins?: any
   screens?: string[]
-  variants?: Record<string, string | null>
+  variants?: Variant[]
   corePlugins?: string[]
   modules?: {
     tailwindcss?: { version: string; module: any }

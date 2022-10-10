@@ -5,7 +5,12 @@ export function getVariantsFromClassName(
   state: State,
   className: string
 ): { variants: string[]; offset: number } {
-  let allVariants = Object.keys(state.variants)
+  let allVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}-${value}`)
+    }
+    return [variant.name]
+  })
   let parts = Array.from(splitAtTopLevelOnly(className, state.separator)).filter(Boolean)
   let variants = new Set<string>()
   let offset = 0
