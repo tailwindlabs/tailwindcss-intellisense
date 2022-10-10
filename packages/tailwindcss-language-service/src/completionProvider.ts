@@ -957,6 +957,20 @@ function provideCssDirectiveCompletions(
             },
           },
         ]),
+    ...(semver.gte(state.version, '3.2.0')
+      ? [
+          {
+            label: '@config',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `TODO.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#config'
+              )})`,
+            },
+          },
+        ]
+      : []),
   ]
 
   return {
