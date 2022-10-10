@@ -5,7 +5,7 @@ import { getLanguageBoundaries } from './util/getLanguageBoundaries'
 import { findAll, indexToPosition } from './util/find'
 import { getTextWithoutComments } from './util/doc'
 import { absoluteRange } from './util/absoluteRange'
-import { lte } from './util/semver'
+import * as semver from './util/semver'
 
 export function getDocumentLinks(
   state: State,
@@ -20,7 +20,7 @@ function getConfigDirectiveLinks(
   document: TextDocument,
   resolveTarget: (linkPath: string) => string
 ): DocumentLink[] {
-  if (lte(state.version, '3.2.0')) {
+  if (semver.lte(state.version, '3.2.0')) {
     return []
   }
 
