@@ -162,10 +162,15 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
             {
               ...item,
               label: 'theme()',
+              filterText: 'theme',
               documentation: {
                 kind: 'markdown',
                 value:
                   'Use the `theme()` function to access your Tailwind config values using dot notation.',
+              },
+              command: {
+                title: '',
+                command: 'editor.action.triggerSuggest',
               },
               textEdit: {
                 ...item.textEdit,
