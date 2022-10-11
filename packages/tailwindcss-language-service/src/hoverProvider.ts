@@ -3,12 +3,12 @@ import type { Hover, TextDocument, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
-import { findClassNameAtPosition } from './util/find'
+import { findClassNameAtPosition, findHelperFunctionsInRange } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
-import { getTextWithoutComments } from './util/doc'
+import { isWithinRange } from './util/isWithinRange'
 
 export async function doHover(
   state: State,
@@ -22,49 +22,34 @@ export async function doHover(
 }
 
 function provideCssHelperHover(state: State, document: TextDocument, position: Position): Hover {
-  if (!isCssContext(state, document, position)) return null
-
-  const line = getTextWithoutComments(document, 'css').split('\n')[position.line]
-
-  const match = line.match(/(?<helper>theme|config)\((?<quote>['"])(?<key>[^)]+)\k<quote>[^)]*\)/)
-
-  if (match === null) return null
-
-  const startChar = match.index + match.groups.helper.length + 2
-  const endChar = startChar + match.groups.key.length
-
-  if (position.character < startChar || position.character >= endChar) {
+  if (!isCssContext(state, document, position)) {
     return null
   }
 
-  let key = match.groups.key
-    .split(/(\[[^\]]+\]|\.)/)
-    .filter(Boolean)
-    .filter((x) => x !== '.')
-    .map((x) => x.replace(/^\[([^\]]+)\]$/, '$1'))
+  let helperFns = findHelperFunctionsInRange(document, {
+    start: { line: position.line, character: 0 },
+    end: { line: position.line + 1, character: 0 },
+  })
 
-  if (key.length === 0) return null
-
-  if (match.groups.helper === 'theme') {
-    key = ['theme', ...key]
+  for (let helperFn of helperFns) {
+    if (isWithinRange(position, helperFn.ranges.path)) {
+      let validated = validateConfigPath(
+        state,
+        helperFn.path,
+        helperFn.helper === 'theme' ? ['theme'] : []
+      )
+      let value = validated.isValid ? stringifyConfigValue(validated.value) : null
+      if (value === null) {
+        return null
+      }
+      return {
+        contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
+        range: helperFn.ranges.path,
+      }
+    }
   }
 
-  const value = validateConfigPath(state, key).isValid
-    ? stringifyConfigValue(dlv(state.config, key))
-    : null
-
-  if (value === null) return null
-
-  return {
-    contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
-    range: {
-      start: { line: position.line, character: startChar },
-      end: {
-        line: position.line,
-        character: endChar,
-      },
-    },
-  }
+  return null
 }
 
 async function provideClassNameHover(

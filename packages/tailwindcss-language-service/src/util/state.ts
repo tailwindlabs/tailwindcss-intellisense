@@ -124,12 +124,12 @@ export type DocumentClassName = {
 }
 
 export type DocumentHelperFunction = {
-  full: string
   helper: 'theme' | 'config'
-  value: string
-  quotes: '"' | "'"
-  range: Range
-  valueRange: Range
+  path: string
+  ranges: {
+    full: Range
+    path: Range
+  }
 }
 
 export type ClassNameMeta = {

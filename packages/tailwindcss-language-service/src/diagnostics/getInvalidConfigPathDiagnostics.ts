@@ -1,16 +1,12 @@
 import { State, Settings } from '../util/state'
-import type { TextDocument, Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver'
 import { InvalidConfigPathDiagnostic, DiagnosticKind } from './types'
-import { isCssDoc } from '../util/css'
-import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
-import { findAll, indexToPosition } from '../util/find'
+import { findHelperFunctionsInDocument } from '../util/find'
 import { stringToPath } from '../util/stringToPath'
 import isObject from '../util/isObject'
 import { closest } from '../util/closest'
-import { absoluteRange } from '../util/absoluteRange'
 import { combinations } from '../util/combinations'
 import dlv from 'dlv'
-import { getTextWithoutComments } from '../util/doc'
 
 function pathToString(path: string | string[]): string {
   if (typeof path === 'string') return path
@@ -167,61 +163,24 @@ export function getInvalidConfigPathDiagnostics(
   if (severity === 'ignore') return []
 
   let diagnostics: InvalidConfigPathDiagnostic[] = []
-  let ranges: Range[] = []
 
-  if (isCssDoc(state, document)) {
-    ranges.push(undefined)
-  } else {
-    let boundaries = getLanguageBoundaries(state, document)
-    if (!boundaries) return []
-    ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
-  }
+  findHelperFunctionsInDocument(state, document).forEach((helperFn) => {
+    let base = helperFn.helper === 'theme' ? ['theme'] : []
+    let result = validateConfigPath(state, helperFn.path, base)
 
-  ranges.forEach((range) => {
-    let text = getTextWithoutComments(document, 'css', range)
-    let matches = findAll(/(?<prefix>\s|^)(?<helper>config|theme)\((?<path>[^)]*)\)/g, text)
-
-    matches.forEach((match) => {
-      let path = match.groups.path.replace(/^['"]+|['"]+$/g, '')
-      let alpha: string
-      let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]+))$/)
-      if (matches) {
-        path = matches[1]
-        alpha = matches[2]
-      }
-      console.log({ path, alpha })
+    if (result.isValid === true) {
       return
+    }
 
-      // let base = match.groups.helper === 'theme' ? ['theme'] : []
-      // let result = validateConfigPath(state, match.groups.path, base)
-
-      // if (result.isValid === true) {
-      //   return null
-      // }
-
-      // let startIndex =
-      //   match.index +
-      //   match.groups.prefix.length +
-      //   match.groups.helper.length +
-      //   1 + // open paren
-      //   match.groups.innerPrefix.length
-
-      // diagnostics.push({
-      //   code: DiagnosticKind.InvalidConfigPath,
-      //   range: absoluteRange(
-      //     {
-      //       start: indexToPosition(text, startIndex),
-      //       end: indexToPosition(text, startIndex + match.groups.path.length),
-      //     },
-      //     range
-      //   ),
-      //   severity:
-      //     severity === 'error'
-      //       ? 1 /* DiagnosticSeverity.Error */
-      //       : 2 /* DiagnosticSeverity.Warning */,
-      //   message: result.reason,
-      //   suggestions: result.suggestions,
-      // })
+    diagnostics.push({
+      code: DiagnosticKind.InvalidConfigPath,
+      range: helperFn.ranges.path,
+      severity:
+        severity === 'error'
+          ? 1 /* DiagnosticSeverity.Error */
+          : 2 /* DiagnosticSeverity.Warning */,
+      message: result.reason,
+      suggestions: result.suggestions,
     })
   })
 
