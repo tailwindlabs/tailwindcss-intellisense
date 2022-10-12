@@ -48,6 +48,7 @@ const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
 const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
+const CSS_GLOB = '*.{css,scss,sass,less,pcss}'
 
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
@@ -130,6 +131,11 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
   }
 }
 
+async function fileContainsAtConfig(uri: Uri) {
+  let contents = (await Workspace.fs.readFile(uri)).toString()
+  return /(^|\b)@config\s*['"]/.test(contents)
+}
+
 export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server.js'))
   let prod = path.join('dist', 'tailwindServer.js')
@@ -149,20 +155,36 @@ export async function activate(context: ExtensionContext) {
     })
   )
 
-  let watcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
+  let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
 
-  watcher.onDidCreate((uri) => {
+  configWatcher.onDidCreate((uri) => {
     let folder = Workspace.getWorkspaceFolder(uri)
-    if (!folder) {
+    if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    if (!isExcluded(uri.fsPath, folder)) {
+    folder = getOuterMostWorkspaceFolder(folder)
+    bootWorkspaceClient(folder)
+  })
+
+  context.subscriptions.push(configWatcher)
+
+  let cssWatcher = Workspace.createFileSystemWatcher(`**/${CSS_GLOB}`, false, false, true)
+
+  async function bootClientIfCssFileContainsAtConfig(uri: Uri) {
+    let folder = Workspace.getWorkspaceFolder(uri)
+    if (!folder || isExcluded(uri.fsPath, folder)) {
+      return
+    }
+    if (await fileContainsAtConfig(uri)) {
       folder = getOuterMostWorkspaceFolder(folder)
       bootWorkspaceClient(folder)
     }
-  })
+  }
 
-  context.subscriptions.push(watcher)
+  cssWatcher.onDidCreate(bootClientIfCssFileContainsAtConfig)
+  cssWatcher.onDidChange(bootClientIfCssFileContainsAtConfig)
+
+  context.subscriptions.push(cssWatcher)
 
   // TODO: check if the actual language MAPPING changed
   // not just the language IDs
@@ -551,11 +573,22 @@ export async function activate(context: ExtensionContext) {
       1
     )
 
-    if (!configFile) {
+    if (configFile) {
+      bootWorkspaceClient(folder)
       return
     }
 
-    bootWorkspaceClient(folder)
+    let cssFiles = await Workspace.findFiles(
+      new RelativePattern(folder, `**/${CSS_GLOB}`),
+      `{${getExcludePatterns(folder).join(',')}}`
+    )
+
+    for (let cssFile of cssFiles) {
+      if (await fileContainsAtConfig(cssFile)) {
+        bootWorkspaceClient(folder)
+        return
+      }
+    }
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
