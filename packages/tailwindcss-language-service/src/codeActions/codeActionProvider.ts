@@ -40,6 +40,10 @@ async function getDiagnosticsFromCodeActionParams(
 }
 
 export async function doCodeActions(state: State, params: CodeActionParams): Promise<CodeAction[]> {
+  if (!state.enabled) {
+    return []
+  }
+
   let diagnostics = await getDiagnosticsFromCodeActionParams(
     state,
     params,
