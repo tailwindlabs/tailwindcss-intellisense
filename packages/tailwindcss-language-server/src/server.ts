@@ -1521,7 +1521,10 @@ class TW {
       resolveProvider: true,
       triggerCharacters: [
         ...TRIGGER_CHARACTERS,
-        ...projects.map((project) => project.state.separator).filter(Boolean),
+        ...projects
+          .map((project) => project.state.separator)
+          .filter((sep) => typeof sep === 'string')
+          .map((sep) => sep.slice(-1)),
       ].filter(Boolean),
     })
 
