@@ -41,14 +41,12 @@ import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
+import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
 
 const colorNames = Object.keys(namedColors)
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
-
-const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
-const CSS_GLOB = '*.{css,scss,sass,less,pcss}'
 
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
@@ -155,7 +153,7 @@ export async function activate(context: ExtensionContext) {
     })
   )
 
-  let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
+  let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
 
   configWatcher.onDidCreate((uri) => {
     let folder = Workspace.getWorkspaceFolder(uri)
@@ -568,7 +566,7 @@ export async function activate(context: ExtensionContext) {
     searchedFolders.add(folder.uri.toString())
 
     let [configFile] = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CONFIG_FILE_GLOB}`),
+      new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       `{${getExcludePatterns(folder).join(',')}}`,
       1
     )

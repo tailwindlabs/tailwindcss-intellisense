@@ -80,6 +80,7 @@ import { equal } from 'tailwindcss-language-service/src/util/array'
 import preflight from 'tailwindcss/lib/css/preflight.css'
 import merge from 'deepmerge'
 import { getTextWithoutComments } from 'tailwindcss-language-service/src/util/doc'
+import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 
 // @ts-ignore
 global.__preflight = preflight
@@ -97,9 +98,6 @@ new Function(
   `
 )(require, __dirname)
 
-const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
-const PACKAGE_GLOB = '{package-lock.json,yarn.lock,pnpm-lock.yaml}'
-const CSS_GLOB = '*.{css,scss,sass,less,pcss}'
 const TRIGGER_CHARACTERS = [
   // class attributes
   '"',
@@ -370,7 +368,7 @@ async function createProjectService(
 
       let isConfigFile = projectConfig.configPath
         ? change.file === projectConfig.configPath
-        : minimatch(file, `**/${CONFIG_FILE_GLOB}`, { dot: true })
+        : minimatch(file, `**/${CONFIG_GLOB}`, { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
 
       if (!isConfigFile && !isDependency) continue
@@ -1510,7 +1508,7 @@ class TW {
     } else {
       let projects: Record<string, Array<DocumentSelector>> = {}
 
-      let files = await glob([`**/${CONFIG_FILE_GLOB}`, `**/${CSS_GLOB}`], {
+      let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
         cwd: base,
         ignore: (await getConfiguration()).tailwindCSS.files.exclude,
         onlyFiles: true,
@@ -1611,7 +1609,7 @@ class TW {
           }
         }
 
-        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_GLOB}`, { dot: true })
+        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
         if (isPackageFile) {
           for (let [key] of this.projects) {
             let projectConfig = JSON.parse(key) as ProjectConfig
@@ -1649,7 +1647,7 @@ class TW {
           }
         }
 
-        let isConfigFile = minimatch(normalizedFilename, `**/${CONFIG_FILE_GLOB}`, {
+        let isConfigFile = minimatch(normalizedFilename, `**/${CONFIG_GLOB}`, {
           dot: true,
         })
         if (isConfigFile && change.type === FileChangeType.Created) {
@@ -1698,8 +1696,8 @@ class TW {
         DidChangeWatchedFilesNotification.type,
         {
           watchers: [
-            { globPattern: `**/${CONFIG_FILE_GLOB}` },
-            { globPattern: `**/${PACKAGE_GLOB}` },
+            { globPattern: `**/${CONFIG_GLOB}` },
+            { globPattern: `**/${PACKAGE_LOCK_GLOB}` },
             { globPattern: `**/${CSS_GLOB}` },
           ],
         }
@@ -1749,7 +1747,7 @@ class TW {
     } else {
       let watch: typeof chokidar.watch = require('chokidar').watch
       let chokidarWatcher = watch(
-        [`**/${CONFIG_FILE_GLOB}`, `**/${PACKAGE_GLOB}`, `**/${CSS_GLOB}`],
+        [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`],
         {
           cwd: base,
           ignorePermissionErrors: true,
