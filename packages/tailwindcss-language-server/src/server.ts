@@ -1418,10 +1418,10 @@ class TW {
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.join(base, relativeConfigPath),
+            configPath: path.resolve(base, relativeConfigPath),
             documentSelector: []
               .concat(relativeDocumentSelectorOrSelectors)
-              .map((selector) => path.join(base, selector)),
+              .map((selector) => path.resolve(base, selector)),
           }
         }
       )
@@ -1505,7 +1505,10 @@ class TW {
       resolveProvider: true,
       triggerCharacters: [
         ...TRIGGER_CHARACTERS,
-        ...projects.map((project) => project.state.separator).filter(Boolean),
+        ...projects
+          .map((project) => project.state.separator)
+          .filter((sep) => typeof sep === 'string')
+          .map((sep) => sep.slice(-1)),
       ].filter(Boolean),
     })
 
