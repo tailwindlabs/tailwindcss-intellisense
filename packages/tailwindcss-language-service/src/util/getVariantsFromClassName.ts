@@ -29,15 +29,7 @@ export function getVariantsFromClassName(
   return { variants: Array.from(variants), offset }
 }
 
-const REGEX_SPECIAL = /[\\^$.*+?()[\]{}|]/g
-const REGEX_HAS_SPECIAL = RegExp(REGEX_SPECIAL.source)
-
-function regexEscape(string: string): string {
-  return string && REGEX_HAS_SPECIAL.test(string)
-    ? string.replace(REGEX_SPECIAL, '\\$&')
-    : string || ''
-}
-
+// https://github.com/tailwindlabs/tailwindcss/blob/a8a2e2a7191fbd4bee044523aecbade5823a8664/src/util/splitAtTopLevelOnly.js
 function splitAtTopLevelOnly(input: string, separator: string): string[] {
   let stack: string[] = []
   let parts: string[] = []
