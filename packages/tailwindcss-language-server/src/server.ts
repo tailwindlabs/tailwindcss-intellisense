@@ -384,23 +384,14 @@ async function createProjectService(
 
       if (!enabled) {
         if (projectConfig.configPath && (isConfigFile || isDependency)) {
-          // update document selector
-          let originalConfig = require(projectConfig.configPath)
-          let contentConfig: unknown = originalConfig.content?.files ?? originalConfig.content
-          let content = Array.isArray(contentConfig) ? contentConfig : []
-          // TODO `state.version` isn't going to exist here
-          let relativeEnabled = semver.gte(state.version, '3.2.0')
-            ? originalConfig.future?.relativeContentPathsByDefault ||
-              originalConfig.content?.relative
-            : false
-          let contentBase = relativeEnabled ? path.dirname(state.configPath) : projectConfig.folder
-          let contentSelector = content
-            .filter((item): item is string => typeof item === 'string')
-            .map((item) => path.resolve(contentBase, item))
-            .map((item) => ({ pattern: normalizePath(item), priority: 1 }))
           documentSelector = [
             ...documentSelector.filter(({ priority }) => priority !== 1),
-            ...contentSelector,
+            // TODO `state.version` isn't going to exist here
+            ...getContentDocumentSelectorFromConfigFile(
+              projectConfig.configPath,
+              state.version,
+              projectConfig.folder
+            ),
           ]
 
           checkOpenDocuments()
@@ -501,6 +492,8 @@ async function createProjectService(
     if (!configPath) {
       throw new SilentError('No config file found.')
     }
+
+    watchPatterns([configPath])
 
     const pnpPath = findUp.sync(
       (dir) => {
@@ -916,19 +909,14 @@ async function createProjectService(
     }
 
     /////////////////////
-    let contentConfig: unknown = originalConfig.content?.files ?? originalConfig.content
-    let content = Array.isArray(contentConfig) ? contentConfig : []
-    let relativeEnabled = semver.gte(tailwindcss.version, '3.2.0')
-      ? originalConfig.future?.relativeContentPathsByDefault || originalConfig.content?.relative
-      : false
-    let contentBase = relativeEnabled ? path.dirname(state.configPath) : projectConfig.folder
-    let contentSelector = content
-      .filter((item): item is string => typeof item === 'string')
-      .map((item) => path.resolve(contentBase, item))
-      .map((item) => ({ pattern: normalizePath(item), priority: 1 }))
     documentSelector = [
       ...documentSelector.filter(({ priority }) => priority !== 1),
-      ...contentSelector,
+      ...getContentDocumentSelectorFromConfigFile(
+        state.configPath,
+        tailwindcss.version,
+        projectConfig.folder,
+        originalConfig
+      ),
     ]
     //////////////////////
 
@@ -992,7 +980,7 @@ async function createProjectService(
     // }
     state.dependencies = getModuleDependencies(state.configPath)
     // chokidarWatcher?.add(state.dependencies)
-    watchPatterns([state.configPath, ...(state.dependencies ?? [])])
+    watchPatterns(state.dependencies ?? [])
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -1436,6 +1424,42 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
   return path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))
 }
 
+function getContentDocumentSelectorFromConfigFile(
+  configPath: string,
+  tailwindVersion: string,
+  rootDir: string,
+  actualConfig?: any
+): DocumentSelector[] {
+  let config = actualConfig ?? require(configPath)
+  let contentConfig: unknown = config.content?.files ?? config.content
+  let content = Array.isArray(contentConfig) ? contentConfig : []
+  let relativeEnabled = semver.gte(tailwindVersion, '3.2.0')
+    ? config.future?.relativeContentPathsByDefault || config.content?.relative
+    : false
+  let contentBase: string
+  if (relativeEnabled) {
+    contentBase = path.dirname(configPath)
+  } else {
+    let pkgJsonPath = findUp.sync(
+      (dir) => {
+        let pkgJson = path.join(dir, 'package.json')
+        if (findUp.sync.exists(pkgJson)) {
+          return pkgJson
+        }
+        if (dir === rootDir) {
+          return findUp.stop
+        }
+      },
+      { cwd: path.dirname(configPath) }
+    )
+    contentBase = pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
+  }
+  return content
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => path.resolve(contentBase, item))
+    .map((item) => ({ pattern: normalizePath(item), priority: 1 }))
+}
+
 class TW {
   private initialized = false
   private lspHandlersAdded = false
@@ -1547,17 +1571,7 @@ class TW {
 
         let contentSelector: Array<DocumentSelector> = []
         try {
-          let config = require(configPath)
-          let contentConfig: unknown = config.content?.files ?? config.content
-          let content = Array.isArray(contentConfig) ? contentConfig : []
-          let relativeEnabled = semver.gte(twVersion, '3.2.0')
-            ? config.future?.relativeContentPathsByDefault || config.content?.relative
-            : false
-          let contentBase = relativeEnabled ? path.dirname(configPath) : base
-          contentSelector = content
-            .filter((item): item is string => typeof item === 'string')
-            .map((item) => path.resolve(contentBase, item))
-            .map((item) => ({ pattern: normalizePath(item), priority: 1 }))
+          contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twVersion, base)
         } catch {}
 
         let documentSelector = contentSelector
