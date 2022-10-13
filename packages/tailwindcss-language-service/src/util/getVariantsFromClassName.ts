@@ -11,16 +11,19 @@ export function getVariantsFromClassName(
     }
     return [variant.name]
   })
-  let parts = splitAtTopLevelOnly(className, state.separator).filter(Boolean)
   let variants = new Set<string>()
   let offset = 0
+  let parts = splitAtTopLevelOnly(className, state.separator)
+  if (parts.length < 2) {
+    return { variants: Array.from(variants), offset }
+  }
+  parts = parts.filter(Boolean)
 
   for (let part of parts) {
     if (
       allVariants.includes(part) ||
       (state.jit &&
-        ((part.includes('[') && part.endsWith(']')) ||
-          (part.includes('<') && part.includes('>'))) &&
+        ((part.includes('[') && part.endsWith(']')) || part.includes('/')) &&
         jit.generateRules(state, [`${part}${state.separator}[color:red]`]).rules.length > 0)
     ) {
       variants.add(part)

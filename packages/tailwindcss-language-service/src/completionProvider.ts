@@ -122,18 +122,6 @@ export function completionsFromClassList(
     let items: CompletionItem[] = []
 
     if (!important) {
-      let prefix = partialClassName.slice(offset)
-      let parentVariant: Variant
-      let variantLabel: string = ''
-      for (let variant of state.variants) {
-        let match = prefix.match(new RegExp(`^${variant.name}(?<label><[^>]+>)-$`))
-        if (match) {
-          parentVariant = variant
-          variantLabel = match.groups.label
-          break
-        }
-      }
-
       let variantOrder = 0
 
       function variantItem(
@@ -161,112 +149,83 @@ export function completionsFromClassList(
         }
       }
 
-      if (parentVariant) {
-        if (parentVariant.isArbitrary) {
-          items.push(
-            variantItem({
-              label: `${parentVariant.name}${variantLabel}-[]${sep}`,
-              insertTextFormat: 2,
-              textEdit: {
-                newText: `${parentVariant.name}${variantLabel}-[\${1:&}]${sep}\${0}`,
-              },
-            })
-          )
-        }
+      items.push(
+        ...state.variants.flatMap((variant) => {
+          let items: CompletionItem[] = []
 
-        items.push(
-          ...parentVariant.values
-            .filter(
-              (value) => !existingVariants.includes(`${parentVariant.name}${variantLabel}-${value}`)
-            )
-            .map((value) =>
+          if (variant.isArbitrary) {
+            items.push(
               variantItem({
-                label: `${parentVariant.name}${variantLabel}-${value}${sep}`,
-                detail: parentVariant
-                  .selectors({ value, label: variantLabel.slice(1, -1) })
-                  .join(', '),
+                label: `${variant.name}-[]${sep}`,
+                insertTextFormat: 2,
+                textEdit: {
+                  newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
+                },
+                command: {
+                  title: '',
+                  command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+                  arguments: [variant.name, replacementRange],
+                },
               })
             )
-        )
-      } else {
-        items.push(
-          ...state.variants.flatMap((variant) => {
-            let items: CompletionItem[] = []
+          } else if (!existingVariants.includes(variant.name)) {
+            let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+            let resultingVariants = [...existingVariants, variant.name]
 
-            if (variant.isArbitrary) {
-              items.push(
-                variantItem({
-                  label: `${variant.name}-[]${sep}`,
-                  insertTextFormat: 2,
-                  textEdit: {
-                    newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
-                  },
-                  command: {
-                    title: '',
-                    command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
-                    arguments: [variant.name, replacementRange],
-                  },
-                })
+            if (shouldSortVariants) {
+              let allVariants = state.variants.map(({ name }) => name)
+              resultingVariants = resultingVariants.sort(
+                (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
               )
-            } else if (!existingVariants.includes(variant.name)) {
-              let shouldSortVariants = !semver.gte(state.version, '2.99.0')
-              let resultingVariants = [...existingVariants, variant.name]
+            }
 
-              if (shouldSortVariants) {
-                let allVariants = state.variants.map(({ name }) => name)
-                resultingVariants = resultingVariants.sort(
-                  (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
-                )
-              }
-
-              items.push(
-                variantItem({
-                  label: `${variant.name}${sep}`,
-                  detail: variant.selectors().join(', '),
-                  textEdit: {
-                    newText: resultingVariants[resultingVariants.length - 1] + sep,
-                  },
-                  additionalTextEdits:
-                    shouldSortVariants && resultingVariants.length > 1
-                      ? [
-                          {
-                            newText:
-                              resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
-                              sep,
-                            range: {
-                              start: {
-                                ...classListRange.start,
-                                character: classListRange.end.character - partialClassName.length,
-                              },
-                              end: {
-                                ...replacementRange.start,
-                                character: replacementRange.start.character,
-                              },
+            items.push(
+              variantItem({
+                label: `${variant.name}${sep}`,
+                detail: variant.selectors().join(', '),
+                textEdit: {
+                  newText: resultingVariants[resultingVariants.length - 1] + sep,
+                },
+                additionalTextEdits:
+                  shouldSortVariants && resultingVariants.length > 1
+                    ? [
+                        {
+                          newText:
+                            resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
+                            sep,
+                          range: {
+                            start: {
+                              ...classListRange.start,
+                              character: classListRange.end.character - partialClassName.length,
+                            },
+                            end: {
+                              ...replacementRange.start,
+                              character: replacementRange.start.character,
                             },
                           },
-                        ]
-                      : [],
-                })
-              )
-            }
+                        },
+                      ]
+                    : [],
+              })
+            )
+          }
 
-            if (variant.values.length) {
-              items.push(
-                ...variant.values
-                  .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
-                  .map((value) =>
-                    variantItem({
-                      label: `${variant.name}-${value}${sep}`,
-                      detail: variant.selectors({ value }).join(', '),
-                    })
-                  )
-              )
-            }
+          if (variant.values.length) {
+            items.push(
+              ...variant.values
+                .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
+                .map((value) =>
+                  variantItem({
+                    label: `${variant.name}-${value}${sep}`,
+                    detail: variant.selectors({ value }).join(', '),
+                  })
+                )
+            )
+          }
 
-            return items
-          })
-        )
-      }
+          return items
+        })
+      )
     }
 
     if (state.classList) {
