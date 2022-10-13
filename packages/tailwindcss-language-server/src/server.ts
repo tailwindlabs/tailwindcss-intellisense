@@ -61,11 +61,7 @@ import {
   Settings,
   ClassNames,
 } from 'tailwindcss-language-service/src/util/state'
-import {
-  provideDiagnostics,
-  updateAllDiagnostics,
-  clearAllDiagnostics,
-} from './lsp/diagnosticsProvider'
+import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
 import { debounce } from 'debounce'
@@ -338,7 +334,6 @@ async function createProjectService(
     editor: {
       connection,
       folder,
-      globalSettings: await getConfiguration(),
       userLanguages: params.initializationOptions.userLanguages
         ? params.initializationOptions.userLanguages
         : {},
@@ -359,21 +354,12 @@ async function createProjectService(
     console.log(`[${path.relative(projectConfig.folder, projectConfig.configPath)}]`, ...args)
   }
 
-  let chokidarWatcher: chokidar.FSWatcher
-  let ignore = state.editor.globalSettings.tailwindCSS.files.exclude
-
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
     let needsRebuild = false
 
     for (let change of changes) {
       let file = normalizePath(change.file)
-
-      for (let ignorePattern of ignore) {
-        if (minimatch(file, ignorePattern, { dot: true })) {
-          continue
-        }
-      }
 
       let isConfigFile = projectConfig.configPath
         ? change.file === projectConfig.configPath
@@ -472,22 +458,6 @@ async function createProjectService(
     clearRequireCache()
 
     let configPath = projectConfig.configPath
-
-    if (!configPath) {
-      configPath = (
-        await glob([`**/${CONFIG_FILE_GLOB}`], {
-          cwd: folder,
-          ignore: state.editor.globalSettings.tailwindCSS.files.exclude,
-          onlyFiles: true,
-          absolute: true,
-          suppressErrors: true,
-          dot: true,
-          concurrency: Math.max(os.cpus().length, 1),
-        })
-      )
-        .sort((a: string, b: string) => a.split('/').length - b.split('/').length)
-        .map(path.normalize)[0]
-    }
 
     if (!configPath) {
       throw new SilentError('No config file found.')
@@ -1020,20 +990,13 @@ async function createProjectService(
       }
     },
     async onUpdateSettings(settings: any): Promise<void> {
-      documentSettingsCache.clear()
-      let previousExclude = state.editor.globalSettings.tailwindCSS.files.exclude
-      state.editor.globalSettings = await state.editor.getConfiguration()
-      if (!equal(previousExclude, settings.tailwindCSS.files.exclude)) {
-        tryInit()
+      if (state.enabled) {
+        refreshDiagnostics()
+      }
+      if (settings.editor.colorDecorators) {
+        updateCapabilities()
       } else {
-        if (state.enabled) {
-          updateAllDiagnostics(state)
-        }
-        if (settings.editor.colorDecorators) {
-          updateCapabilities()
-        } else {
-          connection.sendNotification('@/tailwindCSS/clearColors')
-        }
+        connection.sendNotification('@/tailwindCSS/clearColors')
       }
     },
     onFileEvents,
@@ -1491,12 +1454,9 @@ class TW {
     }
 
     let workspaceFolders: Array<ProjectConfig> = []
-
-    let configFileOrFiles = dlv(
-      await connection.workspace.getConfiguration('tailwindCSS'),
-      'experimental.configFile',
-      null
-    ) as Settings['tailwindCSS']['experimental']['configFile']
+    let globalSettings = await getConfiguration()
+    let ignore = globalSettings.tailwindCSS.files.exclude
+    let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
     let base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
     let cssFileConfigMap: Map<string, string> = new Map()
@@ -1622,6 +1582,12 @@ class TW {
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
 
+        for (let ignorePattern of ignore) {
+          if (minimatch(normalizedFilename, ignorePattern, { dot: true })) {
+            continue changeLoop
+          }
+        }
+
         let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_GLOB}`, { dot: true })
         if (isPackageFile) {
           for (let [key] of this.projects) {
@@ -1686,9 +1652,6 @@ class TW {
         project.onFileEvents(changes)
       }
     }
-
-    let ignore = (await getConfiguration()).tailwindCSS.files.exclude
-    // let watchPatterns: (patterns: string[]) => void = () => {}
 
     if (this.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
       this.disposables.push(
@@ -1831,6 +1794,16 @@ class TW {
 
     this.disposables.push(
       this.connection.onDidChangeConfiguration(async ({ settings }) => {
+        let previousExclude = globalSettings.tailwindCSS.files.exclude
+
+        documentSettingsCache.clear()
+        globalSettings = await getConfiguration()
+
+        if (!equal(previousExclude, globalSettings.tailwindCSS.files.exclude)) {
+          this.restart()
+          return
+        }
+
         for (let [, project] of this.projects) {
           project.onUpdateSettings(settings)
         }
