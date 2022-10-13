@@ -24,6 +24,7 @@ async function getDiagnosticsFromCodeActionParams(
   only?: DiagnosticKind[]
 ): Promise<AugmentedDiagnostic[]> {
   let document = state.editor.documents.get(params.textDocument.uri)
+  if (!document) return []
   let diagnostics = await doValidate(state, document, only)
 
   return params.context.diagnostics

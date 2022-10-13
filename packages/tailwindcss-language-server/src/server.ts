@@ -1114,6 +1114,7 @@ async function createProjectService(
     },
     async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
       let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return []
       let className = document.getText(params.range)
       let match = className.match(
         new RegExp(`-\\[(${colorNames.join('|')}|(?:(?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`, 'i')
