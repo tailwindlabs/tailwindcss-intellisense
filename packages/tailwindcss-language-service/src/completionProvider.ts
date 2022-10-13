@@ -161,11 +161,11 @@ export function completionsFromClassList(
                 textEdit: {
                   newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
                 },
-                command: {
-                  title: '',
-                  command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
-                  arguments: [variant.name, replacementRange],
-                },
+                // command: {
+                //   title: '',
+                //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+                //   arguments: [variant.name, replacementRange],
+                // },
               })
             )
           } else if (!existingVariants.includes(variant.name)) {
