@@ -126,8 +126,8 @@ const colorNames = Object.keys(namedColors)
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
 
-// console.log = connection.console.log.bind(connection.console)
-// console.error = connection.console.error.bind(connection.console)
+console.log = connection.console.log.bind(connection.console)
+console.error = connection.console.error.bind(connection.console)
 
 process.on('unhandledRejection', (e: any) => {
   connection.console.error(formatError(`Unhandled exception`, e))
@@ -378,10 +378,9 @@ async function createProjectService(
       let isConfigFile = projectConfig.configPath
         ? change.file === projectConfig.configPath
         : minimatch(file, `**/${CONFIG_FILE_GLOB}`, { dot: true })
-      let isPackageFile = minimatch(file, `**/${PACKAGE_GLOB}`, { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
 
-      if (!isConfigFile && !isPackageFile && !isDependency) continue
+      if (!isConfigFile && !isDependency) continue
 
       if (!enabled) {
         if (projectConfig.configPath && (isConfigFile || isDependency)) {
@@ -389,10 +388,11 @@ async function createProjectService(
           let originalConfig = require(projectConfig.configPath)
           let contentConfig: unknown = originalConfig.content?.files ?? originalConfig.content
           let content = Array.isArray(contentConfig) ? contentConfig : []
-          // TODO: check version number
-          // if <3.2 this should always be `false`
-          let relativeEnabled =
-            originalConfig.future?.relativeContentPathsByDefault || originalConfig.content?.relative
+          // TODO `state.version` isn't going to exist here
+          let relativeEnabled = semver.gte(state.version, '3.2.0')
+            ? originalConfig.future?.relativeContentPathsByDefault ||
+              originalConfig.content?.relative
+            : false
           let contentBase = relativeEnabled ? path.dirname(state.configPath) : projectConfig.folder
           let contentSelector = content
             .filter((item): item is string => typeof item === 'string')
@@ -414,7 +414,7 @@ async function createProjectService(
         break
       } else if (change.type === FileChangeType.Changed) {
         log('File changed:', change.file)
-        if (!state.enabled || isPackageFile) {
+        if (!state.enabled) {
           needsInit = true
           break
         } else {
@@ -422,7 +422,7 @@ async function createProjectService(
         }
       } else if (change.type === FileChangeType.Deleted) {
         log('File deleted:', change.file)
-        if (!state.enabled || isPackageFile || isConfigFile) {
+        if (!state.enabled || isConfigFile) {
           needsInit = true
           break
         } else {
@@ -918,10 +918,9 @@ async function createProjectService(
     /////////////////////
     let contentConfig: unknown = originalConfig.content?.files ?? originalConfig.content
     let content = Array.isArray(contentConfig) ? contentConfig : []
-    // TODO: check version number
-    // if <3.2 this should always be `false`
-    let relativeEnabled =
-      originalConfig.future?.relativeContentPathsByDefault || originalConfig.content?.relative
+    let relativeEnabled = semver.gte(tailwindcss.version, '3.2.0')
+      ? originalConfig.future?.relativeContentPathsByDefault || originalConfig.content?.relative
+      : false
     let contentBase = relativeEnabled ? path.dirname(state.configPath) : projectConfig.folder
     let contentSelector = content
       .filter((item): item is string => typeof item === 'string')
@@ -1476,6 +1475,7 @@ class TW {
 
     let base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
     let cssFileConfigMap: Map<string, string> = new Map()
+    let configTailwindVersionMap: Map<string, string> = new Map()
 
     if (configFileOrFiles) {
       if (
@@ -1528,15 +1528,30 @@ class TW {
           continue
         }
 
+        let twVersion = require('tailwindcss/package.json').version
+        let isDefaultVersion = true
+        try {
+          let v = require(resolveFrom(path.dirname(configPath), 'tailwindcss/package.json')).version
+          if (typeof v === 'string') {
+            twVersion = v
+            isDefaultVersion = false
+          }
+        } catch {}
+
+        if (isCssFile && (!semver.gte(twVersion, '3.2.0') || isDefaultVersion)) {
+          continue
+        }
+
+        configTailwindVersionMap.set(configPath, twVersion)
+
         let contentSelector: Array<DocumentSelector> = []
         try {
           let config = require(configPath)
           let contentConfig: unknown = config.content?.files ?? config.content
           let content = Array.isArray(contentConfig) ? contentConfig : []
-          // TODO: check version number
-          // if <3.2 this should always be `false`
-          let relativeEnabled =
-            config.future?.relativeContentPathsByDefault || config.content?.relative
+          let relativeEnabled = semver.gte(twVersion, '3.2.0')
+            ? config.future?.relativeContentPathsByDefault || config.content?.relative
+            : false
           let contentBase = relativeEnabled ? path.dirname(configPath) : base
           contentSelector = content
             .filter((item): item is string => typeof item === 'string')
@@ -1582,11 +1597,33 @@ class TW {
 
     const onDidChangeWatchedFiles = async (
       changes: Array<{ file: string; type: FileChangeType }>
-    ): Promise<{ needsRestart: boolean }> => {
+    ): Promise<void> => {
       let needsRestart = false
 
-      for (let change of changes) {
+      changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
+
+        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_GLOB}`, { dot: true })
+        if (isPackageFile) {
+          for (let [key] of this.projects) {
+            let projectConfig = JSON.parse(key) as ProjectConfig
+            let twVersion = require('tailwindcss/package.json').version
+            try {
+              let v = require(resolveFrom(
+                path.dirname(projectConfig.configPath),
+                'tailwindcss/package.json'
+              )).version
+              if (typeof v === 'string') {
+                twVersion = v
+              }
+            } catch {}
+            if (configTailwindVersionMap.get(projectConfig.configPath) !== twVersion) {
+              needsRestart = true
+              break changeLoop
+            }
+          }
+        }
+
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
           dot: true,
         })
@@ -1616,7 +1653,7 @@ class TW {
           let projectConfig = JSON.parse(key) as ProjectConfig
           if (change.file === projectConfig.configPath && change.type === FileChangeType.Deleted) {
             needsRestart = true
-            break
+            break changeLoop
           }
         }
       }
