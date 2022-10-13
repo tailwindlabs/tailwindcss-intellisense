@@ -1002,6 +1002,10 @@ async function provideConfigDirectiveCompletions(
     return null
   }
 
+  if (!semver.gte(state.version, '3.2.0')) {
+    return null
+  }
+
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
   let match = text.match(/(?:\b|^)@config\s*(?<partial>'[^']*|"[^"]*)$/)
   if (!match) {
