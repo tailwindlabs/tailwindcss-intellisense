@@ -1579,10 +1579,14 @@ class TW {
             pattern: normalizePath(filename),
             priority: 0,
           })
-          .concat({
-            pattern: normalizePath(configPath),
-            priority: 0,
-          })
+          .concat(
+            isCssFile
+              ? {
+                  pattern: normalizePath(configPath),
+                  priority: 0,
+                }
+              : []
+          )
           .concat({
             pattern: normalizePath(path.join(path.dirname(filename), '**')),
             priority: 2,
