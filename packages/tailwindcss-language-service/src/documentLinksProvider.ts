@@ -20,7 +20,7 @@ function getConfigDirectiveLinks(
   document: TextDocument,
   resolveTarget: (linkPath: string) => string
 ): DocumentLink[] {
-  if (semver.lte(state.version, '3.2.0')) {
+  if (!semver.gte(state.version, '3.2.0')) {
     return []
   }
 
