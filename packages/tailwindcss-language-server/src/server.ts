@@ -198,6 +198,13 @@ type ProjectConfig = {
 }
 
 type DocumentSelector = { pattern: string; priority: number }
+enum DocumentSelectorPriority {
+  CONFIG_FILE = 0,
+  CSS_FILE = 0,
+  CONTENT_FILE = 1,
+  CSS_DIRECTORY = 2,
+  CONFIG_DIRECTORY = 3,
+}
 
 function getMode(config: any): unknown {
   if (typeof config.mode !== 'undefined') {
@@ -371,7 +378,9 @@ async function createProjectService(
       if (!enabled) {
         if (projectConfig.configPath && (isConfigFile || isDependency)) {
           documentSelector = [
-            ...documentSelector.filter(({ priority }) => priority !== 1),
+            ...documentSelector.filter(
+              ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+            ),
             // TODO `state.version` isn't going to exist here
             ...getContentDocumentSelectorFromConfigFile(
               projectConfig.configPath,
@@ -880,7 +889,9 @@ async function createProjectService(
 
     /////////////////////
     documentSelector = [
-      ...documentSelector.filter(({ priority }) => priority !== 1),
+      ...documentSelector.filter(
+        ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+      ),
       ...getContentDocumentSelectorFromConfigFile(
         state.configPath,
         tailwindcss.version,
@@ -1420,7 +1431,10 @@ function getContentDocumentSelectorFromConfigFile(
   return content
     .filter((item): item is string => typeof item === 'string')
     .map((item) => path.resolve(contentBase, item))
-    .map((item) => ({ pattern: normalizePath(item), priority: 1 }))
+    .map((item) => ({
+      pattern: normalizePath(item),
+      priority: DocumentSelectorPriority.CONTENT_FILE,
+    }))
 }
 
 class TW {
@@ -1486,9 +1500,10 @@ class TW {
           return {
             folder: base,
             configPath: path.resolve(base, relativeConfigPath),
-            documentSelector: []
-              .concat(relativeDocumentSelectorOrSelectors)
-              .map((selector) => ({ priority: 1, pattern: path.resolve(base, selector) })),
+            documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
+              priority: DocumentSelectorPriority.CONTENT_FILE,
+              pattern: path.resolve(base, selector),
+            })),
           }
         }
       )
@@ -1537,24 +1552,32 @@ class TW {
         let documentSelector = contentSelector
           .concat({
             pattern: normalizePath(filename),
-            priority: 0,
+            priority: isCssFile
+              ? DocumentSelectorPriority.CSS_FILE
+              : DocumentSelectorPriority.CONFIG_FILE,
           })
           .concat(
             isCssFile
               ? {
                   pattern: normalizePath(configPath),
-                  priority: 0,
+                  priority: DocumentSelectorPriority.CONFIG_FILE,
                 }
               : []
           )
           .concat({
             pattern: normalizePath(path.join(path.dirname(filename), '**')),
-            priority: 2,
+            priority: isCssFile
+              ? DocumentSelectorPriority.CSS_DIRECTORY
+              : DocumentSelectorPriority.CONFIG_DIRECTORY,
           })
-          .concat({
-            pattern: normalizePath(path.join(path.dirname(configPath), '**')),
-            priority: 3,
-          })
+          .concat(
+            isCssFile
+              ? {
+                  pattern: normalizePath(path.join(path.dirname(configPath), '**')),
+                  priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
+                }
+              : []
+          )
         projects[configPath] = [...(projects[configPath] ?? []), ...documentSelector]
         if (isCssFile) {
           cssFileConfigMap.set(normalizedFilename, configPath)
