@@ -963,7 +963,7 @@ function provideCssDirectiveCompletions(
             label: '@config',
             documentation: {
               kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `TODO.\n\n[Tailwind CSS Documentation](${docsUrl(
+              value: `[Tailwind CSS Documentation](${docsUrl(
                 state.version,
                 'functions-and-directives/#config'
               )})`,
