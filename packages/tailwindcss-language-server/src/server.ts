@@ -1162,6 +1162,7 @@ function getVariants(state: State): Array<Variant> {
           name: variantName,
           values: [],
           isArbitrary: false,
+          hasDash: true,
           selectors: () => {
             function escape(className: string): string {
               let node = state.modules.postcssSelectorParser.module.className()
@@ -1292,6 +1293,7 @@ function getVariants(state: State): Array<Variant> {
     name: variant,
     values: [],
     isArbitrary: false,
+    hasDash: true,
     selectors: () => [],
   }))
 }

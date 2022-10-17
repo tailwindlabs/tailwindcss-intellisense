@@ -34,7 +34,7 @@ export function getInvalidVariantDiagnostics(
 
   let possibleVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
-      return variant.values.map((value) => `${variant.name}-${value}`)
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
     }
     return [variant.name]
   })

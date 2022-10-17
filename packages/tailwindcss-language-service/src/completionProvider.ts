@@ -156,7 +156,7 @@ export function completionsFromClassList(
           if (variant.isArbitrary) {
             items.push(
               variantItem({
-                label: `${variant.name}-[]${sep}`,
+                label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
                 insertTextFormat: 2,
                 textEdit: {
                   newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
@@ -216,7 +216,7 @@ export function completionsFromClassList(
                 .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
                 .map((value) =>
                   variantItem({
-                    label: `${variant.name}-${value}${sep}`,
+                    label: `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
                     detail: variant.selectors({ value }).join(', '),
                   })
                 )
@@ -796,7 +796,7 @@ function provideVariantsDirectiveCompletions(
 
   let possibleVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
-      return variant.values.map((value) => `${variant.name}-${value}`)
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
     }
     return [variant.name]
   })

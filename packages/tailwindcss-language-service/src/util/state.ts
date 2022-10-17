@@ -80,6 +80,7 @@ export interface Variant {
   name: string
   values: string[]
   isArbitrary: boolean
+  hasDash: boolean
   selectors: (params?: { value?: string; label?: string }) => string[]
 }
 
