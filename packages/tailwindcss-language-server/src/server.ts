@@ -1434,7 +1434,11 @@ function getContentDocumentSelectorFromConfigFile(
   }
   return content
     .filter((item): item is string => typeof item === 'string')
-    .map((item) => path.resolve(contentBase, item))
+    .map((item) =>
+      item.startsWith('!')
+        ? `!${path.resolve(contentBase, item.slice(1))}`
+        : path.resolve(contentBase, item)
+    )
     .map((item) => ({
       pattern: normalizePath(item),
       priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -1965,8 +1969,25 @@ class TW {
     for (let [key, project] of this.projects) {
       let projectConfig = JSON.parse(key) as ProjectConfig
       if (projectConfig.configPath) {
-        for (let { pattern, priority } of project.documentSelector()) {
-          if (minimatch(URI.parse(document.uri).fsPath, pattern) && priority < matchedPriority) {
+        let documentSelector = project
+          .documentSelector()
+          .concat()
+          // move all the negated patterns to the front
+          .sort((a, z) => {
+            if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
+              return -1
+            }
+            if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
+              return 1
+            }
+            return 0
+          })
+        for (let { pattern, priority } of documentSelector) {
+          let fsPath = URI.parse(document.uri).fsPath
+          if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
+            break
+          }
+          if (minimatch(fsPath, pattern, { dot: true }) && priority < matchedPriority) {
             matchedProject = project
             matchedPriority = priority
           }
