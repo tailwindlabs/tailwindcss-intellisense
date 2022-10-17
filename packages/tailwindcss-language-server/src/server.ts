@@ -377,8 +377,9 @@ async function createProjectService(
         ? file === projectConfig.configPath
         : minimatch(file, `**/${CONFIG_GLOB}`, { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
+      let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
 
-      if (!isConfigFile && !isDependency) continue
+      if (!isConfigFile && !isDependency && !isPackageFile) continue
 
       if (!enabled) {
         if (projectConfig.configPath && (isConfigFile || isDependency)) {
@@ -404,7 +405,7 @@ async function createProjectService(
         break
       } else if (change.type === FileChangeType.Changed) {
         log('File changed:', change.file)
-        if (!state.enabled) {
+        if (!state.enabled || isPackageFile) {
           needsInit = true
           break
         } else {
@@ -412,7 +413,7 @@ async function createProjectService(
         }
       } else if (change.type === FileChangeType.Deleted) {
         log('File deleted:', change.file)
-        if (!state.enabled || isConfigFile) {
+        if (!state.enabled || isConfigFile || isPackageFile) {
           needsInit = true
           break
         } else {
