@@ -1007,7 +1007,7 @@ async function provideConfigDirectiveCompletions(
   }
 
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
-  let match = text.match(/(?:\b|^)@config\s*(?<partial>'[^']*|"[^"]*)$/)
+  let match = text.match(/@config\s*(?<partial>'[^']*|"[^"]*)$/)
   if (!match) {
     return null
   }

@@ -37,7 +37,7 @@ function getConfigDirectiveLinks(
 
   for (let range of ranges) {
     let text = getTextWithoutComments(document, 'css', range)
-    let matches = findAll(/(?:\b|^)@config\s*(?<path>'[^']+'|"[^"]+")/g, text)
+    let matches = findAll(/@config\s*(?<path>'[^']+'|"[^"]+")/g, text)
 
     for (let match of matches) {
       links.push({
