@@ -1567,40 +1567,44 @@ class TW {
           contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twVersion, base)
         } catch {}
 
-        let documentSelector = contentSelector
-          .concat({
+        let documentSelector: DocumentSelector[] = [
+          {
             pattern: normalizePath(filename),
             priority: isCssFile
               ? DocumentSelectorPriority.CSS_FILE
               : DocumentSelectorPriority.CONFIG_FILE,
-          })
-          .concat(
-            isCssFile
-              ? {
+          },
+          ...(isCssFile
+            ? [
+                {
                   pattern: normalizePath(configPath),
                   priority: DocumentSelectorPriority.CONFIG_FILE,
-                }
-              : []
-          )
-          .concat({
+                },
+              ]
+            : []),
+          ...contentSelector,
+          {
             pattern: normalizePath(path.join(path.dirname(filename), '**')),
             priority: isCssFile
               ? DocumentSelectorPriority.CSS_DIRECTORY
               : DocumentSelectorPriority.CONFIG_DIRECTORY,
-          })
-          .concat(
-            isCssFile
-              ? {
+          },
+          ...(isCssFile
+            ? [
+                {
                   pattern: normalizePath(path.join(path.dirname(configPath), '**')),
                   priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
-                }
-              : []
-          )
-          .concat({
+                },
+              ]
+            : []),
+          {
             pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
             priority: DocumentSelectorPriority.ROOT_DIRECTORY,
-          })
+          },
+        ]
+
         projects[configPath] = [...(projects[configPath] ?? []), ...documentSelector]
+
         if (isCssFile) {
           cssFileConfigMap.set(normalizedFilename, configPath)
         }
