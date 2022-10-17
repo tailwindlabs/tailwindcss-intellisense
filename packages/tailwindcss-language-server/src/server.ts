@@ -369,7 +369,7 @@ async function createProjectService(
       let file = normalizePath(change.file)
 
       let isConfigFile = projectConfig.configPath
-        ? change.file === projectConfig.configPath
+        ? file === projectConfig.configPath
         : minimatch(file, `**/${CONFIG_GLOB}`, { dot: true })
       let isDependency = state.dependencies && state.dependencies.includes(change.file)
 
@@ -1659,7 +1659,10 @@ class TW {
 
         for (let [key] of this.projects) {
           let projectConfig = JSON.parse(key) as ProjectConfig
-          if (change.file === projectConfig.configPath && change.type === FileChangeType.Deleted) {
+          if (
+            normalizedFilename === projectConfig.configPath &&
+            change.type === FileChangeType.Deleted
+          ) {
             needsRestart = true
             break changeLoop
           }
