@@ -1,4 +1,4 @@
-import { Settings, State, Variant } from './util/state'
+import { Settings, State } from './util/state'
 import type {
   CompletionItem,
   CompletionItemKind,
