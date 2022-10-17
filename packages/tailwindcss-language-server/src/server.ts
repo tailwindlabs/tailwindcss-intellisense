@@ -355,8 +355,10 @@ async function createProjectService(
     },
   }
 
-  function log(...args: any[]): void {
-    console.log(`[${path.relative(projectConfig.folder, projectConfig.configPath)}]`, ...args)
+  function log(...args: string[]): void {
+    console.log(
+      `[${path.relative(projectConfig.folder, projectConfig.configPath)}] ${args.join(' ')}`
+    )
   }
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
@@ -1593,7 +1595,7 @@ class TW {
       }
     }
 
-    console.log('[Global]', 'Creating projects:', JSON.stringify(workspaceFolders))
+    console.log(`[Global] Creating projects: ${JSON.stringify(workspaceFolders)}`)
 
     const onDidChangeWatchedFiles = async (
       changes: Array<{ file: string; type: FileChangeType }>
@@ -1708,7 +1710,7 @@ class TW {
       this.watchPatterns = (patterns) => {
         let newPatterns = this.filterNewWatchPatterns(patterns)
         if (newPatterns.length) {
-          console.log('[Global]', 'Adding watch patterns:', newPatterns.join(', '))
+          console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
           this.connection.client
             .register(DidChangeWatchedFilesNotification.type, {
               watchers: newPatterns.map((pattern) => ({ globPattern: pattern })),
@@ -1790,7 +1792,7 @@ class TW {
       this.watchPatterns = (patterns) => {
         let newPatterns = this.filterNewWatchPatterns(patterns)
         if (newPatterns.length) {
-          console.log('[Global]', 'Adding watch patterns:', newPatterns.join(', '))
+          console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
           chokidarWatcher.add(newPatterns)
         }
       }
