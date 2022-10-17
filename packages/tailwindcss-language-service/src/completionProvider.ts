@@ -1018,11 +1018,7 @@ async function provideConfigDirectiveCompletions(
   return {
     isIncomplete: false,
     items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
-      // .filter(
-      //   ([name, type]) =>
-      //     !name.startsWith('.') &&
-      //     (type.isDirectory || (!type.isDirectory && /\.[mc]?js$/.test(name)))
-      // )
+      .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
       .map(([name, type]) => ({
         label: type.isDirectory ? name + '/' : name,
         kind: type.isDirectory ? 19 : 17,
