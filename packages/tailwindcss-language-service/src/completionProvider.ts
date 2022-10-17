@@ -503,6 +503,11 @@ function provideAtApplyCompletions(
   )
 }
 
+const NUMBER_REGEX = /^(\d+\.?|\d*\.\d+)$/
+function isNumber(str: string): boolean {
+  return NUMBER_REGEX.test(str)
+}
+
 async function provideClassNameCompletions(
   state: State,
   document: TextDocument,
@@ -598,46 +603,63 @@ function provideCssHelperCompletions(
 
   return {
     isIncomplete: false,
-    items: Object.keys(obj).map((item, index) => {
-      let color = getColorFromValue(obj[item])
-      const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
-      const insertClosingBrace: boolean =
-        text.charAt(text.length - 1) !== ']' &&
-        (replaceDot || (separator && separator.endsWith('[')))
-      const detail = stringifyConfigValue(obj[item])
+    items: Object.keys(obj)
+      .sort((a, z) => {
+        let aIsNumber = isNumber(a)
+        let zIsNumber = isNumber(z)
+        if (aIsNumber && !zIsNumber) {
+          return -1
+        }
+        if (!aIsNumber && zIsNumber) {
+          return 1
+        }
+        if (aIsNumber && zIsNumber) {
+          return parseFloat(a) - parseFloat(z)
+        }
+        return 0
+      })
+      .map((item, index) => {
+        let color = getColorFromValue(obj[item])
+        const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
+        const insertClosingBrace: boolean =
+          text.charAt(text.length - 1) !== ']' &&
+          (replaceDot || (separator && separator.endsWith('[')))
+        const detail = stringifyConfigValue(obj[item])
 
-      return {
-        label: item,
-        sortText: naturalExpand(index),
-        commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(Boolean),
-        kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
-        // VS Code bug causes some values to not display in some cases
-        detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-        documentation:
-          color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-            ? culori.formatRgb(color)
-            : null,
-        textEdit: {
-          newText: `${item}${insertClosingBrace ? ']' : ''}`,
-          range: editRange,
-        },
-        additionalTextEdits: replaceDot
-          ? [
-              {
-                newText: '[',
-                range: {
-                  start: {
-                    ...editRange.start,
-                    character: editRange.start.character - 1,
+        return {
+          label: item,
+          sortText: naturalExpand(index),
+          commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
+            Boolean
+          ),
+          kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
+          // VS Code bug causes some values to not display in some cases
+          detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
+          documentation:
+            color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+              ? culori.formatRgb(color)
+              : null,
+          textEdit: {
+            newText: `${item}${insertClosingBrace ? ']' : ''}`,
+            range: editRange,
+          },
+          additionalTextEdits: replaceDot
+            ? [
+                {
+                  newText: '[',
+                  range: {
+                    start: {
+                      ...editRange.start,
+                      character: editRange.start.character - 1,
+                    },
+                    end: editRange.start,
                   },
-                  end: editRange.start,
                 },
-              },
-            ]
-          : [],
-        data: 'helper',
-      }
-    }),
+              ]
+            : [],
+          data: 'helper',
+        }
+      }),
   }
 }
 
