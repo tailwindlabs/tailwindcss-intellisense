@@ -1,4 +1,4 @@
-import { Settings, State } from './util/state'
+import { Settings, State, Variant } from './util/state'
 import type {
   CompletionItem,
   CompletionItemKind,
@@ -110,7 +110,6 @@ export function completionsFromClassList(
       }
     }
 
-    let allVariants = Object.keys(state.variants)
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
     replacementRange.start.character += offset
@@ -123,55 +122,109 @@ export function completionsFromClassList(
     let items: CompletionItem[] = []
 
     if (!important) {
-      let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+      let variantOrder = 0
+
+      function variantItem(
+        item: Omit<CompletionItem, 'kind' | 'data' | 'sortText' | 'textEdit'> & {
+          textEdit?: { newText: string; range?: Range }
+        }
+      ): CompletionItem {
+        return {
+          kind: 9,
+          data: 'variant',
+          command:
+            item.insertTextFormat === 2 // Snippet
+              ? undefined
+              : {
+                  title: '',
+                  command: 'editor.action.triggerSuggest',
+                },
+          sortText: '-' + naturalExpand(variantOrder++),
+          ...item,
+          textEdit: {
+            newText: item.label,
+            range: replacementRange,
+            ...item.textEdit,
+          },
+        }
+      }
 
       items.push(
-        ...Object.entries(state.variants)
-          .filter(([variant]) => !existingVariants.includes(variant))
-          .map(([variant, definition], index) => {
-            let resultingVariants = [...existingVariants, variant]
+        ...state.variants.flatMap((variant) => {
+          let items: CompletionItem[] = []
+
+          if (variant.isArbitrary) {
+            items.push(
+              variantItem({
+                label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
+                insertTextFormat: 2,
+                textEdit: {
+                  newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
+                },
+                // command: {
+                //   title: '',
+                //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+                //   arguments: [variant.name, replacementRange],
+                // },
+              })
+            )
+          } else if (!existingVariants.includes(variant.name)) {
+            let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+            let resultingVariants = [...existingVariants, variant.name]
 
             if (shouldSortVariants) {
+              let allVariants = state.variants.map(({ name }) => name)
               resultingVariants = resultingVariants.sort(
                 (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
               )
             }
 
-            return {
-              label: variant + sep,
-              kind: 9,
-              detail: definition,
-              data: 'variant',
-              command: {
-                title: '',
-                command: 'editor.action.triggerSuggest',
-              },
-              sortText: '-' + naturalExpand(index),
-              textEdit: {
-                newText: resultingVariants[resultingVariants.length - 1] + sep,
-                range: replacementRange,
-              },
-              additionalTextEdits:
-                shouldSortVariants && resultingVariants.length > 1
-                  ? [
-                      {
-                        newText:
-                          resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
-                        range: {
-                          start: {
-                            ...classListRange.start,
-                            character: classListRange.end.character - partialClassName.length,
-                          },
-                          end: {
-                            ...replacementRange.start,
-                            character: replacementRange.start.character,
+            items.push(
+              variantItem({
+                label: `${variant.name}${sep}`,
+                detail: variant.selectors().join(', '),
+                textEdit: {
+                  newText: resultingVariants[resultingVariants.length - 1] + sep,
+                },
+                additionalTextEdits:
+                  shouldSortVariants && resultingVariants.length > 1
+                    ? [
+                        {
+                          newText:
+                            resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
+                            sep,
+                          range: {
+                            start: {
+                              ...classListRange.start,
+                              character: classListRange.end.character - partialClassName.length,
+                            },
+                            end: {
+                              ...replacementRange.start,
+                              character: replacementRange.start.character,
+                            },
                           },
                         },
-                      },
-                    ]
-                  : [],
-            } as CompletionItem
-          })
+                      ]
+                    : [],
+              })
+            )
+          }
+
+          if (variant.values.length) {
+            items.push(
+              ...variant.values
+                .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
+                .map((value) =>
+                  variantItem({
+                    label: `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+                    detail: variant.selectors({ value }).join(', '),
+                  })
+                )
+            )
+          }
+
+          return items
+        })
       )
     }
 
@@ -790,7 +843,12 @@ function provideVariantsDirectiveCompletions(
 
   if (/\s+/.test(parts[parts.length - 1])) return null
 
-  let possibleVariants = Object.keys(state.variants)
+  let possibleVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+    }
+    return [variant.name]
+  })
   const existingVariants = parts.slice(0, parts.length - 1)
 
   if (state.jit) {
