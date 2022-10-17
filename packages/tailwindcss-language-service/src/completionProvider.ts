@@ -569,7 +569,7 @@ function provideCssHelperCompletions(
   }
 
   let obj: any
-  let offset: number = 0
+  let offset: number = keys[keys.length - 1].length
   let separator: string = separators.length ? separators[separators.length - 1] : null
 
   if (keys.length === 1) {
@@ -588,6 +588,14 @@ function provideCssHelperCompletions(
 
   if (!obj) return null
 
+  let editRange = {
+    start: {
+      line: position.line,
+      character: position.character - offset,
+    },
+    end: position,
+  }
+
   return {
     isIncomplete: false,
     items: Object.keys(obj).map((item, index) => {
@@ -600,8 +608,8 @@ function provideCssHelperCompletions(
 
       return {
         label: item,
-        filterText: `${replaceDot ? '.' : ''}${item}`,
         sortText: naturalExpand(index),
+        commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(Boolean),
         kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
         // VS Code bug causes some values to not display in some cases
         detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
@@ -610,16 +618,23 @@ function provideCssHelperCompletions(
             ? culori.formatRgb(color)
             : null,
         textEdit: {
-          newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
-          range: {
-            start: {
-              line: position.line,
-              character:
-                position.character - keys[keys.length - 1].length - (replaceDot ? 1 : 0) - offset,
-            },
-            end: position,
-          },
+          newText: `${item}${insertClosingBrace ? ']' : ''}`,
+          range: editRange,
         },
+        additionalTextEdits: replaceDot
+          ? [
+              {
+                newText: '[',
+                range: {
+                  start: {
+                    ...editRange.start,
+                    character: editRange.start.character - 1,
+                  },
+                  end: editRange.start,
+                },
+              },
+            ]
+          : [],
         data: 'helper',
       }
     }),
