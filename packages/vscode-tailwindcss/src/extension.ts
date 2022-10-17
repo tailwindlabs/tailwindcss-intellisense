@@ -378,7 +378,11 @@ export async function activate(context: ExtensionContext) {
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections
-          if (selections.length > 1 && result.additionalTextEdits?.length > 0) {
+          if (
+            result['data'] === 'variant' &&
+            selections.length > 1 &&
+            result.additionalTextEdits?.length > 0
+          ) {
             let length =
               selections[0].start.character - result.additionalTextEdits[0].range.start.character
             let prefixLength =

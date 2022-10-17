@@ -503,6 +503,11 @@ function provideAtApplyCompletions(
   )
 }
 
+const NUMBER_REGEX = /^(\d+\.?|\d*\.\d+)$/
+function isNumber(str: string): boolean {
+  return NUMBER_REGEX.test(str)
+}
+
 async function provideClassNameCompletions(
   state: State,
   document: TextDocument,
@@ -537,14 +542,26 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/\b(?<helper>config|theme)\(['"](?<keys>[^'"]*)$/)
+    .match(/\b(?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
 
   if (match === null) {
     return null
   }
 
+  let alpha: string
+  let path = match.groups.path.replace(/^['"]+/g, '')
+  let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]*))$/)
+  if (matches) {
+    path = matches[1]
+    alpha = matches[2]
+  }
+
+  if (alpha !== undefined) {
+    return null
+  }
+
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
-  let parts = match.groups.keys.split(/([\[\].]+)/)
+  let parts = path.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
   let separators = parts.filter((_, i) => i % 2 !== 0)
   // let obj =
@@ -557,7 +574,7 @@ function provideCssHelperCompletions(
   }
 
   let obj: any
-  let offset: number = 0
+  let offset: number = keys[keys.length - 1].length
   let separator: string = separators.length ? separators[separators.length - 1] : null
 
   if (keys.length === 1) {
@@ -576,41 +593,73 @@ function provideCssHelperCompletions(
 
   if (!obj) return null
 
+  let editRange = {
+    start: {
+      line: position.line,
+      character: position.character - offset,
+    },
+    end: position,
+  }
+
   return {
     isIncomplete: false,
-    items: Object.keys(obj).map((item, index) => {
-      let color = getColorFromValue(obj[item])
-      const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
-      const insertClosingBrace: boolean =
-        text.charAt(text.length - 1) !== ']' &&
-        (replaceDot || (separator && separator.endsWith('[')))
-      const detail = stringifyConfigValue(obj[item])
+    items: Object.keys(obj)
+      .sort((a, z) => {
+        let aIsNumber = isNumber(a)
+        let zIsNumber = isNumber(z)
+        if (aIsNumber && !zIsNumber) {
+          return -1
+        }
+        if (!aIsNumber && zIsNumber) {
+          return 1
+        }
+        if (aIsNumber && zIsNumber) {
+          return parseFloat(a) - parseFloat(z)
+        }
+        return 0
+      })
+      .map((item, index) => {
+        let color = getColorFromValue(obj[item])
+        const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
+        const insertClosingBrace: boolean =
+          text.charAt(text.length - 1) !== ']' &&
+          (replaceDot || (separator && separator.endsWith('[')))
+        const detail = stringifyConfigValue(obj[item])
 
-      return {
-        label: item,
-        filterText: `${replaceDot ? '.' : ''}${item}`,
-        sortText: naturalExpand(index),
-        kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
-        // VS Code bug causes some values to not display in some cases
-        detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-        documentation:
-          color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-            ? culori.formatRgb(color)
-            : null,
-        textEdit: {
-          newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
-          range: {
-            start: {
-              line: position.line,
-              character:
-                position.character - keys[keys.length - 1].length - (replaceDot ? 1 : 0) - offset,
-            },
-            end: position,
+        return {
+          label: item,
+          sortText: naturalExpand(index),
+          commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
+            Boolean
+          ),
+          kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
+          // VS Code bug causes some values to not display in some cases
+          detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
+          documentation:
+            color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+              ? culori.formatRgb(color)
+              : null,
+          textEdit: {
+            newText: `${item}${insertClosingBrace ? ']' : ''}`,
+            range: editRange,
           },
-        },
-        data: 'helper',
-      }
-    }),
+          additionalTextEdits: replaceDot
+            ? [
+                {
+                  newText: '[',
+                  range: {
+                    start: {
+                      ...editRange.start,
+                      character: editRange.start.character - 1,
+                    },
+                    end: editRange.start,
+                  },
+                },
+              ]
+            : [],
+          data: 'helper',
+        }
+      }),
   }
 }
 

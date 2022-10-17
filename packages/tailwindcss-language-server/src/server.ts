@@ -112,6 +112,7 @@ const TRIGGER_CHARACTERS = [
   // @apply and emmet-style
   '.',
   // config/theme helper
+  '(',
   '[',
   // JIT "important" prefix
   '!',
