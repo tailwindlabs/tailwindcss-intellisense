@@ -29,6 +29,10 @@ export type EditorState = {
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
+  readDirectory: (
+    document: TextDocument,
+    directory: string
+  ) => Promise<Array<[name: string, type: { isDirectory: boolean }]>>
 }
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'

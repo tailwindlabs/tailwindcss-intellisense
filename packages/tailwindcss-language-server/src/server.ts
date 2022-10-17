@@ -27,6 +27,9 @@ import {
   FileChangeType,
   Disposable,
   TextDocumentIdentifier,
+  DocumentLinkRequest,
+  DocumentLinkParams,
+  DocumentLink,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -68,6 +71,7 @@ import {
 } from './lsp/diagnosticsProvider'
 import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
+import { getDocumentLinks } from 'tailwindcss-language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
@@ -188,6 +192,7 @@ interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
 }
 
 type ProjectConfig = { folder: string; configPath?: string; documentSelector?: string[] }
@@ -298,6 +303,27 @@ async function createProjectService(
       getConfiguration,
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
+      },
+      async readDirectory(document, directory) {
+        try {
+          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+          let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+          let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
+            dirents.map(async (dirent) => {
+              let isDirectory = dirent.isDirectory()
+              return (await isExcluded(
+                state,
+                document,
+                path.join(directory, dirent.name, isDirectory ? '/' : '')
+              ))
+                ? null
+                : [dirent.name, { isDirectory }]
+            })
+          )
+          return result.filter((item) => item !== null)
+        } catch {
+          return []
+        }
       },
     },
   }
@@ -1028,6 +1054,14 @@ async function createProjectService(
       if (!settings.tailwindCSS.codeActions) return null
       return doCodeActions(state, params)
     },
+    onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+      if (!state.enabled) return null
+      let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return null
+      return getDocumentLinks(state, document, (linkPath) =>
+        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
+      )
+    },
     provideDiagnostics: debounce((document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)
@@ -1485,6 +1519,7 @@ class TW {
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
   }
 
   private updateCapabilities() {
@@ -1499,6 +1534,7 @@ class TW {
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
 
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
@@ -1564,6 +1600,10 @@ class TW {
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+    return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
+  }
+
   listen() {
     this.connection.listen()
   }
@@ -1605,7 +1645,8 @@ function supportsDynamicRegistration(connection: Connection, params: InitializeP
     params.capabilities.textDocument.hover?.dynamicRegistration &&
     params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
     params.capabilities.textDocument.codeAction?.dynamicRegistration &&
-    params.capabilities.textDocument.completion?.dynamicRegistration
+    params.capabilities.textDocument.completion?.dynamicRegistration &&
+    params.capabilities.textDocument.documentLink?.dynamicRegistration
   )
 }
 
@@ -1630,6 +1671,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
       hoverProvider: true,
       colorProvider: true,
       codeActionProvider: true,
+      documentLinkProvider: {},
       completionProvider: {
         resolveProvider: true,
         triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
