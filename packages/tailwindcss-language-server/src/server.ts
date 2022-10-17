@@ -327,7 +327,8 @@ async function createProjectService(
   updateCapabilities: () => void,
   checkOpenDocuments: () => void,
   refreshDiagnostics: () => void,
-  watchPatterns: (patterns: string[]) => void
+  watchPatterns: (patterns: string[]) => void,
+  initialTailwindVersion: string
 ): Promise<ProjectService> {
   let enabled = false
   const folder = projectConfig.folder
@@ -353,6 +354,10 @@ async function createProjectService(
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
     },
+  }
+
+  if (projectConfig.configPath) {
+    watchPatterns([projectConfig.configPath, ...getModuleDependencies(projectConfig.configPath)])
   }
 
   function log(...args: string[]): void {
@@ -381,10 +386,9 @@ async function createProjectService(
             ...documentSelector.filter(
               ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
             ),
-            // TODO `state.version` isn't going to exist here
             ...getContentDocumentSelectorFromConfigFile(
               projectConfig.configPath,
-              state.version,
+              initialTailwindVersion,
               projectConfig.folder
             ),
           ]
@@ -1803,7 +1807,12 @@ class TW {
 
     await Promise.all(
       workspaceFolders.map((projectConfig) =>
-        this.addProject(projectConfig, this.initializeParams, this.watchPatterns)
+        this.addProject(
+          projectConfig,
+          this.initializeParams,
+          this.watchPatterns,
+          configTailwindVersionMap.get(projectConfig.configPath)
+        )
       )
     )
 
@@ -1868,7 +1877,8 @@ class TW {
   private async addProject(
     projectConfig: ProjectConfig,
     params: InitializeParams,
-    watchPatterns: (patterns: string[]) => void
+    watchPatterns: (patterns: string[]) => void,
+    tailwindVersion: string
   ): Promise<void> {
     let key = JSON.stringify(projectConfig)
 
@@ -1890,7 +1900,8 @@ class TW {
           }
         },
         () => this.refreshDiagnostics(),
-        (patterns: string[]) => watchPatterns(patterns)
+        (patterns: string[]) => watchPatterns(patterns),
+        tailwindVersion
       )
       this.projects.set(key, project)
     }
