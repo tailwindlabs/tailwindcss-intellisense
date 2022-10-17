@@ -195,14 +195,15 @@ type ProjectConfig = {
   documentSelector?: Array<DocumentSelector>
 }
 
-type DocumentSelector = { pattern: string; priority: number }
 enum DocumentSelectorPriority {
   CONFIG_FILE = 0,
   CSS_FILE = 0,
   CONTENT_FILE = 1,
   CSS_DIRECTORY = 2,
   CONFIG_DIRECTORY = 3,
+  ROOT_DIRECTORY = 4,
 }
+type DocumentSelector = { pattern: string; priority: DocumentSelectorPriority }
 
 function getMode(config: any): unknown {
   if (typeof config.mode !== 'undefined') {
@@ -1403,6 +1404,26 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
   return path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))
 }
 
+function getPackageRoot(cwd: string, rootDir: string) {
+  try {
+    let pkgJsonPath = findUp.sync(
+      (dir) => {
+        let pkgJson = path.join(dir, 'package.json')
+        if (findUp.sync.exists(pkgJson)) {
+          return pkgJson
+        }
+        if (dir === rootDir) {
+          return findUp.stop
+        }
+      },
+      { cwd }
+    )
+    return pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
+  } catch {
+    return rootDir
+  }
+}
+
 function getContentDocumentSelectorFromConfigFile(
   configPath: string,
   tailwindVersion: string,
@@ -1419,19 +1440,7 @@ function getContentDocumentSelectorFromConfigFile(
   if (relativeEnabled) {
     contentBase = path.dirname(configPath)
   } else {
-    let pkgJsonPath = findUp.sync(
-      (dir) => {
-        let pkgJson = path.join(dir, 'package.json')
-        if (findUp.sync.exists(pkgJson)) {
-          return pkgJson
-        }
-        if (dir === rootDir) {
-          return findUp.stop
-        }
-      },
-      { cwd: path.dirname(configPath) }
-    )
-    contentBase = pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
+    contentBase = getPackageRoot(path.dirname(configPath), rootDir)
   }
   return content
     .filter((item): item is string => typeof item === 'string')
@@ -1587,6 +1596,10 @@ class TW {
                 }
               : []
           )
+          .concat({
+            pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
+            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+          })
         projects[configPath] = [...(projects[configPath] ?? []), ...documentSelector]
         if (isCssFile) {
           cssFileConfigMap.set(normalizedFilename, configPath)
