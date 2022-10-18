@@ -25,6 +25,7 @@ export async function provideInvalidApplyCodeActions(
   diagnostic: InvalidApplyDiagnostic
 ): Promise<CodeAction[]> {
   let document = state.editor.documents.get(params.textDocument.uri)
+  if (!document) return []
   let documentText = getTextWithoutComments(document, 'css')
   let cssRange: Range
   let cssText = documentText

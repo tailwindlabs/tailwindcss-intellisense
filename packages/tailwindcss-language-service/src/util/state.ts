@@ -21,7 +21,6 @@ export type EditorState = {
   connection: Connection
   folder: string
   documents: TextDocuments<TextDocument>
-  globalSettings: Settings
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
