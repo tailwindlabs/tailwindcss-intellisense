@@ -132,7 +132,7 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
 
 async function fileContainsAtConfig(uri: Uri) {
   let contents = (await Workspace.fs.readFile(uri)).toString()
-  return /(^|\b)@config\s*['"]/.test(contents)
+  return /@config\s*['"]/.test(contents)
 }
 
 export async function activate(context: ExtensionContext) {

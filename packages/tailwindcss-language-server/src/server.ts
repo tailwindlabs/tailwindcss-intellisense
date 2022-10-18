@@ -1488,7 +1488,7 @@ async function getPlugins(config: any) {
 
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
   let css = getTextWithoutComments(await fs.promises.readFile(cssFile, 'utf8'), 'css')
-  let match = css.match(/(?:\b|^)@config\s*(?<config>'[^']+'|"[^"]+")/)
+  let match = css.match(/@config\s*(?<config>'[^']+'|"[^"]+")/)
   if (!match) {
     return null
   }
