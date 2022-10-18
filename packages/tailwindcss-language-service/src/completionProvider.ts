@@ -159,7 +159,7 @@ export function completionsFromClassList(
                 label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
                 insertTextFormat: 2,
                 textEdit: {
-                  newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
+                  newText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1:&}]${sep}\${0}`,
                 },
                 // command: {
                 //   title: '',
