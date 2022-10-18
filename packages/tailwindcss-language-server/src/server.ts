@@ -320,6 +320,38 @@ function withFallback<T>(getter: () => T, fallback: T): T {
   }
 }
 
+function dirContains(dir: string, file: string): boolean {
+  let relative = path.relative(dir, file)
+  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
+}
+
+function changeAffectsFile(change: string, files: string[]): boolean {
+  for (let file of files) {
+    console.log({ change, file, contains: dirContains(change, file) })
+    if (change === file || dirContains(change, file)) {
+      return true
+    }
+  }
+  return false
+}
+
+// We need to add parent directories to the watcher:
+// https://github.com/microsoft/vscode/issues/60813
+function getWatchPatternsForFile(file: string): string[] {
+  let tmp: string
+  let dir = path.dirname(file)
+  let patterns: string[] = [file, dir]
+  while (true) {
+    dir = path.dirname((tmp = dir))
+    if (tmp === dir) {
+      break
+    } else {
+      patterns.push(dir)
+    }
+  }
+  return patterns
+}
+
 async function createProjectService(
   projectConfig: ProjectConfig,
   connection: Connection,
@@ -358,7 +390,14 @@ async function createProjectService(
   }
 
   if (projectConfig.configPath) {
-    watchPatterns([projectConfig.configPath, ...getModuleDependencies(projectConfig.configPath)])
+    let deps = []
+    try {
+      deps = getModuleDependencies(projectConfig.configPath)
+    } catch {}
+    watchPatterns([
+      ...getWatchPatternsForFile(projectConfig.configPath),
+      ...deps.flatMap((dep) => getWatchPatternsForFile(dep)),
+    ])
   }
 
   function log(...args: string[]): void {
@@ -374,10 +413,8 @@ async function createProjectService(
     for (let change of changes) {
       let file = normalizePath(change.file)
 
-      let isConfigFile = projectConfig.configPath
-        ? file === projectConfig.configPath
-        : minimatch(file, `**/${CONFIG_GLOB}`, { dot: true })
-      let isDependency = state.dependencies && state.dependencies.includes(change.file)
+      let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
+      let isDependency = changeAffectsFile(change.file, state.dependencies ?? [])
       let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
 
       if (!isConfigFile && !isDependency && !isPackageFile) continue
@@ -432,7 +469,6 @@ async function createProjectService(
 
   function resetState(): void {
     // clearAllDiagnostics(state)
-    refreshDiagnostics()
     Object.keys(state).forEach((key) => {
       // Keep `dependencies` to ensure that they are still watched
       if (key !== 'editor' && key !== 'dependencies') {
@@ -440,6 +476,7 @@ async function createProjectService(
       }
     })
     state.enabled = false
+    refreshDiagnostics()
     updateCapabilities()
   }
 
@@ -478,7 +515,7 @@ async function createProjectService(
       throw new SilentError('No config file found.')
     }
 
-    watchPatterns([configPath])
+    watchPatterns(getWatchPatternsForFile(configPath))
 
     const pnpPath = findUp.sync(
       (dir) => {
@@ -967,7 +1004,7 @@ async function createProjectService(
     // }
     state.dependencies = getModuleDependencies(state.configPath)
     // chokidarWatcher?.add(state.dependencies)
-    watchPatterns(state.dependencies ?? [])
+    watchPatterns((state.dependencies ?? []).flatMap((dep) => getWatchPatternsForFile(dep)))
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -1686,8 +1723,8 @@ class TW {
         for (let [key] of this.projects) {
           let projectConfig = JSON.parse(key) as ProjectConfig
           if (
-            normalizedFilename === projectConfig.configPath &&
-            change.type === FileChangeType.Deleted
+            change.type === FileChangeType.Deleted &&
+            changeAffectsFile(normalizedFilename, [projectConfig.configPath])
           ) {
             needsRestart = true
             break changeLoop
