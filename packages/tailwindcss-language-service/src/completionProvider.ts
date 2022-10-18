@@ -110,7 +110,6 @@ export function completionsFromClassList(
       }
     }
 
-    let allVariants = Object.keys(state.variants)
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
     replacementRange.start.character += offset
@@ -123,55 +122,109 @@ export function completionsFromClassList(
     let items: CompletionItem[] = []
 
     if (!important) {
-      let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+      let variantOrder = 0
+
+      function variantItem(
+        item: Omit<CompletionItem, 'kind' | 'data' | 'sortText' | 'textEdit'> & {
+          textEdit?: { newText: string; range?: Range }
+        }
+      ): CompletionItem {
+        return {
+          kind: 9,
+          data: 'variant',
+          command:
+            item.insertTextFormat === 2 // Snippet
+              ? undefined
+              : {
+                  title: '',
+                  command: 'editor.action.triggerSuggest',
+                },
+          sortText: '-' + naturalExpand(variantOrder++),
+          ...item,
+          textEdit: {
+            newText: item.label,
+            range: replacementRange,
+            ...item.textEdit,
+          },
+        }
+      }
 
       items.push(
-        ...Object.entries(state.variants)
-          .filter(([variant]) => !existingVariants.includes(variant))
-          .map(([variant, definition], index) => {
-            let resultingVariants = [...existingVariants, variant]
+        ...state.variants.flatMap((variant) => {
+          let items: CompletionItem[] = []
+
+          if (variant.isArbitrary) {
+            items.push(
+              variantItem({
+                label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
+                insertTextFormat: 2,
+                textEdit: {
+                  newText: `${variant.name}-[\${1:&}]${sep}\${0}`,
+                },
+                // command: {
+                //   title: '',
+                //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+                //   arguments: [variant.name, replacementRange],
+                // },
+              })
+            )
+          } else if (!existingVariants.includes(variant.name)) {
+            let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+            let resultingVariants = [...existingVariants, variant.name]
 
             if (shouldSortVariants) {
+              let allVariants = state.variants.map(({ name }) => name)
               resultingVariants = resultingVariants.sort(
                 (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
               )
             }
 
-            return {
-              label: variant + sep,
-              kind: 9,
-              detail: definition,
-              data: 'variant',
-              command: {
-                title: '',
-                command: 'editor.action.triggerSuggest',
-              },
-              sortText: '-' + naturalExpand(index),
-              textEdit: {
-                newText: resultingVariants[resultingVariants.length - 1] + sep,
-                range: replacementRange,
-              },
-              additionalTextEdits:
-                shouldSortVariants && resultingVariants.length > 1
-                  ? [
-                      {
-                        newText:
-                          resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
-                        range: {
-                          start: {
-                            ...classListRange.start,
-                            character: classListRange.end.character - partialClassName.length,
-                          },
-                          end: {
-                            ...replacementRange.start,
-                            character: replacementRange.start.character,
+            items.push(
+              variantItem({
+                label: `${variant.name}${sep}`,
+                detail: variant.selectors().join(', '),
+                textEdit: {
+                  newText: resultingVariants[resultingVariants.length - 1] + sep,
+                },
+                additionalTextEdits:
+                  shouldSortVariants && resultingVariants.length > 1
+                    ? [
+                        {
+                          newText:
+                            resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
+                            sep,
+                          range: {
+                            start: {
+                              ...classListRange.start,
+                              character: classListRange.end.character - partialClassName.length,
+                            },
+                            end: {
+                              ...replacementRange.start,
+                              character: replacementRange.start.character,
+                            },
                           },
                         },
-                      },
-                    ]
-                  : [],
-            } as CompletionItem
-          })
+                      ]
+                    : [],
+              })
+            )
+          }
+
+          if (variant.values.length) {
+            items.push(
+              ...variant.values
+                .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
+                .map((value) =>
+                  variantItem({
+                    label: `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+                    detail: variant.selectors({ value }).join(', '),
+                  })
+                )
+            )
+          }
+
+          return items
+        })
       )
     }
 
@@ -503,6 +556,11 @@ function provideAtApplyCompletions(
   )
 }
 
+const NUMBER_REGEX = /^(\d+\.?|\d*\.\d+)$/
+function isNumber(str: string): boolean {
+  return NUMBER_REGEX.test(str)
+}
+
 async function provideClassNameCompletions(
   state: State,
   document: TextDocument,
@@ -537,14 +595,26 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/\b(?<helper>config|theme)\(['"](?<keys>[^'"]*)$/)
+    .match(/\b(?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
 
   if (match === null) {
     return null
   }
 
+  let alpha: string
+  let path = match.groups.path.replace(/^['"]+/g, '')
+  let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]*))$/)
+  if (matches) {
+    path = matches[1]
+    alpha = matches[2]
+  }
+
+  if (alpha !== undefined) {
+    return null
+  }
+
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
-  let parts = match.groups.keys.split(/([\[\].]+)/)
+  let parts = path.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
   let separators = parts.filter((_, i) => i % 2 !== 0)
   // let obj =
@@ -557,7 +627,7 @@ function provideCssHelperCompletions(
   }
 
   let obj: any
-  let offset: number = 0
+  let offset: number = keys[keys.length - 1].length
   let separator: string = separators.length ? separators[separators.length - 1] : null
 
   if (keys.length === 1) {
@@ -576,41 +646,73 @@ function provideCssHelperCompletions(
 
   if (!obj) return null
 
+  let editRange = {
+    start: {
+      line: position.line,
+      character: position.character - offset,
+    },
+    end: position,
+  }
+
   return {
     isIncomplete: false,
-    items: Object.keys(obj).map((item, index) => {
-      let color = getColorFromValue(obj[item])
-      const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
-      const insertClosingBrace: boolean =
-        text.charAt(text.length - 1) !== ']' &&
-        (replaceDot || (separator && separator.endsWith('[')))
-      const detail = stringifyConfigValue(obj[item])
+    items: Object.keys(obj)
+      .sort((a, z) => {
+        let aIsNumber = isNumber(a)
+        let zIsNumber = isNumber(z)
+        if (aIsNumber && !zIsNumber) {
+          return -1
+        }
+        if (!aIsNumber && zIsNumber) {
+          return 1
+        }
+        if (aIsNumber && zIsNumber) {
+          return parseFloat(a) - parseFloat(z)
+        }
+        return 0
+      })
+      .map((item, index) => {
+        let color = getColorFromValue(obj[item])
+        const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
+        const insertClosingBrace: boolean =
+          text.charAt(text.length - 1) !== ']' &&
+          (replaceDot || (separator && separator.endsWith('[')))
+        const detail = stringifyConfigValue(obj[item])
 
-      return {
-        label: item,
-        filterText: `${replaceDot ? '.' : ''}${item}`,
-        sortText: naturalExpand(index),
-        kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
-        // VS Code bug causes some values to not display in some cases
-        detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-        documentation:
-          color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-            ? culori.formatRgb(color)
-            : null,
-        textEdit: {
-          newText: `${replaceDot ? '[' : ''}${item}${insertClosingBrace ? ']' : ''}`,
-          range: {
-            start: {
-              line: position.line,
-              character:
-                position.character - keys[keys.length - 1].length - (replaceDot ? 1 : 0) - offset,
-            },
-            end: position,
+        return {
+          label: item,
+          sortText: naturalExpand(index),
+          commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
+            Boolean
+          ),
+          kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
+          // VS Code bug causes some values to not display in some cases
+          detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
+          documentation:
+            color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+              ? culori.formatRgb(color)
+              : null,
+          textEdit: {
+            newText: `${item}${insertClosingBrace ? ']' : ''}`,
+            range: editRange,
           },
-        },
-        data: 'helper',
-      }
-    }),
+          additionalTextEdits: replaceDot
+            ? [
+                {
+                  newText: '[',
+                  range: {
+                    start: {
+                      ...editRange.start,
+                      character: editRange.start.character - 1,
+                    },
+                    end: editRange.start,
+                  },
+                },
+              ]
+            : [],
+          data: 'helper',
+        }
+      }),
   }
 }
 
@@ -741,7 +843,12 @@ function provideVariantsDirectiveCompletions(
 
   if (/\s+/.test(parts[parts.length - 1])) return null
 
-  let possibleVariants = Object.keys(state.variants)
+  let possibleVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+    }
+    return [variant.name]
+  })
   const existingVariants = parts.slice(0, parts.length - 1)
 
   if (state.jit) {
@@ -945,6 +1052,20 @@ function provideCssDirectiveCompletions(
             },
           },
         ]),
+    ...(semver.gte(state.version, '3.2.0')
+      ? [
+          {
+            label: '@config',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#config'
+              )})`,
+            },
+          },
+        ]
+      : []),
   ]
 
   return {
@@ -964,6 +1085,52 @@ function provideCssDirectiveCompletions(
         },
       },
     })),
+  }
+}
+
+async function provideConfigDirectiveCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position
+): Promise<CompletionList> {
+  if (!isCssContext(state, document, position)) {
+    return null
+  }
+
+  if (!semver.gte(state.version, '3.2.0')) {
+    return null
+  }
+
+  let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
+  let match = text.match(/@config\s*(?<partial>'[^']*|"[^"]*)$/)
+  if (!match) {
+    return null
+  }
+  let partial = match.groups.partial.slice(1) // remove quote
+  let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
+  let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
+
+  return {
+    isIncomplete: false,
+    items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
+      .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
+      .map(([name, type]) => ({
+        label: type.isDirectory ? name + '/' : name,
+        kind: type.isDirectory ? 19 : 17,
+        textEdit: {
+          newText: type.isDirectory ? name + '/' : name,
+          range: {
+            start: {
+              line: position.line,
+              character: position.character - valueAfterLastSlash.length,
+            },
+            end: position,
+          },
+        },
+        command: type.isDirectory
+          ? { command: 'editor.action.triggerSuggest', title: '' }
+          : undefined,
+      })),
   }
 }
 
@@ -1055,6 +1222,7 @@ export async function doComplete(
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
+    (await provideConfigDirectiveCompletions(state, document, position)) ||
     (await provideCustomClassNameCompletions(state, document, position))
 
   if (result) return result

@@ -5,17 +5,25 @@ export function getVariantsFromClassName(
   state: State,
   className: string
 ): { variants: string[]; offset: number } {
-  let allVariants = Object.keys(state.variants)
-  let parts = Array.from(splitAtTopLevelOnly(className, state.separator)).filter(Boolean)
+  let allVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+    }
+    return [variant.name]
+  })
   let variants = new Set<string>()
   let offset = 0
+  let parts = splitAtTopLevelOnly(className, state.separator)
+  if (parts.length < 2) {
+    return { variants: Array.from(variants), offset }
+  }
+  parts = parts.filter(Boolean)
 
   for (let part of parts) {
     if (
       allVariants.includes(part) ||
       (state.jit &&
-        ((part.includes('[') && part.endsWith(']')) ||
-          (part.includes('<') && part.includes('>'))) &&
+        ((part.includes('[') && part.endsWith(']')) || part.includes('/')) &&
         jit.generateRules(state, [`${part}${state.separator}[color:red]`]).rules.length > 0)
     ) {
       variants.add(part)
@@ -29,66 +37,34 @@ export function getVariantsFromClassName(
   return { variants: Array.from(variants), offset }
 }
 
-const REGEX_SPECIAL = /[\\^$.*+?()[\]{}|]/g
-const REGEX_HAS_SPECIAL = RegExp(REGEX_SPECIAL.source)
+// https://github.com/tailwindlabs/tailwindcss/blob/a8a2e2a7191fbd4bee044523aecbade5823a8664/src/util/splitAtTopLevelOnly.js
+function splitAtTopLevelOnly(input: string, separator: string): string[] {
+  let stack: string[] = []
+  let parts: string[] = []
+  let lastPos = 0
 
-function regexEscape(string: string): string {
-  return string && REGEX_HAS_SPECIAL.test(string)
-    ? string.replace(REGEX_SPECIAL, '\\$&')
-    : string || ''
-}
+  for (let idx = 0; idx < input.length; idx++) {
+    let char = input[idx]
 
-function* splitAtTopLevelOnly(input: string, separator: string): Generator<string> {
-  let SPECIALS = new RegExp(`[(){}\\[\\]${regexEscape(separator)}]`, 'g')
-
-  let depth = 0
-  let lastIndex = 0
-  let found = false
-  let separatorIndex = 0
-  let separatorStart = 0
-  let separatorLength = separator.length
-
-  // Find all paren-like things & character
-  // And only split on commas if they're top-level
-  for (let match of input.matchAll(SPECIALS)) {
-    let matchesSeparator = match[0] === separator[separatorIndex]
-    let atEndOfSeparator = separatorIndex === separatorLength - 1
-    let matchesFullSeparator = matchesSeparator && atEndOfSeparator
-
-    if (match[0] === '(') depth++
-    if (match[0] === ')') depth--
-    if (match[0] === '[') depth++
-    if (match[0] === ']') depth--
-    if (match[0] === '{') depth++
-    if (match[0] === '}') depth--
-
-    if (matchesSeparator && depth === 0) {
-      if (separatorStart === 0) {
-        separatorStart = match.index
+    if (stack.length === 0 && char === separator[0]) {
+      if (separator.length === 1 || input.slice(idx, idx + separator.length) === separator) {
+        parts.push(input.slice(lastPos, idx))
+        lastPos = idx + separator.length
       }
-
-      separatorIndex++
     }
 
-    if (matchesFullSeparator && depth === 0) {
-      found = true
-
-      yield input.substring(lastIndex, separatorStart)
-      lastIndex = separatorStart + separatorLength
-    }
-
-    if (separatorIndex === separatorLength) {
-      separatorIndex = 0
-      separatorStart = 0
+    if (char === '(' || char === '[' || char === '{') {
+      stack.push(char)
+    } else if (
+      (char === ')' && stack[stack.length - 1] === '(') ||
+      (char === ']' && stack[stack.length - 1] === '[') ||
+      (char === '}' && stack[stack.length - 1] === '{')
+    ) {
+      stack.pop()
     }
   }
 
-  // Provide the last segment of the string if available
-  // Otherwise the whole string since no `char`s were found
-  // This mirrors the behavior of string.split()
-  if (found) {
-    yield input.substring(lastIndex)
-  } else {
-    yield input
-  }
+  parts.push(input.slice(lastPos))
+
+  return parts
 }

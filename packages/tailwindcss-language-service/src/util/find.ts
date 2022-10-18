@@ -359,36 +359,48 @@ export function findHelperFunctionsInRange(
   range?: Range
 ): DocumentHelperFunction[] {
   const text = getTextWithoutComments(doc, 'css', range)
-  const matches = findAll(
-    /(?<before>^|\s)(?<helper>theme|config)\((?:(?<single>')([^']+)'|(?<double>")([^"]+)")[^)]*\)/gm,
+  let matches = findAll(
+    /(?<prefix>\s|^)(?<helper>config|theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
     text
   )
 
   return matches.map((match) => {
-    let value = match[4] || match[6]
-    let startIndex = match.index + match.groups.before.length
+    let quotesBefore = ''
+    let path = match.groups.path.replace(/['"]+$/, '').replace(/^['"]+/, (m) => {
+      quotesBefore = m
+      return ''
+    })
+    let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]+))$/)
+    if (matches) {
+      path = matches[1]
+    }
+    path = path.replace(/['"]*\s*$/, '')
+
+    let startIndex =
+      match.index +
+      match.groups.prefix.length +
+      match.groups.helper.length +
+      match.groups.innerPrefix.length
+
     return {
-      full: match[0].substr(match.groups.before.length),
-      value,
       helper: match.groups.helper === 'theme' ? 'theme' : 'config',
-      quotes: match.groups.single ? "'" : '"',
-      range: resolveRange(
-        {
-          start: indexToPosition(text, startIndex),
-          end: indexToPosition(text, match.index + match[0].length),
-        },
-        range
-      ),
-      valueRange: resolveRange(
-        {
-          start: indexToPosition(text, startIndex + match.groups.helper.length + 1),
-          end: indexToPosition(
-            text,
-            startIndex + match.groups.helper.length + 1 + 1 + value.length + 1
-          ),
-        },
-        range
-      ),
+      path,
+      ranges: {
+        full: resolveRange(
+          {
+            start: indexToPosition(text, startIndex),
+            end: indexToPosition(text, startIndex + match.groups.path.length),
+          },
+          range
+        ),
+        path: resolveRange(
+          {
+            start: indexToPosition(text, startIndex + quotesBefore.length),
+            end: indexToPosition(text, startIndex + quotesBefore.length + path.length),
+          },
+          range
+        ),
+      },
     }
   })
 }
