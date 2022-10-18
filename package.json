@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "esbuild": "0.14.11",
-    "lerna": "^3.22.1",
+    "lerna": "^6.0.1",
     "mri": "1.2.0"
   }
 }
