@@ -336,7 +336,6 @@ function dirContains(dir: string, file: string): boolean {
 
 function changeAffectsFile(change: string, files: string[]): boolean {
   for (let file of files) {
-    console.log({ change, file, contains: dirContains(change, file) })
     if (change === file || dirContains(change, file)) {
       return true
     }
