@@ -26,6 +26,7 @@ import {
   ProviderResult,
   SnippetString,
   TextEdit,
+  TextEditorSelectionChangeKind,
 } from 'vscode'
 import {
   LanguageClient,
@@ -148,6 +149,62 @@ export async function activate(context: ExtensionContext) {
       }
     })
   )
+
+  // context.subscriptions.push(
+  //   commands.registerCommand(
+  //     'tailwindCSS.onInsertArbitraryVariantSnippet',
+  //     (
+  //       variantName: string,
+  //       range: {
+  //         start: { line: number; character: number }
+  //         end: { line: number; character: number }
+  //       }
+  //     ) => {
+  //       let listener = Window.onDidChangeTextEditorSelection((event) => {
+  //         if (event.selections.length !== 1) {
+  //           listener.dispose()
+  //           return
+  //         }
+
+  //         let document = event.textEditor.document
+  //         let selection = event.selections[0]
+
+  //         let line = document.lineAt(range.start.line)
+  //         let lineRangeFromCompletion = new Range(
+  //           range.start.line,
+  //           range.start.character,
+  //           line.range.end.line,
+  //           line.range.end.character
+  //         )
+  //         let lineText = document.getText(lineRangeFromCompletion)
+  //         let match = lineText.match(/^(\S+)]:/)
+
+  //         if (!match) {
+  //           listener.dispose()
+  //           return
+  //         }
+
+  //         let arbitraryValueRange = new Range(
+  //           lineRangeFromCompletion.start.translate(0, variantName.length + 2),
+  //           lineRangeFromCompletion.start.translate(0, match[1].length)
+  //         )
+
+  //         if (!arbitraryValueRange.contains(selection)) {
+  //           listener.dispose()
+  //         }
+
+  //         if (
+  //           event.kind === TextEditorSelectionChangeKind.Command &&
+  //           selection.isEmpty &&
+  //           selection.start.isEqual(arbitraryValueRange.end.translate(0, 2))
+  //         ) {
+  //           commands.executeCommand('editor.action.triggerSuggest')
+  //         }
+  //       })
+  //       context.subscriptions.push(listener)
+  //     }
+  //   )
+  // )
 
   let watcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
 
@@ -378,7 +435,11 @@ export async function activate(context: ExtensionContext) {
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections
-          if (selections.length > 1 && result.additionalTextEdits?.length > 0) {
+          if (
+            result['data'] === 'variant' &&
+            selections.length > 1 &&
+            result.additionalTextEdits?.length > 0
+          ) {
             let length =
               selections[0].start.character - result.additionalTextEdits[0].range.start.character
             let prefixLength =

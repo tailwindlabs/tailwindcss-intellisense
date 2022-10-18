@@ -29,6 +29,10 @@ export type EditorState = {
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
+  readDirectory: (
+    document: TextDocument,
+    directory: string
+  ) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
@@ -76,6 +80,14 @@ export interface FeatureFlags {
   experimental: string[]
 }
 
+export interface Variant {
+  name: string
+  values: string[]
+  isArbitrary: boolean
+  hasDash: boolean
+  selectors: (params?: { value?: string; label?: string }) => string[]
+}
+
 export interface State {
   enabled: boolean
   configPath?: string
@@ -86,7 +98,7 @@ export interface State {
   dependencies?: string[]
   plugins?: any
   screens?: string[]
-  variants?: Record<string, string | null>
+  variants?: Variant[]
   corePlugins?: string[]
   modules?: {
     tailwindcss?: { version: string; module: any }
@@ -124,12 +136,12 @@ export type DocumentClassName = {
 }
 
 export type DocumentHelperFunction = {
-  full: string
   helper: 'theme' | 'config'
-  value: string
-  quotes: '"' | "'"
-  range: Range
-  valueRange: Range
+  path: string
+  ranges: {
+    full: Range
+    path: Range
+  }
 }
 
 export type ClassNameMeta = {

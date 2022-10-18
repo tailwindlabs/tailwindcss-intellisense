@@ -32,7 +32,12 @@ export function getInvalidVariantDiagnostics(
     ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
-  let possibleVariants = Object.keys(state.variants)
+  let possibleVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+    }
+    return [variant.name]
+  })
   if (state.jit) {
     possibleVariants.unshift('responsive')
     possibleVariants = possibleVariants.filter((v) => !state.screens.includes(v))

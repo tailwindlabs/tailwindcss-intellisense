@@ -27,6 +27,9 @@ import {
   FileChangeType,
   Disposable,
   TextDocumentIdentifier,
+  DocumentLinkRequest,
+  DocumentLinkParams,
+  DocumentLink,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -60,6 +63,7 @@ import {
   FeatureFlags,
   Settings,
   ClassNames,
+  Variant,
 } from 'tailwindcss-language-service/src/util/state'
 import {
   provideDiagnostics,
@@ -68,6 +72,7 @@ import {
 } from './lsp/diagnosticsProvider'
 import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
+import { getDocumentLinks } from 'tailwindcss-language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
@@ -112,6 +117,7 @@ const TRIGGER_CHARACTERS = [
   // @apply and emmet-style
   '.',
   // config/theme helper
+  '(',
   '[',
   // JIT "important" prefix
   '!',
@@ -187,6 +193,7 @@ interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
 }
 
 type ProjectConfig = { folder: string; configPath?: string; documentSelector?: string[] }
@@ -297,6 +304,27 @@ async function createProjectService(
       getConfiguration,
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
+      },
+      async readDirectory(document, directory) {
+        try {
+          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+          let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+          let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
+            dirents.map(async (dirent) => {
+              let isDirectory = dirent.isDirectory()
+              return (await isExcluded(
+                state,
+                document,
+                path.join(directory, dirent.name, isDirectory ? '/' : '')
+              ))
+                ? null
+                : [dirent.name, { isDirectory }]
+            })
+          )
+          return result.filter((item) => item !== null)
+        } catch {
+          return []
+        }
       },
     },
   }
@@ -1027,6 +1055,14 @@ async function createProjectService(
       if (!settings.tailwindCSS.codeActions) return null
       return doCodeActions(state, params)
     },
+    onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+      if (!state.enabled) return null
+      let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return null
+      return getDocumentLinks(state, document, (linkPath) =>
+        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
+      )
+    },
     provideDiagnostics: debounce((document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)
@@ -1146,105 +1182,117 @@ function isAtRule(node: Node): node is AtRule {
   return node.type === 'atrule'
 }
 
-function getVariants(state: State): Record<string, string> {
-  if (state.jit) {
-    function escape(className: string): string {
-      let node = state.modules.postcssSelectorParser.module.className()
-      node.value = className
-      return dlv(node, 'raws.value', node.value)
-    }
+function getVariants(state: State): Array<Variant> {
+  if (state.jitContext?.getVariants) {
+    return state.jitContext.getVariants()
+  }
 
-    let result = {}
+  if (state.jit) {
+    let result: Array<Variant> = []
     // [name, [sort, fn]]
     // [name, [[sort, fn]]]
     Array.from(state.jitContext.variantMap as Map<string, [any, any]>).forEach(
       ([variantName, variantFnOrFns]) => {
-        let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
-          ([_sort, fn]) => fn
-        )
-
-        let placeholder = '__variant_placeholder__'
-
-        let root = state.modules.postcss.module.root({
-          nodes: [
-            state.modules.postcss.module.rule({
-              selector: `.${escape(placeholder)}`,
-              nodes: [],
-            }),
-          ],
-        })
-
-        let classNameParser = state.modules.postcssSelectorParser.module((selectors) => {
-          return selectors.first.filter(({ type }) => type === 'class').pop().value
-        })
-
-        function getClassNameFromSelector(selector) {
-          return classNameParser.transformSync(selector)
-        }
-
-        function modifySelectors(modifierFunction) {
-          root.each((rule) => {
-            if (rule.type !== 'rule') {
-              return
+        result.push({
+          name: variantName,
+          values: [],
+          isArbitrary: false,
+          hasDash: true,
+          selectors: () => {
+            function escape(className: string): string {
+              let node = state.modules.postcssSelectorParser.module.className()
+              node.value = className
+              return dlv(node, 'raws.value', node.value)
             }
 
-            rule.selectors = rule.selectors.map((selector) => {
-              return modifierFunction({
-                get className() {
-                  return getClassNameFromSelector(selector)
-                },
-                selector,
-              })
+            let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
+              ([_sort, fn]) => fn
+            )
+
+            let placeholder = '__variant_placeholder__'
+
+            let root = state.modules.postcss.module.root({
+              nodes: [
+                state.modules.postcss.module.rule({
+                  selector: `.${escape(placeholder)}`,
+                  nodes: [],
+                }),
+              ],
             })
-          })
-          return root
-        }
 
-        let definitions = []
+            let classNameParser = state.modules.postcssSelectorParser.module((selectors) => {
+              return selectors.first.filter(({ type }) => type === 'class').pop().value
+            })
 
-        for (let fn of fns) {
-          let definition: string
-          let container = root.clone()
-          let returnValue = fn({
-            container,
-            separator: state.separator,
-            modifySelectors,
-            format: (def: string) => {
-              definition = def.replace(/:merge\(([^)]+)\)/g, '$1')
-            },
-            wrap: (rule: Container) => {
-              if (isAtRule(rule)) {
-                definition = `@${rule.name} ${rule.params}`
+            function getClassNameFromSelector(selector) {
+              return classNameParser.transformSync(selector)
+            }
+
+            function modifySelectors(modifierFunction) {
+              root.each((rule) => {
+                if (rule.type !== 'rule') {
+                  return
+                }
+
+                rule.selectors = rule.selectors.map((selector) => {
+                  return modifierFunction({
+                    get className() {
+                      return getClassNameFromSelector(selector)
+                    },
+                    selector,
+                  })
+                })
+              })
+              return root
+            }
+
+            let definitions = []
+
+            for (let fn of fns) {
+              let definition: string
+              let container = root.clone()
+              let returnValue = fn({
+                container,
+                separator: state.separator,
+                modifySelectors,
+                format: (def: string) => {
+                  definition = def.replace(/:merge\(([^)]+)\)/g, '$1')
+                },
+                wrap: (rule: Container) => {
+                  if (isAtRule(rule)) {
+                    definition = `@${rule.name} ${rule.params}`
+                  }
+                },
+              })
+
+              if (!definition) {
+                definition = returnValue
               }
-            },
-          })
 
-          if (!definition) {
-            definition = returnValue
-          }
+              if (definition) {
+                definitions.push(definition)
+                continue
+              }
 
-          if (definition) {
-            definitions.push(definition)
-            continue
-          }
+              container.walkDecls((decl) => {
+                decl.remove()
+              })
 
-          container.walkDecls((decl) => {
-            decl.remove()
-          })
+              definition = container
+                .toString()
+                .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
+                .replace(/(?<!\\)[{}]/g, '')
+                .replace(/\s*\n\s*/g, ' ')
+                .trim()
 
-          definition = container
-            .toString()
-            .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
-            .replace(/(?<!\\)[{}]/g, '')
-            .replace(/\s*\n\s*/g, ' ')
-            .trim()
+              if (!definition.includes(placeholder)) {
+                definitions.push(definition)
+              }
+            }
 
-          if (!definition.includes(placeholder)) {
-            definitions.push(definition)
-          }
-        }
-
-        result[variantName] = definitions.join(', ') || null
+            return definitions
+          },
+        })
       }
     )
 
@@ -1276,7 +1324,13 @@ function getVariants(state: State): Record<string, string> {
     })
   })
 
-  return variants.reduce((obj, variant) => ({ ...obj, [variant]: null }), {})
+  return variants.map((variant) => ({
+    name: variant,
+    values: [],
+    isArbitrary: false,
+    hasDash: true,
+    selectors: () => [],
+  }))
 }
 
 async function getPlugins(config: any) {
@@ -1484,6 +1538,7 @@ class TW {
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
   }
 
   private updateCapabilities() {
@@ -1498,6 +1553,7 @@ class TW {
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
 
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
@@ -1563,6 +1619,10 @@ class TW {
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+    return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
+  }
+
   listen() {
     this.connection.listen()
   }
@@ -1604,7 +1664,8 @@ function supportsDynamicRegistration(connection: Connection, params: InitializeP
     params.capabilities.textDocument.hover?.dynamicRegistration &&
     params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
     params.capabilities.textDocument.codeAction?.dynamicRegistration &&
-    params.capabilities.textDocument.completion?.dynamicRegistration
+    params.capabilities.textDocument.completion?.dynamicRegistration &&
+    params.capabilities.textDocument.documentLink?.dynamicRegistration
   )
 }
 
@@ -1629,6 +1690,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
       hoverProvider: true,
       colorProvider: true,
       codeActionProvider: true,
+      documentLinkProvider: {},
       completionProvider: {
         resolveProvider: true,
         triggerCharacters: [...TRIGGER_CHARACTERS, ':'],

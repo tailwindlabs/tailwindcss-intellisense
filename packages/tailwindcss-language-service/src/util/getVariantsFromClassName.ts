@@ -5,17 +5,25 @@ export function getVariantsFromClassName(
   state: State,
   className: string
 ): { variants: string[]; offset: number } {
-  let allVariants = Object.keys(state.variants)
-  let parts = splitAtTopLevelOnly(className, state.separator).filter(Boolean)
+  let allVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) => `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+    }
+    return [variant.name]
+  })
   let variants = new Set<string>()
   let offset = 0
+  let parts = splitAtTopLevelOnly(className, state.separator)
+  if (parts.length < 2) {
+    return { variants: Array.from(variants), offset }
+  }
+  parts = parts.filter(Boolean)
 
   for (let part of parts) {
     if (
       allVariants.includes(part) ||
       (state.jit &&
-        ((part.includes('[') && part.endsWith(']')) ||
-          (part.includes('<') && part.includes('>'))) &&
+        ((part.includes('[') && part.endsWith(']')) || part.includes('/')) &&
         jit.generateRules(state, [`${part}${state.separator}[color:red]`]).rules.length > 0)
     ) {
       variants.add(part)
