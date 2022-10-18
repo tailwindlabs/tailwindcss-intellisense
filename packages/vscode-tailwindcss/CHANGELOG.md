@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- Fix usage of absolute paths in `experimental.configFile` setting (#617)
+- Fix IntelliSense when separator is `--` (#628)
+- Improve support for `theme` CSS helper when not using quotes and/or using an opacity modifier (1b730cb)
+- Add support for dynamic and parameterized variants (Tailwind v3.2) (d073bb9, f59adbe)
+- Add support for `@config` (Tailwind v3.2) (bf57dd1)
+- Bump bundled versions of `tailwindcss` and first-party plugins (315070a)
+- Add automatic support for multi-config workspaces, including `@config` resolution (#633)
+
 ## 0.8.7
 
 - Support `insiders` versions of `tailwindcss` (#571)
