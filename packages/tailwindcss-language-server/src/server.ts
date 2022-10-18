@@ -1652,7 +1652,12 @@ class TW {
           return {
             folder: base,
             configPath,
-            documentSelector,
+            documentSelector: documentSelector
+              .sort((a, z) => a.priority - z.priority)
+              .filter(
+                ({ pattern }, index, documentSelectors) =>
+                  documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index
+              ),
           }
         })
       }
