@@ -200,9 +200,11 @@ type ProjectConfig = {
   folder: string
   configPath?: string
   documentSelector?: Array<DocumentSelector>
+  isUserConfigured: boolean
 }
 
 enum DocumentSelectorPriority {
+  USER_CONFIGURED = 0,
   CONFIG_FILE = 0,
   CSS_FILE = 0,
   CONTENT_FILE = 1,
@@ -448,7 +450,11 @@ async function createProjectService(
       if (!isConfigFile && !isDependency && !isPackageFile) continue
 
       if (!enabled) {
-        if (projectConfig.configPath && (isConfigFile || isDependency)) {
+        if (
+          !projectConfig.isUserConfigured &&
+          projectConfig.configPath &&
+          (isConfigFile || isDependency)
+        ) {
           documentSelector = [
             ...documentSelector.filter(
               ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
@@ -959,17 +965,19 @@ async function createProjectService(
     }
 
     /////////////////////
-    documentSelector = [
-      ...documentSelector.filter(
-        ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
-      ),
-      ...getContentDocumentSelectorFromConfigFile(
-        state.configPath,
-        tailwindcss.version,
-        projectConfig.folder,
-        originalConfig
-      ),
-    ]
+    if (!projectConfig.isUserConfigured) {
+      documentSelector = [
+        ...documentSelector.filter(
+          ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+        ),
+        ...getContentDocumentSelectorFromConfigFile(
+          state.configPath,
+          tailwindcss.version,
+          projectConfig.folder,
+          originalConfig
+        ),
+      ]
+    }
     //////////////////////
 
     try {
@@ -1610,9 +1618,10 @@ class TW {
             folder: base,
             configPath: path.resolve(base, relativeConfigPath),
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
-              priority: DocumentSelectorPriority.CONTENT_FILE,
+              priority: DocumentSelectorPriority.USER_CONFIGURED,
               pattern: path.resolve(base, selector),
             })),
+            isUserConfigured: true,
           }
         }
       )
@@ -1706,6 +1715,7 @@ class TW {
           return {
             folder: base,
             configPath,
+            isUserConfigured: false,
             documentSelector: documentSelector
               .sort((a, z) => a.priority - z.priority)
               .filter(
