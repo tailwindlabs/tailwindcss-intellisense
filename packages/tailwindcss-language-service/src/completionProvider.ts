@@ -216,7 +216,10 @@ export function completionsFromClassList(
                 .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
                 .map((value) =>
                   variantItem({
-                    label: value === 'DEFAULT'? `${variant.name}${sep}` : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+                    label:
+                      value === 'DEFAULT'
+                        ? `${variant.name}${sep}`
+                        : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
                     detail: variant.selectors({ value }).join(', '),
                   })
                 )
@@ -845,7 +848,9 @@ function provideVariantsDirectiveCompletions(
 
   let possibleVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
-      return variant.values.map((value) => value === 'DEFAULT'? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`)
+      return variant.values.map((value) =>
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`
+      )
     }
     return [variant.name]
   })
