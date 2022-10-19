@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Fix variant completions when using a `DEFAULT` value with `matchVariant` (#635)
+
 ## 0.9.0
 
 - Fix usage of absolute paths in `experimental.configFile` setting (#617)
