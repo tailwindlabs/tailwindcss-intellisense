@@ -1592,6 +1592,11 @@ class TW {
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
 
+    // base directory to resolve relative `experimental.configFile` paths against
+    let userDefinedConfigBase = this.initializeParams.initializationOptions?.workspaceFile
+      ? path.dirname(this.initializeParams.initializationOptions.workspaceFile)
+      : base
+
     if (configFileOrFiles) {
       if (
         typeof configFileOrFiles !== 'string' &&
@@ -1615,10 +1620,10 @@ class TW {
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.resolve(base, relativeConfigPath),
+            configPath: path.resolve(userDefinedConfigBase, relativeConfigPath),
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: path.resolve(base, selector),
+              pattern: path.resolve(userDefinedConfigBase, selector),
             })),
             isUserConfigured: true,
           }
