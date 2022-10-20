@@ -1562,7 +1562,7 @@ class TW {
   public initializeParams: InitializeParams
   private registrations: Promise<BulkUnregistration>
   private disposables: Disposable[] = []
-  private watchPatterns: (patterns: string[]) => void
+  private watchPatterns: (patterns: string[]) => void = () => {}
   private watched: string[] = []
 
   constructor(private connection: Connection) {
