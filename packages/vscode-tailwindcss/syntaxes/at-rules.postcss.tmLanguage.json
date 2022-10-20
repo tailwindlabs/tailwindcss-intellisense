@@ -91,7 +91,7 @@
           "name": "punctuation.definition.keyword.css"
         }
       },
-      "end": "(?<=})(?!\\G)",
+      "end": "(?<=}|;)(?!\\G)",
       "patterns": [
         {
           "include": "source.css#comment-block"
@@ -100,8 +100,16 @@
           "include": "source.css.postcss#double-slash"
         },
         {
-          "match": "[^\\s{]+?",
+          "match": "[^\\s{;,]+?",
           "name": "variable.parameter.layer.tailwind"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.list.comma.css"
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.rule.css"
         },
         {
           "begin": "{",

@@ -65,14 +65,22 @@
           "name": "punctuation.definition.keyword.css"
         }
       },
-      "end": "\\s*(?={)",
+      "end": "\\s*(?={|;)",
       "patterns": [
         {
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{]+?",
+          "match": "[^\\s{;,]+?",
           "name": "entity.name.function.scss"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.delimiter.scss"
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.rule.scss"
         }
       ]
     },
