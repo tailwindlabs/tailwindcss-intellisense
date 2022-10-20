@@ -42,16 +42,22 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\((-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\(\\s*(-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
     namedColors
   ).join('|')})(?:$|\\s|\\)|,)`,
   'gi'
 )
 
+function replaceColorVarsWithTheirDefaults(str: string): string {
+  // rgb(var(--primary, 66 66 66))
+  // -> rgb(66 66 66)
+  return str.replace(/((?:rgb|hsl)a?\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
+}
+
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
-  return Array.from(str.matchAll(colorRegex), (match) => {
+  return Array.from(replaceColorVarsWithTheirDefaults(str).matchAll(colorRegex), (match) => {
     let color = match[1].replace(/var\([^)]+\)/, '1')
     return getKeywordColor(color) ?? culori.parse(color)
   }).filter(Boolean)
