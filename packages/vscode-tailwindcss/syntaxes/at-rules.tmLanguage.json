@@ -85,14 +85,22 @@
           "name": "punctuation.definition.keyword.css"
         }
       },
-      "end": "(?<=})(?!\\G)",
+      "end": "(?<=}|;)(?!\\G)",
       "patterns": [
         {
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{]+?",
+          "match": "[^\\s{;,]+?",
           "name": "variable.parameter.layer.tailwind"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.list.comma.css"
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.rule.css"
         },
         {
           "begin": "{",
