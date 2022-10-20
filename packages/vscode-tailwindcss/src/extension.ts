@@ -246,6 +246,15 @@ export async function activate(context: ExtensionContext) {
   // e.g. "plaintext" already exists but you change it from "html" to "css"
   context.subscriptions.push(
     Workspace.onDidChangeConfiguration((event) => {
+      let toReboot = new Set<WorkspaceFolder>()
+
+      Workspace.textDocuments.forEach((document) => {
+        let folder = Workspace.getWorkspaceFolder(document.uri)
+        if (!folder) return
+        if (event.affectsConfiguration('tailwindCSS.experimental.configFile', folder)) {
+          toReboot.add(folder)
+        }
+      })
       ;[...clients].forEach(([key, client]) => {
         const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
         let reboot = false
@@ -267,11 +276,15 @@ export async function activate(context: ExtensionContext) {
         }
 
         if (reboot && client) {
-          clients.delete(folder.uri.toString())
-          client.stop()
-          bootWorkspaceClient(folder)
+          toReboot.add(folder)
         }
       })
+
+      for (let folder of toReboot) {
+        clients.get(folder.uri.toString())?.stop()
+        clients.delete(folder.uri.toString())
+        bootClientForFolderIfNeeded(folder)
+      }
     })
   )
 
@@ -568,6 +581,8 @@ export async function activate(context: ExtensionContext) {
       },
       initializationOptions: {
         userLanguages: getUserLanguages(folder),
+        workspaceFile:
+          Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile.fsPath : undefined,
       },
       synchronize: {
         configurationSection: ['files', 'editor', 'tailwindCSS'],
@@ -602,29 +617,12 @@ export async function activate(context: ExtensionContext) {
     clients.set(folder.uri.toString(), client)
   }
 
-  async function didOpenTextDocument(document: TextDocument): Promise<void> {
-    if (document.languageId === 'tailwindcss') {
-      bootCssServer()
-    }
-
-    // We are only interested in language mode text
-    if (document.uri.scheme !== 'file') {
+  async function bootClientForFolderIfNeeded(folder: WorkspaceFolder): Promise<void> {
+    let settings = Workspace.getConfiguration('tailwindCSS', folder)
+    if (settings.get('experimental.configFile') !== null) {
+      bootWorkspaceClient(folder)
       return
     }
-
-    let uri = document.uri
-    let folder = Workspace.getWorkspaceFolder(uri)
-    // Files outside a folder can't be handled. This might depend on the language.
-    // Single file languages like JSON might handle files outside the workspace folders.
-    if (!folder) {
-      return
-    }
-    // If we have nested workspace folders we only start a server on the outer most workspace folder.
-    folder = getOuterMostWorkspaceFolder(folder)
-
-    if (searchedFolders.has(folder.uri.toString())) return
-
-    searchedFolders.add(folder.uri.toString())
 
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
@@ -648,6 +646,35 @@ export async function activate(context: ExtensionContext) {
         return
       }
     }
+  }
+
+  async function didOpenTextDocument(document: TextDocument): Promise<void> {
+    if (document.languageId === 'tailwindcss') {
+      bootCssServer()
+    }
+
+    // We are only interested in language mode text
+    if (document.uri.scheme !== 'file') {
+      return
+    }
+
+    let uri = document.uri
+    let folder = Workspace.getWorkspaceFolder(uri)
+    // Files outside a folder can't be handled. This might depend on the language.
+    // Single file languages like JSON might handle files outside the workspace folders.
+    if (!folder) {
+      return
+    }
+    // If we have nested workspace folders we only start a server on the outer most workspace folder.
+    folder = getOuterMostWorkspaceFolder(folder)
+
+    if (searchedFolders.has(folder.uri.toString())) {
+      return
+    }
+
+    searchedFolders.add(folder.uri.toString())
+
+    await bootClientForFolderIfNeeded(folder)
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
