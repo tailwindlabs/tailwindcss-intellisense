@@ -1063,7 +1063,7 @@ function provideCssDirectiveCompletions(
             label: '@config',
             documentation: {
               kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `[Tailwind CSS Documentation](${docsUrl(
+              value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
                 'functions-and-directives/#config'
               )})`,
