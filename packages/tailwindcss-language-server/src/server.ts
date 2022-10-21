@@ -2128,7 +2128,7 @@ class TW {
           return { error: 'no-project' }
         }
         try {
-          return { result: project.sortClassLists(params.classLists) }
+          return { classLists: project.sortClassLists(params.classLists) }
         } catch {
           return { error: 'unknown' }
         }
