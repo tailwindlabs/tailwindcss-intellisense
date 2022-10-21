@@ -73,20 +73,6 @@ function sortedWorkspaceFolders(): string[] {
   return _sortedWorkspaceFolders
 }
 
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
-  let sorted = sortedWorkspaceFolders()
-  for (let element of sorted) {
-    let uri = folder.uri.toString()
-    if (uri.charAt(uri.length - 1) !== '/') {
-      uri = uri + '/'
-    }
-    if (uri.startsWith(element)) {
-      return Workspace.getWorkspaceFolder(Uri.parse(element))!
-    }
-  }
-  return folder
-}
-
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   const langs = Workspace.getConfiguration('tailwindCSS', folder).includeLanguages
   return isObject(langs) ? langs : {}
@@ -217,7 +203,6 @@ export async function activate(context: ExtensionContext) {
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    folder = getOuterMostWorkspaceFolder(folder)
     bootWorkspaceClient(folder)
   })
 
@@ -231,7 +216,6 @@ export async function activate(context: ExtensionContext) {
       return
     }
     if (await fileContainsAtConfig(uri)) {
-      folder = getOuterMostWorkspaceFolder(folder)
       bootWorkspaceClient(folder)
     }
   }
@@ -465,6 +449,34 @@ export async function activate(context: ExtensionContext) {
       outputChannel: outputChannel,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
+        provideCompletionItem(document, position, context, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, position, context, token)
+        },
+        provideHover(document, position, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, position, token)
+        },
+        handleDiagnostics(uri, diagnostics, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(uri)
+          if (workspaceFolder !== folder) {
+            return
+          }
+          next(uri, diagnostics)
+        },
+        provideCodeActions(document, range, context, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, range, context, token)
+        },
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections
@@ -506,6 +518,11 @@ export async function activate(context: ExtensionContext) {
           return result
         },
         async provideDocumentColors(document, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+
           let colors = await next(document, token)
           let editableColors = colors.filter((color) => {
             let text =
@@ -666,8 +683,6 @@ export async function activate(context: ExtensionContext) {
     if (!folder) {
       return
     }
-    // If we have nested workspace folders we only start a server on the outer most workspace folder.
-    folder = getOuterMostWorkspaceFolder(folder)
 
     if (searchedFolders.has(folder.uri.toString())) {
       return
