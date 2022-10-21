@@ -158,19 +158,24 @@ export async function activate(context: ExtensionContext) {
 
   async function sortSelection(): Promise<void> {
     let { document, selections } = Window.activeTextEditor
+
     if (selections.length === 0) {
       return
     }
+
     let initialSelections = selections
     let uri = document.uri
     let folder = Workspace.getWorkspaceFolder(uri)
+
     if (clients.size === 0 || !folder || isExcluded(uri.fsPath, folder)) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
+
     let client = clients.get(folder.uri.toString())
     if (!client) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
+
     let result = await client.sendRequest<{ error: string } | { classLists: string[] }>(
       '@/tailwindCSS/sortSelection',
       {
@@ -178,26 +183,28 @@ export async function activate(context: ExtensionContext) {
         classLists: selections.map((selection) => document.getText(selection)),
       }
     )
+
     if (
       Window.activeTextEditor.document.uri.toString() !== uri.toString() ||
       !selectionsAreEqual(initialSelections, Window.activeTextEditor.selections)
     ) {
       return
     }
+
     if ('error' in result) {
       throw Error(
         {
           'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
         }[result.error] ?? 'An unknown error occurred.'
       )
-    } else {
-      let sortedClassLists = result.classLists
-      Window.activeTextEditor.edit((builder) => {
-        for (let i = 0; i < selections.length; i++) {
-          builder.replace(selections[i], sortedClassLists[i])
-        }
-      })
     }
+
+    let sortedClassLists = result.classLists
+    Window.activeTextEditor.edit((builder) => {
+      for (let i = 0; i < selections.length; i++) {
+        builder.replace(selections[i], sortedClassLists[i])
+      }
+    })
   }
 
   context.subscriptions.push(
