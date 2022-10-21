@@ -164,10 +164,9 @@ export async function activate(context: ExtensionContext) {
     }
 
     let initialSelections = selections
-    let uri = document.uri
-    let folder = Workspace.getWorkspaceFolder(uri)
+    let folder = Workspace.getWorkspaceFolder(document.uri)
 
-    if (clients.size === 0 || !folder || isExcluded(uri.fsPath, folder)) {
+    if (clients.size === 0 || !folder || isExcluded(document.uri.fsPath, folder)) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
 
@@ -179,13 +178,13 @@ export async function activate(context: ExtensionContext) {
     let result = await client.sendRequest<{ error: string } | { classLists: string[] }>(
       '@/tailwindCSS/sortSelection',
       {
-        uri: uri.toString(),
+        uri: document.uri.toString(),
         classLists: selections.map((selection) => document.getText(selection)),
       }
     )
 
     if (
-      Window.activeTextEditor.document.uri.toString() !== uri.toString() ||
+      Window.activeTextEditor.document !== document ||
       !selectionsAreEqual(initialSelections, Window.activeTextEditor.selections)
     ) {
       return
