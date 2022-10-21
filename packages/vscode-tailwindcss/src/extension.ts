@@ -27,6 +27,7 @@ import {
   SnippetString,
   TextEdit,
   TextEditorSelectionChangeKind,
+  Selection,
 } from 'vscode'
 import {
   LanguageClient,
@@ -121,6 +122,21 @@ async function fileContainsAtConfig(uri: Uri) {
   return /@config\s*['"]/.test(contents)
 }
 
+function selectionsAreEqual(
+  aSelections: readonly Selection[],
+  bSelections: readonly Selection[]
+): boolean {
+  if (aSelections.length !== bSelections.length) {
+    return false
+  }
+  for (let i = 0; i < aSelections.length; i++) {
+    if (!aSelections[i].isEqual(bSelections[i])) {
+      return false
+    }
+  }
+  return true
+}
+
 export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server.js'))
   let prod = path.join('dist', 'tailwindServer.js')
@@ -145,7 +161,7 @@ export async function activate(context: ExtensionContext) {
     if (selections.length === 0) {
       return
     }
-    let selectionsJson = JSON.stringify(selections)
+    let initialSelections = selections
     let uri = document.uri
     let folder = Workspace.getWorkspaceFolder(uri)
     if (clients.size === 0 || !folder || isExcluded(uri.fsPath, folder)) {
@@ -155,17 +171,16 @@ export async function activate(context: ExtensionContext) {
     if (!client) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
-    let ranges = selections.map((selection) => new Range(selection.start, selection.end))
     let result = await client.sendRequest<{ error: string } | { classLists: string[] }>(
       '@/tailwindCSS/sortSelection',
       {
         uri: uri.toString(),
-        classLists: ranges.map((range) => document.getText(range)),
+        classLists: selections.map((selection) => document.getText(selection)),
       }
     )
     if (
       Window.activeTextEditor.document.uri.toString() !== uri.toString() ||
-      JSON.stringify(Window.activeTextEditor.selections) !== selectionsJson
+      !selectionsAreEqual(initialSelections, Window.activeTextEditor.selections)
     ) {
       return
     }
@@ -178,8 +193,8 @@ export async function activate(context: ExtensionContext) {
     } else {
       let sortedClassLists = result.classLists
       Window.activeTextEditor.edit((builder) => {
-        for (let i = 0; i < ranges.length; i++) {
-          builder.replace(ranges[i], sortedClassLists[i])
+        for (let i = 0; i < selections.length; i++) {
+          builder.replace(selections[i], sortedClassLists[i])
         }
       })
     }
