@@ -512,6 +512,7 @@ async function createProjectService(
     state.enabled = false
     refreshDiagnostics()
     updateCapabilities()
+    connection.sendNotification('@/tailwindCSS/projectReset')
   }
 
   async function tryInit() {
@@ -520,6 +521,7 @@ async function createProjectService(
     }
     try {
       await init()
+      connection.sendNotification('@/tailwindCSS/projectInitialized')
     } catch (error) {
       resetState()
       showError(connection, error)
@@ -1212,6 +1214,10 @@ async function createProjectService(
       ].map((value) => ({ label: `${prefix}-[${value}]` }))
     },
     sortClassLists(classLists: string[]): string[] {
+      if (!state.jit) {
+        return classLists
+      }
+
       return classLists.map((classList) => {
         let result = ''
         let parts = classList.split(/(\s+)/)
@@ -2121,19 +2127,39 @@ class TW {
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
     this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
-    this.connection.onRequest((method, params: { uri: string; classLists: string[] }) => {
-      if (method === '@/tailwindCSS/sortSelection') {
-        let project = this.getProject({ uri: params.uri })
-        if (!project) {
-          return { error: 'no-project' }
-        }
-        try {
-          return { classLists: project.sortClassLists(params.classLists) }
-        } catch {
-          return { error: 'unknown' }
-        }
+    this.connection.onRequest(this.onRequest.bind(this))
+  }
+
+  private onRequest(
+    method: '@/tailwindCSS/sortSelection',
+    params: { uri: string; classLists: string[] }
+  ): { error: string } | { classLists: string[] }
+  private onRequest(
+    method: '@/tailwindCSS/getProject',
+    params: { uri: string }
+  ): { version: string } | null
+  private onRequest(method: string, params: any): any {
+    if (method === '@/tailwindCSS/sortSelection') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project) {
+        return { error: 'no-project' }
       }
-    })
+      try {
+        return { classLists: project.sortClassLists(params.classLists) }
+      } catch {
+        return { error: 'unknown' }
+      }
+    }
+
+    if (method === '@/tailwindCSS/getProject') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project || !project.enabled() || !project.state?.enabled) {
+        return null
+      }
+      return {
+        version: project.state.version,
+      }
+    }
   }
 
   private updateCapabilities() {
@@ -2243,6 +2269,7 @@ class TW {
   }
 
   dispose(): void {
+    connection.sendNotification('@/tailwindCSS/projectsDestroyed')
     for (let [, project] of this.projects) {
       project.dispose()
     }

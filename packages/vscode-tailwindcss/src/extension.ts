@@ -39,6 +39,7 @@ import {
   Disposable,
 } from 'vscode-languageclient/node'
 import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
+import * as semver from 'tailwindcss-language-service/src/util/semver'
 import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
@@ -137,6 +138,53 @@ function selectionsAreEqual(
   return true
 }
 
+async function getActiveTextEditorProject(): Promise<{ version: string } | null> {
+  if (clients.size === 0) {
+    return null
+  }
+  let editor = Window.activeTextEditor
+  if (!editor) {
+    return null
+  }
+  let uri = editor.document.uri
+  let folder = Workspace.getWorkspaceFolder(uri)
+  if (!folder) {
+    return null
+  }
+  let client = clients.get(folder.uri.toString())
+  if (!client) {
+    return null
+  }
+  try {
+    let project = await client.sendRequest<{ version: string } | null>('@/tailwindCSS/getProject', {
+      uri: uri.toString(),
+    })
+    return project
+  } catch {
+    return null
+  }
+}
+
+async function activeTextEditorSupportsClassSorting(): Promise<boolean> {
+  let project = await getActiveTextEditorProject()
+  if (!project) {
+    return false
+  }
+  return semver.gte(project.version, '3.0.0')
+}
+
+async function updateActiveTextEditorContext(): Promise<void> {
+  commands.executeCommand(
+    'setContext',
+    'tailwindCSS.activeTextEditorSupportsClassSorting',
+    await activeTextEditorSupportsClassSorting()
+  )
+}
+
+function resetActiveTextEditorContext(): void {
+  commands.executeCommand('setContext', 'tailwindCSS.activeTextEditorSupportsClassSorting', false)
+}
+
 export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server.js'))
   let prod = path.join('dist', 'tailwindServer.js')
@@ -213,6 +261,12 @@ export async function activate(context: ExtensionContext) {
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${error.message}`)
       }
+    })
+  )
+
+  context.subscriptions.push(
+    Window.onDidChangeActiveTextEditor(async () => {
+      await updateActiveTextEditorContext()
     })
   )
 
@@ -693,6 +747,16 @@ export async function activate(context: ExtensionContext) {
     })
 
     client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
+
+    client.onNotification('@/tailwindCSS/projectInitialized', async () => {
+      await updateActiveTextEditorContext()
+    })
+    client.onNotification('@/tailwindCSS/projectReset', async () => {
+      await updateActiveTextEditorContext()
+    })
+    client.onNotification('@/tailwindCSS/projectsDestroyed', () => {
+      resetActiveTextEditorContext()
+    })
 
     client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
       return commands.executeCommand<SymbolInformation[]>(

@@ -60,8 +60,8 @@
       },
       {
         "command": "tailwindCSS.sortSelection",
-        "title": "Tailwind CSS: Sort Selection",
-        "enablement": "editorHasSelection && resourceScheme == file"
+        "title": "Tailwind CSS: Sort Classes in Selection",
+        "enablement": "editorHasSelection && resourceScheme == file && tailwindCSS.activeTextEditorSupportsClassSorting"
       }
     ],
     "grammars": [
