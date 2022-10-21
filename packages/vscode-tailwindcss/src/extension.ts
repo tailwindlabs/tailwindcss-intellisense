@@ -156,29 +156,33 @@ export async function activate(context: ExtensionContext) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
     let ranges = selections.map((selection) => new Range(selection.start, selection.end))
-    let { error, result } = await client.sendRequest('@/tailwindCSS/sortSelection', {
-      uri: uri.toString(),
-      classLists: ranges.map((range) => document.getText(range)),
-    })
+    let result = await client.sendRequest<{ error: string } | { classLists: string[] }>(
+      '@/tailwindCSS/sortSelection',
+      {
+        uri: uri.toString(),
+        classLists: ranges.map((range) => document.getText(range)),
+      }
+    )
     if (
       Window.activeTextEditor.document.uri.toString() !== uri.toString() ||
       JSON.stringify(Window.activeTextEditor.selections) !== selectionsJson
     ) {
       return
     }
-    if (error) {
+    if ('error' in result) {
       throw Error(
         {
           'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
-          unknown: 'An unknown error occurred.',
-        }[error]
+        }[result.error] ?? 'An unknown error occurred.'
       )
+    } else {
+      let sortedClassLists = result.classLists
+      Window.activeTextEditor.edit((builder) => {
+        for (let i = 0; i < ranges.length; i++) {
+          builder.replace(ranges[i], sortedClassLists[i])
+        }
+      })
     }
-    Window.activeTextEditor.edit((builder) => {
-      for (let i = 0; i < ranges.length; i++) {
-        builder.replace(ranges[i], result[i])
-      }
-    })
   }
 
   context.subscriptions.push(
