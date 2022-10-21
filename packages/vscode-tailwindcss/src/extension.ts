@@ -564,6 +564,7 @@ export async function activate(context: ExtensionContext) {
                 let doc = Workspace.textDocuments.find((doc) => doc.uri.toString() === scopeUri)
                 if (doc) {
                   scope = {
+                    uri: Uri.parse(scopeUri),
                     languageId: doc.languageId,
                   }
                 }
