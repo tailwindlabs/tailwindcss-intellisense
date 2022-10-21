@@ -1,5 +1,5 @@
 import selectorParser from 'postcss-selector-parser'
-import dset from 'dset'
+import { dset } from 'dset'
 import dlv from 'dlv'
 import type { Container, Node, Root, AtRule, Document } from 'postcss'
 

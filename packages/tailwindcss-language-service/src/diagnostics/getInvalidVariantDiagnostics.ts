@@ -6,7 +6,8 @@ import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-import semver from 'semver'
+import * as semver from '../util/semver'
+import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidVariantDiagnostics(
   state: State,
@@ -31,14 +32,21 @@ export function getInvalidVariantDiagnostics(
     ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
-  let possibleVariants = Object.keys(state.variants)
+  let possibleVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) =>
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`
+      )
+    }
+    return [variant.name]
+  })
   if (state.jit) {
     possibleVariants.unshift('responsive')
     possibleVariants = possibleVariants.filter((v) => !state.screens.includes(v))
   }
 
   ranges.forEach((range) => {
-    let text = document.getText(range)
+    let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(/(?:\s|^)@variants\s+(?<variants>[^{]+)/g, text)
 
     matches.forEach((match) => {

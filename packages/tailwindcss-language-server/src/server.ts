@@ -27,6 +27,9 @@ import {
   FileChangeType,
   Disposable,
   TextDocumentIdentifier,
+  DocumentLinkRequest,
+  DocumentLinkParams,
+  DocumentLink,
 } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
@@ -43,9 +46,9 @@ import resolveFrom, { setPnpApi } from './util/resolveFrom'
 import { AtRule, Container, Node, Result } from 'postcss'
 import Module from 'module'
 import Hook from './lib/hook'
-import semver from 'semver'
+import * as semver from 'tailwindcss-language-service/src/util/semver'
 import dlv from 'dlv'
-import dset from 'dset'
+import { dset } from 'dset'
 import pkgUp from 'pkg-up'
 import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
@@ -60,14 +63,12 @@ import {
   FeatureFlags,
   Settings,
   ClassNames,
+  Variant,
 } from 'tailwindcss-language-service/src/util/state'
-import {
-  provideDiagnostics,
-  updateAllDiagnostics,
-  clearAllDiagnostics,
-} from './lsp/diagnosticsProvider'
+import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
+import { getDocumentLinks } from 'tailwindcss-language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
@@ -78,10 +79,13 @@ import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
-import isExcluded, { DEFAULT_FILES_EXCLUDE } from './util/isExcluded'
+import isExcluded from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
 import { equal } from 'tailwindcss-language-service/src/util/array'
 import preflight from 'tailwindcss/lib/css/preflight.css'
+import merge from 'deepmerge'
+import { getTextWithoutComments } from 'tailwindcss-language-service/src/util/doc'
+import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 
 // @ts-ignore
 global.__preflight = preflight
@@ -99,8 +103,6 @@ new Function(
   `
 )(require, __dirname)
 
-const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
-const PACKAGE_GLOB = '{package.json,package-lock.json,yarn.lock,pnpm-lock.yaml}'
 const TRIGGER_CHARACTERS = [
   // class attributes
   '"',
@@ -111,6 +113,7 @@ const TRIGGER_CHARACTERS = [
   // @apply and emmet-style
   '.',
   // config/theme helper
+  '(',
   '[',
   // JIT "important" prefix
   '!',
@@ -174,22 +177,43 @@ function firstOptional<T>(...options: Array<() => T>): T | undefined {
 }
 
 interface ProjectService {
+  enabled: () => boolean
+  enable: () => void
+  documentSelector: () => Array<DocumentSelector>
   state: State
   tryInit: () => Promise<void>
-  dispose: () => void
+  dispose: () => Promise<void>
   onUpdateSettings: (settings: any) => void
   onFileEvents: (changes: Array<{ file: string; type: FileChangeType }>) => void
   onHover(params: TextDocumentPositionParams): Promise<Hover>
   onCompletion(params: CompletionParams): Promise<CompletionList>
   onCompletionResolve(item: CompletionItem): Promise<CompletionItem>
   provideDiagnostics(document: TextDocument): void
+  provideDiagnosticsForce(document: TextDocument): void
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
   sortClassLists(classLists: string[]): string[]
 }
 
-type ProjectConfig = { folder: string; configPath?: string; documentSelector?: string[] }
+type ProjectConfig = {
+  folder: string
+  configPath?: string
+  documentSelector?: Array<DocumentSelector>
+  isUserConfigured: boolean
+}
+
+enum DocumentSelectorPriority {
+  USER_CONFIGURED = 0,
+  CONFIG_FILE = 0,
+  CSS_FILE = 0,
+  CONTENT_FILE = 1,
+  CSS_DIRECTORY = 2,
+  CONFIG_DIRECTORY = 3,
+  ROOT_DIRECTORY = 4,
+}
+type DocumentSelector = { pattern: string; priority: DocumentSelectorPriority }
 
 function getMode(config: any): unknown {
   if (typeof config.mode !== 'undefined') {
@@ -214,42 +238,150 @@ function deleteMode(config: any): void {
   }
 }
 
+const documentSettingsCache: Map<string, Settings> = new Map()
+async function getConfiguration(uri?: string) {
+  if (documentSettingsCache.has(uri)) {
+    return documentSettingsCache.get(uri)
+  }
+  let [editor, tailwindCSS] = await Promise.all([
+    connection.workspace.getConfiguration({
+      section: 'editor',
+      scopeUri: uri,
+    }),
+    connection.workspace.getConfiguration({
+      section: 'tailwindCSS',
+      scopeUri: uri,
+    }),
+  ])
+  editor = isObject(editor) ? editor : {}
+  tailwindCSS = isObject(tailwindCSS) ? tailwindCSS : {}
+
+  let config: Settings = merge<Settings>(
+    {
+      editor: { tabSize: 2 },
+      tailwindCSS: {
+        emmetCompletions: false,
+        classAttributes: ['class', 'className', 'ngClass'],
+        codeActions: true,
+        hovers: true,
+        suggestions: true,
+        validate: true,
+        colorDecorators: true,
+        rootFontSize: 16,
+        lint: {
+          cssConflict: 'warning',
+          invalidApply: 'error',
+          invalidScreen: 'error',
+          invalidVariant: 'error',
+          invalidConfigPath: 'error',
+          invalidTailwindDirective: 'error',
+          recommendedVariantOrder: 'warning',
+        },
+        showPixelEquivalents: true,
+        includeLanguages: {},
+        files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+        experimental: {
+          classRegex: [],
+          configFile: null,
+        },
+      },
+    },
+    { editor, tailwindCSS },
+    { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray }
+  )
+  documentSettingsCache.set(uri, config)
+  return config
+}
+
+function clearRequireCache(): void {
+  Object.keys(require.cache).forEach((key) => {
+    if (!key.endsWith('.node')) {
+      delete require.cache[key]
+    }
+  })
+  Object.keys((Module as any)._pathCache).forEach((key) => {
+    delete (Module as any)._pathCache[key]
+  })
+}
+
+function withoutLogs<T>(getter: () => T): T {
+  let fns = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+  }
+  for (let key in fns) {
+    console[key] = () => {}
+  }
+  try {
+    return getter()
+  } finally {
+    for (let key in fns) {
+      console[key] = fns[key]
+    }
+  }
+}
+
+function withFallback<T>(getter: () => T, fallback: T): T {
+  try {
+    return getter()
+  } catch (e) {
+    return fallback
+  }
+}
+
+function dirContains(dir: string, file: string): boolean {
+  let relative = path.relative(dir, file)
+  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
+}
+
+function changeAffectsFile(change: string, files: string[]): boolean {
+  for (let file of files) {
+    if (change === file || dirContains(change, file)) {
+      return true
+    }
+  }
+  return false
+}
+
+// We need to add parent directories to the watcher:
+// https://github.com/microsoft/vscode/issues/60813
+function getWatchPatternsForFile(file: string): string[] {
+  let tmp: string
+  let dir = path.dirname(file)
+  let patterns: string[] = [file, dir]
+  while (true) {
+    dir = path.dirname((tmp = dir))
+    if (tmp === dir) {
+      break
+    } else {
+      patterns.push(dir)
+    }
+  }
+  return patterns
+}
+
 async function createProjectService(
   projectConfig: ProjectConfig,
   connection: Connection,
   params: InitializeParams,
   documentService: DocumentService,
-  updateCapabilities: () => void
+  updateCapabilities: () => void,
+  checkOpenDocuments: () => void,
+  refreshDiagnostics: () => void,
+  watchPatterns: (patterns: string[]) => void,
+  initialTailwindVersion: string
 ): Promise<ProjectService> {
+  let enabled = false
   const folder = projectConfig.folder
-  const disposables: Disposable[] = []
-  const documentSettingsCache: Map<string, Settings> = new Map()
+  const disposables: Array<Disposable | Promise<Disposable>> = []
+  let documentSelector = projectConfig.documentSelector
 
-  async function getConfiguration(uri?: string) {
-    if (documentSettingsCache.has(uri)) {
-      return documentSettingsCache.get(uri)
-    }
-    let [editor, tailwindCSS] = await Promise.all([
-      connection.workspace.getConfiguration({
-        section: 'editor',
-        scopeUri: uri,
-      }),
-      connection.workspace.getConfiguration({
-        section: 'tailwindCSS',
-        scopeUri: uri,
-      }),
-    ])
-    let config: Settings = { editor, tailwindCSS }
-    documentSettingsCache.set(uri, config)
-    return config
-  }
-
-  const state: State = {
+  let state: State = {
     enabled: false,
     editor: {
       connection,
       folder,
-      globalSettings: await getConfiguration(),
       userLanguages: params.initializationOptions.userLanguages
         ? params.initializationOptions.userLanguages
         : {},
@@ -263,11 +395,46 @@ async function createProjectService(
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
+      async readDirectory(document, directory) {
+        try {
+          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+          let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+          let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
+            dirents.map(async (dirent) => {
+              let isDirectory = dirent.isDirectory()
+              return (await isExcluded(
+                state,
+                document,
+                path.join(directory, dirent.name, isDirectory ? '/' : '')
+              ))
+                ? null
+                : [dirent.name, { isDirectory }]
+            })
+          )
+          return result.filter((item) => item !== null)
+        } catch {
+          return []
+        }
+      },
     },
   }
 
-  let chokidarWatcher: chokidar.FSWatcher
-  let ignore = state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
+  if (projectConfig.configPath) {
+    let deps = []
+    try {
+      deps = getModuleDependencies(projectConfig.configPath)
+    } catch {}
+    watchPatterns([
+      ...getWatchPatternsForFile(projectConfig.configPath),
+      ...deps.flatMap((dep) => getWatchPatternsForFile(dep)),
+    ])
+  }
+
+  function log(...args: string[]): void {
+    console.log(
+      `[${path.relative(projectConfig.folder, projectConfig.configPath)}] ${args.join(' ')}`
+    )
+  }
 
   function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
     let needsInit = false
@@ -276,22 +443,40 @@ async function createProjectService(
     for (let change of changes) {
       let file = normalizePath(change.file)
 
-      for (let ignorePattern of ignore) {
-        if (minimatch(file, ignorePattern, { dot: true })) {
-          continue
+      let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
+      let isDependency = changeAffectsFile(change.file, state.dependencies ?? [])
+      let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+
+      if (!isConfigFile && !isDependency && !isPackageFile) continue
+
+      if (!enabled) {
+        if (
+          !projectConfig.isUserConfigured &&
+          projectConfig.configPath &&
+          (isConfigFile || isDependency)
+        ) {
+          documentSelector = [
+            ...documentSelector.filter(
+              ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+            ),
+            ...getContentDocumentSelectorFromConfigFile(
+              projectConfig.configPath,
+              initialTailwindVersion,
+              projectConfig.folder
+            ),
+          ]
+
+          checkOpenDocuments()
         }
+        continue
       }
 
-      let isConfigFile = minimatch(file, `**/${CONFIG_FILE_GLOB}`, { dot: true })
-      let isPackageFile = minimatch(file, `**/${PACKAGE_GLOB}`, { dot: true })
-      let isDependency = state.dependencies && state.dependencies.includes(change.file)
-
-      if (!isConfigFile && !isPackageFile && !isDependency) continue
-
       if (change.type === FileChangeType.Created) {
+        log('File created:', change.file)
         needsInit = true
         break
       } else if (change.type === FileChangeType.Changed) {
+        log('File changed:', change.file)
         if (!state.enabled || isPackageFile) {
           needsInit = true
           break
@@ -299,7 +484,8 @@ async function createProjectService(
           needsRebuild = true
         }
       } else if (change.type === FileChangeType.Deleted) {
-        if (!state.enabled || isPackageFile || isConfigFile) {
+        log('File deleted:', change.file)
+        if (!state.enabled || isConfigFile || isPackageFile) {
           needsInit = true
           break
         } else {
@@ -315,65 +501,8 @@ async function createProjectService(
     }
   }
 
-  if (params.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-    connection.client.register(DidChangeWatchedFilesNotification.type, {
-      watchers: [{ globPattern: `**/${CONFIG_FILE_GLOB}` }, { globPattern: `**/${PACKAGE_GLOB}` }],
-    })
-  } else if (parcel.getBinding()) {
-    let typeMap = {
-      create: FileChangeType.Created,
-      update: FileChangeType.Changed,
-      delete: FileChangeType.Deleted,
-    }
-
-    let subscription = await parcel.subscribe(
-      folder,
-      (err, events) => {
-        onFileEvents(events.map((event) => ({ file: event.path, type: typeMap[event.type] })))
-      },
-      {
-        ignore: ignore.map((ignorePattern) =>
-          path.resolve(folder, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, ''))
-        ),
-      }
-    )
-
-    disposables.push({
-      dispose() {
-        subscription.unsubscribe()
-      },
-    })
-  } else {
-    let watch: typeof chokidar.watch = require('chokidar').watch
-    chokidarWatcher = watch([`**/${CONFIG_FILE_GLOB}`, `**/${PACKAGE_GLOB}`], {
-      cwd: folder,
-      ignorePermissionErrors: true,
-      ignoreInitial: true,
-      ignored: ignore,
-      awaitWriteFinish: {
-        stabilityThreshold: 100,
-        pollInterval: 20,
-      },
-    })
-
-    await new Promise<void>((resolve) => {
-      chokidarWatcher.on('ready', () => resolve())
-    })
-
-    chokidarWatcher
-      .on('add', (file) => onFileEvents([{ file, type: FileChangeType.Created }]))
-      .on('change', (file) => onFileEvents([{ file, type: FileChangeType.Changed }]))
-      .on('unlink', (file) => onFileEvents([{ file, type: FileChangeType.Deleted }]))
-
-    disposables.push({
-      dispose() {
-        chokidarWatcher.close()
-      },
-    })
-  }
-
   function resetState(): void {
-    clearAllDiagnostics(state)
+    // clearAllDiagnostics(state)
     Object.keys(state).forEach((key) => {
       // Keep `dependencies` to ensure that they are still watched
       if (key !== 'editor' && key !== 'dependencies') {
@@ -381,10 +510,14 @@ async function createProjectService(
       }
     })
     state.enabled = false
+    refreshDiagnostics()
     updateCapabilities()
   }
 
   async function tryInit() {
+    if (!enabled) {
+      return
+    }
     try {
       await init()
     } catch (error) {
@@ -394,6 +527,9 @@ async function createProjectService(
   }
 
   async function tryRebuild() {
+    if (!enabled) {
+      return
+    }
     try {
       await rebuild()
     } catch (error) {
@@ -402,41 +538,18 @@ async function createProjectService(
     }
   }
 
-  function clearRequireCache(): void {
-    Object.keys(require.cache).forEach((key) => {
-      if (!key.endsWith('.node')) {
-        delete require.cache[key]
-      }
-    })
-    Object.keys((Module as any)._pathCache).forEach((key) => {
-      delete (Module as any)._pathCache[key]
-    })
-  }
-
   async function init() {
+    log('Initializing...')
+
     clearRequireCache()
 
     let configPath = projectConfig.configPath
 
     if (!configPath) {
-      configPath = (
-        await glob([`**/${CONFIG_FILE_GLOB}`], {
-          cwd: folder,
-          ignore: state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE,
-          onlyFiles: true,
-          absolute: true,
-          suppressErrors: true,
-          dot: true,
-          concurrency: Math.max(os.cpus().length, 1),
-        })
-      )
-        .sort((a: string, b: string) => a.split('/').length - b.split('/').length)
-        .map(path.normalize)[0]
-    }
-
-    if (!configPath) {
       throw new SilentError('No config file found.')
     }
+
+    watchPatterns(getWatchPatternsForFile(configPath))
 
     const pnpPath = findUp.sync(
       (dir) => {
@@ -510,14 +623,14 @@ async function createProjectService(
         return
       }
 
-      console.log(`Found Tailwind CSS config file: ${configPath}`)
+      log(`Loaded Tailwind CSS config file: ${configPath}`)
 
       postcss = require(postcssPath)
       postcssSelectorParser = require(postcssSelectorParserPath)
-      console.log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
+      log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
 
       tailwindcss = require(tailwindcssPath)
-      console.log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
+      log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       try {
         resolveConfigFn = require(resolveFrom(tailwindDir, './resolveConfig.js'))
@@ -664,9 +777,9 @@ async function createProjectService(
           module: require('tailwindcss/lib/lib/expandApplyAtRules').default,
         },
       }
-      console.log('Failed to load workspace modules.')
-      console.log(`Using bundled version of \`tailwindcss\`: v${tailwindcssVersion}`)
-      console.log(`Using bundled version of \`postcss\`: v${postcssVersion}`)
+      log('Failed to load workspace modules.')
+      log(`Using bundled version of \`tailwindcss\`: v${tailwindcssVersion}`)
+      log(`Using bundled version of \`postcss\`: v${postcssVersion}`)
     }
 
     state.configPath = configPath
@@ -754,6 +867,8 @@ async function createProjectService(
   }
 
   async function rebuild() {
+    log('Building...')
+
     clearRequireCache()
 
     const { tailwindcss, postcss, resolveConfig } = state.modules
@@ -849,6 +964,22 @@ async function createProjectService(
       throw new SilentError(`Failed to load config file: ${state.configPath}`)
     }
 
+    /////////////////////
+    if (!projectConfig.isUserConfigured) {
+      documentSelector = [
+        ...documentSelector.filter(
+          ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+        ),
+        ...getContentDocumentSelectorFromConfigFile(
+          state.configPath,
+          tailwindcss.version,
+          projectConfig.folder,
+          originalConfig
+        ),
+      ]
+    }
+    //////////////////////
+
     try {
       state.config = resolveConfig.module(originalConfig)
       state.separator = state.config.separator
@@ -904,11 +1035,12 @@ async function createProjectService(
       }
     }
 
-    if (state.dependencies) {
-      chokidarWatcher?.unwatch(state.dependencies)
-    }
+    // if (state.dependencies) {
+    //   chokidarWatcher?.unwatch(state.dependencies)
+    // }
     state.dependencies = getModuleDependencies(state.configPath)
-    chokidarWatcher?.add(state.dependencies)
+    // chokidarWatcher?.add(state.dependencies)
+    watchPatterns((state.dependencies ?? []).flatMap((dep) => getWatchPatternsForFile(dep)))
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -923,89 +1055,115 @@ async function createProjectService(
 
     state.enabled = true
 
-    updateAllDiagnostics(state)
+    // updateAllDiagnostics(state)
+    refreshDiagnostics()
 
     updateCapabilities()
   }
 
   return {
+    enabled() {
+      return enabled
+    },
+    enable() {
+      enabled = true
+    },
     state,
+    documentSelector() {
+      return documentSelector
+    },
     tryInit,
-    dispose() {
-      for (let { dispose } of disposables) {
-        dispose()
+    async dispose() {
+      state = { enabled: false }
+      for (let disposable of disposables) {
+        ;(await disposable).dispose()
       }
     },
     async onUpdateSettings(settings: any): Promise<void> {
-      documentSettingsCache.clear()
-      let previousExclude =
-        state.editor.globalSettings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE
-      state.editor.globalSettings = await state.editor.getConfiguration()
-      if (!equal(previousExclude, settings.tailwindCSS.files?.exclude ?? DEFAULT_FILES_EXCLUDE)) {
-        tryInit()
+      if (state.enabled) {
+        refreshDiagnostics()
+      }
+      if (settings.editor.colorDecorators) {
+        updateCapabilities()
       } else {
-        if (state.enabled) {
-          updateAllDiagnostics(state)
-        }
-        if (settings.editor.colorDecorators) {
-          updateCapabilities()
-        } else {
-          connection.sendNotification('@/tailwindCSS/clearColors')
-        }
+        connection.sendNotification('@/tailwindCSS/clearColors')
       }
     },
     onFileEvents,
     async onHover(params: TextDocumentPositionParams): Promise<Hover> {
-      if (!state.enabled) return null
-      let document = documentService.getDocument(params.textDocument.uri)
-      if (!document) return null
-      let settings = await state.editor.getConfiguration(document.uri)
-      if (!settings.tailwindCSS.hovers) return null
-      if (await isExcluded(state, document)) return null
-      return doHover(state, document, params.position)
+      return withFallback(async () => {
+        if (!state.enabled) return null
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return null
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.hovers) return null
+        if (await isExcluded(state, document)) return null
+        return doHover(state, document, params.position)
+      }, null)
     },
     async onCompletion(params: CompletionParams): Promise<CompletionList> {
-      if (!state.enabled) return null
-      let document = documentService.getDocument(params.textDocument.uri)
-      if (!document) return null
-      let settings = await state.editor.getConfiguration(document.uri)
-      if (!settings.tailwindCSS.suggestions) return null
-      if (await isExcluded(state, document)) return null
-      let result = await doComplete(state, document, params.position, params.context)
-      if (!result) return result
-      return {
-        isIncomplete: result.isIncomplete,
-        items: result.items.map((item) => ({
-          ...item,
-          data: { projectKey: JSON.stringify(projectConfig), originalData: item.data },
-        })),
-      }
+      return withFallback(async () => {
+        if (!state.enabled) return null
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return null
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.suggestions) return null
+        if (await isExcluded(state, document)) return null
+        let result = await doComplete(state, document, params.position, params.context)
+        if (!result) return result
+        return {
+          isIncomplete: result.isIncomplete,
+          items: result.items.map((item) => ({
+            ...item,
+            data: { projectKey: JSON.stringify(projectConfig), originalData: item.data },
+          })),
+        }
+      }, null)
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
-      if (!state.enabled) return null
-      return resolveCompletionItem(state, { ...item, data: item.data?.originalData })
+      return withFallback(() => {
+        if (!state.enabled) return null
+        return resolveCompletionItem(state, { ...item, data: item.data?.originalData })
+      }, null)
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+      return withFallback(async () => {
+        if (!state.enabled) return null
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return null
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.codeActions) return null
+        return doCodeActions(state, params)
+      }, null)
+    },
+    onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
-      let settings = await state.editor.getConfiguration(document.uri)
-      if (!settings.tailwindCSS.codeActions) return null
-      return doCodeActions(state, params)
+      return getDocumentLinks(state, document, (linkPath) =>
+        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
+      )
     },
     provideDiagnostics: debounce((document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)
     }, 500),
+    provideDiagnosticsForce: (document: TextDocument) => {
+      if (!state.enabled) return
+      provideDiagnostics(state, document)
+    },
     async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
-      if (!state.enabled) return []
-      let document = documentService.getDocument(params.textDocument.uri)
-      if (!document) return []
-      if (await isExcluded(state, document)) return null
-      return getDocumentColors(state, document)
+      return withFallback(async () => {
+        if (!state.enabled) return []
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return []
+        if (await isExcluded(state, document)) return null
+        return getDocumentColors(state, document)
+      }, null)
     },
     async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
       let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return []
       let className = document.getText(params.range)
       let match = className.match(
         new RegExp(`-\\[(${colorNames.join('|')}|(?:(?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`, 'i')
@@ -1169,105 +1327,119 @@ function isAtRule(node: Node): node is AtRule {
   return node.type === 'atrule'
 }
 
-function getVariants(state: State): Record<string, string> {
-  if (state.jit) {
-    function escape(className: string): string {
-      let node = state.modules.postcssSelectorParser.module.className()
-      node.value = className
-      return dlv(node, 'raws.value', node.value)
-    }
+function getVariants(state: State): Array<Variant> {
+  if (state.jitContext?.getVariants) {
+    return state.jitContext.getVariants()
+  }
 
-    let result = {}
+  if (state.jit) {
+    let result: Array<Variant> = []
     // [name, [sort, fn]]
     // [name, [[sort, fn]]]
     Array.from(state.jitContext.variantMap as Map<string, [any, any]>).forEach(
       ([variantName, variantFnOrFns]) => {
-        let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
-          ([_sort, fn]) => fn
-        )
-
-        let placeholder = '__variant_placeholder__'
-
-        let root = state.modules.postcss.module.root({
-          nodes: [
-            state.modules.postcss.module.rule({
-              selector: `.${escape(placeholder)}`,
-              nodes: [],
-            }),
-          ],
-        })
-
-        let classNameParser = state.modules.postcssSelectorParser.module((selectors) => {
-          return selectors.first.filter(({ type }) => type === 'class').pop().value
-        })
-
-        function getClassNameFromSelector(selector) {
-          return classNameParser.transformSync(selector)
-        }
-
-        function modifySelectors(modifierFunction) {
-          root.each((rule) => {
-            if (rule.type !== 'rule') {
-              return
+        result.push({
+          name: variantName,
+          values: [],
+          isArbitrary: false,
+          hasDash: true,
+          selectors: () => {
+            function escape(className: string): string {
+              let node = state.modules.postcssSelectorParser.module.className()
+              node.value = className
+              return dlv(node, 'raws.value', node.value)
             }
 
-            rule.selectors = rule.selectors.map((selector) => {
-              return modifierFunction({
-                get className() {
-                  return getClassNameFromSelector(selector)
-                },
-                selector,
-              })
+            let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
+              ([_sort, fn]) => fn
+            )
+
+            let placeholder = '__variant_placeholder__'
+
+            let root = state.modules.postcss.module.root({
+              nodes: [
+                state.modules.postcss.module.rule({
+                  selector: `.${escape(placeholder)}`,
+                  nodes: [],
+                }),
+              ],
             })
-          })
-          return root
-        }
 
-        let definitions = []
+            let classNameParser = state.modules.postcssSelectorParser.module((selectors) => {
+              return selectors.first.filter(({ type }) => type === 'class').pop().value
+            })
 
-        for (let fn of fns) {
-          let definition: string
-          let container = root.clone()
-          let returnValue = fn({
-            container,
-            separator: state.separator,
-            modifySelectors,
-            format: (def: string) => {
-              definition = def.replace(/:merge\(([^)]+)\)/g, '$1')
-            },
-            wrap: (rule: Container) => {
-              if (isAtRule(rule)) {
-                definition = `@${rule.name} ${rule.params}`
+            function getClassNameFromSelector(selector) {
+              return classNameParser.transformSync(selector)
+            }
+
+            function modifySelectors(modifierFunction) {
+              root.each((rule) => {
+                if (rule.type !== 'rule') {
+                  return
+                }
+
+                rule.selectors = rule.selectors.map((selector) => {
+                  return modifierFunction({
+                    get className() {
+                      return getClassNameFromSelector(selector)
+                    },
+                    selector,
+                  })
+                })
+              })
+              return root
+            }
+
+            let definitions = []
+
+            for (let fn of fns) {
+              let definition: string
+              let container = root.clone()
+              let returnValue = withoutLogs(() =>
+                fn({
+                  container,
+                  separator: state.separator,
+                  modifySelectors,
+                  format: (def: string) => {
+                    definition = def.replace(/:merge\(([^)]+)\)/g, '$1')
+                  },
+                  wrap: (rule: Container) => {
+                    if (isAtRule(rule)) {
+                      definition = `@${rule.name} ${rule.params}`
+                    }
+                  },
+                })
+              )
+
+              if (!definition) {
+                definition = returnValue
               }
-            },
-          })
 
-          if (!definition) {
-            definition = returnValue
-          }
+              if (definition) {
+                definitions.push(definition)
+                continue
+              }
 
-          if (definition) {
-            definitions.push(definition)
-            continue
-          }
+              container.walkDecls((decl) => {
+                decl.remove()
+              })
 
-          container.walkDecls((decl) => {
-            decl.remove()
-          })
+              definition = container
+                .toString()
+                .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
+                .replace(/(?<!\\)[{}]/g, '')
+                .replace(/\s*\n\s*/g, ' ')
+                .trim()
 
-          definition = container
-            .toString()
-            .replace(`.${escape(`${variantName}:${placeholder}`)}`, '&')
-            .replace(/(?<!\\)[{}]/g, '')
-            .replace(/\s*\n\s*/g, ' ')
-            .trim()
+              if (!definition.includes(placeholder)) {
+                definitions.push(definition)
+              }
+            }
 
-          if (!definition.includes(placeholder)) {
-            definitions.push(definition)
-          }
-        }
-
-        result[variantName] = definitions.join(', ') || null
+            return definitions
+          },
+        })
       }
     )
 
@@ -1299,7 +1471,13 @@ function getVariants(state: State): Record<string, string> {
     })
   })
 
-  return variants.reduce((obj, variant) => ({ ...obj, [variant]: null }), {})
+  return variants.map((variant) => ({
+    name: variant,
+    values: [],
+    isArbitrary: false,
+    hasDash: true,
+    selectors: () => [],
+  }))
 }
 
 async function getPlugins(config: any) {
@@ -1373,13 +1551,77 @@ async function getPlugins(config: any) {
   // }
 }
 
+async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
+  let css = getTextWithoutComments(await fs.promises.readFile(cssFile, 'utf8'), 'css')
+  let match = css.match(/@config\s*(?<config>'[^']+'|"[^"]+")/)
+  if (!match) {
+    return null
+  }
+  return path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))
+}
+
+function getPackageRoot(cwd: string, rootDir: string) {
+  try {
+    let pkgJsonPath = findUp.sync(
+      (dir) => {
+        let pkgJson = path.join(dir, 'package.json')
+        if (findUp.sync.exists(pkgJson)) {
+          return pkgJson
+        }
+        if (dir === rootDir) {
+          return findUp.stop
+        }
+      },
+      { cwd }
+    )
+    return pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
+  } catch {
+    return rootDir
+  }
+}
+
+function getContentDocumentSelectorFromConfigFile(
+  configPath: string,
+  tailwindVersion: string,
+  rootDir: string,
+  actualConfig?: any
+): DocumentSelector[] {
+  let config = actualConfig ?? require(configPath)
+  let contentConfig: unknown = config.content?.files ?? config.content
+  let content = Array.isArray(contentConfig) ? contentConfig : []
+  let relativeEnabled = semver.gte(tailwindVersion, '3.2.0')
+    ? config.future?.relativeContentPathsByDefault || config.content?.relative
+    : false
+  let contentBase: string
+  if (relativeEnabled) {
+    contentBase = path.dirname(configPath)
+  } else {
+    contentBase = getPackageRoot(path.dirname(configPath), rootDir)
+  }
+  return content
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) =>
+      item.startsWith('!')
+        ? `!${path.resolve(contentBase, item.slice(1))}`
+        : path.resolve(contentBase, item)
+    )
+    .map((item) => ({
+      pattern: normalizePath(item),
+      priority: DocumentSelectorPriority.CONTENT_FILE,
+    }))
+}
+
 class TW {
   private initialized = false
+  private lspHandlersAdded = false
   private workspaces: Map<string, { name: string; workspaceFsPath: string }>
   private projects: Map<string, ProjectService>
   private documentService: DocumentService
   public initializeParams: InitializeParams
   private registrations: Promise<BulkUnregistration>
+  private disposables: Disposable[] = []
+  private watchPatterns: (patterns: string[]) => void = () => {}
+  private watched: string[] = []
 
   constructor(private connection: Connection) {
     this.documentService = new DocumentService(this.connection)
@@ -1390,34 +1632,30 @@ class TW {
   async init(): Promise<void> {
     if (this.initialized) return
 
+    clearRequireCache()
+
     this.initialized = true
 
-    // TODO
-    let workspaceFolders: Array<ProjectConfig> =
-      false &&
-      Array.isArray(this.initializeParams.workspaceFolders) &&
-      this.initializeParams.capabilities.workspace?.workspaceFolders
-        ? this.initializeParams.workspaceFolders.map((el) => ({
-            folder: getFileFsPath(el.uri),
-          }))
-        : this.initializeParams.rootPath
-        ? [{ folder: normalizeFileNameToFsPath(this.initializeParams.rootPath) }]
-        : []
-
-    if (workspaceFolders.length === 0) {
+    if (!this.initializeParams.rootPath) {
       console.error('No workspace folders found, not initializing.')
       return
     }
 
-    let configFileOrFiles = dlv(
-      await connection.workspace.getConfiguration('tailwindCSS'),
-      'experimental.configFile',
-      null
-    ) as Settings['tailwindCSS']['experimental']['configFile']
+    let workspaceFolders: Array<ProjectConfig> = []
+    let globalSettings = await getConfiguration()
+    let ignore = globalSettings.tailwindCSS.files.exclude
+    let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
+
+    let base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
+    let cssFileConfigMap: Map<string, string> = new Map()
+    let configTailwindVersionMap: Map<string, string> = new Map()
+
+    // base directory to resolve relative `experimental.configFile` paths against
+    let userDefinedConfigBase = this.initializeParams.initializationOptions?.workspaceFile
+      ? path.dirname(this.initializeParams.initializationOptions.workspaceFile)
+      : base
 
     if (configFileOrFiles) {
-      let base = workspaceFolders[0].folder
-
       if (
         typeof configFileOrFiles !== 'string' &&
         (!isObject(configFileOrFiles) ||
@@ -1440,73 +1678,449 @@ class TW {
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.join(base, relativeConfigPath),
-            documentSelector: []
-              .concat(relativeDocumentSelectorOrSelectors)
-              .map((selector) => path.join(base, selector)),
+            configPath: path.resolve(userDefinedConfigBase, relativeConfigPath),
+            documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
+              priority: DocumentSelectorPriority.USER_CONFIGURED,
+              pattern: path.resolve(userDefinedConfigBase, selector),
+            })),
+            isUserConfigured: true,
           }
         }
       )
+    } else {
+      let projects: Record<string, Array<DocumentSelector>> = {}
+
+      let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
+        cwd: base,
+        ignore: (await getConfiguration()).tailwindCSS.files.exclude,
+        onlyFiles: true,
+        absolute: true,
+        suppressErrors: true,
+        dot: true,
+        concurrency: Math.max(os.cpus().length, 1),
+      })
+
+      for (let filename of files) {
+        let normalizedFilename = normalizePath(filename)
+        let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, { dot: true })
+        let configPath = isCssFile ? await getConfigFileFromCssFile(filename) : filename
+        if (!configPath) {
+          continue
+        }
+
+        let twVersion = require('tailwindcss/package.json').version
+        let isDefaultVersion = true
+        try {
+          let v = require(resolveFrom(path.dirname(configPath), 'tailwindcss/package.json')).version
+          if (typeof v === 'string') {
+            twVersion = v
+            isDefaultVersion = false
+          }
+        } catch {}
+
+        if (isCssFile && (!semver.gte(twVersion, '3.2.0') || isDefaultVersion)) {
+          continue
+        }
+
+        configTailwindVersionMap.set(configPath, twVersion)
+
+        let contentSelector: Array<DocumentSelector> = []
+        try {
+          contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twVersion, base)
+        } catch {}
+
+        let documentSelector: DocumentSelector[] = [
+          {
+            pattern: normalizePath(filename),
+            priority: isCssFile
+              ? DocumentSelectorPriority.CSS_FILE
+              : DocumentSelectorPriority.CONFIG_FILE,
+          },
+          ...(isCssFile
+            ? [
+                {
+                  pattern: normalizePath(configPath),
+                  priority: DocumentSelectorPriority.CONFIG_FILE,
+                },
+              ]
+            : []),
+          ...contentSelector,
+          {
+            pattern: normalizePath(path.join(path.dirname(filename), '**')),
+            priority: isCssFile
+              ? DocumentSelectorPriority.CSS_DIRECTORY
+              : DocumentSelectorPriority.CONFIG_DIRECTORY,
+          },
+          ...(isCssFile
+            ? [
+                {
+                  pattern: normalizePath(path.join(path.dirname(configPath), '**')),
+                  priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
+                },
+              ]
+            : []),
+          {
+            pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
+            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+          },
+        ]
+
+        projects[configPath] = [...(projects[configPath] ?? []), ...documentSelector]
+
+        if (isCssFile) {
+          cssFileConfigMap.set(normalizedFilename, configPath)
+        }
+      }
+
+      if (Object.keys(projects).length > 0) {
+        workspaceFolders = Object.entries(projects).map(([configPath, documentSelector]) => {
+          return {
+            folder: base,
+            configPath,
+            isUserConfigured: false,
+            documentSelector: documentSelector
+              .sort((a, z) => a.priority - z.priority)
+              .filter(
+                ({ pattern }, index, documentSelectors) =>
+                  documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index
+              ),
+          }
+        })
+      }
     }
 
-    await Promise.all(
-      workspaceFolders.map((projectConfig) => this.addProject(projectConfig, this.initializeParams))
-    )
+    console.log(`[Global] Creating projects: ${JSON.stringify(workspaceFolders)}`)
 
-    this.setupLSPHandlers()
+    const onDidChangeWatchedFiles = async (
+      changes: Array<{ file: string; type: FileChangeType }>
+    ): Promise<void> => {
+      let needsRestart = false
+
+      changeLoop: for (let change of changes) {
+        let normalizedFilename = normalizePath(change.file)
+
+        for (let ignorePattern of ignore) {
+          if (minimatch(normalizedFilename, ignorePattern, { dot: true })) {
+            continue changeLoop
+          }
+        }
+
+        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+        if (isPackageFile) {
+          for (let [key] of this.projects) {
+            let projectConfig = JSON.parse(key) as ProjectConfig
+            let twVersion = require('tailwindcss/package.json').version
+            try {
+              let v = require(resolveFrom(
+                path.dirname(projectConfig.configPath),
+                'tailwindcss/package.json'
+              )).version
+              if (typeof v === 'string') {
+                twVersion = v
+              }
+            } catch {}
+            if (configTailwindVersionMap.get(projectConfig.configPath) !== twVersion) {
+              needsRestart = true
+              break changeLoop
+            }
+          }
+        }
+
+        let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
+          dot: true,
+        })
+        if (isCssFile) {
+          let configPath = await getConfigFileFromCssFile(change.file)
+          if (
+            cssFileConfigMap.has(normalizedFilename) &&
+            cssFileConfigMap.get(normalizedFilename) !== configPath
+          ) {
+            needsRestart = true
+            break
+          } else if (!cssFileConfigMap.has(normalizedFilename) && configPath) {
+            needsRestart = true
+            break
+          }
+        }
+
+        let isConfigFile = minimatch(normalizedFilename, `**/${CONFIG_GLOB}`, {
+          dot: true,
+        })
+        if (isConfigFile && change.type === FileChangeType.Created) {
+          needsRestart = true
+          break
+        }
+
+        for (let [key] of this.projects) {
+          let projectConfig = JSON.parse(key) as ProjectConfig
+          if (
+            change.type === FileChangeType.Deleted &&
+            changeAffectsFile(normalizedFilename, [projectConfig.configPath])
+          ) {
+            needsRestart = true
+            break changeLoop
+          }
+        }
+      }
+
+      if (needsRestart) {
+        this.restart()
+        return
+      }
+
+      for (let [, project] of this.projects) {
+        project.onFileEvents(changes)
+      }
+    }
 
     if (this.initializeParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
-      this.connection.onDidChangeWatchedFiles(({ changes }) => {
-        for (let [, project] of this.projects) {
-          project.onFileEvents(
-            changes.map(({ uri, type }) => ({
+      this.disposables.push(
+        this.connection.onDidChangeWatchedFiles(async ({ changes }) => {
+          let normalizedChanges = changes
+            .map(({ uri, type }) => ({
               file: URI.parse(uri).fsPath,
               type,
             }))
-          )
+            .filter(
+              (change, changeIndex, changes) =>
+                changes.findIndex((c) => c.file === change.file && c.type === change.type) ===
+                changeIndex
+            )
+
+          await onDidChangeWatchedFiles(normalizedChanges)
+        })
+      )
+
+      let disposable = await this.connection.client.register(
+        DidChangeWatchedFilesNotification.type,
+        {
+          watchers: [
+            { globPattern: `**/${CONFIG_GLOB}` },
+            { globPattern: `**/${PACKAGE_LOCK_GLOB}` },
+            { globPattern: `**/${CSS_GLOB}` },
+          ],
         }
+      )
+
+      this.disposables.push(disposable)
+
+      this.watchPatterns = (patterns) => {
+        let newPatterns = this.filterNewWatchPatterns(patterns)
+        if (newPatterns.length) {
+          console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
+          this.connection.client
+            .register(DidChangeWatchedFilesNotification.type, {
+              watchers: newPatterns.map((pattern) => ({ globPattern: pattern })),
+            })
+            .then((disposable) => {
+              this.disposables.push(disposable)
+            })
+        }
+      }
+    } else if (parcel.getBinding()) {
+      let typeMap = {
+        create: FileChangeType.Created,
+        update: FileChangeType.Changed,
+        delete: FileChangeType.Deleted,
+      }
+
+      let subscription = await parcel.subscribe(
+        base,
+        (err, events) => {
+          onDidChangeWatchedFiles(
+            events.map((event) => ({ file: event.path, type: typeMap[event.type] }))
+          )
+        },
+        {
+          ignore: ignore.map((ignorePattern) =>
+            path.resolve(base, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, ''))
+          ),
+        }
+      )
+
+      this.disposables.push({
+        dispose() {
+          subscription.unsubscribe()
+        },
       })
+    } else {
+      let watch: typeof chokidar.watch = require('chokidar').watch
+      let chokidarWatcher = watch(
+        [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`],
+        {
+          cwd: base,
+          ignorePermissionErrors: true,
+          ignoreInitial: true,
+          ignored: ignore,
+          awaitWriteFinish: {
+            stabilityThreshold: 100,
+            pollInterval: 20,
+          },
+        }
+      )
+
+      await new Promise<void>((resolve) => {
+        chokidarWatcher.on('ready', () => resolve())
+      })
+
+      chokidarWatcher
+        .on('add', (file) =>
+          onDidChangeWatchedFiles([
+            { file: path.resolve(base, file), type: FileChangeType.Created },
+          ])
+        )
+        .on('change', (file) =>
+          onDidChangeWatchedFiles([
+            { file: path.resolve(base, file), type: FileChangeType.Changed },
+          ])
+        )
+        .on('unlink', (file) =>
+          onDidChangeWatchedFiles([
+            { file: path.resolve(base, file), type: FileChangeType.Deleted },
+          ])
+        )
+
+      this.disposables.push({
+        dispose() {
+          chokidarWatcher.close()
+        },
+      })
+
+      this.watchPatterns = (patterns) => {
+        let newPatterns = this.filterNewWatchPatterns(patterns)
+        if (newPatterns.length) {
+          console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
+          chokidarWatcher.add(newPatterns)
+        }
+      }
     }
 
-    this.connection.onDidChangeConfiguration(async ({ settings }) => {
-      for (let [, project] of this.projects) {
-        project.onUpdateSettings(settings)
+    await Promise.all(
+      workspaceFolders.map((projectConfig) =>
+        this.addProject(
+          projectConfig,
+          this.initializeParams,
+          this.watchPatterns,
+          configTailwindVersionMap.get(projectConfig.configPath)
+        )
+      )
+    )
+
+    // init projects for documents that are _already_ open
+    for (let document of this.documentService.getAllDocuments()) {
+      let project = this.getProject(document)
+      if (project && !project.enabled()) {
+        project.enable()
+        await project.tryInit()
       }
-    })
+    }
 
-    this.connection.onShutdown(() => {
-      this.dispose()
-    })
+    this.setupLSPHandlers()
 
-    this.documentService.onDidChangeContent((change) => {
-      this.getProject(change.document)?.provideDiagnostics(change.document)
-    })
+    this.disposables.push(
+      this.connection.onDidChangeConfiguration(async ({ settings }) => {
+        let previousExclude = globalSettings.tailwindCSS.files.exclude
+
+        documentSettingsCache.clear()
+        globalSettings = await getConfiguration()
+
+        if (!equal(previousExclude, globalSettings.tailwindCSS.files.exclude)) {
+          this.restart()
+          return
+        }
+
+        for (let [, project] of this.projects) {
+          project.onUpdateSettings(settings)
+        }
+      })
+    )
+
+    this.disposables.push(
+      this.connection.onShutdown(() => {
+        this.dispose()
+      })
+    )
+
+    this.disposables.push(
+      this.documentService.onDidChangeContent((change) => {
+        this.getProject(change.document)?.provideDiagnostics(change.document)
+      })
+    )
+
+    this.disposables.push(
+      this.documentService.onDidOpen((event) => {
+        let project = this.getProject(event.document)
+        if (project && !project.enabled()) {
+          project.enable()
+          project.tryInit()
+        }
+      })
+    )
   }
 
-  private async addProject(projectConfig: ProjectConfig, params: InitializeParams): Promise<void> {
+  private filterNewWatchPatterns(patterns: string[]) {
+    let newWatchPatterns = patterns.filter((pattern) => !this.watched.includes(pattern))
+    this.watched.push(...newWatchPatterns)
+    return newWatchPatterns
+  }
+
+  private async addProject(
+    projectConfig: ProjectConfig,
+    params: InitializeParams,
+    watchPatterns: (patterns: string[]) => void,
+    tailwindVersion: string
+  ): Promise<void> {
     let key = JSON.stringify(projectConfig)
-    if (this.projects.has(key)) {
-      await this.projects.get(key).tryInit()
-    } else {
+
+    if (!this.projects.has(key)) {
       const project = await createProjectService(
         projectConfig,
         this.connection,
         params,
         this.documentService,
-        () => this.updateCapabilities()
+        () => this.updateCapabilities(),
+        () => {
+          for (let document of this.documentService.getAllDocuments()) {
+            let project = this.getProject(document)
+            if (project && !project.enabled()) {
+              project.enable()
+              project.tryInit()
+              break
+            }
+          }
+        },
+        () => this.refreshDiagnostics(),
+        (patterns: string[]) => watchPatterns(patterns),
+        tailwindVersion
       )
       this.projects.set(key, project)
-      await project.tryInit()
+    }
+  }
+
+  private refreshDiagnostics() {
+    for (let doc of this.documentService.getAllDocuments()) {
+      let project = this.getProject(doc)
+      if (project) {
+        project.provideDiagnosticsForce(doc)
+      } else {
+        this.connection.sendDiagnostics({ uri: doc.uri, diagnostics: [] })
+      }
     }
   }
 
   private setupLSPHandlers() {
+    if (this.lspHandlersAdded) {
+      return
+    }
+    this.lspHandlersAdded = true
+
     this.connection.onHover(this.onHover.bind(this))
     this.connection.onCompletion(this.onCompletion.bind(this))
     this.connection.onCompletionResolve(this.onCompletionResolve.bind(this))
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
     this.connection.onRequest((method, params: { uri: string; classLists: string[] }) => {
       if (method === '@/tailwindCSS/sortSelection') {
         let project = this.getProject({ uri: params.uri })
@@ -1534,20 +2148,18 @@ class TW {
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
 
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
       triggerCharacters: [
         ...TRIGGER_CHARACTERS,
-        ...projects.map((project) => project.state.separator).filter(Boolean),
+        ...projects
+          .map((project) => project.state.separator)
+          .filter((sep) => typeof sep === 'string')
+          .map((sep) => sep.slice(-1)),
       ].filter(Boolean),
-    })
-
-    capabilities.add(DidChangeWatchedFilesNotification.type, {
-      watchers: projects.flatMap(
-        (project) => project.state.dependencies?.map((file) => ({ globPattern: file })) ?? []
-      ),
     })
 
     this.registrations = this.connection.client.register(capabilities)
@@ -1555,12 +2167,33 @@ class TW {
 
   private getProject(document: TextDocumentIdentifier): ProjectService {
     let fallbackProject: ProjectService
+    let matchedProject: ProjectService
+    let matchedPriority: number = Infinity
+
     for (let [key, project] of this.projects) {
       let projectConfig = JSON.parse(key) as ProjectConfig
       if (projectConfig.configPath) {
-        for (let selector of projectConfig.documentSelector) {
-          if (minimatch(URI.parse(document.uri).fsPath, selector)) {
-            return project
+        let documentSelector = project
+          .documentSelector()
+          .concat()
+          // move all the negated patterns to the front
+          .sort((a, z) => {
+            if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
+              return -1
+            }
+            if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
+              return 1
+            }
+            return 0
+          })
+        for (let { pattern, priority } of documentSelector) {
+          let fsPath = URI.parse(document.uri).fsPath
+          if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
+            break
+          }
+          if (minimatch(fsPath, pattern, { dot: true }) && priority < matchedPriority) {
+            matchedProject = project
+            matchedPriority = priority
           }
         }
       } else {
@@ -1569,6 +2202,11 @@ class TW {
         }
       }
     }
+
+    if (matchedProject) {
+      return matchedProject
+    }
+
     return fallbackProject
   }
 
@@ -1596,6 +2234,10 @@ class TW {
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
+  onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+    return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
+  }
+
   listen() {
     this.connection.listen()
   }
@@ -1604,6 +2246,26 @@ class TW {
     for (let [, project] of this.projects) {
       project.dispose()
     }
+    this.projects = new Map()
+
+    this.refreshDiagnostics()
+
+    if (this.registrations) {
+      this.registrations.then((r) => r.dispose())
+      this.registrations = undefined
+    }
+
+    this.disposables.forEach((d) => d.dispose())
+    this.disposables.length = 0
+
+    this.watched.length = 0
+  }
+
+  restart(): void {
+    console.log('----------\nRESTARTING\n----------')
+    this.dispose()
+    this.initialized = false
+    this.init()
   }
 }
 
@@ -1629,15 +2291,19 @@ class DocumentService {
   get onDidClose() {
     return this.documents.onDidClose
   }
+  get onDidOpen() {
+    return this.documents.onDidOpen
+  }
 }
 
 function supportsDynamicRegistration(connection: Connection, params: InitializeParams): boolean {
   return (
     connection.onInitialized &&
-    params.capabilities.textDocument.hover.dynamicRegistration &&
-    params.capabilities.textDocument.colorProvider.dynamicRegistration &&
-    params.capabilities.textDocument.codeAction.dynamicRegistration &&
-    params.capabilities.textDocument.completion.dynamicRegistration
+    params.capabilities.textDocument.hover?.dynamicRegistration &&
+    params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
+    params.capabilities.textDocument.codeAction?.dynamicRegistration &&
+    params.capabilities.textDocument.completion?.dynamicRegistration &&
+    params.capabilities.textDocument.documentLink?.dynamicRegistration
   )
 }
 
@@ -1662,6 +2328,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
       hoverProvider: true,
       colorProvider: true,
       codeActionProvider: true,
+      documentLinkProvider: {},
       completionProvider: {
         resolveProvider: true,
         triggerCharacters: [...TRIGGER_CHARACTERS, ':'],

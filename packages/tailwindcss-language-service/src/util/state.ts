@@ -21,7 +21,6 @@ export type EditorState = {
   connection: Connection
   folder: string
   documents: TextDocuments<TextDocument>
-  globalSettings: Settings
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
@@ -29,47 +28,63 @@ export type EditorState = {
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
+  readDirectory: (
+    document: TextDocument,
+    directory: string
+  ) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
 
+export type EditorSettings = {
+  tabSize: number
+}
+
+export type TailwindCssSettings = {
+  emmetCompletions: boolean
+  includeLanguages: Record<string, string>
+  classAttributes: string[]
+  suggestions: boolean
+  hovers: boolean
+  codeActions: boolean
+  validate: boolean
+  showPixelEquivalents: boolean
+  rootFontSize: number
+  colorDecorators: boolean
+  lint: {
+    cssConflict: DiagnosticSeveritySetting
+    invalidApply: DiagnosticSeveritySetting
+    invalidScreen: DiagnosticSeveritySetting
+    invalidVariant: DiagnosticSeveritySetting
+    invalidConfigPath: DiagnosticSeveritySetting
+    invalidTailwindDirective: DiagnosticSeveritySetting
+    recommendedVariantOrder: DiagnosticSeveritySetting
+  }
+  experimental: {
+    classRegex: string[]
+    configFile: string | Record<string, string | string[]>
+  }
+  files: {
+    exclude: string[]
+  }
+}
+
 export type Settings = {
-  editor: {
-    tabSize: number
-  }
-  tailwindCSS: {
-    emmetCompletions: boolean
-    includeLanguages: Record<string, string>
-    classAttributes: string[]
-    suggestions: boolean
-    hovers: boolean
-    codeActions: boolean
-    validate: boolean
-    showPixelEquivalents: boolean
-    rootFontSize: number
-    colorDecorators: boolean
-    lint: {
-      cssConflict: DiagnosticSeveritySetting
-      invalidApply: DiagnosticSeveritySetting
-      invalidScreen: DiagnosticSeveritySetting
-      invalidVariant: DiagnosticSeveritySetting
-      invalidConfigPath: DiagnosticSeveritySetting
-      invalidTailwindDirective: DiagnosticSeveritySetting
-      recommendedVariantOrder: DiagnosticSeveritySetting
-    }
-    experimental: {
-      classRegex: string[]
-      configFile: string | Record<string, string | string[]>
-    }
-    files: {
-      exclude: string[]
-    }
-  }
+  editor: EditorSettings
+  tailwindCSS: TailwindCssSettings
 }
 
 export interface FeatureFlags {
   future: string[]
   experimental: string[]
+}
+
+export interface Variant {
+  name: string
+  values: string[]
+  isArbitrary: boolean
+  hasDash: boolean
+  selectors: (params?: { value?: string; label?: string }) => string[]
 }
 
 export interface State {
@@ -82,7 +97,7 @@ export interface State {
   dependencies?: string[]
   plugins?: any
   screens?: string[]
-  variants?: Record<string, string | null>
+  variants?: Variant[]
   corePlugins?: string[]
   modules?: {
     tailwindcss?: { version: string; module: any }
@@ -120,12 +135,12 @@ export type DocumentClassName = {
 }
 
 export type DocumentHelperFunction = {
-  full: string
   helper: 'theme' | 'config'
-  value: string
-  quotes: '"' | "'"
-  range: Range
-  valueRange: Range
+  path: string
+  ranges: {
+    full: Range
+    path: Range
+  }
 }
 
 export type ClassNameMeta = {

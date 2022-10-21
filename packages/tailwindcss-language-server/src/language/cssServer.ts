@@ -162,10 +162,15 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
             {
               ...item,
               label: 'theme()',
+              filterText: 'theme',
               documentation: {
                 kind: 'markdown',
                 value:
                   'Use the `theme()` function to access your Tailwind config values using dot notation.',
+              },
+              command: {
+                title: '',
+                command: 'editor.action.triggerSuggest',
               },
               textEdit: {
                 ...item.textEdit,
@@ -357,6 +362,7 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@media(\s+screen\s*\([^)]+\))/g,
         (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`
       )
+      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
   )
 }
 
@@ -387,7 +393,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     .filter((diagnostic) => {
       if (
         diagnostic.code === 'unknownAtRules' &&
-        /Unknown at rule @(tailwind|apply)/.test(diagnostic.message)
+        /Unknown at rule @(tailwind|apply|config)/.test(diagnostic.message)
       ) {
         return false
       }

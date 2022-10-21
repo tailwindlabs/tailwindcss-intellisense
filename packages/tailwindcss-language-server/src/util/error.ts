@@ -25,11 +25,11 @@ export function showError(
   message: string = 'Tailwind CSS'
 ): void {
   console.error(formatError(message, err))
-  if (!(err instanceof SilentError)) {
-    connection.sendNotification('@/tailwindCSS/error', {
-      message: formatError(message, err, false),
-    })
-  }
+  // if (!(err instanceof SilentError)) {
+  //   connection.sendNotification('@/tailwindCSS/error', {
+  //     message: formatError(message, err, false),
+  //   })
+  // }
 }
 
 export function SilentError(message: string) {

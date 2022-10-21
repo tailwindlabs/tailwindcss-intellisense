@@ -26,6 +26,7 @@ import {
   ProviderResult,
   SnippetString,
   TextEdit,
+  TextEditorSelectionChangeKind,
 } from 'vscode'
 import {
   LanguageClient,
@@ -41,13 +42,12 @@ import isObject from 'tailwindcss-language-service/src/util/isObject'
 import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
+import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
 
 const colorNames = Object.keys(namedColors)
 
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
-
-const CONFIG_FILE_GLOB = '{tailwind,tailwind.config}.{js,cjs}'
 
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
@@ -71,20 +71,6 @@ function sortedWorkspaceFolders(): string[] {
       : []
   }
   return _sortedWorkspaceFolders
-}
-
-function getOuterMostWorkspaceFolder(folder: WorkspaceFolder): WorkspaceFolder {
-  let sorted = sortedWorkspaceFolders()
-  for (let element of sorted) {
-    let uri = folder.uri.toString()
-    if (uri.charAt(uri.length - 1) !== '/') {
-      uri = uri + '/'
-    }
-    if (uri.startsWith(element)) {
-      return Workspace.getWorkspaceFolder(Uri.parse(element))!
-    }
-  }
-  return folder
 }
 
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
@@ -130,6 +116,11 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
   }
 }
 
+async function fileContainsAtConfig(uri: Uri) {
+  let contents = (await Workspace.fs.readFile(uri)).toString()
+  return /@config\s*['"]/.test(contents)
+}
+
 export async function activate(context: ExtensionContext) {
   let module = context.asAbsolutePath(path.join('dist', 'server.js'))
   let prod = path.join('dist', 'tailwindServer.js')
@@ -160,7 +151,6 @@ export async function activate(context: ExtensionContext) {
     if (clients.size === 0 || !folder || isExcluded(uri.fsPath, folder)) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
-    folder = getOuterMostWorkspaceFolder(folder)
     let client = clients.get(folder.uri.toString())
     if (!client) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
@@ -201,26 +191,105 @@ export async function activate(context: ExtensionContext) {
     })
   )
 
-  let watcher = Workspace.createFileSystemWatcher(`**/${CONFIG_FILE_GLOB}`, false, true, true)
+  // context.subscriptions.push(
+  //   commands.registerCommand(
+  //     'tailwindCSS.onInsertArbitraryVariantSnippet',
+  //     (
+  //       variantName: string,
+  //       range: {
+  //         start: { line: number; character: number }
+  //         end: { line: number; character: number }
+  //       }
+  //     ) => {
+  //       let listener = Window.onDidChangeTextEditorSelection((event) => {
+  //         if (event.selections.length !== 1) {
+  //           listener.dispose()
+  //           return
+  //         }
 
-  watcher.onDidCreate((uri) => {
+  //         let document = event.textEditor.document
+  //         let selection = event.selections[0]
+
+  //         let line = document.lineAt(range.start.line)
+  //         let lineRangeFromCompletion = new Range(
+  //           range.start.line,
+  //           range.start.character,
+  //           line.range.end.line,
+  //           line.range.end.character
+  //         )
+  //         let lineText = document.getText(lineRangeFromCompletion)
+  //         let match = lineText.match(/^(\S+)]:/)
+
+  //         if (!match) {
+  //           listener.dispose()
+  //           return
+  //         }
+
+  //         let arbitraryValueRange = new Range(
+  //           lineRangeFromCompletion.start.translate(0, variantName.length + 2),
+  //           lineRangeFromCompletion.start.translate(0, match[1].length)
+  //         )
+
+  //         if (!arbitraryValueRange.contains(selection)) {
+  //           listener.dispose()
+  //         }
+
+  //         if (
+  //           event.kind === TextEditorSelectionChangeKind.Command &&
+  //           selection.isEmpty &&
+  //           selection.start.isEqual(arbitraryValueRange.end.translate(0, 2))
+  //         ) {
+  //           commands.executeCommand('editor.action.triggerSuggest')
+  //         }
+  //       })
+  //       context.subscriptions.push(listener)
+  //     }
+  //   )
+  // )
+
+  let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
+
+  configWatcher.onDidCreate((uri) => {
     let folder = Workspace.getWorkspaceFolder(uri)
-    if (!folder) {
+    if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    if (!isExcluded(uri.fsPath, folder)) {
-      folder = getOuterMostWorkspaceFolder(folder)
-      bootWorkspaceClient(folder)
-    }
+    bootWorkspaceClient(folder)
   })
 
-  context.subscriptions.push(watcher)
+  context.subscriptions.push(configWatcher)
+
+  let cssWatcher = Workspace.createFileSystemWatcher(`**/${CSS_GLOB}`, false, false, true)
+
+  async function bootClientIfCssFileContainsAtConfig(uri: Uri) {
+    let folder = Workspace.getWorkspaceFolder(uri)
+    if (!folder || isExcluded(uri.fsPath, folder)) {
+      return
+    }
+    if (await fileContainsAtConfig(uri)) {
+      bootWorkspaceClient(folder)
+    }
+  }
+
+  cssWatcher.onDidCreate(bootClientIfCssFileContainsAtConfig)
+  cssWatcher.onDidChange(bootClientIfCssFileContainsAtConfig)
+
+  context.subscriptions.push(cssWatcher)
 
   // TODO: check if the actual language MAPPING changed
   // not just the language IDs
   // e.g. "plaintext" already exists but you change it from "html" to "css"
   context.subscriptions.push(
     Workspace.onDidChangeConfiguration((event) => {
+      let toReboot = new Set<WorkspaceFolder>()
+
+      Workspace.textDocuments.forEach((document) => {
+        let folder = Workspace.getWorkspaceFolder(document.uri)
+        if (!folder) return
+        if (event.affectsConfiguration('tailwindCSS.experimental.configFile', folder)) {
+          toReboot.add(folder)
+        }
+      })
       ;[...clients].forEach(([key, client]) => {
         const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
         let reboot = false
@@ -242,11 +311,15 @@ export async function activate(context: ExtensionContext) {
         }
 
         if (reboot && client) {
-          clients.delete(folder.uri.toString())
-          client.stop()
-          bootWorkspaceClient(folder)
+          toReboot.add(folder)
         }
       })
+
+      for (let folder of toReboot) {
+        clients.get(folder.uri.toString())?.stop()
+        clients.delete(folder.uri.toString())
+        bootClientForFolderIfNeeded(folder)
+      }
     })
   )
 
@@ -325,11 +398,8 @@ export async function activate(context: ExtensionContext) {
       }
     )
 
-    client.onReady().then(() => {
-      context.subscriptions.push(initCompletionProvider())
-    })
-
-    context.subscriptions.push(client.start())
+    await client.start()
+    context.subscriptions.push(initCompletionProvider())
 
     function initCompletionProvider(): Disposable {
       const regionCompletionRegExpr = /^(\s*)(\/(\*\s*(#\w*)?)?)?$/
@@ -430,10 +500,42 @@ export async function activate(context: ExtensionContext) {
       outputChannel: outputChannel,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
+        provideCompletionItem(document, position, context, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, position, context, token)
+        },
+        provideHover(document, position, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, position, token)
+        },
+        handleDiagnostics(uri, diagnostics, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(uri)
+          if (workspaceFolder !== folder) {
+            return
+          }
+          next(uri, diagnostics)
+        },
+        provideCodeActions(document, range, context, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+          return next(document, range, context, token)
+        },
         async resolveCompletionItem(item, token, next) {
           let result = await next(item, token)
           let selections = Window.activeTextEditor.selections
-          if (selections.length > 1 && result.additionalTextEdits?.length > 0) {
+          if (
+            result['data'] === 'variant' &&
+            selections.length > 1 &&
+            result.additionalTextEdits?.length > 0
+          ) {
             let length =
               selections[0].start.character - result.additionalTextEdits[0].range.start.character
             let prefixLength =
@@ -467,6 +569,11 @@ export async function activate(context: ExtensionContext) {
           return result
         },
         async provideDocumentColors(document, token, next) {
+          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
+          if (workspaceFolder !== folder) {
+            return null
+          }
+
           let colors = await next(document, token)
           let editableColors = colors.filter((color) => {
             let text =
@@ -525,6 +632,7 @@ export async function activate(context: ExtensionContext) {
                 let doc = Workspace.textDocuments.find((doc) => doc.uri.toString() === scopeUri)
                 if (doc) {
                   scope = {
+                    uri: Uri.parse(scopeUri),
                     languageId: doc.languageId,
                   }
                 }
@@ -542,6 +650,8 @@ export async function activate(context: ExtensionContext) {
       },
       initializationOptions: {
         userLanguages: getUserLanguages(folder),
+        workspaceFile:
+          Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile.fsPath : undefined,
       },
       synchronize: {
         configurationSection: ['files', 'editor', 'tailwindCSS'],
@@ -550,22 +660,20 @@ export async function activate(context: ExtensionContext) {
 
     let client = new LanguageClient(CLIENT_ID, CLIENT_NAME, serverOptions, clientOptions)
 
-    client.onReady().then(() => {
-      client.onNotification('@/tailwindCSS/error', async ({ message }) => {
-        let action = await Window.showErrorMessage(message, 'Go to output')
-        if (action === 'Go to output') {
-          commands.executeCommand('tailwindCSS.showOutput')
-        }
-      })
+    client.onNotification('@/tailwindCSS/error', async ({ message }) => {
+      let action = await Window.showErrorMessage(message, 'Go to output')
+      if (action === 'Go to output') {
+        commands.executeCommand('tailwindCSS.showOutput')
+      }
+    })
 
-      client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
+    client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
 
-      client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
-        return commands.executeCommand<SymbolInformation[]>(
-          'vscode.executeDocumentSymbolProvider',
-          Uri.parse(uri)
-        )
-      })
+    client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
+      return commands.executeCommand<SymbolInformation[]>(
+        'vscode.executeDocumentSymbolProvider',
+        Uri.parse(uri)
+      )
     })
 
     client.onDidChangeState(({ newState }) => {
@@ -576,6 +684,37 @@ export async function activate(context: ExtensionContext) {
 
     client.start()
     clients.set(folder.uri.toString(), client)
+  }
+
+  async function bootClientForFolderIfNeeded(folder: WorkspaceFolder): Promise<void> {
+    let settings = Workspace.getConfiguration('tailwindCSS', folder)
+    if (settings.get('experimental.configFile') !== null) {
+      bootWorkspaceClient(folder)
+      return
+    }
+
+    let [configFile] = await Workspace.findFiles(
+      new RelativePattern(folder, `**/${CONFIG_GLOB}`),
+      `{${getExcludePatterns(folder).join(',')}}`,
+      1
+    )
+
+    if (configFile) {
+      bootWorkspaceClient(folder)
+      return
+    }
+
+    let cssFiles = await Workspace.findFiles(
+      new RelativePattern(folder, `**/${CSS_GLOB}`),
+      `{${getExcludePatterns(folder).join(',')}}`
+    )
+
+    for (let cssFile of cssFiles) {
+      if (await fileContainsAtConfig(cssFile)) {
+        bootWorkspaceClient(folder)
+        return
+      }
+    }
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
@@ -595,24 +734,14 @@ export async function activate(context: ExtensionContext) {
     if (!folder) {
       return
     }
-    // If we have nested workspace folders we only start a server on the outer most workspace folder.
-    folder = getOuterMostWorkspaceFolder(folder)
 
-    if (searchedFolders.has(folder.uri.toString())) return
-
-    searchedFolders.add(folder.uri.toString())
-
-    let [configFile] = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CONFIG_FILE_GLOB}`),
-      `{${getExcludePatterns(folder).join(',')}}`,
-      1
-    )
-
-    if (!configFile) {
+    if (searchedFolders.has(folder.uri.toString())) {
       return
     }
 
-    bootWorkspaceClient(folder)
+    searchedFolders.add(folder.uri.toString())
+
+    await bootClientForFolderIfNeeded(folder)
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))

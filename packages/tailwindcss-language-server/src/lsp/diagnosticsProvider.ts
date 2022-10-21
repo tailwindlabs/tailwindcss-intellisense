@@ -20,15 +20,3 @@ export function clearDiagnostics(state: State, document: TextDocument): void {
     diagnostics: [],
   })
 }
-
-export function clearAllDiagnostics(state: State): void {
-  state.editor?.documents.all().forEach((document) => {
-    clearDiagnostics(state, document)
-  })
-}
-
-export function updateAllDiagnostics(state: State): void {
-  state.editor?.documents.all().forEach((document) => {
-    provideDiagnostics(state, document)
-  })
-}

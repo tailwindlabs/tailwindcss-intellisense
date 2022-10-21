@@ -36,12 +36,12 @@ export async function getDocumentColors(
 
   let helperFns = findHelperFunctionsInDocument(state, document)
   helperFns.forEach((fn) => {
-    let keys = stringToPath(fn.value)
+    let keys = stringToPath(fn.path)
     let base = fn.helper === 'theme' ? ['theme'] : []
     let value = dlv(state.config, [...base, ...keys])
     let color = getColorFromValue(value)
     if (color && typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-      colors.push({ range: fn.valueRange, color: culoriColorToVscodeColor(color) })
+      colors.push({ range: fn.ranges.path, color: culoriColorToVscodeColor(color) })
     }
   })
 

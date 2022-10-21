@@ -70,7 +70,7 @@ This setting allows you to add additional language support. The key of each entr
 
 ### `tailwindCSS.files.exclude`
 
-Configure glob patterns to exclude from all IntelliSense features. Inherits all glob patterns from the `files.exclude` setting. **Default: ["\*\*/.git/\*\*", "\*\*/node_modules/\*\*", "\*\*/.hg/\*\*"]**
+Configure glob patterns to exclude from all IntelliSense features. Inherits all glob patterns from the `files.exclude` setting. **Default: ["\*\*/.git/\*\*", "\*\*/node_modules/\*\*", "\*\*/.hg/\*\*", "\*\*/.svn/\*\*"]**
 
 ### `tailwindCSS.emmetCompletions`
 

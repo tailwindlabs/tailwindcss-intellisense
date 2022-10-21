@@ -10,7 +10,6 @@ const exclude = [
   'rimraf',
   'jest',
   'prettier',
-  'terser',
   'typescript',
   'license-checker',
 ]
