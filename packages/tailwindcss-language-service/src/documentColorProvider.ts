@@ -8,6 +8,7 @@ import { getColor, getColorFromValue, culoriColorToVscodeColor } from './util/co
 import { stringToPath } from './util/stringToPath'
 import type { TextDocument, ColorInformation } from 'vscode-languageserver'
 import dlv from 'dlv'
+import { dedupeByRange } from './util/array'
 
 export async function getDocumentColors(
   state: State,
@@ -45,5 +46,5 @@ export async function getDocumentColors(
     }
   })
 
-  return colors
+  return dedupeByRange(colors)
 }

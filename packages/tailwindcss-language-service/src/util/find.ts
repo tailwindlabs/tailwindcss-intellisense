@@ -5,12 +5,10 @@ import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext } from './html'
 import { isWithinRange } from './isWithinRange'
 import { isJsxContext } from './js'
-import { flatten } from './array'
+import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
-import dlv from 'dlv'
-import { rangesEqual } from './rangesEqual'
 import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 import { getTextWithoutComments } from './doc'
 
@@ -282,13 +280,6 @@ export async function findClassListsInHtmlRange(
   return result
 }
 
-function dedupeClassLists(classLists: DocumentClassList[]): DocumentClassList[] {
-  return classLists.filter(
-    (classList, classListIndex) =>
-      classListIndex === classLists.findIndex((c) => rangesEqual(c.range, classList.range))
-  )
-}
-
 export async function findClassListsInRange(
   state: State,
   doc: TextDocument,
@@ -302,7 +293,7 @@ export async function findClassListsInRange(
   } else {
     classLists = await findClassListsInHtmlRange(state, doc, mode, range)
   }
-  return dedupeClassLists([
+  return dedupeByRange([
     ...classLists,
     ...(includeCustom ? await findCustomClassLists(state, doc, range) : []),
   ])
@@ -319,7 +310,7 @@ export async function findClassListsInDocument(
   let boundaries = getLanguageBoundaries(state, doc)
   if (!boundaries) return []
 
-  return dedupeClassLists(
+  return dedupeByRange(
     flatten([
       ...(await Promise.all(
         boundaries
