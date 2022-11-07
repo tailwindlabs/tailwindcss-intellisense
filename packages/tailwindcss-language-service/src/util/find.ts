@@ -350,10 +350,7 @@ export function findHelperFunctionsInRange(
   range?: Range
 ): DocumentHelperFunction[] {
   const text = getTextWithoutComments(doc, 'css', range)
-  let matches = findAll(
-    /(?<prefix>\s|^)(?<helper>config|theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
-    text
-  )
+  let matches = findAll(/\b(?<helper>config|theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g, text)
 
   return matches.map((match) => {
     let quotesBefore = ''
@@ -367,11 +364,7 @@ export function findHelperFunctionsInRange(
     }
     path = path.replace(/['"]*\s*$/, '')
 
-    let startIndex =
-      match.index +
-      match.groups.prefix.length +
-      match.groups.helper.length +
-      match.groups.innerPrefix.length
+    let startIndex = match.index + match.groups.helper.length + match.groups.innerPrefix.length
 
     return {
       helper: match.groups.helper === 'theme' ? 'theme' : 'config',
