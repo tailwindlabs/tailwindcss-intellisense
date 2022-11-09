@@ -196,6 +196,16 @@ export async function activate(context: ExtensionContext) {
   //   )
   // )
 
+  Workspace.findFiles(`**/${CONFIG_GLOB}`).then(uris => {
+    uris.forEach(uri => {
+      let folder = Workspace.getWorkspaceFolder(uri)
+      if (!folder || isExcluded(uri.fsPath, folder)) {
+        return
+      }
+      bootWorkspaceClient(folder)
+    })
+  })
+  
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
 
   configWatcher.onDidCreate((uri) => {
