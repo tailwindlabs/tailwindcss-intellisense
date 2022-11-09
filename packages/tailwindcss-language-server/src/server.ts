@@ -381,7 +381,7 @@ async function createProjectService(
     editor: {
       connection,
       folder,
-      userLanguages: params.initializationOptions.userLanguages
+      userLanguages: params.initializationOptions?.userLanguages
         ? params.initializationOptions.userLanguages
         : {},
       // TODO
