@@ -43,6 +43,12 @@ import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
 import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
+import {
+  registerFoldingRangeProvider,
+  toggleFoldClassAttributes,
+  triggerUpdateDecorations,
+  initClassFoldingDecorator,
+} from './classFoldingDecorator'
 
 const colorNames = Object.keys(namedColors)
 
@@ -268,6 +274,15 @@ export async function activate(context: ExtensionContext) {
         clients.get(folder.uri.toString())?.stop()
         clients.delete(folder.uri.toString())
         bootClientForFolderIfNeeded(folder)
+      }
+
+      if (
+        event.affectsConfiguration('tailwindCSS.classAttributes') ||
+        event.affectsConfiguration('tailwindCSS.experimental.foldClassAttributes') ||
+        event.affectsConfiguration('editor.fontSize')
+      ) {
+        initClassFoldingDecorator(context)
+        triggerUpdateDecorations()
       }
     })
   )
@@ -709,6 +724,27 @@ export async function activate(context: ExtensionContext) {
       }
     })
   )
+
+  initClassFoldingDecorator(context)
+  context.subscriptions.push(registerFoldingRangeProvider())
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.toggleFoldClassAttributes', toggleFoldClassAttributes)
+  )
+
+  context.subscriptions.push(
+    Window.onDidChangeActiveTextEditor((e) => {
+      if (e) triggerUpdateDecorations()
+    })
+  )
+
+  context.subscriptions.push(
+    Window.onDidChangeTextEditorSelection((e) => {
+      if (e) triggerUpdateDecorations(true)
+    })
+  )
+
+  triggerUpdateDecorations()
 }
 
 export function deactivate(): Thenable<void> {

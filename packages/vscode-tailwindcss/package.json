@@ -57,6 +57,10 @@
         "command": "tailwindCSS.showOutput",
         "title": "Tailwind CSS: Show Output",
         "enablement": "tailwindCSS.hasOutputChannel"
+      },
+      {
+        "command": "tailwindCSS.toggleFoldClassAttributes",
+        "title": "Tailwind CSS: Toggle Fold Class Attributes"
       }
     ],
     "grammars": [
@@ -273,6 +277,11 @@
           "default": "warning",
           "markdownDescription": "Class variants not in the recommended order (applies in [JIT mode](https://tailwindcss.com/docs/just-in-time-mode) only)",
           "scope": "language-overridable"
+        },
+        "tailwindCSS.experimental.foldClassAttributes": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Controls whether the editor should auto hide class attributes' values."
         },
         "tailwindCSS.experimental.classRegex": {
           "type": "array",
