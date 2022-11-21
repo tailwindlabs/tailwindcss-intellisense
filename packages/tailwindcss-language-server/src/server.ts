@@ -2249,7 +2249,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
     }
   }
 
-  tw.init()
+  await tw.init()
 
   return {
     capabilities: {
