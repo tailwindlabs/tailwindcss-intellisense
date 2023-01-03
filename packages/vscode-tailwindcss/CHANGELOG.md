@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.2
+
+- Fix `@layer` syntax highlighting (#637)
+- Improve extraction for variable colors (#638)
+- Improve `experimental.configFile` in multi-root workspaces (#640)
+- Add documentation for `@config` completion (ea5aff5)
+- Boot language servers for nested workspace folders (#642)
+- Remove `typescript` from default languages (#645)
+- Fix duplicate color decorators (#652)
+- Improve theme helper detection (#655)
+- Add class modifier completions (#686)
+- Bump bundled version of `tailwindcss` to `3.2.4` (f07eedd)
+
 ## 0.9.1
 
 - Fix variant completions when using a `DEFAULT` value with `matchVariant` (#635)
