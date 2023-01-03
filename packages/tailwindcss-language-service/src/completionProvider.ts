@@ -64,25 +64,43 @@ export function completionsFromClassList(
   }
 
   if (state.jit) {
+    let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
+
     if (
       context &&
       (context.triggerKind === 1 ||
         (context.triggerKind === 2 && context.triggerCharacter === '/')) &&
       partialClassName.includes('/')
     ) {
-      // opacity modifiers
+      // modifiers
+      let modifiers: string[]
       let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
-      let testClass = beforeSlash + '/[0]'
-      let { rules } = jit.generateRules(state, [testClass])
-      if (rules.length > 0) {
-        let opacities = dlv(state.config, 'theme.opacity', {})
-        if (!isObject(opacities)) {
-          opacities = {}
+      let classListContainsModifiers = state.classList.some(
+        (cls) => Array.isArray(cls) && cls[1].modifiers
+      )
+
+      if (classListContainsModifiers) {
+        let baseClassName = beforeSlash.slice(offset)
+        modifiers = state.classList.find(
+          (cls) => Array.isArray(cls) && cls[0] === baseClassName
+        )?.[1].modifiers
+      } else {
+        let testClass = beforeSlash + '/[0]'
+        let { rules } = jit.generateRules(state, [testClass])
+        if (rules.length > 0) {
+          let opacities = dlv(state.config, 'theme.opacity', {})
+          if (!isObject(opacities)) {
+            opacities = {}
+          }
+          modifiers = Object.keys(opacities)
         }
+      }
+
+      if (modifiers) {
         return {
           isIncomplete: false,
-          items: Object.keys(opacities).map((opacity, index) => {
-            let className = `${beforeSlash}/${opacity}`
+          items: modifiers.map((modifier, index) => {
+            let className = `${beforeSlash}/${modifier}`
             let kind: CompletionItemKind = 21
             let documentation: string = null
 
@@ -109,8 +127,6 @@ export function completionsFromClassList(
         }
       }
     }
-
-    let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
     replacementRange.start.character += offset
 
