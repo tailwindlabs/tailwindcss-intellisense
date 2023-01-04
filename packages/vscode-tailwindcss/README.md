@@ -58,7 +58,7 @@ By default VS Code will not trigger completions when editing "string" content, f
 
 ### `tailwindCSS.includeLanguages`
 
-This setting allows you to add additional language support. The key of each entry is the new language ID and the value is any one of the extensions built-in languages, depending on how you want the new language to be treated (e.g. `html`, `css`, or `javascript`):
+This setting allows you to add additional language support. The key of each entry is the new language ID and the value is any one of the extensions [built-in languages](https://github.com/tailwindlabs/tailwindcss-intellisense/blob/master/packages/tailwindcss-language-service/src/util/languages.ts), depending on how you want the new language to be treated (e.g. `html`, `css`, or `javascript`):
 
 ```json
 {
