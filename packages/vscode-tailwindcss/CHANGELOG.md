@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.3
+
+- Tweak `theme` helper detection (#689)
+- Remove marketplace "preview" tag (5932d20)
+- Add `typescript` to default languages (#690)
+
 ## 0.9.2
 
 - Fix `@layer` syntax highlighting (#637)
