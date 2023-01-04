@@ -614,7 +614,7 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/\b(?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
+    .match(/[\s:;/*(){}](?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
 
   if (match === null) {
     return null
