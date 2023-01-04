@@ -49,6 +49,7 @@ export const jsLanguages = [
   'javascriptreact',
   'reason',
   'rescript',
+  'typescript',
   'typescriptreact',
 ]
 
