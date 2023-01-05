@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.4
+
+- Fix document selector when `tailwindCSS.experimental.configFile` is a string (#693)
+- Fix IntelliSense for project paths containing brackets (#694)
+
 ## 0.9.3
 
 - Tweak `theme` helper detection (#689)
