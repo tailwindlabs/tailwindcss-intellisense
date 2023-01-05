@@ -2120,14 +2120,15 @@ class TW {
             }
             return 0
           })
-        for (let { pattern, priority } of documentSelector) {
+        for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
+          let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
           if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
             break
           }
-          if (minimatch(fsPath, pattern, { dot: true }) && priority < matchedPriority) {
+          if (minimatch(fsPath, pattern, { dot: true }) && selector.priority < matchedPriority) {
             matchedProject = project
-            matchedPriority = priority
+            matchedPriority = selector.priority
           }
         }
       } else {
