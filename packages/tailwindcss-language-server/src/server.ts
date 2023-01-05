@@ -1617,7 +1617,9 @@ class TW {
       }
 
       let configFiles =
-        typeof configFileOrFiles === 'string' ? { [configFileOrFiles]: '**' } : configFileOrFiles
+        typeof configFileOrFiles === 'string'
+          ? { [configFileOrFiles]: path.resolve(base, '**') }
+          : configFileOrFiles
 
       workspaceFolders = Object.entries(configFiles).map(
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
