@@ -321,7 +321,9 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/braces": "3.0.1",
     "@types/vscode": "1.65.0",
+    "braces": "3.0.2",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
     "rimraf": "3.0.2",

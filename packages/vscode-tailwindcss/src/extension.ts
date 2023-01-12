@@ -43,6 +43,7 @@ import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
 import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
+import braces from 'braces'
 
 const colorNames = Object.keys(namedColors)
 
@@ -644,7 +645,9 @@ export async function activate(context: ExtensionContext) {
 
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
-      `{${getExcludePatterns(folder).join(',')}}`,
+      `{${getExcludePatterns(folder)
+        .flatMap((pattern) => braces.expand(pattern))
+        .join(',')}}`,
       1
     )
 
