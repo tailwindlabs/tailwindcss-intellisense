@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.5
+
+- Fix error when a `files.excludes` pattern contains braces (#696)
+
 ## 0.9.4
 
 - Fix document selector when `tailwindCSS.experimental.configFile` is a string (#693)
