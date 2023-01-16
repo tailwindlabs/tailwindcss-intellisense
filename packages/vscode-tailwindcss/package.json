@@ -326,6 +326,7 @@
     "braces": "3.0.2",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
+    "minimatch": "5.1.4",
     "rimraf": "3.0.2",
     "vsce": "2.15.0",
     "vscode-languageclient": "8.0.2"
