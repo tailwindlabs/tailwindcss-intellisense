@@ -177,6 +177,7 @@ function firstOptional<T>(...options: Array<() => T>): T | undefined {
 }
 
 interface ProjectService {
+  projectConfig: ProjectConfig
   enabled: () => boolean
   enable: () => void
   documentSelector: () => Array<DocumentSelector>
@@ -361,6 +362,7 @@ function getWatchPatternsForFile(file: string): string[] {
 }
 
 async function createProjectService(
+  projectKey: string,
   projectConfig: ProjectConfig,
   connection: Connection,
   params: InitializeParams,
@@ -1064,6 +1066,7 @@ async function createProjectService(
   }
 
   return {
+    projectConfig,
     enabled() {
       return enabled
     },
@@ -1117,7 +1120,7 @@ async function createProjectService(
           isIncomplete: result.isIncomplete,
           items: result.items.map((item) => ({
             ...item,
-            data: { projectKey: JSON.stringify(projectConfig), originalData: item.data },
+            data: { projectKey, originalData: item.data },
           })),
         }
       }, null)
@@ -1561,6 +1564,7 @@ class TW {
   private lspHandlersAdded = false
   private workspaces: Map<string, { name: string; workspaceFsPath: string }>
   private projects: Map<string, ProjectService>
+  private projectCounter: number
   private documentService: DocumentService
   public initializeParams: InitializeParams
   private registrations: Promise<BulkUnregistration>
@@ -1572,6 +1576,7 @@ class TW {
     this.documentService = new DocumentService(this.connection)
     this.workspaces = new Map()
     this.projects = new Map()
+    this.projectCounter = 0
   }
 
   async init(): Promise<void> {
@@ -1754,19 +1759,18 @@ class TW {
 
         let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
         if (isPackageFile) {
-          for (let [key] of this.projects) {
-            let projectConfig = JSON.parse(key) as ProjectConfig
+          for (let [, project] of this.projects) {
             let twVersion = require('tailwindcss/package.json').version
             try {
               let v = require(resolveFrom(
-                path.dirname(projectConfig.configPath),
+                path.dirname(project.projectConfig.configPath),
                 'tailwindcss/package.json'
               )).version
               if (typeof v === 'string') {
                 twVersion = v
               }
             } catch {}
-            if (configTailwindVersionMap.get(projectConfig.configPath) !== twVersion) {
+            if (configTailwindVersionMap.get(project.projectConfig.configPath) !== twVersion) {
               needsRestart = true
               break changeLoop
             }
@@ -1798,11 +1802,10 @@ class TW {
           break
         }
 
-        for (let [key] of this.projects) {
-          let projectConfig = JSON.parse(key) as ProjectConfig
+        for (let [, project] of this.projects) {
           if (
             change.type === FileChangeType.Deleted &&
-            changeAffectsFile(normalizedFilename, [projectConfig.configPath])
+            changeAffectsFile(normalizedFilename, [project.projectConfig.configPath])
           ) {
             needsRestart = true
             break changeLoop
@@ -2017,31 +2020,29 @@ class TW {
     watchPatterns: (patterns: string[]) => void,
     tailwindVersion: string
   ): Promise<void> {
-    let key = JSON.stringify(projectConfig)
-
-    if (!this.projects.has(key)) {
-      const project = await createProjectService(
-        projectConfig,
-        this.connection,
-        params,
-        this.documentService,
-        () => this.updateCapabilities(),
-        () => {
-          for (let document of this.documentService.getAllDocuments()) {
-            let project = this.getProject(document)
-            if (project && !project.enabled()) {
-              project.enable()
-              project.tryInit()
-              break
-            }
+    let key = String(this.projectCounter++)
+    const project = await createProjectService(
+      key,
+      projectConfig,
+      this.connection,
+      params,
+      this.documentService,
+      () => this.updateCapabilities(),
+      () => {
+        for (let document of this.documentService.getAllDocuments()) {
+          let project = this.getProject(document)
+          if (project && !project.enabled()) {
+            project.enable()
+            project.tryInit()
+            break
           }
-        },
-        () => this.refreshDiagnostics(),
-        (patterns: string[]) => watchPatterns(patterns),
-        tailwindVersion
-      )
-      this.projects.set(key, project)
-    }
+        }
+      },
+      () => this.refreshDiagnostics(),
+      (patterns: string[]) => watchPatterns(patterns),
+      tailwindVersion
+    )
+    this.projects.set(key, project)
   }
 
   private refreshDiagnostics() {
@@ -2104,9 +2105,8 @@ class TW {
     let matchedProject: ProjectService
     let matchedPriority: number = Infinity
 
-    for (let [key, project] of this.projects) {
-      let projectConfig = JSON.parse(key) as ProjectConfig
-      if (projectConfig.configPath) {
+    for (let [, project] of this.projects) {
+      if (project.projectConfig.configPath) {
         let documentSelector = project
           .documentSelector()
           .concat()
