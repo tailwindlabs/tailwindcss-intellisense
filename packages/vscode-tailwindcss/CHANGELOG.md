@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.6
+
+- Fix activation on Windows when project path contains brackets (#699)
+
 ## 0.9.5
 
 - Fix error when a `files.excludes` pattern contains braces (#696)
