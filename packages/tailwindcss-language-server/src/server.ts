@@ -378,6 +378,16 @@ async function createProjectService(
   const disposables: Array<Disposable | Promise<Disposable>> = []
   let documentSelector = projectConfig.documentSelector
 
+  let itemDefaults =
+    params.capabilities.textDocument?.completion?.completionList?.itemDefaults ?? []
+
+  // VS Code _does_ support `itemDefaults.data` since at least 1.67.0 (this extension's min version)
+  // but it doesn't advertise it in its capabilities. So we manually add it here.
+  // See also: https://github.com/microsoft/vscode-languageserver-node/issues/1181
+  if (params.clientInfo?.name === 'Visual Studio Code' && !itemDefaults.includes('data')) {
+    itemDefaults.push('data')
+  }
+
   let state: State = {
     enabled: false,
     editor: {
@@ -390,6 +400,7 @@ async function createProjectService(
       capabilities: {
         configuration: true,
         diagnosticRelatedInformation: true,
+        itemDefaults,
       },
       documents: documentService.documents,
       getConfiguration,
@@ -1116,11 +1127,25 @@ async function createProjectService(
         if (await isExcluded(state, document)) return null
         let result = await doComplete(state, document, params.position, params.context)
         if (!result) return result
+
+        let supportsDefaults = state.editor.capabilities.itemDefaults.length > 0
+        let supportsDefaultData = state.editor.capabilities.itemDefaults.includes('data')
+
         return {
           isIncomplete: result.isIncomplete,
+          ...(supportsDefaults
+            ? {
+                itemDefaults: {
+                  ...(result.itemDefaults ?? {}),
+                  ...(supportsDefaultData
+                    ? { data: { _projectKey: projectKey, ...(result.itemDefaults?.data ?? {}) } }
+                    : {}),
+                },
+              }
+            : {}),
           items: result.items.map((item) => ({
             ...item,
-            data: { projectKey, originalData: item.data },
+            ...(item.data ? { data: { _projectKey: projectKey, ...item.data } } : {}),
           })),
         }
       }, null)
@@ -1128,7 +1153,7 @@ async function createProjectService(
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
       return withFallback(() => {
         if (!state.enabled) return null
-        return resolveCompletionItem(state, { ...item, data: item.data?.originalData })
+        return resolveCompletionItem(state, item)
       }, null)
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
@@ -2162,7 +2187,7 @@ class TW {
   }
 
   async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
-    return this.projects.get(item.data.projectKey)?.onCompletionResolve(item) ?? null
+    return this.projects.get(item.data?._projectKey)?.onCompletionResolve(item) ?? null
   }
 
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {

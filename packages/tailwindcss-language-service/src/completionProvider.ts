@@ -21,7 +21,7 @@ import isObject from './util/isObject'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
 import { isJsDoc, isJsxContext } from './util/js'
-import { naturalExpand } from './util/naturalExpand'
+import { createNaturalExpand, naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
 import { docsUrl } from './util/docsUrl'
 import { ensureArray } from './util/array'
@@ -102,7 +102,7 @@ export function completionsFromClassList(
           items: modifiers.map((modifier, index) => {
             let className = `${beforeSlash}/${modifier}`
             let kind: CompletionItemKind = 21
-            let documentation: string = null
+            let documentation: string | undefined
 
             const color = getColor(state, className)
             if (color !== null) {
@@ -114,10 +114,9 @@ export function completionsFromClassList(
 
             return {
               label: className,
-              documentation,
+              ...(documentation ? { documentation } : {}),
               kind,
               sortText: naturalExpand(index),
-              data: [className],
               textEdit: {
                 newText: className,
                 range: replacementRange,
@@ -141,13 +140,11 @@ export function completionsFromClassList(
       let variantOrder = 0
 
       function variantItem(
-        item: Omit<CompletionItem, 'kind' | 'data' | 'sortText' | 'textEdit'> & {
-          textEdit?: { newText: string; range?: Range }
-        }
+        item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>
       ): CompletionItem {
         return {
           kind: 9,
-          data: 'variant',
+          data: { _type: 'variant' },
           command:
             item.insertTextFormat === 2 // Snippet
               ? undefined
@@ -157,11 +154,6 @@ export function completionsFromClassList(
                 },
           sortText: '-' + naturalExpand(variantOrder++),
           ...item,
-          textEdit: {
-            newText: item.label,
-            range: replacementRange,
-            ...item.textEdit,
-          },
         }
       }
 
@@ -174,9 +166,7 @@ export function completionsFromClassList(
               variantItem({
                 label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
                 insertTextFormat: 2,
-                textEdit: {
-                  newText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
-                },
+                textEditText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
                 // command: {
                 //   title: '',
                 //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
@@ -199,9 +189,7 @@ export function completionsFromClassList(
               variantItem({
                 label: `${variant.name}${sep}`,
                 detail: variant.selectors().join(', '),
-                textEdit: {
-                  newText: resultingVariants[resultingVariants.length - 1] + sep,
-                },
+                textEditText: resultingVariants[resultingVariants.length - 1] + sep,
                 additionalTextEdits:
                   shouldSortVariants && resultingVariants.length > 1
                     ? [
@@ -248,31 +236,38 @@ export function completionsFromClassList(
     }
 
     if (state.classList) {
-      return {
-        isIncomplete: false,
-        items: items.concat(
-          state.classList.map(([className, { color }], index) => {
-            let kind: CompletionItemKind = color ? 16 : 21
-            let documentation = null
+      let naturalExpand = createNaturalExpand(state.classList.length)
 
-            if (color && typeof color !== 'string') {
-              documentation = culori.formatRgb(color)
-            }
+      return withDefaults(
+        {
+          isIncomplete: false,
+          items: items.concat(
+            state.classList.map(([className, { color }], index) => {
+              let kind: CompletionItemKind = color ? 16 : 21
+              let documentation: string | undefined
 
-            return {
-              label: className,
-              kind,
-              documentation,
-              sortText: naturalExpand(index),
-              data: [...existingVariants, important ? `!${className}` : className],
-              textEdit: {
-                newText: className,
-                range: replacementRange,
-              },
-            } as CompletionItem
-          })
-        ),
-      }
+              if (color && typeof color !== 'string') {
+                documentation = culori.formatRgb(color)
+              }
+
+              return {
+                label: className,
+                kind,
+                ...(documentation ? { documentation } : {}),
+                sortText: naturalExpand(index),
+              } as CompletionItem
+            })
+          ),
+        },
+        {
+          data: {
+            ...(important ? { important } : {}),
+            variants: existingVariants,
+          },
+          range: replacementRange,
+        },
+        state.editor.capabilities.itemDefaults
+      )
     }
 
     return {
@@ -289,7 +284,7 @@ export function completionsFromClassList(
             })
             .map((className, index) => {
               let kind: CompletionItemKind = 21
-              let documentation: string = null
+              let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
@@ -302,9 +297,12 @@ export function completionsFromClassList(
               return {
                 label: className,
                 kind,
-                documentation,
+                ...(documentation ? { documentation } : {}),
                 sortText: naturalExpand(index),
-                data: [...existingVariants, important ? `!${className}` : className],
+                data: {
+                  variants: existingVariants,
+                  ...(important ? { important } : {}),
+                },
                 textEdit: {
                   newText: className,
                   range: replacementRange,
@@ -350,13 +348,12 @@ export function completionsFromClassList(
         return {
           label: className + sep,
           kind: 9,
-          documentation: null,
           command: {
             title: '',
             command: 'editor.action.triggerSuggest',
           },
           sortText: '-' + naturalExpand(index),
-          data: [...subsetKey, className],
+          data: { className, variants: subsetKey },
           textEdit: {
             newText: className + sep,
             range: replacementRange,
@@ -370,7 +367,7 @@ export function completionsFromClassList(
           )
           .map((className, index) => {
             let kind: CompletionItemKind = 21
-            let documentation: string = null
+            let documentation: string | undefined
 
             const color = getColor(state, className)
             if (color !== null) {
@@ -383,9 +380,9 @@ export function completionsFromClassList(
             return {
               label: className,
               kind,
-              documentation,
+              ...(documentation ? { documentation } : {}),
               sortText: naturalExpand(index),
-              data: [...subsetKey, className],
+              data: { variants: subsetKey },
               textEdit: {
                 newText: className,
                 range: replacementRange,
@@ -569,7 +566,9 @@ function provideAtApplyCompletions(
           semver.gte(state.version, '2.0.0-alpha.1') || flagEnabled(state, 'applyComplexClasses')
         )
       }
-      let validated = validateApply(state, item.data)
+      let variants = item.data?.variants ?? []
+      let className = item.data?.className ?? item.label
+      let validated = validateApply(state, [...variants, className])
       return validated !== null && validated.isApplyable === true
     }
   )
@@ -707,10 +706,9 @@ function provideCssHelperCompletions(
           kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
           // VS Code bug causes some values to not display in some cases
           detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-          documentation:
-            color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-              ? culori.formatRgb(color)
-              : null,
+          ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+            ? { documentation: culori.formatRgb(color) }
+            : {}),
           textEdit: {
             newText: `${item}${insertClosingBrace ? ']' : ''}`,
             range: editRange,
@@ -729,7 +727,7 @@ function provideCssHelperCompletions(
                 },
               ]
             : [],
-          data: 'helper',
+          data: { _type: 'helper' },
         }
       }),
   }
@@ -821,7 +819,7 @@ function provideTailwindDirectiveCompletions(
     ].map((item) => ({
       ...item,
       kind: 21,
-      data: '@tailwind',
+      data: { _type: '@tailwind' },
       textEdit: {
         newText: item.label,
         range: {
@@ -886,7 +884,7 @@ function provideVariantsDirectiveCompletions(
         label: variant,
         detail: state.variants[variant],
         kind: 21,
-        data: 'variant',
+        data: { _type: 'variant' },
         sortText: naturalExpand(index),
         textEdit: {
           newText: variant,
@@ -925,7 +923,7 @@ function provideLayerDirectiveCompletions(
     items: ['base', 'components', 'utilities'].map((layer, index) => ({
       label: layer,
       kind: 21,
-      data: 'layer',
+      data: { _type: 'layer' },
       sortText: naturalExpand(index),
       textEdit: {
         newText: layer,
@@ -938,6 +936,44 @@ function provideLayerDirectiveCompletions(
         },
       },
     })),
+  }
+}
+
+function withDefaults(
+  completionList: CompletionList,
+  defaults: Partial<{ data: any; range: Range }>,
+  supportedDefaults: string[]
+): CompletionList {
+  let defaultData = supportedDefaults.includes('data')
+  let defaultRange = supportedDefaults.includes('editRange')
+
+  return {
+    ...completionList,
+    ...(defaultData || defaultRange
+      ? {
+          itemDefaults: {
+            ...(defaultData && defaults.data ? { data: defaults.data } : {}),
+            ...(defaultRange && defaults.range ? { editRange: defaults.range } : {}),
+          },
+        }
+      : {}),
+    items:
+      defaultData && defaultRange
+        ? completionList.items
+        : completionList.items.map(({ textEditText, ...item }) => ({
+            ...item,
+            ...(defaultData || !defaults.data ? {} : { data: defaults.data }),
+            ...(defaultRange || !defaults.range
+              ? textEditText
+                ? { textEditText }
+                : {}
+              : {
+                  textEdit: {
+                    newText: textEditText ?? item.label,
+                    range: defaults.range,
+                  },
+                }),
+          })),
   }
 }
 
@@ -963,25 +999,27 @@ function provideScreenDirectiveCompletions(
 
   if (!isObject(screens)) return null
 
-  return {
-    isIncomplete: false,
-    items: Object.keys(screens).map((screen, index) => ({
-      label: screen,
-      kind: 21,
-      data: 'screen',
-      sortText: naturalExpand(index),
-      textEdit: {
-        newText: screen,
-        range: {
-          start: {
-            line: position.line,
-            character: position.character - match.groups.partial.length,
-          },
-          end: position,
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: Object.keys(screens).map((screen, index) => ({
+        label: screen,
+        kind: 21,
+        sortText: naturalExpand(index),
+      })),
+    },
+    {
+      data: { _type: 'screen' },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - match.groups.partial.length,
         },
+        end: position,
       },
-    })),
-  }
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 function provideCssDirectiveCompletions(
@@ -1089,24 +1127,26 @@ function provideCssDirectiveCompletions(
       : []),
   ]
 
-  return {
-    isIncomplete: false,
-    items: items.map((item) => ({
-      ...item,
-      kind: 14,
-      data: 'directive',
-      textEdit: {
-        newText: item.label,
-        range: {
-          start: {
-            line: position.line,
-            character: position.character - match.groups.partial.length - 1,
-          },
-          end: position,
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: items.map((item) => ({
+        ...item,
+        kind: 14,
+      })),
+    },
+    {
+      data: { _type: 'directive' },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - match.groups.partial.length - 1,
         },
+        end: position,
       },
-    })),
-  }
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 async function provideConfigDirectiveCompletions(
@@ -1136,6 +1176,7 @@ async function provideConfigDirectiveCompletions(
     items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
       .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
       .map(([name, type]) => ({
+        data: { _type: 'filesystem' },
         label: type.isDirectory ? name + '/' : name,
         kind: type.isDirectory ? 19 : 17,
         textEdit: {
@@ -1255,25 +1296,31 @@ export async function resolveCompletionItem(
   state: State,
   item: CompletionItem
 ): Promise<CompletionItem> {
-  if (['helper', 'directive', 'variant', 'layer', '@tailwind'].includes(item.data)) {
+  if (
+    ['helper', 'directive', 'variant', 'layer', '@tailwind', 'filesystem'].includes(
+      item.data?._type
+    )
+  ) {
     return item
   }
 
-  if (item.data === 'screen') {
+  if (item.data?._type === 'screen') {
     let screens = dlv(state.config, ['theme', 'screens'], dlv(state.config, ['screens'], {}))
     if (!isObject(screens)) screens = {}
     item.detail = stringifyScreen(screens[item.label] as Screen)
     return item
   }
 
-  if (!Array.isArray(item.data)) {
-    return item
+  let className = item.data?.className ?? item.label
+  if (item.data?.important) {
+    className = `!${className}`
   }
+  let variants = item.data?.variants ?? []
 
   if (state.jit) {
     if (item.kind === 9) return item
     if (item.detail && item.documentation) return item
-    let { root, rules } = jit.generateRules(state, [item.data.join(state.separator)])
+    let { root, rules } = jit.generateRules(state, [[...variants, className].join(state.separator)])
     if (rules.length === 0) return item
     if (!item.detail) {
       if (rules.length === 1) {
@@ -1291,14 +1338,14 @@ export async function resolveCompletionItem(
     return item
   }
 
-  const className = dlv(state.classNames.classNames, [...item.data, '__info'])
+  const rules = dlv(state.classNames.classNames, [...variants, className, '__info'])
   if (item.kind === 9) {
-    item.detail = state.classNames.context[item.data[item.data.length - 1]].join(', ')
+    item.detail = state.classNames.context[className].join(', ')
   } else {
-    item.detail = await getCssDetail(state, className)
+    item.detail = await getCssDetail(state, rules)
     if (!item.documentation) {
       const settings = await state.editor.getConfiguration()
-      const css = stringifyCss(item.data.join(':'), className, settings)
+      const css = stringifyCss([...variants, className].join(':'), rules, settings)
       if (css) {
         item.documentation = {
           kind: 'markdown' as typeof MarkupKind.Markdown,

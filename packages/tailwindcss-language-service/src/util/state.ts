@@ -25,6 +25,7 @@ export type EditorState = {
   capabilities: {
     configuration: boolean
     diagnosticRelatedInformation: boolean
+    itemDefaults: string[]
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
