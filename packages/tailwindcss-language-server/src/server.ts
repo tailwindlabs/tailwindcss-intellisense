@@ -350,6 +350,9 @@ function getWatchPatternsForFile(file: string, root: string): string[] {
   let tmp: string
   let dir = path.dirname(file)
   let patterns: string[] = [file, dir]
+  if (dir === root) {
+    return patterns
+  }
   while (true) {
     dir = path.dirname((tmp = dir))
     if (tmp === dir) {
@@ -448,7 +451,7 @@ async function createProjectService(
       let file = normalizePath(change.file)
 
       let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
-      let isDependency = changeAffectsFile(change.file, state.dependencies ?? [])
+      let isDependency = changeAffectsFile(file, state.dependencies ?? [])
       let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
 
       if (!isConfigFile && !isDependency && !isPackageFile) continue
@@ -565,7 +568,7 @@ async function createProjectService(
         if (findUp.sync.exists(pnpFile)) {
           return pnpFile
         }
-        if (dir === folder) {
+        if (dir === path.normalize(folder)) {
           return findUp.stop
         }
       },
@@ -1512,7 +1515,7 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
   if (!match) {
     return null
   }
-  return path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))
+  return normalizePath(path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1)))
 }
 
 function getPackageRoot(cwd: string, rootDir: string) {
@@ -1523,7 +1526,7 @@ function getPackageRoot(cwd: string, rootDir: string) {
         if (findUp.sync.exists(pkgJson)) {
           return pkgJson
         }
-        if (dir === rootDir) {
+        if (dir === path.normalize(rootDir)) {
           return findUp.stop
         }
       },
@@ -1603,7 +1606,7 @@ class TW {
     let ignore = globalSettings.tailwindCSS.files.exclude
     let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
-    let base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
+    let base = normalizePath(normalizeFileNameToFsPath(this.initializeParams.rootPath))
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
 
@@ -1637,10 +1640,10 @@ class TW {
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.resolve(userDefinedConfigBase, relativeConfigPath),
+            configPath: normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath)),
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: path.resolve(userDefinedConfigBase, selector),
+              pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
             })),
             isUserConfigured: true,
           }
