@@ -989,15 +989,19 @@ async function createProjectService(
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator
         if (state.jitContext.getClassList) {
-          state.classList = state.jitContext
-            .getClassList()
+          let classList = state.jitContext
+            .getClassList({ includeMetadata: true })
             .filter((className) => className !== '*')
-            .map((className) => {
-              if (Array.isArray(className)) {
-                return [className[0], { color: getColor(state, className[0]), ...className[1] }]
-              }
-              return [className, { color: getColor(state, className) }]
-            })
+          state.classListContainsMetadata = classList.some((cls) => Array.isArray(cls))
+          state.classList = classList.map((className) => {
+            if (Array.isArray(className)) {
+              return [
+                className[0],
+                { color: getColor(state, className[0]), ...(className[1] ?? []) },
+              ]
+            }
+            return [className, { color: getColor(state, className) }]
+          })
         }
       } else {
         delete state.jitContext
