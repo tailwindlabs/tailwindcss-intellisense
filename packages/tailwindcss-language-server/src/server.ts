@@ -346,7 +346,7 @@ function changeAffectsFile(change: string, files: string[]): boolean {
 
 // We need to add parent directories to the watcher:
 // https://github.com/microsoft/vscode/issues/60813
-function getWatchPatternsForFile(file: string): string[] {
+function getWatchPatternsForFile(file: string, root: string): string[] {
   let tmp: string
   let dir = path.dirname(file)
   let patterns: string[] = [file, dir]
@@ -356,6 +356,9 @@ function getWatchPatternsForFile(file: string): string[] {
       break
     } else {
       patterns.push(dir)
+      if (dir === root) {
+        break
+      }
     }
   }
   return patterns
@@ -426,8 +429,8 @@ async function createProjectService(
       deps = getModuleDependencies(projectConfig.configPath)
     } catch {}
     watchPatterns([
-      ...getWatchPatternsForFile(projectConfig.configPath),
-      ...deps.flatMap((dep) => getWatchPatternsForFile(dep)),
+      ...getWatchPatternsForFile(projectConfig.configPath, projectConfig.folder),
+      ...deps.flatMap((dep) => getWatchPatternsForFile(dep, projectConfig.folder)),
     ])
   }
 
@@ -550,7 +553,7 @@ async function createProjectService(
       throw new SilentError('No config file found.')
     }
 
-    watchPatterns(getWatchPatternsForFile(configPath))
+    watchPatterns(getWatchPatternsForFile(configPath, projectConfig.folder))
 
     const pnpPath = findUp.sync(
       (dir) => {
@@ -1044,7 +1047,11 @@ async function createProjectService(
     // }
     state.dependencies = getModuleDependencies(state.configPath)
     // chokidarWatcher?.add(state.dependencies)
-    watchPatterns((state.dependencies ?? []).flatMap((dep) => getWatchPatternsForFile(dep)))
+    watchPatterns(
+      (state.dependencies ?? []).flatMap((dep) =>
+        getWatchPatternsForFile(dep, projectConfig.folder)
+      )
+    )
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
