@@ -1,5 +1,5 @@
 import { Settings, State } from './util/state'
-import type {
+import {
   CompletionItem,
   CompletionItemKind,
   Range,
@@ -8,6 +8,7 @@ import type {
   TextDocument,
   Position,
   CompletionContext,
+  CompletionTriggerKind,
 } from 'vscode-languageserver'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
@@ -405,6 +406,21 @@ export function completionsFromClassList(
   }
 }
 
+// This might be a VS Code bug?
+// The trigger character is not included in the document text
+function ensureTriggerCharacterIsIncluded(text: string, context?: CompletionContext): string {
+  if (!context) {
+    return text
+  }
+  if (
+    context.triggerKind === CompletionTriggerKind.TriggerCharacter &&
+    text.slice(-1) !== context.triggerCharacter
+  ) {
+    return `${text.slice(0, text.length - 1)}${context.triggerCharacter}`
+  }
+  return text
+}
+
 async function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
@@ -415,6 +431,8 @@ async function provideClassAttributeCompletions(
     start: document.positionAt(Math.max(0, document.offsetAt(position) - 1000)),
     end: position,
   })
+
+  str = ensureTriggerCharacterIsIncluded(str, context)
 
   let matches = matchClassAttributes(
     str,
@@ -538,12 +556,15 @@ async function provideCustomClassNameCompletions(
 function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): CompletionList {
   let str = document.getText({
     start: { line: Math.max(position.line - 30, 0), character: 0 },
     end: position,
   })
+
+  str = ensureTriggerCharacterIsIncluded(str, context)
 
   const match = findLast(/@apply\s+(?<classList>[^;}]*)$/gi, str)
 
@@ -587,7 +608,7 @@ async function provideClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
-    return provideAtApplyCompletions(state, document, position)
+    return provideAtApplyCompletions(state, document, position, context)
   }
 
   if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
