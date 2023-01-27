@@ -997,7 +997,7 @@ async function createProjectService(
             if (Array.isArray(className)) {
               return [
                 className[0],
-                { color: getColor(state, className[0]), ...(className[1] ?? []) },
+                { color: getColor(state, className[0]), ...(className[1] ?? {}) },
               ]
             }
             return [className, { color: getColor(state, className) }]
