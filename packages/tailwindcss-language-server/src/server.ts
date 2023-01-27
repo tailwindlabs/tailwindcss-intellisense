@@ -1643,7 +1643,7 @@ class TW {
             configPath: path.resolve(userDefinedConfigBase, relativeConfigPath),
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: path.resolve(userDefinedConfigBase, selector),
+              pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
             })),
             isUserConfigured: true,
           }
