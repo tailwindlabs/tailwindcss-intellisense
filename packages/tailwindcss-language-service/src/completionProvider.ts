@@ -43,8 +43,8 @@ export function completionsFromClassList(
   state: State,
   classList: string,
   classListRange: Range,
+  document: TextDocument,
   filter?: (item: CompletionItem) => boolean,
-  document?: TextDocument,
   context?: CompletionContext
 ): CompletionList {
   let classNamesAndWhitespace = classList.split(/(\s+)/)
@@ -489,8 +489,8 @@ async function provideClassAttributeCompletions(
           ),
           end: position,
         },
-        undefined,
         document,
+        undefined,
         context
       )
     }
@@ -553,13 +553,18 @@ async function provideCustomClassNameCompletions(
             classList = containerMatch[1].substr(0, cursor - matchStart)
           }
 
-          return completionsFromClassList(state, classList, {
-            start: {
-              line: position.line,
-              character: position.character - classList.length,
+          return completionsFromClassList(
+            state,
+            classList,
+            {
+              start: {
+                line: position.line,
+                character: position.character - classList.length,
+              },
+              end: position,
             },
-            end: position,
-          })
+            document
+          )
         }
       }
     } catch (_) {}
@@ -599,6 +604,7 @@ function provideAtApplyCompletions(
       },
       end: position,
     },
+    document,
     (item) => {
       if (item.kind === 9) {
         return (
@@ -1332,13 +1338,18 @@ async function provideEmmetCompletions(
   const parts = emmetItems.items[0].label.split('.')
   if (parts.length < 2) return null
 
-  return completionsFromClassList(state, parts[parts.length - 1], {
-    start: {
-      line: position.line,
-      character: position.character - parts[parts.length - 1].length,
+  return completionsFromClassList(
+    state,
+    parts[parts.length - 1],
+    {
+      start: {
+        line: position.line,
+        character: position.character - parts[parts.length - 1].length,
+      },
+      end: position,
     },
-    end: position,
-  })
+    document
+  )
 }
 
 export async function doComplete(
