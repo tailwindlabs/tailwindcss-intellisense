@@ -1,5 +1,5 @@
 import { Settings, State } from './util/state'
-import {
+import type {
   CompletionItem,
   CompletionItemKind,
   Range,
@@ -8,7 +8,6 @@ import {
   TextDocument,
   Position,
   CompletionContext,
-  CompletionTriggerKind,
 } from 'vscode-languageserver'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
@@ -413,7 +412,7 @@ function ensureTriggerCharacterIsIncluded(text: string, context?: CompletionCont
     return text
   }
   if (
-    context.triggerKind === CompletionTriggerKind.TriggerCharacter &&
+    context.triggerKind === 2 && // CompletionTriggerKind.TriggerCharacter
     text.slice(-1) !== context.triggerCharacter
   ) {
     return `${text.slice(0, text.length - 1)}${context.triggerCharacter}`
