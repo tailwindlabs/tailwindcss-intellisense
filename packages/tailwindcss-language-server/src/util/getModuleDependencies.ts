@@ -2,11 +2,13 @@ import fs from 'fs'
 import path from 'path'
 import resolve from 'resolve'
 import detective from 'detective'
+import normalizePath from 'normalize-path'
 
 export function getModuleDependencies(modulePath: string): string[] {
   return _getModuleDependencies(modulePath)
     .map(({ file }) => file)
     .filter((file) => file !== modulePath)
+    .map((file) => normalizePath(file))
 }
 
 function createModule(file) {
