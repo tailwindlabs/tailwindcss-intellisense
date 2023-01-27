@@ -1950,11 +1950,7 @@ class TW {
         let newPatterns = this.filterNewWatchPatterns(patterns)
         if (newPatterns.length) {
           console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
-          for (let newPattern of newPatterns) {
-            try {
-              chokidarWatcher.add(newPattern)
-            } catch {}
-          }
+          chokidarWatcher.add(newPatterns)
         }
       }
     }
