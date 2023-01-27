@@ -211,7 +211,8 @@ enum DocumentSelectorPriority {
   CONTENT_FILE = 1,
   CSS_DIRECTORY = 2,
   CONFIG_DIRECTORY = 3,
-  ROOT_DIRECTORY = 4,
+  PACKAGE_DIRECTORY = 4,
+  ROOT_DIRECTORY = 5,
 }
 type DocumentSelector = { pattern: string; priority: DocumentSelectorPriority }
 
@@ -1733,7 +1734,7 @@ class TW {
             : []),
           {
             pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
-            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+            priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
           },
         ]
 
@@ -1744,7 +1745,16 @@ class TW {
         }
       }
 
-      if (Object.keys(projects).length > 0) {
+      let projectKeys = Object.keys(projects)
+      let projectCount = projectKeys.length
+
+      if (projectCount > 0) {
+        if (projectCount === 1) {
+          projects[projectKeys[0]].push({
+            pattern: normalizePath(path.join(base, '**')),
+            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+          })
+        }
         workspaceFolders = Object.entries(projects).map(([configPath, documentSelector]) => {
           return {
             folder: base,
