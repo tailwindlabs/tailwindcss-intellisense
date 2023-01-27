@@ -412,6 +412,36 @@ export function completionsFromClassList(
   )
 }
 
+// This might be a VS Code bug?
+// The trigger character is not included in the document text
+function ensureTriggerCharacterIsIncluded(
+  text: string,
+  document: TextDocument,
+  position: Position,
+  context?: CompletionContext
+): string {
+  if (!context) {
+    return text
+  }
+  if (
+    context.triggerKind === 2 && // CompletionTriggerKind.TriggerCharacter
+    text.slice(-1) !== context.triggerCharacter
+  ) {
+    let nextChar = document.getText({
+      start: position,
+      end: document.positionAt(document.offsetAt(position) + 1),
+    })
+    // If there's a next char (i.e. we're not at the end of the document)
+    // then it will be included instead of the trigger character, so we replace it.
+    // Otherwise we just append.
+    if (nextChar.length === 0) {
+      return `${text}${context.triggerCharacter}`
+    }
+    return `${text.slice(0, text.length - 1)}${context.triggerCharacter}`
+  }
+  return text
+}
+
 async function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
@@ -422,6 +452,8 @@ async function provideClassAttributeCompletions(
     start: document.positionAt(Math.max(0, document.offsetAt(position) - 1000)),
     end: position,
   })
+
+  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   let matches = matchClassAttributes(
     str,
@@ -545,12 +577,15 @@ async function provideCustomClassNameCompletions(
 function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): CompletionList {
   let str = document.getText({
     start: { line: Math.max(position.line - 30, 0), character: 0 },
     end: position,
   })
+
+  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   const match = findLast(/@apply\s+(?<classList>[^;}]*)$/gi, str)
 
@@ -596,7 +631,7 @@ async function provideClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
-    return provideAtApplyCompletions(state, document, position)
+    return provideAtApplyCompletions(state, document, position, context)
   }
 
   if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
