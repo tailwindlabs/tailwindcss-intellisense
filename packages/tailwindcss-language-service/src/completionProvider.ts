@@ -407,7 +407,12 @@ export function completionsFromClassList(
 
 // This might be a VS Code bug?
 // The trigger character is not included in the document text
-function ensureTriggerCharacterIsIncluded(text: string, context?: CompletionContext): string {
+function ensureTriggerCharacterIsIncluded(
+  text: string,
+  document: TextDocument,
+  position: Position,
+  context?: CompletionContext
+): string {
   if (!context) {
     return text
   }
@@ -415,6 +420,16 @@ function ensureTriggerCharacterIsIncluded(text: string, context?: CompletionCont
     context.triggerKind === 2 && // CompletionTriggerKind.TriggerCharacter
     text.slice(-1) !== context.triggerCharacter
   ) {
+    let nextChar = document.getText({
+      start: position,
+      end: document.positionAt(document.offsetAt(position) + 1),
+    })
+    // If there's a next char (i.e. we're not at the end of the document)
+    // then it will be included instead of the trigger character, so we replace it.
+    // Otherwise we just append.
+    if (nextChar.length === 0) {
+      return `${text}${context.triggerCharacter}`
+    }
     return `${text.slice(0, text.length - 1)}${context.triggerCharacter}`
   }
   return text
@@ -431,7 +446,7 @@ async function provideClassAttributeCompletions(
     end: position,
   })
 
-  str = ensureTriggerCharacterIsIncluded(str, context)
+  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   let matches = matchClassAttributes(
     str,
@@ -563,7 +578,7 @@ function provideAtApplyCompletions(
     end: position,
   })
 
-  str = ensureTriggerCharacterIsIncluded(str, context)
+  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   const match = findLast(/@apply\s+(?<classList>[^;}]*)$/gi, str)
 
