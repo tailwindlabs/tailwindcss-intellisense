@@ -75,15 +75,12 @@ export function completionsFromClassList(
       // modifiers
       let modifiers: string[]
       let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
-      let classListContainsModifiers = state.classList.some(
-        (cls) => Array.isArray(cls) && cls[1].modifiers
-      )
 
-      if (classListContainsModifiers) {
+      if (state.classListContainsMetadata) {
         let baseClassName = beforeSlash.slice(offset)
         modifiers = state.classList.find(
           (cls) => Array.isArray(cls) && cls[0] === baseClassName
-        )?.[1].modifiers
+        )?.[1]?.modifiers
       } else {
         let testClass = beforeSlash + '/[0]'
         let { rules } = jit.generateRules(state, [testClass])

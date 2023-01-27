@@ -118,6 +118,7 @@ export interface State {
   jit?: boolean
   jitContext?: any
   classList?: Array<[string, { color: culori.Color | KeywordColor | null; modifiers?: string[] }]>
+  classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
   // postcssPlugins?: { before: any[]; after: any[] }
