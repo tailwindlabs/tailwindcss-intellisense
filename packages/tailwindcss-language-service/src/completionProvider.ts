@@ -21,7 +21,7 @@ import isObject from './util/isObject'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
 import { isJsDoc, isJsxContext } from './util/js'
-import { createNaturalExpand, naturalExpand } from './util/naturalExpand'
+import { naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
 import { docsUrl } from './util/docsUrl'
 import { ensureArray } from './util/array'
@@ -97,33 +97,36 @@ export function completionsFromClassList(
       }
 
       if (modifiers) {
-        return {
-          isIncomplete: false,
-          items: modifiers.map((modifier, index) => {
-            let className = `${beforeSlash}/${modifier}`
-            let kind: CompletionItemKind = 21
-            let documentation: string | undefined
+        return withDefaults(
+          {
+            isIncomplete: false,
+            items: modifiers.map((modifier, index) => {
+              let className = `${beforeSlash}/${modifier}`
+              let kind: CompletionItemKind = 21
+              let documentation: string | undefined
 
-            const color = getColor(state, className)
-            if (color !== null) {
-              kind = 16
-              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                documentation = culori.formatRgb(color)
+              const color = getColor(state, className)
+              if (color !== null) {
+                kind = 16
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
+                }
               }
-            }
 
-            return {
-              label: className,
-              ...(documentation ? { documentation } : {}),
-              kind,
-              sortText: naturalExpand(index),
-              textEdit: {
-                newText: className,
-                range: replacementRange,
-              },
-            }
-          }),
-        }
+              return {
+                label: className,
+                ...(documentation ? { documentation } : {}),
+                kind,
+                sortText: naturalExpand(index),
+              }
+            }),
+          },
+          {
+            range: replacementRange,
+            data: state.completionItemData,
+          },
+          state.editor.capabilities.itemDefaults
+        )
       }
     }
 
@@ -144,7 +147,10 @@ export function completionsFromClassList(
       ): CompletionItem {
         return {
           kind: 9,
-          data: { _type: 'variant' },
+          data: {
+            ...(state.completionItemData ?? {}),
+            _type: 'variant',
+          },
           command:
             item.insertTextFormat === 2 // Snippet
               ? undefined
@@ -236,8 +242,6 @@ export function completionsFromClassList(
     }
 
     if (state.classList) {
-      let naturalExpand = createNaturalExpand(state.classList.length)
-
       return withDefaults(
         {
           isIncomplete: false,
@@ -254,13 +258,14 @@ export function completionsFromClassList(
                 label: className,
                 kind,
                 ...(documentation ? { documentation } : {}),
-                sortText: naturalExpand(index),
+                sortText: naturalExpand(index, state.classList.length),
               } as CompletionItem
             })
           ),
         },
         {
           data: {
+            ...(state.completionItemData ?? {}),
             ...(important ? { important } : {}),
             variants: existingVariants,
           },
@@ -270,56 +275,59 @@ export function completionsFromClassList(
       )
     }
 
-    return {
-      isIncomplete: false,
-      items: items
-        .concat(
-          Object.keys(state.classNames.classNames)
-            .filter((className) => {
-              let item = state.classNames.classNames[className]
-              if (existingVariants.length === 0) {
-                return item.__info
-              }
-              return item.__info && isUtil(item)
-            })
-            .map((className, index) => {
-              let kind: CompletionItemKind = 21
-              let documentation: string | undefined
-
-              const color = getColor(state, className)
-              if (color !== null) {
-                kind = 16
-                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+    return withDefaults(
+      {
+        isIncomplete: false,
+        items: items
+          .concat(
+            Object.keys(state.classNames.classNames)
+              .filter((className) => {
+                let item = state.classNames.classNames[className]
+                if (existingVariants.length === 0) {
+                  return item.__info
                 }
-              }
+                return item.__info && isUtil(item)
+              })
+              .map((className, index, classNames) => {
+                let kind: CompletionItemKind = 21
+                let documentation: string | undefined
 
-              return {
-                label: className,
-                kind,
-                ...(documentation ? { documentation } : {}),
-                sortText: naturalExpand(index),
-                data: {
-                  variants: existingVariants,
-                  ...(important ? { important } : {}),
-                },
-                textEdit: {
-                  newText: className,
-                  range: replacementRange,
-                },
-              } as CompletionItem
-            })
-        )
-        .filter((item) => {
-          if (item === null) {
-            return false
-          }
-          if (filter && !filter(item)) {
-            return false
-          }
-          return true
-        }),
-    }
+                const color = getColor(state, className)
+                if (color !== null) {
+                  kind = 16
+                  if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                    documentation = culori.formatRgb(color)
+                  }
+                }
+
+                return {
+                  label: className,
+                  kind,
+                  ...(documentation ? { documentation } : {}),
+                  sortText: naturalExpand(index, classNames.length),
+                } as CompletionItem
+              })
+          )
+          .filter((item) => {
+            if (item === null) {
+              return false
+            }
+            if (filter && !filter(item)) {
+              return false
+            }
+            return true
+          }),
+      },
+      {
+        range: replacementRange,
+        data: {
+          ...(state.completionItemData ?? {}),
+          variants: existingVariants,
+          ...(important ? { important } : {}),
+        },
+      },
+      state.editor.capabilities.itemDefaults
+    )
   }
 
   for (let i = parts.length - 1; i > 0; i--) {
@@ -339,67 +347,72 @@ export function completionsFromClassList(
     }
   }
 
-  return {
-    isIncomplete: false,
-    items: Object.keys(isSubset ? subset : state.classNames.classNames)
-      .filter((k) => k !== '__info')
-      .filter((className) => isContextItem(state, [...subsetKey, className]))
-      .map((className, index): CompletionItem => {
-        return {
-          label: className + sep,
-          kind: 9,
-          command: {
-            title: '',
-            command: 'editor.action.triggerSuggest',
-          },
-          sortText: '-' + naturalExpand(index),
-          data: { className, variants: subsetKey },
-          textEdit: {
-            newText: className + sep,
-            range: replacementRange,
-          },
-        }
-      })
-      .concat(
-        Object.keys(isSubset ? subset : state.classNames.classNames)
-          .filter((className) =>
-            dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
-          )
-          .map((className, index) => {
-            let kind: CompletionItemKind = 21
-            let documentation: string | undefined
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: Object.keys(isSubset ? subset : state.classNames.classNames)
+        .filter((k) => k !== '__info')
+        .filter((className) => isContextItem(state, [...subsetKey, className]))
+        .map((className, index, classNames): CompletionItem => {
+          return {
+            label: className + sep,
+            kind: 9,
+            command: {
+              title: '',
+              command: 'editor.action.triggerSuggest',
+            },
+            sortText: '-' + naturalExpand(index, classNames.length),
+            data: {
+              ...(state.completionItemData ?? {}),
+              className,
+              variants: subsetKey,
+            },
+          }
+        })
+        .concat(
+          Object.keys(isSubset ? subset : state.classNames.classNames)
+            .filter((className) =>
+              dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
+            )
+            .map((className, index, classNames) => {
+              let kind: CompletionItemKind = 21
+              let documentation: string | undefined
 
-            const color = getColor(state, className)
-            if (color !== null) {
-              kind = 16
-              if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                documentation = culori.formatRgb(color)
+              const color = getColor(state, className)
+              if (color !== null) {
+                kind = 16
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
+                }
               }
-            }
 
-            return {
-              label: className,
-              kind,
-              ...(documentation ? { documentation } : {}),
-              sortText: naturalExpand(index),
-              data: { variants: subsetKey },
-              textEdit: {
-                newText: className,
-                range: replacementRange,
-              },
-            }
-          })
-      )
-      .filter((item) => {
-        if (item === null) {
-          return false
-        }
-        if (filter && !filter(item)) {
-          return false
-        }
-        return true
-      }),
-  }
+              return {
+                label: className,
+                kind,
+                ...(documentation ? { documentation } : {}),
+                sortText: naturalExpand(index, classNames.length),
+              }
+            })
+        )
+        .filter((item) => {
+          if (item === null) {
+            return false
+          }
+          if (filter && !filter(item)) {
+            return false
+          }
+          return true
+        }),
+    },
+    {
+      range: replacementRange,
+      data: {
+        ...(state.completionItemData ?? {}),
+        variants: subsetKey,
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 async function provideClassAttributeCompletions(
@@ -672,65 +685,72 @@ function provideCssHelperCompletions(
     end: position,
   }
 
-  return {
-    isIncomplete: false,
-    items: Object.keys(obj)
-      .sort((a, z) => {
-        let aIsNumber = isNumber(a)
-        let zIsNumber = isNumber(z)
-        if (aIsNumber && !zIsNumber) {
-          return -1
-        }
-        if (!aIsNumber && zIsNumber) {
-          return 1
-        }
-        if (aIsNumber && zIsNumber) {
-          return parseFloat(a) - parseFloat(z)
-        }
-        return 0
-      })
-      .map((item, index) => {
-        let color = getColorFromValue(obj[item])
-        const replaceDot: boolean = item.indexOf('.') !== -1 && separator && separator.endsWith('.')
-        const insertClosingBrace: boolean =
-          text.charAt(text.length - 1) !== ']' &&
-          (replaceDot || (separator && separator.endsWith('[')))
-        const detail = stringifyConfigValue(obj[item])
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: Object.keys(obj)
+        .sort((a, z) => {
+          let aIsNumber = isNumber(a)
+          let zIsNumber = isNumber(z)
+          if (aIsNumber && !zIsNumber) {
+            return -1
+          }
+          if (!aIsNumber && zIsNumber) {
+            return 1
+          }
+          if (aIsNumber && zIsNumber) {
+            return parseFloat(a) - parseFloat(z)
+          }
+          return 0
+        })
+        .map((item, index, items) => {
+          let color = getColorFromValue(obj[item])
+          const replaceDot: boolean =
+            item.indexOf('.') !== -1 && separator && separator.endsWith('.')
+          const insertClosingBrace: boolean =
+            text.charAt(text.length - 1) !== ']' &&
+            (replaceDot || (separator && separator.endsWith('[')))
+          const detail = stringifyConfigValue(obj[item])
 
-        return {
-          label: item,
-          sortText: naturalExpand(index),
-          commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
-            Boolean
-          ),
-          kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
-          // VS Code bug causes some values to not display in some cases
-          detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
-          ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-            ? { documentation: culori.formatRgb(color) }
-            : {}),
-          textEdit: {
-            newText: `${item}${insertClosingBrace ? ']' : ''}`,
-            range: editRange,
-          },
-          additionalTextEdits: replaceDot
-            ? [
-                {
-                  newText: '[',
-                  range: {
-                    start: {
-                      ...editRange.start,
-                      character: editRange.start.character - 1,
+          return {
+            label: item,
+            sortText: naturalExpand(index, items.length),
+            commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
+              Boolean
+            ),
+            kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
+            // VS Code bug causes some values to not display in some cases
+            detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
+            ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
+              ? { documentation: culori.formatRgb(color) }
+              : {}),
+            ...(insertClosingBrace ? { textEditText: `${item}]` } : {}),
+            additionalTextEdits: replaceDot
+              ? [
+                  {
+                    newText: '[',
+                    range: {
+                      start: {
+                        ...editRange.start,
+                        character: editRange.start.character - 1,
+                      },
+                      end: editRange.start,
                     },
-                    end: editRange.start,
                   },
-                },
-              ]
-            : [],
-          data: { _type: 'helper' },
-        }
-      }),
-  }
+                ]
+              : [],
+          }
+        }),
+    },
+    {
+      range: editRange,
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'helper',
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 function provideTailwindDirectiveCompletions(
@@ -751,87 +771,94 @@ function provideTailwindDirectiveCompletions(
 
   if (match === null) return null
 
-  return {
-    isIncomplete: false,
-    items: [
-      semver.gte(state.version, '1.0.0-beta.1')
-        ? {
-            label: 'base',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#tailwind'
-              )})`,
-            },
-          }
-        : {
-            label: 'preflight',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#tailwind'
-              )})`,
-            },
+  let items = [
+    semver.gte(state.version, '1.0.0-beta.1')
+      ? {
+          label: 'base',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#tailwind'
+            )})`,
           },
-      {
-        label: 'components',
-        documentation: {
-          kind: 'markdown' as typeof MarkupKind.Markdown,
-          value: `This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
-            state.version,
-            'functions-and-directives/#tailwind'
-          )})`,
-        },
-      },
-      {
-        label: 'utilities',
-        documentation: {
-          kind: 'markdown' as typeof MarkupKind.Markdown,
-          value: `This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
-            state.version,
-            'functions-and-directives/#tailwind'
-          )})`,
-        },
-      },
-      state.jit && semver.gte(state.version, '2.1.99')
-        ? {
-            label: 'variants',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
-              )})`,
-            },
-          }
-        : {
-            label: 'screens',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#tailwind'
-              )})`,
-            },
+        }
+      : {
+          label: 'preflight',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#tailwind'
+            )})`,
           },
-    ].map((item) => ({
-      ...item,
-      kind: 21,
-      data: { _type: '@tailwind' },
-      textEdit: {
-        newText: item.label,
-        range: {
-          start: {
-            line: position.line,
-            character: position.character - match.groups.partial.length,
-          },
-          end: position,
         },
+    {
+      label: 'components',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#tailwind'
+        )})`,
       },
-    })),
-  }
+    },
+    {
+      label: 'utilities',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#tailwind'
+        )})`,
+      },
+    },
+    state.jit && semver.gte(state.version, '2.1.99')
+      ? {
+          label: 'variants',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
+            )})`,
+          },
+        }
+      : {
+          label: 'screens',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#tailwind'
+            )})`,
+          },
+        },
+  ]
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: items.map((item) => ({
+        ...item,
+        kind: 21,
+      })),
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: '@tailwind',
+      },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - match.groups.partial.length,
+        },
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 function provideVariantsDirectiveCompletions(
@@ -875,29 +902,33 @@ function provideVariantsDirectiveCompletions(
     possibleVariants = possibleVariants.filter((v) => !state.screens.includes(v))
   }
 
-  return {
-    isIncomplete: false,
-    items: possibleVariants
-      .filter((v) => existingVariants.indexOf(v) === -1)
-      .map((variant, index) => ({
-        // TODO: detail
-        label: variant,
-        detail: state.variants[variant],
-        kind: 21,
-        data: { _type: 'variant' },
-        sortText: naturalExpand(index),
-        textEdit: {
-          newText: variant,
-          range: {
-            start: {
-              line: position.line,
-              character: position.character - parts[parts.length - 1].length,
-            },
-            end: position,
-          },
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: possibleVariants
+        .filter((v) => existingVariants.indexOf(v) === -1)
+        .map((variant, index, variants) => ({
+          // TODO: detail
+          label: variant,
+          kind: 21,
+          sortText: naturalExpand(index, variants.length),
+        })),
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'variant',
+      },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - parts[parts.length - 1].length,
         },
-      })),
-  }
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 function provideLayerDirectiveCompletions(
@@ -918,25 +949,30 @@ function provideLayerDirectiveCompletions(
 
   if (match === null) return null
 
-  return {
-    isIncomplete: false,
-    items: ['base', 'components', 'utilities'].map((layer, index) => ({
-      label: layer,
-      kind: 21,
-      data: { _type: 'layer' },
-      sortText: naturalExpand(index),
-      textEdit: {
-        newText: layer,
-        range: {
-          start: {
-            line: position.line,
-            character: position.character - match.groups.partial.length,
-          },
-          end: position,
-        },
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: ['base', 'components', 'utilities'].map((layer, index, layers) => ({
+        label: layer,
+        kind: 21,
+        sortText: naturalExpand(index, layers.length),
+      })),
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'layer',
       },
-    })),
-  }
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - match.groups.partial.length,
+        },
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 function withDefaults(
@@ -962,7 +998,7 @@ function withDefaults(
         ? completionList.items
         : completionList.items.map(({ textEditText, ...item }) => ({
             ...item,
-            ...(defaultData || !defaults.data ? {} : { data: defaults.data }),
+            ...(defaultData || !defaults.data || item.data ? {} : { data: defaults.data }),
             ...(defaultRange || !defaults.range
               ? textEditText
                 ? { textEditText }
@@ -1009,7 +1045,10 @@ function provideScreenDirectiveCompletions(
       })),
     },
     {
-      data: { _type: 'screen' },
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'screen',
+      },
       range: {
         start: {
           line: position.line,
@@ -1136,7 +1175,10 @@ function provideCssDirectiveCompletions(
       })),
     },
     {
-      data: { _type: 'directive' },
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'directive',
+      },
       range: {
         start: {
           line: position.line,
@@ -1171,29 +1213,34 @@ async function provideConfigDirectiveCompletions(
   let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
   let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
 
-  return {
-    isIncomplete: false,
-    items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
-      .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
-      .map(([name, type]) => ({
-        data: { _type: 'filesystem' },
-        label: type.isDirectory ? name + '/' : name,
-        kind: type.isDirectory ? 19 : 17,
-        textEdit: {
-          newText: type.isDirectory ? name + '/' : name,
-          range: {
-            start: {
-              line: position.line,
-              character: position.character - valueAfterLastSlash.length,
-            },
-            end: position,
-          },
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
+        .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
+        .map(([name, type]) => ({
+          label: type.isDirectory ? name + '/' : name,
+          kind: type.isDirectory ? 19 : 17,
+          command: type.isDirectory
+            ? { command: 'editor.action.triggerSuggest', title: '' }
+            : undefined,
+        })),
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'filesystem',
+      },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character - valueAfterLastSlash.length,
         },
-        command: type.isDirectory
-          ? { command: 'editor.action.triggerSuggest', title: '' }
-          : undefined,
-      })),
-  }
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 async function provideEmmetCompletions(

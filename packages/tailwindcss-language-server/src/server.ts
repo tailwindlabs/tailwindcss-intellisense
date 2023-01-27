@@ -390,6 +390,9 @@ async function createProjectService(
 
   let state: State = {
     enabled: false,
+    completionItemData: {
+      _projectKey: projectKey,
+    },
     editor: {
       connection,
       folder,
@@ -1125,29 +1128,7 @@ async function createProjectService(
         let settings = await state.editor.getConfiguration(document.uri)
         if (!settings.tailwindCSS.suggestions) return null
         if (await isExcluded(state, document)) return null
-        let result = await doComplete(state, document, params.position, params.context)
-        if (!result) return result
-
-        let supportsDefaults = state.editor.capabilities.itemDefaults.length > 0
-        let supportsDefaultData = state.editor.capabilities.itemDefaults.includes('data')
-
-        return {
-          isIncomplete: result.isIncomplete,
-          ...(supportsDefaults
-            ? {
-                itemDefaults: {
-                  ...(result.itemDefaults ?? {}),
-                  ...(supportsDefaultData
-                    ? { data: { _projectKey: projectKey, ...(result.itemDefaults?.data ?? {}) } }
-                    : {}),
-                },
-              }
-            : {}),
-          items: result.items.map((item) => ({
-            ...item,
-            ...(item.data ? { data: { _projectKey: projectKey, ...item.data } } : {}),
-          })),
-        }
+        return doComplete(state, document, params.position, params.context)
       }, null)
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
