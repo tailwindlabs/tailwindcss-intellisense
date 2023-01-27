@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.7
+
+- Improve completion list performance (#706)
+- Improve support for Tailwind class modifiers (#707)
+- Fix activation on Windows when using `tailwindCSS.experimental.configFile` setting (#708)
+- Don't watch directories above workspace root (#709)
+- Enable IntelliSense in entire workspace when there is exactly one active Tailwind project (#711)
+
 ## 0.9.6
 
 - Fix activation on Windows when project path contains brackets (#699)
