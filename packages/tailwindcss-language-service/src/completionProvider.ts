@@ -43,12 +43,12 @@ export function completionsFromClassList(
   state: State,
   classList: string,
   classListRange: Range,
-  document: TextDocument,
   filter?: (item: CompletionItem) => boolean,
+  document?: TextDocument,
   context?: CompletionContext
 ): CompletionList {
-  let classNamesAndWhitespace = classList.split(/(\s+)/)
-  const partialClassName = classNamesAndWhitespace[classNamesAndWhitespace.length - 1]
+  let classNames = classList.split(/[\s+]/)
+  const partialClassName = classNames[classNames.length - 1]
   let sep = state.separator
   let parts = partialClassName.split(sep)
   let subset: any
@@ -57,10 +57,10 @@ export function completionsFromClassList(
 
   let replacementRange = {
     ...classListRange,
-    start: document.positionAt(
-      document.offsetAt(classListRange.start) +
-        classNamesAndWhitespace.slice(0, classNamesAndWhitespace.length - 1).join('').length
-    ),
+    start: {
+      ...classListRange.start,
+      character: classListRange.end.character - partialClassName.length,
+    },
   }
 
   if (state.jit) {
@@ -201,12 +201,10 @@ export function completionsFromClassList(
                             resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
                             sep,
                           range: {
-                            start: document.positionAt(
-                              document.offsetAt(classListRange.start) +
-                                classNamesAndWhitespace
-                                  .slice(0, classNamesAndWhitespace.length - 1)
-                                  .join('').length
-                            ),
+                            start: {
+                              ...classListRange.start,
+                              character: classListRange.end.character - partialClassName.length,
+                            },
                             end: {
                               ...replacementRange.start,
                               character: replacementRange.start.character,
@@ -414,39 +412,16 @@ export function completionsFromClassList(
   )
 }
 
-// This might be a VS Code bug?
-// The trigger character is not included in the document text
-function ensureTriggerCharacterIsIncluded(
-  text: string,
-  document: TextDocument,
-  position: Position,
-  context?: CompletionContext
-): string {
-  if (!context) {
-    return text
-  }
-  if (
-    context.triggerKind === 2 && // CompletionTriggerKind.TriggerCharacter
-    text.slice(-1) !== context.triggerCharacter
-  ) {
-    return `${text.slice(0, text.length - 1)}${context.triggerCharacter}`
-  }
-  return text
-}
-
 async function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
   position: Position,
   context?: CompletionContext
 ): Promise<CompletionList> {
-  let startOffset = Math.max(0, document.offsetAt(position) - 1000)
   let str = document.getText({
-    start: document.positionAt(startOffset),
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - 1000)),
     end: position,
   })
-
-  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   let matches = matchClassAttributes(
     str,
@@ -459,13 +434,11 @@ async function provideClassAttributeCompletions(
 
   let match = matches[matches.length - 1]
 
-  let lexer =
+  const lexer =
     match[0][0] === ':' || (match[1].startsWith('[') && match[1].endsWith(']'))
       ? getComputedClassAttributeLexer()
       : getClassAttributeLexer()
-  let attributeOffset = match.index + match[0].length - 1
-  let attributeText = str.substr(attributeOffset)
-  lexer.reset(attributeText)
+  lexer.reset(str.substr(match.index + match[0].length - 1))
 
   try {
     let tokens = Array.from(lexer)
@@ -484,13 +457,14 @@ async function provideClassAttributeCompletions(
         state,
         classList,
         {
-          start: document.positionAt(
-            startOffset + attributeOffset + (attributeText.length - classList.length)
-          ),
+          start: {
+            line: position.line,
+            character: position.character - classList.length,
+          },
           end: position,
         },
-        document,
         undefined,
+        document,
         context
       )
     }
@@ -553,18 +527,13 @@ async function provideCustomClassNameCompletions(
             classList = containerMatch[1].substr(0, cursor - matchStart)
           }
 
-          return completionsFromClassList(
-            state,
-            classList,
-            {
-              start: {
-                line: position.line,
-                character: position.character - classList.length,
-              },
-              end: position,
+          return completionsFromClassList(state, classList, {
+            start: {
+              line: position.line,
+              character: position.character - classList.length,
             },
-            document
-          )
+            end: position,
+          })
         }
       }
     } catch (_) {}
@@ -576,15 +545,12 @@ async function provideCustomClassNameCompletions(
 function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
-  position: Position,
-  context?: CompletionContext
+  position: Position
 ): CompletionList {
   let str = document.getText({
     start: { line: Math.max(position.line - 30, 0), character: 0 },
     end: position,
   })
-
-  str = ensureTriggerCharacterIsIncluded(str, document, position, context)
 
   const match = findLast(/@apply\s+(?<classList>[^;}]*)$/gi, str)
 
@@ -604,7 +570,6 @@ function provideAtApplyCompletions(
       },
       end: position,
     },
-    document,
     (item) => {
       if (item.kind === 9) {
         return (
@@ -631,7 +596,7 @@ async function provideClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
-    return provideAtApplyCompletions(state, document, position, context)
+    return provideAtApplyCompletions(state, document, position)
   }
 
   if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
@@ -1338,18 +1303,13 @@ async function provideEmmetCompletions(
   const parts = emmetItems.items[0].label.split('.')
   if (parts.length < 2) return null
 
-  return completionsFromClassList(
-    state,
-    parts[parts.length - 1],
-    {
-      start: {
-        line: position.line,
-        character: position.character - parts[parts.length - 1].length,
-      },
-      end: position,
+  return completionsFromClassList(state, parts[parts.length - 1], {
+    start: {
+      line: position.line,
+      character: position.character - parts[parts.length - 1].length,
     },
-    document
-  )
+    end: position,
+  })
 }
 
 export async function doComplete(
