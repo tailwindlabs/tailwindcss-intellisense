@@ -25,6 +25,7 @@ export type EditorState = {
   capabilities: {
     configuration: boolean
     diagnosticRelatedInformation: boolean
+    itemDefaults: string[]
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
@@ -118,6 +119,7 @@ export interface State {
   jitContext?: any
   classList?: Array<[string, { color: culori.Color | KeywordColor | null; modifiers?: string[] }]>
   pluginVersions?: string
+  completionItemData?: Record<string, any>
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 
