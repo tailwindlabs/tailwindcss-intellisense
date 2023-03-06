@@ -35,7 +35,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
     (state.editor &&
       notSemicolonLanguages.includes(state.editor.userLanguages[document.languageId]))
   ) {
-    regex = /(?:\s|^)@tailwind\s+(?<value>[^(\r)?\n]+)/g
+    regex = /(?:\s|^)@tailwind\s+(?<value>[^\r\n]+)/g
   } else {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
   }
