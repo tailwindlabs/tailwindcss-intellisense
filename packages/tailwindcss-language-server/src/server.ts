@@ -1607,17 +1607,26 @@ class TW {
 
     this.initialized = true
 
-    if (!this.initializeParams.rootPath) {
+    let base: string
+    if (this.initializeParams.rootUri) {
+      console.log('here!!')
+      base = URI.parse(this.initializeParams.rootUri).fsPath
+    } else if (this.initializeParams.rootPath) {
+      base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
+    }
+
+    if (!base) {
       console.error('No workspace folders found, not initializing.')
       return
     }
+
+    base = normalizePath(base)
 
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await getConfiguration()
     let ignore = globalSettings.tailwindCSS.files.exclude
     let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
-    let base = normalizePath(normalizeFileNameToFsPath(this.initializeParams.rootPath))
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
 
