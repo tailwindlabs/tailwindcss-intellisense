@@ -1,4 +1,5 @@
 import type { TextDocument, Range } from 'vscode-languageserver'
+import moo from 'moo'
 
 export function getTextWithoutComments(
   doc: TextDocument,
@@ -14,7 +15,7 @@ export function getTextWithoutComments(
   let text = typeof docOrText === 'string' ? docOrText : docOrText.getText(range)
 
   if (type === 'js' || type === 'jsx') {
-    return text.replace(/\/\*.*?\*\//gs, replace).replace(/\/\/.*?$/gms, replace)
+    return getJsWithoutComments(text)
   }
 
   if (type === 'css') {
@@ -26,4 +27,36 @@ export function getTextWithoutComments(
 
 function replace(match: string): string {
   return match.replace(/./gs, (char) => (char === '\n' ? '\n' : ' '))
+}
+
+let jsLexer: moo.Lexer
+
+function getJsWithoutComments(text: string): string {
+  if (!jsLexer) {
+    jsLexer = moo.states({
+      main: {
+        commentLine: /\/\/.*?$/,
+        commentBlock: { match: /\/\*[^]*?\*\//, lineBreaks: true },
+        stringDouble: /"(?:[^"\\]|\\.)*"/,
+        stringSingle: /'(?:[^'\\]|\\.)*'/,
+        stringBacktick: /`(?:[^`\\]|\\.)*`/,
+        other: { match: /[^]/, lineBreaks: true },
+      },
+    })
+  }
+
+  let str = ''
+  jsLexer.reset(text)
+
+  for (let token of jsLexer) {
+    if (token.type === 'commentLine') {
+      str += ' '.repeat(token.value.length)
+    } else if (token.type === 'commentBlock') {
+      str += token.value.replace(/./g, ' ')
+    } else {
+      str += token.value
+    }
+  }
+
+  return str
 }
