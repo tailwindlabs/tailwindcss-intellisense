@@ -1609,7 +1609,6 @@ class TW {
 
     let base: string
     if (this.initializeParams.rootUri) {
-      console.log('here!!')
       base = URI.parse(this.initializeParams.rootUri).fsPath
     } else if (this.initializeParams.rootPath) {
       base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
