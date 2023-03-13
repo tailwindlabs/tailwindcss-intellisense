@@ -44,7 +44,6 @@ export function completionsFromClassList(
   classList: string,
   classListRange: Range,
   filter?: (item: CompletionItem) => boolean,
-  document?: TextDocument,
   context?: CompletionContext
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
@@ -464,7 +463,6 @@ async function provideClassAttributeCompletions(
           end: position,
         },
         undefined,
-        document,
         context
       )
     }
@@ -476,7 +474,8 @@ async function provideClassAttributeCompletions(
 async function provideCustomClassNameCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
   const regexes = settings.tailwindCSS.experimental.classRegex
@@ -527,13 +526,19 @@ async function provideCustomClassNameCompletions(
             classList = containerMatch[1].substr(0, cursor - matchStart)
           }
 
-          return completionsFromClassList(state, classList, {
-            start: {
-              line: position.line,
-              character: position.character - classList.length,
+          return completionsFromClassList(
+            state,
+            classList,
+            {
+              start: {
+                line: position.line,
+                character: position.character - classList.length,
+              },
+              end: position,
             },
-            end: position,
-          })
+            undefined,
+            context
+          )
         }
       }
     } catch (_) {}
@@ -545,7 +550,8 @@ async function provideCustomClassNameCompletions(
 function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
+  context?: CompletionContext
 ): CompletionList {
   let str = document.getText({
     start: { line: Math.max(position.line - 30, 0), character: 0 },
@@ -580,7 +586,8 @@ function provideAtApplyCompletions(
       let className = item.data?.className ?? item.label
       let validated = validateApply(state, [...variants, className])
       return validated !== null && validated.isApplyable === true
-    }
+    },
+    context
   )
 }
 
@@ -596,7 +603,7 @@ async function provideClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
-    return provideAtApplyCompletions(state, document, position)
+    return provideAtApplyCompletions(state, document, position, context)
   }
 
   if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
@@ -1329,7 +1336,7 @@ export async function doComplete(
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
     (await provideConfigDirectiveCompletions(state, document, position)) ||
-    (await provideCustomClassNameCompletions(state, document, position))
+    (await provideCustomClassNameCompletions(state, document, position, context))
 
   if (result) return result
 
