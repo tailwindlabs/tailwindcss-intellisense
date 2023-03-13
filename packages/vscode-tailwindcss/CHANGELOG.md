@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.8
+
+- Fix `invalidTailwindDirective` linting with CRLF file endings (#723)
+- Add support for Handlebars template scripts (`<script type="text/x-handlebars-template">`) (#726)
+- Improve JavaScript comment detection (#727)
+- Add modifier completions for `@apply` and `classRegex` setting (#732)
+- Add bundled version of `@tailwindcss/container-queries` (#733)
+- Support `InitializeParams.rootUri` (#725)
+- Add `htmldjango` to default supported languages (#721)
+
 ## 0.9.7
 
 - Improve completion list performance (#706)
