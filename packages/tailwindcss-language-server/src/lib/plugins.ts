@@ -3,6 +3,10 @@ export default {
     module: require('@tailwindcss/aspect-ratio'),
     version: require('@tailwindcss/aspect-ratio/package.json').version,
   },
+  '@tailwindcss/container-queries': {
+    module: require('@tailwindcss/container-queries'),
+    version: require('@tailwindcss/container-queries/package.json').version,
+  },
   '@tailwindcss/forms': {
     module: require('@tailwindcss/forms'),
     version: require('@tailwindcss/forms/package.json').version,
