@@ -2,7 +2,7 @@
 
 ## 0.9.9
 
-- Support TypeScript and ESM Tailwind config files when using a version of `tailwindcss` that supports these (currently `tailwindcss@insiders`, since [`tailwindlabs/tailwindcss#10785`](https://github.com/tailwindlabs/tailwindcss/pull/10785))
+- Support TypeScript and ESM Tailwind config files when using a version of `tailwindcss` that supports these (currently `tailwindcss@insiders`, since [`tailwindlabs/tailwindcss#10785`](https://github.com/tailwindlabs/tailwindcss/pull/10785)) (#738, #739)
 
 ## 0.9.8
 
