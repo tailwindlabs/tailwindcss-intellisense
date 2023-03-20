@@ -1,41 +1,87 @@
+// https://github.com/tailwindlabs/tailwindcss/blob/e046a37dbc17f163b066cd34a559e7c8a276bd8b/src/lib/getModuleDependencies.js
 import fs from 'fs'
 import path from 'path'
-import resolve from 'resolve'
-import detective from 'detective-typescript'
 import normalizePath from 'normalize-path'
 
-function createModule(file: string): { file: string; requires: string[] } {
-  let source = fs.readFileSync(file, 'utf-8')
-  return { file, requires: detective(source, { mixedImports: true }) }
+let jsExtensions = ['.js', '.cjs', '.mjs']
+
+// Given the current file `a.ts`, we want to make sure that when importing `b` that we resolve
+// `b.ts` before `b.js`
+//
+// E.g.:
+//
+// a.ts
+//   b // .ts
+//   c // .ts
+// a.js
+//   b // .js or .ts
+
+let jsResolutionOrder = ['', '.js', '.cjs', '.mjs', '.ts', '.cts', '.mts', '.jsx', '.tsx']
+let tsResolutionOrder = ['', '.ts', '.cts', '.mts', '.tsx', '.js', '.cjs', '.mjs', '.jsx']
+
+function resolveWithExtension(file: string, extensions: string[]): string | null {
+  // Try to find `./a.ts`, `./a.ts`, ... from `./a`
+  for (let ext of extensions) {
+    let full = `${file}${ext}`
+    if (fs.existsSync(full) && fs.statSync(full).isFile()) {
+      return full
+    }
+  }
+
+  // Try to find `./a/index.js` from `./a`
+  for (let ext of extensions) {
+    let full = `${file}/index${ext}`
+    if (fs.existsSync(full)) {
+      return full
+    }
+  }
+
+  return null
 }
 
-function* _getModuleDependencies(entryFile: string): Generator<string> {
-  yield entryFile
+function* _getModuleDependencies(
+  filename: string,
+  base: string,
+  seen: Set<string>
+): Generator<string> {
+  let ext = path.extname(filename)
 
-  let mod = createModule(entryFile)
+  // Try to find the file
+  let absoluteFile = resolveWithExtension(
+    path.resolve(base, filename),
+    jsExtensions.includes(ext) ? jsResolutionOrder : tsResolutionOrder
+  )
+  if (absoluteFile === null) return // File doesn't exist
 
-  let ext = path.extname(entryFile)
-  let isTypeScript = ext === '.ts' || ext === '.cts' || ext === '.mts'
-  let extensions = [...(isTypeScript ? ['.ts', '.cts', '.mts'] : []), '.js', '.cjs', '.mjs']
+  // Prevent infinite loops when there are circular dependencies
+  if (seen.has(absoluteFile)) return // Already seen
+  seen.add(absoluteFile)
 
-  // Iterate over the modules, even when new
-  // ones are being added
-  for (let dep of mod.requires) {
-    // Only track local modules, not node_modules
-    if (!dep.startsWith('./') && !dep.startsWith('../')) {
-      continue
-    }
+  // Mark the file as a dependency
+  yield absoluteFile
 
-    try {
-      let basedir = path.dirname(mod.file)
-      let depPath = resolve.sync(dep, { basedir, extensions })
-      yield* _getModuleDependencies(depPath)
-    } catch {}
+  // Resolve new base for new imports/requires
+  base = path.dirname(absoluteFile)
+
+  let contents = fs.readFileSync(absoluteFile, 'utf-8')
+
+  // Find imports/requires
+  for (let match of [
+    ...contents.matchAll(/import[\s\S]*?['"](.{3,}?)['"]/gi),
+    ...contents.matchAll(/import[\s\S]*from[\s\S]*?['"](.{3,}?)['"]/gi),
+    ...contents.matchAll(/require\(['"`](.{3,})['"`]\)/gi),
+  ]) {
+    // Bail out if it's not a relative file
+    if (!match[1].startsWith('.')) continue
+
+    yield* _getModuleDependencies(match[1], base, seen)
   }
 }
 
-export function getModuleDependencies(entryFile: string): string[] {
-  return Array.from(_getModuleDependencies(entryFile))
-    .filter((file) => file !== entryFile)
+export function getModuleDependencies(absoluteFilePath: string): string[] {
+  return Array.from(
+    _getModuleDependencies(absoluteFilePath, path.dirname(absoluteFilePath), new Set())
+  )
+    .filter((file) => file !== absoluteFilePath)
     .map((file) => normalizePath(file))
 }
