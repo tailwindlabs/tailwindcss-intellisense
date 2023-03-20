@@ -105,6 +105,7 @@ export interface State {
     postcss?: { version: string; module: Postcss }
     postcssSelectorParser?: { module: any }
     resolveConfig?: { module: any }
+    loadConfig?: { module: any }
     jit?: {
       generateRules: { module: any }
       createContext: { module: any }

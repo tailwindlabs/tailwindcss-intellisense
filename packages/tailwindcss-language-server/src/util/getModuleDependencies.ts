@@ -1,47 +1,41 @@
 import fs from 'fs'
 import path from 'path'
 import resolve from 'resolve'
-import detective from 'detective'
+import detective from 'detective-typescript'
 import normalizePath from 'normalize-path'
 
-export function getModuleDependencies(modulePath: string): string[] {
-  return _getModuleDependencies(modulePath)
-    .map(({ file }) => file)
-    .filter((file) => file !== modulePath)
-    .map((file) => normalizePath(file))
+function createModule(file: string): { file: string; requires: string[] } {
+  let source = fs.readFileSync(file, 'utf-8')
+  return { file, requires: detective(source, { mixedImports: true }) }
 }
 
-function createModule(file) {
-  const source = fs.readFileSync(file, 'utf-8')
-  const requires = detective(source)
+function* _getModuleDependencies(entryFile: string): Generator<string> {
+  yield entryFile
 
-  return { file, requires }
-}
+  let mod = createModule(entryFile)
 
-function _getModuleDependencies(entryFile) {
-  const rootModule = createModule(entryFile)
-  const modules = [rootModule]
+  let ext = path.extname(entryFile)
+  let isTypeScript = ext === '.ts' || ext === '.cts' || ext === '.mts'
+  let extensions = [...(isTypeScript ? ['.ts', '.cts', '.mts'] : []), '.js', '.cjs', '.mjs']
 
   // Iterate over the modules, even when new
   // ones are being added
-  for (const mdl of modules) {
-    mdl.requires
-      .filter((dep) => {
-        // Only track local modules, not node_modules
-        return dep.startsWith('./') || dep.startsWith('../')
-      })
-      .forEach((dep) => {
-        try {
-          const basedir = path.dirname(mdl.file)
-          const depPath = resolve.sync(dep, { basedir })
-          const depModule = createModule(depPath)
+  for (let dep of mod.requires) {
+    // Only track local modules, not node_modules
+    if (!dep.startsWith('./') && !dep.startsWith('../')) {
+      continue
+    }
 
-          modules.push(depModule)
-        } catch (_err) {
-          // eslint-disable-next-line no-empty
-        }
-      })
+    try {
+      let basedir = path.dirname(mod.file)
+      let depPath = resolve.sync(dep, { basedir, extensions })
+      yield* _getModuleDependencies(depPath)
+    } catch {}
   }
+}
 
-  return modules
+export function getModuleDependencies(entryFile: string): string[] {
+  return Array.from(_getModuleDependencies(entryFile))
+    .filter((file) => file !== entryFile)
+    .map((file) => normalizePath(file))
 }

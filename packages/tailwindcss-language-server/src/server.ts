@@ -608,6 +608,7 @@ async function createProjectService(
     let pluginVersions: string | undefined
     let browserslist: string[] | undefined
     let resolveConfigFn: (config: any) => any
+    let loadConfigFn: (path: string) => any
     let featureFlags: FeatureFlags = { future: [], experimental: [] }
     let applyComplexClasses: any
 
@@ -674,6 +675,10 @@ async function createProjectService(
           }
         }
       }
+
+      try {
+        loadConfigFn = require(resolveFrom(tailwindDir, './loadConfig.js'))
+      } catch {}
 
       if (semver.gte(tailwindcssVersion, '1.4.0') && semver.lte(tailwindcssVersion, '1.99.0')) {
         const browserslistPath = resolveFrom(tailwindDir, 'browserslist')
@@ -810,6 +815,7 @@ async function createProjectService(
       postcss: { version: postcssVersion, module: postcss },
       postcssSelectorParser: { module: postcssSelectorParser },
       resolveConfig: { module: resolveConfigFn },
+      loadConfig: { module: loadConfigFn },
       jit: jitModules,
     }
     state.browserslist = browserslist
@@ -893,7 +899,7 @@ async function createProjectService(
 
     clearRequireCache()
 
-    const { tailwindcss, postcss, resolveConfig } = state.modules
+    const { tailwindcss, postcss, resolveConfig, loadConfig } = state.modules
     const sepLocation = semver.gte(tailwindcss.version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
@@ -901,85 +907,91 @@ async function createProjectService(
     let originalConfig: any
 
     let isV3 = semver.gte(tailwindcss.version, '2.99.0')
+    let hook: Hook
 
-    let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
-      originalConfig = klona(exports)
+    if (loadConfig.module) {
+      originalConfig = await loadConfig.module(state.configPath)
+      state.jit = true
+    } else {
+      hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
+        originalConfig = klona(exports)
 
-      let separator = dlv(exports, sepLocation)
-      if (typeof separator !== 'string') {
-        separator = ':'
-      }
-      dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
-      exports[isV3 ? 'content' : 'purge'] = []
-
-      let mode = getMode(exports)
-      deleteMode(exports)
-
-      let isJit = isV3 || (state.modules.jit && mode === 'jit')
-
-      if (isJit) {
-        state.jit = true
-        exports.variants = []
-
-        if (Array.isArray(exports.presets)) {
-          for (let preset of exports.presets) {
-            presetVariants.push(preset.variants)
-            preset.variants = []
-          }
+        let separator = dlv(exports, sepLocation)
+        if (typeof separator !== 'string') {
+          separator = ':'
         }
-      } else {
-        state.jit = false
-      }
+        dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
+        exports[isV3 ? 'content' : 'purge'] = []
 
-      if (state.corePlugins) {
-        let corePluginsConfig = {}
-        for (let pluginName of state.corePlugins) {
-          corePluginsConfig[pluginName] = true
-        }
-        exports.corePlugins = corePluginsConfig
-      }
+        let mode = getMode(exports)
+        deleteMode(exports)
 
-      // inject JIT `matchUtilities` function
-      if (Array.isArray(exports.plugins)) {
-        exports.plugins = exports.plugins.map((plugin) => {
-          if (plugin.__isOptionsFunction) {
-            plugin = plugin()
-          }
-          if (typeof plugin === 'function') {
-            let newPlugin = (...args) => {
-              if (!args[0].matchUtilities) {
-                args[0].matchUtilities = () => {}
-              }
-              return plugin(...args)
+        let isJit = isV3 || (state.modules.jit && mode === 'jit')
+
+        if (isJit) {
+          state.jit = true
+          exports.variants = []
+
+          if (Array.isArray(exports.presets)) {
+            for (let preset of exports.presets) {
+              presetVariants.push(preset.variants)
+              preset.variants = []
             }
-            // @ts-ignore
-            newPlugin.__intellisense_cache_bust = Math.random()
-            return newPlugin
           }
-          if (plugin.handler) {
-            return {
-              ...plugin,
-              handler: (...args) => {
+        } else {
+          state.jit = false
+        }
+
+        if (state.corePlugins) {
+          let corePluginsConfig = {}
+          for (let pluginName of state.corePlugins) {
+            corePluginsConfig[pluginName] = true
+          }
+          exports.corePlugins = corePluginsConfig
+        }
+
+        // inject JIT `matchUtilities` function
+        if (Array.isArray(exports.plugins)) {
+          exports.plugins = exports.plugins.map((plugin) => {
+            if (plugin.__isOptionsFunction) {
+              plugin = plugin()
+            }
+            if (typeof plugin === 'function') {
+              let newPlugin = (...args) => {
                 if (!args[0].matchUtilities) {
                   args[0].matchUtilities = () => {}
                 }
-                return plugin.handler(...args)
-              },
-              __intellisense_cache_bust: Math.random(),
+                return plugin(...args)
+              }
+              // @ts-ignore
+              newPlugin.__intellisense_cache_bust = Math.random()
+              return newPlugin
             }
-          }
-          return plugin
-        })
+            if (plugin.handler) {
+              return {
+                ...plugin,
+                handler: (...args) => {
+                  if (!args[0].matchUtilities) {
+                    args[0].matchUtilities = () => {}
+                  }
+                  return plugin.handler(...args)
+                },
+                __intellisense_cache_bust: Math.random(),
+              }
+            }
+            return plugin
+          })
+        }
+
+        return exports
+      })
+
+      try {
+        require(state.configPath)
+      } catch (error) {
+        hook.unhook()
+        throw error
       }
-
-      return exports
-    })
-
-    try {
-      require(state.configPath)
-    } catch (error) {
-      hook.unhook()
-      throw error
     }
 
     if (!originalConfig) {
@@ -1029,14 +1041,14 @@ async function createProjectService(
         delete state.classList
       }
     } catch (error) {
-      hook.unhook()
+      hook?.unhook()
       throw error
     }
 
     let postcssResult: Result
 
     if (state.classList) {
-      hook.unhook()
+      hook?.unhook()
     } else {
       try {
         postcssResult = await postcss
@@ -1060,7 +1072,7 @@ async function createProjectService(
       } catch (error) {
         throw error
       } finally {
-        hook.unhook()
+        hook?.unhook()
       }
     }
 
@@ -1700,6 +1712,13 @@ class TW {
         } catch {}
 
         if (isCssFile && (!semver.gte(twVersion, '3.2.0') || isDefaultVersion)) {
+          continue
+        }
+
+        if (
+          (configPath.endsWith('.ts') || configPath.endsWith('.mjs')) &&
+          !semver.gte(twVersion, '3.3.0')
+        ) {
           continue
         }
 
