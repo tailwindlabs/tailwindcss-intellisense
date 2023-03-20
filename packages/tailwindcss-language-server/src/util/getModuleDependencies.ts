@@ -1,4 +1,4 @@
-// https://github.com/tailwindlabs/tailwindcss/blob/e046a37dbc17f163b066cd34a559e7c8a276bd8b/src/lib/getModuleDependencies.js
+// https://github.com/tailwindlabs/tailwindcss/blob/bac5ecf0040aa9a788d1b22d706506146ee831ff/src/lib/getModuleDependencies.js
 import fs from 'fs'
 import path from 'path'
 import normalizePath from 'normalize-path'
@@ -42,10 +42,9 @@ function resolveWithExtension(file: string, extensions: string[]): string | null
 function* _getModuleDependencies(
   filename: string,
   base: string,
-  seen: Set<string>
+  seen: Set<string>,
+  ext = path.extname(filename)
 ): Generator<string> {
-  let ext = path.extname(filename)
-
   // Try to find the file
   let absoluteFile = resolveWithExtension(
     path.resolve(base, filename),
@@ -62,6 +61,7 @@ function* _getModuleDependencies(
 
   // Resolve new base for new imports/requires
   base = path.dirname(absoluteFile)
+  ext = path.extname(absoluteFile)
 
   let contents = fs.readFileSync(absoluteFile, 'utf-8')
 
@@ -74,7 +74,7 @@ function* _getModuleDependencies(
     // Bail out if it's not a relative file
     if (!match[1].startsWith('.')) continue
 
-    yield* _getModuleDependencies(match[1], base, seen)
+    yield* _getModuleDependencies(match[1], base, seen, ext)
   }
 }
 
