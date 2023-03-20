@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.9
+
+- Support TypeScript and ESM Tailwind config files when using a version of `tailwindcss` that supports these (currently `tailwindcss@insiders`, since [`tailwindlabs/tailwindcss#10785`](https://github.com/tailwindlabs/tailwindcss/pull/10785))
+
 ## 0.9.8
 
 - Fix `invalidTailwindDirective` linting with CRLF file endings (#723)
