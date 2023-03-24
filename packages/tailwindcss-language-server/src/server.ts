@@ -412,7 +412,6 @@ async function createProjectService(
         diagnosticRelatedInformation: true,
         itemDefaults,
       },
-      documents: documentService.documents,
       getConfiguration,
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
@@ -1171,7 +1170,7 @@ async function createProjectService(
         if (!document) return null
         let settings = await state.editor.getConfiguration(document.uri)
         if (!settings.tailwindCSS.codeActions) return null
-        return doCodeActions(state, params)
+        return doCodeActions(state, params, document)
       }, null)
     },
     onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
