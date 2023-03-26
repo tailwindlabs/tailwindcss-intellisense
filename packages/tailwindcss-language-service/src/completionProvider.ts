@@ -242,7 +242,13 @@ export function completionsFromClassList(
         {
           isIncomplete: false,
           items: items.concat(
-            state.classList.map(([className, { color }], index) => {
+            state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
+              if (
+                state.blocklist?.includes([...existingVariants, className].join(state.separator))
+              ) {
+                return items
+              }
+
               let kind: CompletionItemKind = color ? 16 : 21
               let documentation: string | undefined
 
@@ -250,13 +256,15 @@ export function completionsFromClassList(
                 documentation = culori.formatRgb(color)
               }
 
-              return {
+              items.push({
                 label: className,
                 kind,
                 ...(documentation ? { documentation } : {}),
                 sortText: naturalExpand(index, state.classList.length),
-              } as CompletionItem
-            })
+              })
+
+              return items
+            }, [] as CompletionItem[])
           ),
         },
         {

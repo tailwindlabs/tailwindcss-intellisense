@@ -29,16 +29,15 @@ export function findLast(re: RegExp, str: string): RegExpMatchArray {
   return matches[matches.length - 1]
 }
 
-export function getClassNamesInClassList({
-  classList,
-  range,
-  important,
-}: DocumentClassList): DocumentClassName[] {
+export function getClassNamesInClassList(
+  { classList, range, important }: DocumentClassList,
+  blocklist: State['blocklist']
+): DocumentClassName[] {
   const parts = classList.split(/(\s+)/)
   const names: DocumentClassName[] = []
   let index = 0
   for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 0) {
+    if (i % 2 === 0 && !blocklist.includes(parts[i])) {
       const start = indexToPosition(classList, index)
       const end = indexToPosition(classList, index + parts[i].length)
       names.push({
@@ -77,7 +76,9 @@ export async function findClassNamesInRange(
   includeCustom: boolean = true
 ): Promise<DocumentClassName[]> {
   const classLists = await findClassListsInRange(state, doc, range, mode, includeCustom)
-  return flatten(classLists.map(getClassNamesInClassList))
+  return flatten(
+    classLists.map((classList) => getClassNamesInClassList(classList, state.blocklist))
+  )
 }
 
 export async function findClassNamesInDocument(
@@ -85,7 +86,9 @@ export async function findClassNamesInDocument(
   doc: TextDocument
 ): Promise<DocumentClassName[]> {
   const classLists = await findClassListsInDocument(state, doc)
-  return flatten(classLists.map(getClassNamesInClassList))
+  return flatten(
+    classLists.map((classList) => getClassNamesInClassList(classList, state.blocklist))
+  )
 }
 
 export function findClassListsInCssRange(doc: TextDocument, range?: Range): DocumentClassList[] {

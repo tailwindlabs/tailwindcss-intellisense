@@ -100,6 +100,7 @@ export interface State {
   screens?: string[]
   variants?: Variant[]
   corePlugins?: string[]
+  blocklist?: unknown[]
   modules?: {
     tailwindcss?: { version: string; module: any }
     postcss?: { version: string; module: Postcss }

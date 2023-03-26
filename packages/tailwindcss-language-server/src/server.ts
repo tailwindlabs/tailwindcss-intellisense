@@ -1017,6 +1017,8 @@ async function createProjectService(
     try {
       state.config = resolveConfig.module(originalConfig)
       state.separator = state.config.separator
+      state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      delete state.config.blocklist
 
       if (state.jit) {
         state.jitContext = state.modules.jit.createContext.module(state)
