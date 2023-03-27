@@ -22,7 +22,7 @@ export async function getDocumentColors(
 
   let classLists = await findClassListsInDocument(state, document)
   classLists.forEach((classList) => {
-    let classNames = getClassNamesInClassList(classList)
+    let classNames = getClassNamesInClassList(classList, state.blocklist)
     classNames.forEach((className) => {
       let color = getColor(state, className.className)
       if (color === null || typeof color === 'string' || (color.alpha ?? 1) === 0) {
