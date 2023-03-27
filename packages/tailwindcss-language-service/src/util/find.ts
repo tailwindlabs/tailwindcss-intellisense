@@ -376,8 +376,8 @@ export function findHelperFunctionsInRange(
 
   return matches.map((match) => {
     let quotesBefore = ''
-    let commaIndex = getFirstCommaIndex(match.groups.path)
     let path = match.groups.path
+    let commaIndex = getFirstCommaIndex(path)
     if (commaIndex !== null) {
       path = path.slice(0, commaIndex).trimEnd()
     }
