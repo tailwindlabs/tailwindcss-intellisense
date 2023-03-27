@@ -348,6 +348,22 @@ export function findHelperFunctionsInDocument(
   )
 }
 
+function getFirstCommaIndex(str: string): number | null {
+  let quoteChar: string | undefined
+  for (let i = 0; i < str.length; i++) {
+    let char = str[i]
+    if (char === ',' && !quoteChar) {
+      return i
+    }
+    if (!quoteChar && (char === '"' || char === "'")) {
+      quoteChar = char
+    } else if (char === quoteChar) {
+      quoteChar = undefined
+    }
+  }
+  return null
+}
+
 export function findHelperFunctionsInRange(
   doc: TextDocument,
   range?: Range
@@ -360,7 +376,12 @@ export function findHelperFunctionsInRange(
 
   return matches.map((match) => {
     let quotesBefore = ''
-    let path = match.groups.path.replace(/['"]+$/, '').replace(/^['"]+/, (m) => {
+    let path = match.groups.path
+    let commaIndex = getFirstCommaIndex(path)
+    if (commaIndex !== null) {
+      path = path.slice(0, commaIndex).trimEnd()
+    }
+    path = path.replace(/['"]+$/, '').replace(/^['"]+/, (m) => {
       quotesBefore = m
       return ''
     })
