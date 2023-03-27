@@ -20,7 +20,6 @@ export type ClassNames = {
 export type EditorState = {
   connection: Connection
   folder: string
-  documents: TextDocuments<TextDocument>
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean

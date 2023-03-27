@@ -18,13 +18,13 @@ import { dset } from 'dset'
 import selectorParser from 'postcss-selector-parser'
 import { flatten } from '../util/array'
 import { getTextWithoutComments } from '../util/doc'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
-  params: CodeActionParams,
+  document: TextDocument,
   diagnostic: InvalidApplyDiagnostic
 ): Promise<CodeAction[]> {
-  let document = state.editor.documents.get(params.textDocument.uri)
   if (!document) return []
   let documentText = getTextWithoutComments(document, 'css')
   let cssRange: Range
@@ -144,7 +144,7 @@ export async function provideInvalidApplyCodeActions(
       diagnostics: [diagnostic],
       edit: {
         changes: {
-          [params.textDocument.uri]: changes,
+          [document.uri]: changes,
         },
       },
     },

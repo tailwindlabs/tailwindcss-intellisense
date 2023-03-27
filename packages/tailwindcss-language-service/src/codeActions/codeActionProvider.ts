@@ -17,13 +17,14 @@ import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
 import { provideInvalidApplyCodeActions } from './provideInvalidApplyCodeActions'
 import { provideSuggestionCodeActions } from './provideSuggestionCodeActions'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
   params: CodeActionParams,
+  document: TextDocument,
   only?: DiagnosticKind[]
 ): Promise<AugmentedDiagnostic[]> {
-  let document = state.editor.documents.get(params.textDocument.uri)
   if (!document) return []
   let diagnostics = await doValidate(state, document, only)
 
@@ -40,7 +41,7 @@ async function getDiagnosticsFromCodeActionParams(
     .filter(Boolean)
 }
 
-export async function doCodeActions(state: State, params: CodeActionParams): Promise<CodeAction[]> {
+export async function doCodeActions(state: State, params: CodeActionParams, document: TextDocument): Promise<CodeAction[]> {
   if (!state.enabled) {
     return []
   }
@@ -48,6 +49,7 @@ export async function doCodeActions(state: State, params: CodeActionParams): Pro
   let diagnostics = await getDiagnosticsFromCodeActionParams(
     state,
     params,
+    document,
     params.context.diagnostics
       .map((diagnostic) => diagnostic.code)
       .filter(Boolean) as DiagnosticKind[]
@@ -56,7 +58,7 @@ export async function doCodeActions(state: State, params: CodeActionParams): Pro
   return Promise.all(
     diagnostics.map((diagnostic) => {
       if (isInvalidApplyDiagnostic(diagnostic)) {
-        return provideInvalidApplyCodeActions(state, params, diagnostic)
+        return provideInvalidApplyCodeActions(state, document, diagnostic)
       }
 
       if (isCssConflictDiagnostic(diagnostic)) {
