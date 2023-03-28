@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Fix use of certain built-in node modules in config file (#745)
+- Exclude classes in `blocklist` from IntelliSense (#746)
+- Fix `theme` helper handling when specifying default value (#747)
+- Fix activation when connected to Windows with Remote SSH extension (#748)
+
 ## 0.9.9
 
 - Support TypeScript and ESM Tailwind config files when using a version of `tailwindcss` that supports these (currently `tailwindcss@insiders`, since [`tailwindlabs/tailwindcss#10785`](https://github.com/tailwindlabs/tailwindcss/pull/10785)) (#738, #739)
