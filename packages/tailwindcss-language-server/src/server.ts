@@ -391,7 +391,7 @@ async function createProjectService(
   // VS Code _does_ support `itemDefaults.data` since at least 1.67.0 (this extension's min version)
   // but it doesn't advertise it in its capabilities. So we manually add it here.
   // See also: https://github.com/microsoft/vscode-languageserver-node/issues/1181
-  if (params.clientInfo?.name === 'Visual Studio Code' && !itemDefaults.includes('data')) {
+  if (params.clientInfo?.name?.includes('Visual Studio Code') && !itemDefaults.includes('data')) {
     itemDefaults.push('data')
   }
 
