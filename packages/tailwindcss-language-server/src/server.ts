@@ -789,6 +789,7 @@ async function createProjectService(
     } catch (error) {
       tailwindcss = require('tailwindcss')
       resolveConfigFn = require('tailwindcss/resolveConfig')
+      loadConfigFn = require('tailwindcss/loadConfig')
       postcss = require('postcss')
       tailwindcssVersion = require('tailwindcss/package.json').version
       postcssVersion = require('postcss/package.json').version
