@@ -6,6 +6,7 @@
 - Exclude classes in `blocklist` from IntelliSense (#746)
 - Fix `theme` helper handling when specifying default value (#747)
 - Fix activation when connected to Windows with Remote SSH extension (#748)
+- Bump bundled version of `tailwindcss` to `v3.3.0` (#749)
 
 ## 0.9.9
 
