@@ -911,6 +911,7 @@ async function createProjectService(
 
     if (loadConfig.module) {
       originalConfig = await loadConfig.module(state.configPath)
+      originalConfig = originalConfig.default ?? originalConfig
       state.jit = true
     } else {
       hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
