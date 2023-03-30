@@ -910,9 +910,14 @@ async function createProjectService(
     let hook: Hook
 
     if (loadConfig.module) {
-      originalConfig = await loadConfig.module(state.configPath)
-      originalConfig = originalConfig.default ?? originalConfig
-      state.jit = true
+      hook = new Hook(fs.realpathSync(state.configPath))
+      try {
+        originalConfig = await loadConfig.module(state.configPath)
+        originalConfig = originalConfig.default ?? originalConfig
+        state.jit = true
+      } finally {
+        hook.unhook()
+      }
     } else {
       hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
         originalConfig = klona(exports)
