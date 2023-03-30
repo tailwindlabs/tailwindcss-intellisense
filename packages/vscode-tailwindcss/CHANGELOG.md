@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.9.11
+
+- Fix first-party plugin usage when using bundled version of `tailwindcss` (#751)
+
+## 0.9.10
 
 - Fix use of certain built-in node modules in config file (#745)
 - Exclude classes in `blocklist` from IntelliSense (#746)
