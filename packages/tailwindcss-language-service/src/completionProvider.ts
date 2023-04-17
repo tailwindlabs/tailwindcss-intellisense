@@ -426,7 +426,7 @@ async function provideClassAttributeCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   let str = document.getText({
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - 1000)),
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - 2000)),
     end: position,
   })
 
