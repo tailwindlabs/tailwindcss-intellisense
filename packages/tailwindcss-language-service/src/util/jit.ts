@@ -1,6 +1,5 @@
 import { State } from './state'
-import type { Container, Document, Root, Rule } from 'postcss'
-import dlv from 'dlv'
+import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { remToPx } from './remToPx'
 
 export function bigSign(bigIntValue) {
@@ -8,7 +7,11 @@ export function bigSign(bigIntValue) {
   return (bigIntValue > 0n) - (bigIntValue < 0n)
 }
 
-export function generateRules(state: State, classNames: string[]): { root: Root; rules: Rule[] } {
+export function generateRules(
+  state: State,
+  classNames: string[],
+  filter: (rule: Rule) => boolean = () => true
+): { root: Root; rules: Rule[] } {
   let rules: [bigint, Rule][] = state.modules.jit.generateRules
     .module(new Set(classNames), state.jitContext)
     .sort(([a], [z]) => bigSign(a - z))
@@ -18,7 +21,9 @@ export function generateRules(state: State, classNames: string[]): { root: Root;
 
   let actualRules: Rule[] = []
   root.walkRules((subRule) => {
-    actualRules.push(subRule)
+    if (filter(subRule)) {
+      actualRules.push(subRule)
+    }
   })
 
   return {
@@ -84,14 +89,17 @@ function replaceClassName(state: State, selector: string, find: string, replace:
   return state.modules.postcssSelectorParser.module(transform).processSync(selector)
 }
 
+function isAtRule(node: Node): node is AtRule {
+  return node.type === 'atrule'
+}
+
 export function getRuleContext(state: State, rule: Rule, className: string): string[] {
   let context: string[] = [replaceClassName(state, rule.selector, className, '__placeholder__')]
 
   let p: Container | Document = rule
   while (p.parent && p.parent.type !== 'root') {
     p = p.parent
-    if (p.type === 'atrule') {
-      // @ts-ignore
+    if (isAtRule(p)) {
       context.unshift(`@${p.name} ${p.params}`)
     }
   }
