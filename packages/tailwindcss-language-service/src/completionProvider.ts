@@ -28,11 +28,11 @@ import { ensureArray } from './util/array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
-import { remToPx } from './util/remToPx'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
 import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
+import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -1444,10 +1444,10 @@ function stringifyDecls(obj: any, settings: Settings): string {
     .map((prop) =>
       ensureArray(obj[prop])
         .map((value) => {
-          const px = settings.tailwindCSS.showPixelEquivalents
-            ? remToPx(value, settings.tailwindCSS.rootFontSize)
-            : undefined
-          return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
+          if (settings.tailwindCSS.showPixelEquivalents) {
+            value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+          }
+          return `${prop}: ${value};`
         })
         .join(' ')
     )
