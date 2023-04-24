@@ -1845,7 +1845,7 @@ class TW {
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
           dot: true,
         })
-        if (isCssFile) {
+        if (isCssFile && change.type !== FileChangeType.Deleted) {
           let configPath = await getConfigFileFromCssFile(change.file)
           if (
             cssFileConfigMap.has(normalizedFilename) &&
