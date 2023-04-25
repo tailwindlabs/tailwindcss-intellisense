@@ -767,6 +767,13 @@ async function createProjectService(
                   .default
             ),
           },
+          evaluateTailwindFunctions: {
+            module: firstOptional(
+              () =>
+                require(resolveFrom(configDir, 'tailwindcss/lib/lib/evaluateTailwindFunctions'))
+                  .default
+            ),
+          },
         }
       } catch (_) {
         try {
@@ -1221,7 +1228,7 @@ async function createProjectService(
 
       let isNamedColor = colorNames.includes(currentColor)
 
-      let color: culori.RgbColor = {
+      let color: culori.Color = {
         mode: 'rgb',
         r: params.color.red,
         g: params.color.green,
@@ -1845,7 +1852,7 @@ class TW {
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
           dot: true,
         })
-        if (isCssFile) {
+        if (isCssFile && change.type !== FileChangeType.Deleted) {
           let configPath = await getConfigFileFromCssFile(change.file)
           if (
             cssFileConfigMap.has(normalizedFilename) &&

@@ -18,6 +18,7 @@ export function generateRules(
 
   let root = state.modules.postcss.module.root({ nodes: rules.map(([, rule]) => rule) })
   state.modules.jit.expandApplyAtRules.module(state.jitContext)(root)
+  state.modules.jit.evaluateTailwindFunctions?.module?.(state.jitContext)(root)
 
   let actualRules: Rule[] = []
   root.walkRules((subRule) => {
