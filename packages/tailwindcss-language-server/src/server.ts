@@ -282,7 +282,7 @@ async function getConfiguration(uri?: string) {
         includeLanguages: {},
         files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
         experimental: {
-          classRegex: [],
+          classRegex: ["['\"`]@apply\\s+(.*)['\"`]"],
           configFile: null,
         },
       },
