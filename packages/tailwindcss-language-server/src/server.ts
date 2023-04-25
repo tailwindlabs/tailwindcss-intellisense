@@ -1221,7 +1221,7 @@ async function createProjectService(
 
       let isNamedColor = colorNames.includes(currentColor)
 
-      let color: culori.RgbColor = {
+      let color: culori.Color = {
         mode: 'rgb',
         r: params.color.red,
         g: params.color.green,
