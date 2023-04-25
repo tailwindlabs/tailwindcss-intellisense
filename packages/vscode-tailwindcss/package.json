@@ -275,7 +275,10 @@
         },
         "tailwindCSS.experimental.classRegex": {
           "type": "array",
-          "scope": "language-overridable"
+          "scope": "language-overridable",
+          "default": [
+            "['\"`]@apply\\s+(.*)['\"`]"
+          ]
         },
         "tailwindCSS.experimental.configFile": {
           "type": [
