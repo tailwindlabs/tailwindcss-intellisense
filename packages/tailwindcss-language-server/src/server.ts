@@ -767,6 +767,13 @@ async function createProjectService(
                   .default
             ),
           },
+          evaluateTailwindFunctions: {
+            module: firstOptional(
+              () =>
+                require(resolveFrom(configDir, 'tailwindcss/lib/lib/evaluateTailwindFunctions'))
+                  .default
+            ),
+          },
         }
       } catch (_) {
         try {

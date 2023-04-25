@@ -110,6 +110,7 @@ export interface State {
       generateRules: { module: any }
       createContext: { module: any }
       expandApplyAtRules: { module: any }
+      evaluateTailwindFunctions?: { module: any }
     }
   }
   browserslist?: string[]
