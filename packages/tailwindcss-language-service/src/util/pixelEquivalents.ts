@@ -1,7 +1,8 @@
-import type { Container, Plugin, PluginCreator } from 'postcss'
+import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import { parse as parseMediaQueryList } from '@csstools/media-query-list-parser'
 import postcss from 'postcss'
+import { isTokenNode } from '@csstools/css-parser-algorithms'
 
 type Comment = { index: number; value: string }
 
@@ -42,15 +43,52 @@ export function addPixelEquivalentsToCss(css: string, rootFontSize: number): str
     return css
   }
 
+  return applyComments(css, comments)
+}
+
+function applyComments(str: string, comments: Comment[]): string {
   let offset = 0
+
   for (let comment of comments) {
     let index = comment.index + offset
     let commentStr = `/* ${comment.value} */`
-    css = css.slice(0, index) + commentStr + css.slice(index)
+    str = str.slice(0, index) + commentStr + str.slice(index)
     offset += commentStr.length
   }
 
-  return css
+  return str
+}
+
+function getPixelEquivalentsForMediaQuery(params: string, rootFontSize: number): Comment[] {
+  let comments: Comment[] = []
+
+  try {
+    parseMediaQueryList(params).forEach((mediaQuery) => {
+      mediaQuery.walk(({ node }) => {
+        if (
+          isTokenNode(node) &&
+          node.type === 'token' &&
+          node.value[0] === 'dimension-token' &&
+          (node.value[4].type === 'integer' || node.value[4].type === 'number') &&
+          (node.value[4].unit === 'rem' || node.value[4].unit === 'em')
+        ) {
+          comments.push({
+            index: params.length - (params.length - node.value[3] - 1),
+            value: `${node.value[4].value * rootFontSize}px`,
+          })
+        }
+      })
+    })
+  } catch {}
+
+  return comments
+}
+
+export function addPixelEquivalentsToMediaQuery(query: string, rootFontSize: number): string {
+  return query.replace(/(?<=^\s*@media\s*).*?$/, (params) => {
+    let comments = getPixelEquivalentsForMediaQuery(params, rootFontSize)
+    return applyComments(params, comments)
+  })
 }
 
 function postcssPlugin({
@@ -68,24 +106,14 @@ function postcssPlugin({
           return
         }
 
-        parseMediaQueryList(atRule.params).forEach((mediaQuery) => {
-          mediaQuery.walk((entry) => {
-            if (
-              entry.node.type === 'token' &&
-              entry.node.value[0] === 'dimension-token' &&
-              (entry.node.value[4].type === 'integer' || entry.node.value[4].type === 'number') &&
-              (entry.node.value[4].unit === 'rem' || entry.node.value[4].unit === 'em')
-            ) {
-              comments.push({
-                index:
-                  atRule.source.start.offset +
-                  `@media${atRule.raws.afterName}${atRule.params}`.length -
-                  (atRule.params.length - entry.node.value[3] - 1),
-                value: `${entry.node.value[4].value * rootFontSize}px`,
-              })
-            }
-          })
-        })
+        comments.push(
+          ...getPixelEquivalentsForMediaQuery(atRule.params, rootFontSize).map(
+            ({ index, value }) => ({
+              index: index + atRule.source.start.offset + `@media${atRule.raws.afterName}`.length,
+              value,
+            })
+          )
+        )
       },
     },
     Declaration(decl) {
