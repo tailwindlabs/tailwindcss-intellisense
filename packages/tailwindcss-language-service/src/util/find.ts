@@ -11,6 +11,7 @@ import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
 import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 import { getTextWithoutComments } from './doc'
+import { isSemicolonlessCssLanguage } from './languages'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -91,12 +92,16 @@ export async function findClassNamesInDocument(
   )
 }
 
-export function findClassListsInCssRange(doc: TextDocument, range?: Range): DocumentClassList[] {
+export function findClassListsInCssRange(
+  state: State,
+  doc: TextDocument,
+  range?: Range
+): DocumentClassList[] {
   const text = getTextWithoutComments(doc, 'css', range)
-  const matches = findAll(
-    /(@apply\s+)(?<classList>[^;}]+?)(?<important>\s*!important)?\s*[;}]/g,
-    text
-  )
+  let regex = isSemicolonlessCssLanguage(doc.languageId, state.editor?.userLanguages)
+    ? /(@apply\s+)(?<classList>[^}\r\n]+?)(?<important>\s*!important)?(?:\r|\n|}|$)/g
+    : /(@apply\s+)(?<classList>[^;}]+?)(?<important>\s*!important)?\s*[;}]/g
+  const matches = findAll(regex, text)
   const globalStart: Position = range ? range.start : { line: 0, character: 0 }
 
   return matches.map((match) => {
@@ -292,7 +297,7 @@ export async function findClassListsInRange(
 ): Promise<DocumentClassList[]> {
   let classLists: DocumentClassList[]
   if (mode === 'css') {
-    classLists = findClassListsInCssRange(doc, range)
+    classLists = findClassListsInCssRange(state, doc, range)
   } else {
     classLists = await findClassListsInHtmlRange(state, doc, mode, range)
   }
@@ -307,7 +312,7 @@ export async function findClassListsInDocument(
   doc: TextDocument
 ): Promise<DocumentClassList[]> {
   if (isCssDoc(state, doc)) {
-    return findClassListsInCssRange(doc)
+    return findClassListsInCssRange(state, doc)
   }
 
   let boundaries = getLanguageBoundaries(state, doc)
@@ -324,7 +329,7 @@ export async function findClassListsInDocument(
       )),
       ...boundaries
         .filter((b) => b.type === 'css')
-        .map(({ range }) => findClassListsInCssRange(doc, range)),
+        .map(({ range }) => findClassListsInCssRange(state, doc, range)),
       await findCustomClassLists(state, doc),
     ])
   )
