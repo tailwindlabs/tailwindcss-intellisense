@@ -8,6 +8,7 @@ import * as semver from '../util/semver'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import { getTextWithoutComments } from '../util/doc'
+import { isSemicolonlessCssLanguage } from '../util/languages'
 
 export function getInvalidTailwindDirectiveDiagnostics(
   state: State,
@@ -28,13 +29,8 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
-  let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']
   let regex: RegExp
-  if (
-    notSemicolonLanguages.includes(document.languageId) ||
-    (state.editor &&
-      notSemicolonLanguages.includes(state.editor.userLanguages[document.languageId]))
-  ) {
+  if (isSemicolonlessCssLanguage(document.languageId, state.editor?.userLanguages)) {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^\r\n]+)/g
   } else {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
