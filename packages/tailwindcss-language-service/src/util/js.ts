@@ -19,5 +19,5 @@ export function isJsxContext(state: State, doc: TextDocument, position: Position
 
   let boundaries = getLanguageBoundaries(state, doc, str)
 
-  return boundaries ? boundaries[boundaries.length - 1].type === 'jsx' : false
+  return boundaries ? ['jsx', 'tsx'].includes(boundaries[boundaries.length - 1].type) : false
 }
