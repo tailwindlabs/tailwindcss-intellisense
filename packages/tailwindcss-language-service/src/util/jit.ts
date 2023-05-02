@@ -1,6 +1,6 @@
 import { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
-import { remToPx } from './remToPx'
+import { addPixelEquivalentsToCss, addPixelEquivalentsToValue } from './pixelEquivalents'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -41,17 +41,13 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
     node.remove()
   })
 
+  let css = clone.toString()
+
   if (settings.tailwindCSS.showPixelEquivalents) {
-    clone.walkDecls((decl) => {
-      let px = remToPx(decl.value, settings.tailwindCSS.rootFontSize)
-      if (px) {
-        decl.value = `${decl.value}/* ${px} */`
-      }
-    })
+    css = addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
   }
 
-  return clone
-    .toString()
+  return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
     .replace(/^(?:    )+/gm, (indent: string) =>
       ' '.repeat((indent.length / 4) * settings.editor.tabSize)
@@ -70,10 +66,10 @@ export async function stringifyDecls(state: State, rule: Rule, uri?: string): Pr
 
   let result = []
   rule.walkDecls(({ prop, value }) => {
-    let px = settings.tailwindCSS.showPixelEquivalents
-      ? remToPx(value, settings.tailwindCSS.rootFontSize)
-      : undefined
-    result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''};`)
+    if (settings.tailwindCSS.showPixelEquivalents) {
+      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+    }
+    result.push(`${prop}: ${value};`)
   })
   return result.join(' ')
 }

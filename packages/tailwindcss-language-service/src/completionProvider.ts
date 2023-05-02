@@ -28,11 +28,14 @@ import { ensureArray } from './util/array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
 import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
-import { remToPx } from './util/remToPx'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
 import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
+import {
+  addPixelEquivalentsToMediaQuery,
+  addPixelEquivalentsToValue,
+} from './util/pixelEquivalents'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -43,6 +46,7 @@ export function completionsFromClassList(
   state: State,
   classList: string,
   classListRange: Range,
+  rootFontSize: number,
   filter?: (item: CompletionItem) => boolean,
   context?: CompletionContext
 ): CompletionList {
@@ -190,7 +194,10 @@ export function completionsFromClassList(
             items.push(
               variantItem({
                 label: `${variant.name}${sep}`,
-                detail: variant.selectors().join(', '),
+                detail: variant
+                  .selectors()
+                  .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+                  .join(', '),
                 textEditText: resultingVariants[resultingVariants.length - 1] + sep,
                 additionalTextEdits:
                   shouldSortVariants && resultingVariants.length > 1
@@ -430,10 +437,9 @@ async function provideClassAttributeCompletions(
     end: position,
   })
 
-  let matches = matchClassAttributes(
-    str,
-    (await state.editor.getConfiguration(document.uri)).tailwindCSS.classAttributes
-  )
+  let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
+
+  let matches = matchClassAttributes(str, settings.classAttributes)
 
   if (matches.length === 0) {
     return null
@@ -470,6 +476,7 @@ async function provideClassAttributeCompletions(
           },
           end: position,
         },
+        settings.rootFontSize,
         undefined,
         context
       )
@@ -544,6 +551,7 @@ async function provideCustomClassNameCompletions(
               },
               end: position,
             },
+            settings.tailwindCSS.rootFontSize,
             undefined,
             context
           )
@@ -555,12 +563,13 @@ async function provideCustomClassNameCompletions(
   return null
 }
 
-function provideAtApplyCompletions(
+async function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
   position: Position,
   context?: CompletionContext
-): CompletionList {
+): Promise<CompletionList> {
+  let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
   let str = document.getText({
     start: { line: Math.max(position.line - 30, 0), character: 0 },
     end: position,
@@ -584,6 +593,7 @@ function provideAtApplyCompletions(
       },
       end: position,
     },
+    settings.rootFontSize,
     (item) => {
       if (item.kind === 9) {
         return (
@@ -1318,13 +1328,18 @@ async function provideEmmetCompletions(
   const parts = emmetItems.items[0].label.split('.')
   if (parts.length < 2) return null
 
-  return completionsFromClassList(state, parts[parts.length - 1], {
-    start: {
-      line: position.line,
-      character: position.character - parts[parts.length - 1].length,
+  return completionsFromClassList(
+    state,
+    parts[parts.length - 1],
+    {
+      start: {
+        line: position.line,
+        character: position.character - parts[parts.length - 1].length,
+      },
+      end: position,
     },
-    end: position,
-  })
+    settings.tailwindCSS.rootFontSize
+  )
 }
 
 export async function doComplete(
@@ -1444,10 +1459,10 @@ function stringifyDecls(obj: any, settings: Settings): string {
     .map((prop) =>
       ensureArray(obj[prop])
         .map((value) => {
-          const px = settings.tailwindCSS.showPixelEquivalents
-            ? remToPx(value, settings.tailwindCSS.rootFontSize)
-            : undefined
-          return `${prop}: ${value}${px ? `/* ${px} */` : ''};`
+          if (settings.tailwindCSS.showPixelEquivalents) {
+            value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+          }
+          return `${prop}: ${value};`
         })
         .join(' ')
     )

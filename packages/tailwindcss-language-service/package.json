@@ -14,6 +14,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@csstools/media-query-list-parser": "2.0.4",
+    "@csstools/css-parser-algorithms": "2.1.1",
+    "@csstools/css-tokenizer": "2.1.1",
     "@types/culori": "^2.0.0",
     "@types/moo": "0.5.3",
     "@types/semver": "7.3.10",
@@ -28,6 +31,7 @@
     "moo": "0.5.1",
     "postcss": "8.3.9",
     "postcss-selector-parser": "6.0.2",
+    "postcss-value-parser": "4.2.0",
     "semver": "7.3.7",
     "sift-string": "0.0.2",
     "stringify-object": "3.3.0",
