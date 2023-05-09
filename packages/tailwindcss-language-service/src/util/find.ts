@@ -14,12 +14,18 @@ import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
-  let match: RegExpMatchArray
-  let matches: RegExpMatchArray[] = []
+  let match: RegExpMatchArray;
+
+  const count = (str.match(re) || []).length;
+  let matches: RegExpMatchArray[] = new Array(count);
+  let i = 0;
+
   while ((match = re.exec(str)) !== null) {
-    matches.push({ ...match })
+    matches[i] = match;
+    i++;
   }
-  return matches
+
+  return matches;
 }
 
 export function findLast(re: RegExp, str: string): RegExpMatchArray {
