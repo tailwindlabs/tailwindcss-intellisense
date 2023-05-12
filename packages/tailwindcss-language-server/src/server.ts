@@ -79,7 +79,7 @@ import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
-import isExcluded from './util/isExcluded'
+import isExcluded, { isExcludedOnComplete } from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
 import { equal } from 'tailwindcss-language-service/src/util/array'
 import preflight from 'tailwindcss/lib/css/preflight.css'
@@ -1169,7 +1169,7 @@ async function createProjectService(
         if (!document) return null
         let settings = await state.editor.getConfiguration(document.uri)
         if (!settings.tailwindCSS.suggestions) return null
-        if (await isExcluded(state, document)) return null
+        if (await isExcludedOnComplete(state, document, settings)) return null
         return doComplete(state, document, params.position, params.context)
       }, null)
     },
