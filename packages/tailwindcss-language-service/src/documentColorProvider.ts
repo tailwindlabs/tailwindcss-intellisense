@@ -6,7 +6,8 @@ import {
 } from './util/find'
 import { getColor, getColorFromValue, culoriColorToVscodeColor } from './util/color'
 import { stringToPath } from './util/stringToPath'
-import type { TextDocument, ColorInformation } from 'vscode-languageserver'
+import type { ColorInformation } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import { dedupeByRange } from './util/array'
 

@@ -1,5 +1,5 @@
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State, Settings } from '../util/state'
-import type { TextDocument } from 'vscode-languageserver'
 import { RecommendedVariantOrderDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import * as jit from '../util/jit'

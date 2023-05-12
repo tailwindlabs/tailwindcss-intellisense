@@ -5,10 +5,10 @@ import type {
   Range,
   MarkupKind,
   CompletionList,
-  TextDocument,
   Position,
   CompletionContext,
 } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
 import { getColor, getColorFromValue } from './util/color'

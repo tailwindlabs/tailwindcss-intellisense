@@ -1,5 +1,5 @@
 import { State } from './util/state'
-import type { Hover, TextDocument, Position } from 'vscode-languageserver'
+import type { Hover,  Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
@@ -9,6 +9,7 @@ import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 export async function doHover(
   state: State,

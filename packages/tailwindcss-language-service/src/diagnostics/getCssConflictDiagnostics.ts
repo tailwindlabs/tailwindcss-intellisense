@@ -1,6 +1,5 @@
 import { joinWithAnd } from '../util/joinWithAnd'
 import { State, Settings } from '../util/state'
-import type { TextDocument } from 'vscode-languageserver'
 import { CssConflictDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { getClassNameDecls } from '../util/getClassNameDecls'
@@ -8,6 +7,7 @@ import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 import * as jit from '../util/jit'
 import type { AtRule, Node, Rule } from 'postcss'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 function isCustomProperty(property: string): boolean {
   return property.startsWith('--')

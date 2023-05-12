@@ -1,4 +1,5 @@
-import type { TextDocument, Range } from 'vscode-languageserver'
+import type {  Range } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import moo from 'moo'
 
 export function getTextWithoutComments(

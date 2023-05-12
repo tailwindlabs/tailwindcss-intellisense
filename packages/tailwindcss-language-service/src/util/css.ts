@@ -1,4 +1,5 @@
-import type { TextDocument, Position } from 'vscode-languageserver'
+import type { Position } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
 import { isJsDoc } from './js'
 import { State } from './state'

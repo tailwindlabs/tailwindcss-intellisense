@@ -1,4 +1,5 @@
-import type { TextDocument, Range, Position } from 'vscode-languageserver'
+import type { Range, Position } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { DocumentClassName, DocumentClassList, State, DocumentHelperFunction } from './state'
 import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'

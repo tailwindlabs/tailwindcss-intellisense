@@ -1,4 +1,4 @@
-import { TextDocument } from 'vscode-languageserver/node'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State } from 'tailwindcss-language-service/src/util/state'
 import { doValidate } from 'tailwindcss-language-service/src/diagnostics/diagnosticsProvider'
 import isExcluded from '../util/isExcluded'
