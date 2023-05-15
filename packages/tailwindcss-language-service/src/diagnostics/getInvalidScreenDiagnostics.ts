@@ -1,5 +1,6 @@
 import { State, Settings } from '../util/state'
-import type { TextDocument, Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { InvalidScreenDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'

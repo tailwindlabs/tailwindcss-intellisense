@@ -1,4 +1,5 @@
 import type { CodeAction, CodeActionParams } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State } from '../util/state'
 import { doValidate } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'
@@ -17,7 +18,6 @@ import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
 import { provideInvalidApplyCodeActions } from './provideInvalidApplyCodeActions'
 import { provideSuggestionCodeActions } from './provideSuggestionCodeActions'
-import { TextDocument } from 'vscode-languageserver-textdocument'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,

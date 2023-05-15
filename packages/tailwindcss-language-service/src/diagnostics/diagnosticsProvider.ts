@@ -1,4 +1,4 @@
-import type { TextDocument } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State } from '../util/state'
 import { DiagnosticKind, AugmentedDiagnostic } from './types'
 import { getCssConflictDiagnostics } from './getCssConflictDiagnostics'
