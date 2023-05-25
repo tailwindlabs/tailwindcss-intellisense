@@ -644,13 +644,15 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
+    let exclude = `{${getExcludePatterns(folder)
+      .flatMap((pattern) => braces.expand(pattern))
+      .join(',')
+      .replace(/{/g, '%7B')
+      .replace(/}/g, '%7D')}}`
+
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
-      `{${getExcludePatterns(folder)
-        .flatMap((pattern) => braces.expand(pattern))
-        .join(',')
-        .replace(/{/g, '%7B')
-        .replace(/}/g, '%7D')}}`,
+      exclude,
       1
     )
 
@@ -659,10 +661,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    let cssFiles = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CSS_GLOB}`),
-      `{${getExcludePatterns(folder).join(',')}}`
-    )
+    let cssFiles = await Workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude)
 
     for (let cssFile of cssFiles) {
       if (await fileContainsAtConfig(cssFile)) {
