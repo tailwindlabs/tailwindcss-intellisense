@@ -648,7 +648,9 @@ export async function activate(context: ExtensionContext) {
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       `{${getExcludePatterns(folder)
         .flatMap((pattern) => braces.expand(pattern))
-        .join(',')}}`,
+        .join(',')
+        .replace(/{/g, '%7B')
+        .replace(/}/g, '%7D')}}`,
       1
     )
 
