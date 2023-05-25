@@ -668,7 +668,7 @@ async function createProjectService(
               './lib/util/mergeConfigWithDefaults.js'
             ))
             const defaultConfig = require(resolveFrom(tailwindDir, './defaultConfig.js'))
-            resolveConfigFn = (config) => resolveConfig(config, defaultConfig())
+            resolveConfigFn = (config) => resolveConfig.default(config, defaultConfig())
           } catch (_) {
             throw Error('Failed to load resolveConfig function.')
           }
@@ -1029,7 +1029,10 @@ async function createProjectService(
 
     try {
       state.config = resolveConfig.module(originalConfig)
-      state.separator = state.config.separator
+      state.separator = dlv(state.config, sepLocation)
+      if (typeof state.separator !== 'string') {
+        state.separator = ':'
+      }
       state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
       delete state.config.blocklist
 
