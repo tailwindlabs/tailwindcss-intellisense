@@ -82,9 +82,14 @@ export async function getCssConflictDiagnostics(
             return false
           }
 
+          let propertiesAreComparable = false
+
           for (let i = 0; i < otherRules.length; i++) {
             let otherRule = otherRules[i]
             let properties = getRuleProperties(otherRule)
+            if (info[i].properties.length > 0 && properties.length > 0) {
+              propertiesAreComparable = true
+            }
             if (!equal(info[i].properties, properties)) {
               return false
             }
@@ -92,6 +97,10 @@ export async function getCssConflictDiagnostics(
             if (!equal(info[i].context, context)) {
               return false
             }
+          }
+
+          if (!propertiesAreComparable) {
+            return false
           }
 
           return true
