@@ -48,7 +48,11 @@
         "aliases": [
           "Tailwind CSS"
         ],
-        "configuration": "./tailwindcss.language.configuration.json"
+        "configuration": "./tailwindcss.language.configuration.json",
+        "icon": {
+          "light": "media/icon.png",
+          "dark": "media/icon.png"
+        }
       }
     ],
     "commands": [
