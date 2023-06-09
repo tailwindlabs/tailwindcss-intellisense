@@ -50,7 +50,7 @@ By default VS Code will not trigger completions when editing "string" content, f
 
 ```
 "editor.quickSuggestions": {
-  "strings": true
+  "strings": "on"
 }
 ```
 
