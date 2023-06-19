@@ -2306,9 +2306,8 @@ class DocumentService {
   }
 }
 
-function supportsDynamicRegistration(connection: Connection, params: InitializeParams): boolean {
+function supportsDynamicRegistration(params: InitializeParams): boolean {
   return (
-    connection.onInitialized &&
     params.capabilities.textDocument.hover?.dynamicRegistration &&
     params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
     params.capabilities.textDocument.codeAction?.dynamicRegistration &&
@@ -2322,15 +2321,13 @@ const tw = new TW(connection)
 connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
   tw.initializeParams = params
 
-  if (supportsDynamicRegistration(connection, params)) {
+  if (supportsDynamicRegistration(params)) {
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
       },
     }
   }
-
-  await tw.init()
 
   return {
     capabilities: {
