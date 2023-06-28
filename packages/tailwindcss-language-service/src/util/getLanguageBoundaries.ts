@@ -77,11 +77,11 @@ let states = {
     ...text,
   },
   style: {
-    cssBlockEnd: { match: '</style>', pop: 1 },
+    cssBlockEnd: { match: /<\/style\s*>/, pop: 1 },
     ...text,
   },
   script: {
-    jsBlockEnd: { match: '</script>', pop: 1 },
+    jsBlockEnd: { match: /<\/script\s*>/, pop: 1 },
     ...text,
   },
 }
