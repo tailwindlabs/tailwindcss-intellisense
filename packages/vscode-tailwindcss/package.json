@@ -308,6 +308,15 @@
           "default": true,
           "markdownDescription": "Show `px` equivalents for `rem` CSS values."
         },
+        "tailwindCSS.colorFormat": {
+          "type": "string",
+          "enum": [
+            "rgb",
+            "hex"
+          ],
+          "default": "rgb",
+          "markdownDescription": "The format to use for color values in completions and hovers."
+        },
         "tailwindCSS.rootFontSize": {
           "type": "number",
           "default": 16,

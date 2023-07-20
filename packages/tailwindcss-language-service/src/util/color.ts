@@ -1,5 +1,5 @@
 import dlv from 'dlv'
-import { State } from './state'
+import { State, TailwindCssSettings } from './state'
 import removeMeta from './removeMeta'
 import { ensureArray, dedupe, flatten } from './array'
 import type { Color } from 'vscode-languageserver'
@@ -191,4 +191,15 @@ let toRgb = culori.converter('rgb')
 export function culoriColorToVscodeColor(color: culori.Color): Color {
   let rgb = toRgb(color)
   return { red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha ?? 1 }
+}
+
+export function formatColor(color: culori.Color, settings: TailwindCssSettings): string {
+  switch (settings.colorFormat) {
+    case 'hex':
+      const hasAlpha = color.alpha !== undefined && color.alpha !== 1;
+      return hasAlpha ? culori.formatHex8(color) : culori.formatHex(color)
+    case 'rgb':
+    default:
+      return culori.formatRgb(color)
+  }
 }

@@ -11,7 +11,7 @@ import type {
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
-import { getColor, getColorFromValue } from './util/color'
+import { formatColor, getColor, getColorFromValue } from './util/color'
 import { isHtmlContext } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
@@ -30,7 +30,6 @@ import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
-import * as culori from 'culori'
 import {
   addPixelEquivalentsToMediaQuery,
   addPixelEquivalentsToValue,
@@ -42,14 +41,16 @@ let isUtil = (className) =>
     ? className.__info.some((x) => x.__source === 'utilities')
     : className.__info.__source === 'utilities'
 
-export function completionsFromClassList(
+export async function completionsFromClassList(
   state: State,
+  document: TextDocument,
   classList: string,
   classListRange: Range,
   rootFontSize: number,
   filter?: (item: CompletionItem) => boolean,
   context?: CompletionContext
-): CompletionList {
+): Promise<CompletionList> {
+  const settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
   let sep = state.separator
@@ -109,7 +110,7 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = 16
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color, settings)
                 }
               }
 
@@ -270,7 +271,7 @@ export function completionsFromClassList(
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
-                documentation = culori.formatRgb(color)
+                documentation = formatColor(color, settings)
               }
 
               items.push({
@@ -317,7 +318,7 @@ export function completionsFromClassList(
                 if (color !== null) {
                   kind = 16
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                    documentation = culori.formatRgb(color)
+                    documentation = formatColor(color, settings)
                   }
                 }
 
@@ -403,7 +404,7 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = 16
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color, settings)
                 }
               }
 
@@ -476,8 +477,9 @@ async function provideClassAttributeCompletions(
         }
       }
 
-      return completionsFromClassList(
+      return await completionsFromClassList(
         state,
+        document,
         classList,
         {
           start: {
@@ -554,8 +556,9 @@ async function provideAtApplyCompletions(
 
   const classList = match.groups.classList
 
-  return completionsFromClassList(
+  return await completionsFromClassList(
     state,
+    document,
     classList,
     {
       start: {
@@ -602,11 +605,11 @@ async function provideClassNameCompletions(
   return null
 }
 
-function provideCssHelperCompletions(
+async function provideCssHelperCompletions(
   state: State,
   document: TextDocument,
   position: Position
-): CompletionList {
+): Promise<CompletionList> {
   if (!isCssContext(state, document, position)) {
     return null
   }
@@ -637,6 +640,7 @@ function provideCssHelperCompletions(
     return null
   }
 
+  const settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
   let parts = path.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
@@ -715,7 +719,7 @@ function provideCssHelperCompletions(
             // VS Code bug causes some values to not display in some cases
             detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
             ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-              ? { documentation: culori.formatRgb(color) }
+              ? { documentation: formatColor(color, settings) }
               : {}),
             ...(insertClosingBrace ? { textEditText: `${item}]` } : {}),
             additionalTextEdits: replaceDot
@@ -1299,8 +1303,9 @@ async function provideEmmetCompletions(
   const parts = emmetItems.items[0].label.split('.')
   if (parts.length < 2) return null
 
-  return completionsFromClassList(
+  return await completionsFromClassList(
     state,
+    document,
     parts[parts.length - 1],
     {
       start: {
@@ -1323,7 +1328,7 @@ export async function doComplete(
 
   const result =
     (await provideClassNameCompletions(state, document, position, context)) ||
-    provideCssHelperCompletions(state, document, position) ||
+    (await provideCssHelperCompletions(state, document, position)) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
     provideVariantsDirectiveCompletions(state, document, position) ||

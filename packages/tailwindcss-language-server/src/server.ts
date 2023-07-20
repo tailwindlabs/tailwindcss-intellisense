@@ -265,6 +265,7 @@ async function getConfiguration(uri?: string) {
           recommendedVariantOrder: 'warning',
         },
         showPixelEquivalents: true,
+        colorFormat: 'rgb',
         includeLanguages: {},
         files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
         experimental: {
