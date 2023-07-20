@@ -179,3 +179,17 @@ If you’re having issues getting the IntelliSense features to activate, there a
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
 - Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
+
+# Contributing
+
+## Building the Extension
+
+You can build the VSIX package by running these commands in the project root.
+
+```bash
+npm ci
+npm run bootstrap
+npx lerna run build
+npx lerna run package
+code --install-extension ./packages/vscode-tailwindcss/*.vsix
+```
