@@ -296,10 +296,10 @@ export async function findClassListsInRange(
   mode?: 'html' | 'css' | 'jsx',
   includeCustom: boolean = true
 ): Promise<DocumentClassList[]> {
-  let classLists: DocumentClassList[]
+  let classLists: DocumentClassList[] = []
   if (mode === 'css') {
     classLists = findClassListsInCssRange(state, doc, range)
-  } else {
+  } else if (mode === 'html' || mode === 'jsx') {
     classLists = await findClassListsInHtmlRange(state, doc, mode, range)
   }
   return dedupeByRange([
@@ -449,6 +449,8 @@ export async function findClassNameAtPosition(
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
   } else if (isJsxContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'jsx')
+  } else {
+    classNames = await findClassNamesInRange(state, doc, searchRange)
   }
 
   if (classNames.length === 0) {
