@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.13
+
+- Fix CSS conflict regression (#842)
+
 ## 0.9.12
 
 - Increase class search range (#760)
