@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.12
+
+- Increase class search range (#760)
+- Fix CSS conflict diagnostic false negatives (#761)
+- Don't attempt to read from deleted CSS files (#765)
+- Resolve helper functions in CSS previews (#766)
+- Fix CSS conflict diagnostics in semicolonless CSS documents (#771)
+- Enable IntelliSense for `<script lang="tsx">` (#773)
+- Include pixel equivalents in more places (#775)
+- Fix initialisation when using `tailwindcss@^0` (#787)
+- Fix activation when `files.excludes` contains braces (#789)
+- Fix diagnostic false-positive when no CSS properties are present (#793)
+- Add language mode icon (#794)
+- Fix IntelliSense following closing `script`/`style` tag containing whitespace (#808)
+- Fix `classRegex` hovers in unknown contexts (#824)
+- Expand `classRegex` search range (#840)
+
 ## 0.9.11
 
 - Fix first-party plugin usage when using bundled version of `tailwindcss` (#751)
