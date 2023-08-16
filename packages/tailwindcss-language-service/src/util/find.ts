@@ -135,7 +135,7 @@ async function findCustomClassLists(
 
   if (!Array.isArray(regexes) || regexes.length === 0) return []
 
-  const text = doc.getText(range)
+  const text = doc.getText(range ? { ...range, start: doc.positionAt(0) } : undefined)
   const result: DocumentClassList[] = []
 
   for (let i = 0; i < regexes.length; i++) {
