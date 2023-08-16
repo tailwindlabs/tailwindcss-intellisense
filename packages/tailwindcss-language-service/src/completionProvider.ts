@@ -499,8 +499,8 @@ async function provideCustomClassNameCompletions(
   const positionOffset = document.offsetAt(position)
 
   const searchRange: Range = {
-    start: document.positionAt(Math.max(0, positionOffset - 1000)),
-    end: document.positionAt(positionOffset + 1000),
+    start: document.positionAt(0),
+    end: document.positionAt(positionOffset + 2000),
   }
 
   let str = document.getText(searchRange)
