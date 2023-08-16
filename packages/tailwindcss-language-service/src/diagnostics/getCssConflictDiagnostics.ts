@@ -33,9 +33,9 @@ function getRuleProperties(rule: Rule): string[] {
   rule.walkDecls(({ prop }) => {
     properties.push(prop)
   })
-  if (properties.findIndex((p) => !isCustomProperty(p)) > -1) {
-    properties = properties.filter((p) => !isCustomProperty(p))
-  }
+  // if (properties.findIndex((p) => !isCustomProperty(p)) > -1) {
+  //   properties = properties.filter((p) => !isCustomProperty(p))
+  // }
   return properties
 }
 
