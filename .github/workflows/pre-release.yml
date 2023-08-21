@@ -1,0 +1,38 @@
+name: Publish pre-release
+concurrency: publish
+on:
+  push:
+    branches: [master]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm install && npm run bootstrap
+      - name: Bump version
+        run: >
+          node .github/workflows/bump-version.mjs &&
+          cat packages/vscode-tailwindcss/package.json
+      # - name: Publish
+      #   env:
+      #     VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
+      #   run: npx lerna run publish --scope=vscode-tailwindcss -- --pre-release -p $VSCODE_TOKEN
+      - name: Build LSP
+        run: npx lerna run build --scope=tailwindcss-language-server
+      - name: Resolve LSP version
+        run: |
+          echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: 'Version LSP based on commit: 0.0.0-insiders.${{ env.SHA_SHORT }}'
+        run: >
+          cd packages/tailwindcss-language-server &&
+          npm version 0.0.0-insiders.${{ env.SHA_SHORT }} --force --no-git-tag-version
+      - name: Publish LSP
+        run: >
+          cd packages/tailwindcss-language-server &&
+          npm publish --tag insiders
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
