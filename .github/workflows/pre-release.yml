@@ -26,7 +26,9 @@ jobs:
       - name: Publish IntelliSense
         env:
           VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
-        run: npx lerna run publish --scope=vscode-tailwindcss -- --pre-release -p $VSCODE_TOKEN
+        run: >
+          cd packages/vscode-tailwindcss &&
+          npm run publish -- --pre-release -p $VSCODE_TOKEN
       - name: Build LSP
         run: npx lerna run build --scope=@tailwindcss/language-server
       - name: Resolve LSP version
