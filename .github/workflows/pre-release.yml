@@ -22,7 +22,7 @@ jobs:
       #     VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
       #   run: npx lerna run publish --scope=vscode-tailwindcss -- --pre-release -p $VSCODE_TOKEN
       - name: Build LSP
-        run: npx lerna run build --scope=tailwindcss-language-server
+        run: npx lerna run build --scope=@tailwindcss/language-server
       - name: Resolve LSP version
         run: |
           echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
