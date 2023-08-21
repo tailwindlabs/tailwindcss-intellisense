@@ -148,7 +148,7 @@ async function findCustomClassLists(
       let containerMatch: ReturnType<Regex['exec']>
 
       while ((containerMatch = containerRegex.exec(text)) !== null) {
-        const searchStart = doc.offsetAt(range?.start || { line: 0, character: 0 })
+        const searchStart = doc.offsetAt({ line: 0, character: 0 })
         const matchStart = searchStart + containerMatch.index[1]
         const matchEnd = matchStart + containerMatch[1].length
 
