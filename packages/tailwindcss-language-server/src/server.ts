@@ -1611,7 +1611,7 @@ function getContentDocumentSelectorFromConfigFile(
 }
 
 class TW {
-  private initialized = false
+  private initPromise: Promise<void>
   private lspHandlersAdded = false
   private workspaces: Map<string, { name: string; workspaceFsPath: string }>
   private projects: Map<string, ProjectService>
@@ -1631,11 +1631,14 @@ class TW {
   }
 
   async init(): Promise<void> {
-    if (this.initialized) return
+    if (!this.initPromise) {
+      this.initPromise = this._init()
+    }
+    await this.initPromise
+  }
 
+  private async _init(): Promise<void> {
     clearRequireCache()
-
-    this.initialized = true
 
     let base: string
     if (this.initializeParams.rootUri) {
@@ -2131,7 +2134,7 @@ class TW {
     }
   }
 
-  private setupLSPHandlers() {
+  setupLSPHandlers() {
     if (this.lspHandlersAdded) {
       return
     }
@@ -2147,6 +2150,10 @@ class TW {
   }
 
   private updateCapabilities() {
+    if (!supportsDynamicRegistration(this.initializeParams)) {
+      return
+    }
+
     if (this.registrations) {
       this.registrations.then((r) => r.dispose())
     }
@@ -2221,30 +2228,37 @@ class TW {
   }
 
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onDocumentColor(params) ?? []
   }
 
   async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onColorPresentation(params) ?? []
   }
 
   async onHover(params: TextDocumentPositionParams): Promise<Hover> {
+    await this.init()
     return this.getProject(params.textDocument)?.onHover(params) ?? null
   }
 
   async onCompletion(params: CompletionParams): Promise<CompletionList> {
+    await this.init()
     return this.getProject(params.textDocument)?.onCompletion(params) ?? null
   }
 
   async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
+    await this.init()
     return this.projects.get(item.data?._projectKey)?.onCompletionResolve(item) ?? null
   }
 
-  onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+  async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
-  onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+  async onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
   }
 
@@ -2274,7 +2288,7 @@ class TW {
   restart(): void {
     console.log('----------\nRESTARTING\n----------')
     this.dispose()
-    this.initialized = false
+    this.initPromise = undefined
     this.init()
   }
 }
@@ -2306,9 +2320,8 @@ class DocumentService {
   }
 }
 
-function supportsDynamicRegistration(connection: Connection, params: InitializeParams): boolean {
+function supportsDynamicRegistration(params: InitializeParams): boolean {
   return (
-    connection.onInitialized &&
     params.capabilities.textDocument.hover?.dynamicRegistration &&
     params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
     params.capabilities.textDocument.codeAction?.dynamicRegistration &&
@@ -2322,7 +2335,7 @@ const tw = new TW(connection)
 connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
   tw.initializeParams = params
 
-  if (supportsDynamicRegistration(connection, params)) {
+  if (supportsDynamicRegistration(params)) {
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
@@ -2330,7 +2343,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
     }
   }
 
-  await tw.init()
+  tw.setupLSPHandlers()
 
   return {
     capabilities: {
