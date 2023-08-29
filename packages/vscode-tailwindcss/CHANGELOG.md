@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+Nothing yet.
+
+## 0.10.0
+
+- Fix `classRegex` offset (#846)
+- Fix language server initialisation outside of VS Code (#803)
+- Fix recommended variant order linting in Tailwind v2 (#849)
+
 ## 0.9.13
 
 - Fix CSS conflict regression (#842)
