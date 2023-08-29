@@ -1,0 +1,34 @@
+{
+  "code": "<div class=\"hover:focus:uppercase\">",
+  "expected": [
+    {
+      "title": "Replace with 'focus:hover:uppercase'",
+      "kind": "quickfix",
+      "diagnostics": [
+        {
+          "code": "recommendedVariantOrder",
+          "suggestions": ["focus:hover:uppercase"],
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 33 }
+          },
+          "severity": 2,
+          "message": "Variants are not in the recommended order, which may cause unexpected CSS output."
+        }
+      ],
+      "edit": {
+        "changes": {
+          "{{URI}}": [
+            {
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 33 }
+              },
+              "newText": "focus:hover:uppercase"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

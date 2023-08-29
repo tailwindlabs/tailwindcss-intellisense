@@ -1,0 +1,4 @@
+{
+  "code": "<div class=\"uppercase sm:lowercase\"></div>",
+  "expected": []
+}

@@ -1,0 +1,13 @@
+{
+  "code": "@screen small",
+  "language": "css",
+  "expected": [
+    {
+      "code": "invalidScreen",
+      "range": { "start": { "line": 0, "character": 8 }, "end": { "line": 0, "character": 13 } },
+      "severity": 1,
+      "message": "The screen 'small' does not exist in your theme config. Did you mean 'sm'?",
+      "suggestions": ["sm"]
+    }
+  ]
+}

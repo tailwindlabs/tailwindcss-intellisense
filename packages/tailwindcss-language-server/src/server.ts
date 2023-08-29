@@ -1200,10 +1200,13 @@ async function createProjectService(
         URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
       )
     },
-    provideDiagnostics: debounce((document: TextDocument) => {
-      if (!state.enabled) return
-      provideDiagnostics(state, document)
-    }, 500),
+    provideDiagnostics: debounce(
+      (document: TextDocument) => {
+        if (!state.enabled) return
+        provideDiagnostics(state, document)
+      },
+      params.initializationOptions?.testMode ? 0 : 500
+    ),
     provideDiagnosticsForce: (document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)

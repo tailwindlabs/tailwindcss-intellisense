@@ -1,0 +1,13 @@
+{
+  "code": ".test { color: theme(colors.red.901) }",
+  "language": "css",
+  "expected": [
+    {
+      "code": "invalidConfigPath",
+      "range": { "start": { "line": 0, "character": 21 }, "end": { "line": 0, "character": 35 } },
+      "severity": 1,
+      "message": "'colors.red.901' does not exist in your theme config. Did you mean 'colors.red.900'?",
+      "suggestions": ["colors.red.900"]
+    }
+  ]
+}

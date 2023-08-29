@@ -1,0 +1,161 @@
+{
+  "code": "<div class=\"lowercase uppercase\">",
+  "expected": [
+    {
+      "title": "Delete 'uppercase'",
+      "kind": "quickfix",
+      "diagnostics": [
+        {
+          "code": "cssConflict",
+          "className": {
+            "className": "lowercase",
+            "classList": {
+              "classList": "lowercase uppercase",
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 31 }
+              }
+            },
+            "relativeRange": {
+              "start": { "line": 0, "character": 0 },
+              "end": { "line": 0, "character": 9 }
+            },
+            "range": {
+              "start": { "line": 0, "character": 12 },
+              "end": { "line": 0, "character": 21 }
+            }
+          },
+          "otherClassNames": [
+            {
+              "className": "uppercase",
+              "classList": {
+                "classList": "lowercase uppercase",
+                "range": {
+                  "start": { "line": 0, "character": 12 },
+                  "end": { "line": 0, "character": 31 }
+                }
+              },
+              "relativeRange": {
+                "start": { "line": 0, "character": 10 },
+                "end": { "line": 0, "character": 19 }
+              },
+              "range": {
+                "start": { "line": 0, "character": 22 },
+                "end": { "line": 0, "character": 31 }
+              }
+            }
+          ],
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 21 }
+          },
+          "severity": 2,
+          "message": "'lowercase' applies the same CSS properties as 'uppercase'.",
+          "relatedInformation": [
+            {
+              "message": "uppercase",
+              "location": {
+                "uri": "{{URI}}",
+                "range": {
+                  "start": { "line": 0, "character": 22 },
+                  "end": { "line": 0, "character": 31 }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "edit": {
+        "changes": {
+          "{{URI}}": [
+            {
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 31 }
+              },
+              "newText": "lowercase"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "title": "Delete 'lowercase'",
+      "kind": "quickfix",
+      "diagnostics": [
+        {
+          "code": "cssConflict",
+          "className": {
+            "className": "uppercase",
+            "classList": {
+              "classList": "lowercase uppercase",
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 31 }
+              }
+            },
+            "relativeRange": {
+              "start": { "line": 0, "character": 10 },
+              "end": { "line": 0, "character": 19 }
+            },
+            "range": {
+              "start": { "line": 0, "character": 22 },
+              "end": { "line": 0, "character": 31 }
+            }
+          },
+          "otherClassNames": [
+            {
+              "className": "lowercase",
+              "classList": {
+                "classList": "lowercase uppercase",
+                "range": {
+                  "start": { "line": 0, "character": 12 },
+                  "end": { "line": 0, "character": 31 }
+                }
+              },
+              "relativeRange": {
+                "start": { "line": 0, "character": 0 },
+                "end": { "line": 0, "character": 9 }
+              },
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 21 }
+              }
+            }
+          ],
+          "range": {
+            "start": { "line": 0, "character": 22 },
+            "end": { "line": 0, "character": 31 }
+          },
+          "severity": 2,
+          "message": "'uppercase' applies the same CSS properties as 'lowercase'.",
+          "relatedInformation": [
+            {
+              "message": "lowercase",
+              "location": {
+                "uri": "{{URI}}",
+                "range": {
+                  "start": { "line": 0, "character": 12 },
+                  "end": { "line": 0, "character": 21 }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "edit": {
+        "changes": {
+          "{{URI}}": [
+            {
+              "range": {
+                "start": { "line": 0, "character": 12 },
+                "end": { "line": 0, "character": 31 }
+              },
+              "newText": "uppercase"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
