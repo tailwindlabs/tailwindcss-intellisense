@@ -30,10 +30,9 @@ export async function getRecommendedVariantOrderDiagnostics(
         return
       }
 
+      let order = state.jitContext.variantOrder ?? state.jitContext.offsets.variantOffsets
       let { variants, offset } = getVariantsFromClassName(state, className.className)
-      let sortedVariants = [...variants].sort((a, b) =>
-        jit.bigSign(state.jitContext.variantOrder.get(b) - state.jitContext.variantOrder.get(a))
-      )
+      let sortedVariants = [...variants].sort((a, b) => jit.bigSign(order.get(b) - order.get(a)))
 
       if (!equalExact(variants, sortedVariants)) {
         diagnostics.push({
