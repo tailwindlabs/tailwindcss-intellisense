@@ -23,6 +23,7 @@ jobs:
         run: >
           cd packages/tailwindcss-language-server &&
           npm run build &&
+          npm run test:prepare &&
           npm test
       - name: Bump IntelliSense version
         run: >
