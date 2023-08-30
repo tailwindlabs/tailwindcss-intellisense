@@ -1,5 +1,5 @@
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State, Settings } from '../util/state'
-import type { TextDocument } from 'vscode-languageserver'
 import { RecommendedVariantOrderDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import * as jit from '../util/jit'
@@ -23,17 +23,16 @@ export async function getRecommendedVariantOrderDiagnostics(
   const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
-    const classNames = getClassNamesInClassList(classList)
+    const classNames = getClassNamesInClassList(classList, state.blocklist)
     classNames.forEach((className) => {
       let { rules } = jit.generateRules(state, [className.className])
       if (rules.length === 0) {
         return
       }
 
+      let order = state.jitContext.variantOrder ?? state.jitContext.offsets.variantOffsets
       let { variants, offset } = getVariantsFromClassName(state, className.className)
-      let sortedVariants = [...variants].sort((a, b) =>
-        jit.bigSign(state.jitContext.variantOrder.get(b) - state.jitContext.variantOrder.get(a))
-      )
+      let sortedVariants = [...variants].sort((a, b) => jit.bigSign(order.get(b) - order.get(a)))
 
       if (!equalExact(variants, sortedVariants)) {
         diagnostics.push({

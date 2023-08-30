@@ -20,11 +20,11 @@ export type ClassNames = {
 export type EditorState = {
   connection: Connection
   folder: string
-  documents: TextDocuments<TextDocument>
   userLanguages: Record<string, string>
   capabilities: {
     configuration: boolean
     diagnosticRelatedInformation: boolean
+    itemDefaults: string[]
   }
   getConfiguration: (uri?: string) => Promise<Settings>
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
@@ -99,15 +99,18 @@ export interface State {
   screens?: string[]
   variants?: Variant[]
   corePlugins?: string[]
+  blocklist?: unknown[]
   modules?: {
     tailwindcss?: { version: string; module: any }
     postcss?: { version: string; module: Postcss }
     postcssSelectorParser?: { module: any }
     resolveConfig?: { module: any }
+    loadConfig?: { module: any }
     jit?: {
       generateRules: { module: any }
       createContext: { module: any }
       expandApplyAtRules: { module: any }
+      evaluateTailwindFunctions?: { module: any }
     }
   }
   browserslist?: string[]
@@ -116,8 +119,10 @@ export interface State {
   editor?: EditorState
   jit?: boolean
   jitContext?: any
-  classList?: Array<[string, { color: culori.Color | KeywordColor | null }]>
+  classList?: Array<[string, { color: culori.Color | KeywordColor | null; modifiers?: string[] }]>
+  classListContainsMetadata?: boolean
   pluginVersions?: string
+  completionItemData?: Record<string, any>
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 

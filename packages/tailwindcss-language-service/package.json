@@ -1,6 +1,6 @@
 {
   "name": "tailwindcss-language-service",
-  "version": "0.0.25",
+  "version": "0.0.28",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -14,6 +14,10 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@csstools/media-query-list-parser": "2.0.4",
+    "@csstools/css-parser-algorithms": "2.1.1",
+    "@csstools/css-tokenizer": "2.1.1",
+    "@types/culori": "^2.0.0",
     "@types/moo": "0.5.3",
     "@types/semver": "7.3.10",
     "becke-ch--regex--s0-0-v1--base--pl--lib": "1.4.0",
@@ -27,7 +31,8 @@
     "moo": "0.5.1",
     "postcss": "8.3.9",
     "postcss-selector-parser": "6.0.2",
-    "semver": "7.3.7",
+    "postcss-value-parser": "4.2.0",
+    "semver": "7.5.2",
     "sift-string": "0.0.2",
     "stringify-object": "3.3.0",
     "tmp-cache": "1.1.0",

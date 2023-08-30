@@ -1,0 +1,5 @@
+{
+  "code": ".test { @apply uppercase; color: red; @apply lowercase }",
+  "language": "css",
+  "expected": []
+}

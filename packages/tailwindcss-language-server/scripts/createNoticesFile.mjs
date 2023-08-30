@@ -4,15 +4,7 @@ import { readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
-const exclude = [
-  /^@types\//,
-  'esbuild',
-  'rimraf',
-  'jest',
-  'prettier',
-  'typescript',
-  'license-checker',
-]
+const exclude = [/^@types\//, 'esbuild', 'rimraf', 'prettier', 'typescript', 'license-checker']
 
 function isExcluded(name) {
   for (let pattern of exclude) {

@@ -1,0 +1,35 @@
+{
+  "code": "@variants hoover",
+  "language": "css",
+  "expected": [
+    {
+      "title": "Replace with 'hover'",
+      "kind": "quickfix",
+      "diagnostics": [
+        {
+          "code": "invalidVariant",
+          "range": {
+            "start": { "line": 0, "character": 10 },
+            "end": { "line": 0, "character": 16 }
+          },
+          "severity": 1,
+          "message": "The variant 'hoover' does not exist. Did you mean 'hover'?",
+          "suggestions": ["hover"]
+        }
+      ],
+      "edit": {
+        "changes": {
+          "{{URI}}": [
+            {
+              "range": {
+                "start": { "line": 0, "character": 10 },
+                "end": { "line": 0, "character": 16 }
+              },
+              "newText": "hover"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

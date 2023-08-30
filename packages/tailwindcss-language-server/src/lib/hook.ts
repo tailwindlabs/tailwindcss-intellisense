@@ -20,7 +20,7 @@ export default class Hook {
   private _origRequire = Module.prototype.require
   private _require: (req: string) => any
 
-  constructor(find: string, callback: (x) => {}) {
+  constructor(find: string, callback: (x) => {} = (x) => x) {
     // @ts-ignore
     if (typeof Module._resolveFilename !== 'function') {
       throw new Error(

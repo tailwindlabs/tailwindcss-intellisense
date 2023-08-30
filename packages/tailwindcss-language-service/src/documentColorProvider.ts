@@ -6,8 +6,10 @@ import {
 } from './util/find'
 import { getColor, getColorFromValue, culoriColorToVscodeColor } from './util/color'
 import { stringToPath } from './util/stringToPath'
-import type { TextDocument, ColorInformation } from 'vscode-languageserver'
+import type { ColorInformation } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
+import { dedupeByRange } from './util/array'
 
 export async function getDocumentColors(
   state: State,
@@ -21,7 +23,7 @@ export async function getDocumentColors(
 
   let classLists = await findClassListsInDocument(state, document)
   classLists.forEach((classList) => {
-    let classNames = getClassNamesInClassList(classList)
+    let classNames = getClassNamesInClassList(classList, state.blocklist)
     classNames.forEach((className) => {
       let color = getColor(state, className.className)
       if (color === null || typeof color === 'string' || (color.alpha ?? 1) === 0) {
@@ -45,5 +47,5 @@ export async function getDocumentColors(
     }
   })
 
-  return colors
+  return dedupeByRange(colors)
 }

@@ -1,4 +1,5 @@
-import type { TextDocument, Range } from 'vscode-languageserver'
+import type { Range } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
 import { State } from './state'
 import { indexToPosition } from './find'
@@ -7,7 +8,16 @@ import moo from 'moo'
 import Cache from 'tmp-cache'
 import { getTextWithoutComments } from './doc'
 
-export type LanguageBoundary = { type: 'html' | 'js' | 'css' | string; range: Range }
+export type LanguageBoundary = { type: 'html' | 'js' | 'css' | (string & {}); range: Range }
+
+let htmlScriptTypes = [
+  // https://v3-migration.vuejs.org/breaking-changes/inline-template-attribute.html#option-1-use-script-tag
+  'text/html',
+  // https://vuejs.org/guide/essentials/component-basics.html#dom-template-parsing-caveats
+  'text/x-template',
+  // https://github.com/tailwindlabs/tailwindcss-intellisense/issues/722
+  'text/x-handlebars-template',
+]
 
 let text = { text: { match: /[^]/, lineBreaks: true } }
 
@@ -30,6 +40,8 @@ let states = {
     jsBlockEnd: { match: '/>', pop: 1 },
     langAttrStartDouble: { match: 'lang="', push: 'langAttrDouble' },
     langAttrStartSingle: { match: "lang='", push: 'langAttrSingle' },
+    typeAttrStartDouble: { match: 'type="', push: 'typeAttrDouble' },
+    typeAttrStartSingle: { match: "type='", push: 'typeAttrSingle' },
     attrStartDouble: { match: '"', push: 'attrDouble' },
     attrStartSingle: { match: "'", push: 'attrSingle' },
     interp: { match: '{', push: 'interp' },
@@ -48,6 +60,14 @@ let states = {
     langAttrEnd: { match: "'", pop: 1 },
     lang: { match: /[^']+/, lineBreaks: true },
   },
+  typeAttrDouble: {
+    langAttrEnd: { match: '"', pop: 1 },
+    type: { match: /[^"]+/, lineBreaks: true },
+  },
+  typeAttrSingle: {
+    langAttrEnd: { match: "'", pop: 1 },
+    type: { match: /[^']+/, lineBreaks: true },
+  },
   attrDouble: {
     attrEnd: { match: '"', pop: 1 },
     ...text,
@@ -57,11 +77,11 @@ let states = {
     ...text,
   },
   style: {
-    cssBlockEnd: { match: '</style>', pop: 1 },
+    cssBlockEnd: { match: /<\/style\s*>/, pop: 1 },
     ...text,
   },
   script: {
-    jsBlockEnd: { match: '</script>', pop: 1 },
+    jsBlockEnd: { match: /<\/script\s*>/, pop: 1 },
     ...text,
   },
 }
@@ -156,6 +176,8 @@ export function getLanguageBoundaries(
           boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
         } else if (token.type === 'lang') {
           boundaries[boundaries.length - 1].type = token.text
+        } else if (token.type === 'type' && htmlScriptTypes.includes(token.text)) {
+          boundaries[boundaries.length - 1].type = 'html'
         }
       }
       offset += token.text.length

@@ -45,6 +45,8 @@ import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
 import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
+import braces from 'braces'
+import normalizePath from 'normalize-path'
 
 const colorNames = Object.keys(namedColors)
 
@@ -572,7 +574,7 @@ export async function activate(context: ExtensionContext) {
       documentSelector: languages.get(folder.uri.toString()).map((language) => ({
         scheme: 'file',
         language,
-        pattern: `${folder.uri.fsPath.replace(/[\[\]\{\}]/g, '?')}/**/*`,
+        pattern: normalizePath(`${folder.uri.fsPath.replace(/[\[\]\{\}]/g, '?')}/**/*`),
       })),
       diagnosticCollectionName: CLIENT_ID,
       workspaceFolder: folder,
@@ -782,9 +784,15 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
+    let exclude = `{${getExcludePatterns(folder)
+      .flatMap((pattern) => braces.expand(pattern))
+      .join(',')
+      .replace(/{/g, '%7B')
+      .replace(/}/g, '%7D')}}`
+
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
-      `{${getExcludePatterns(folder).join(',')}}`,
+      exclude,
       1
     )
 
@@ -793,10 +801,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    let cssFiles = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CSS_GLOB}`),
-      `{${getExcludePatterns(folder).join(',')}}`
-    )
+    let cssFiles = await Workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude)
 
     for (let cssFile of cssFiles) {
       if (await fileContainsAtConfig(cssFile)) {

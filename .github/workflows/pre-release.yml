@@ -1,0 +1,52 @@
+name: Publish pre-release
+concurrency: publish
+on:
+  push:
+    branches: [master]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ env.NODE_VERSION }}-node_modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install dependencies
+        run: npm install && npm run bootstrap
+      - name: Run tests
+        run: >
+          cd packages/tailwindcss-language-server &&
+          npm run build &&
+          npm run test:prepare &&
+          npm test
+      - name: Bump IntelliSense version
+        run: >
+          node .github/workflows/bump-version.mjs &&
+          cat packages/vscode-tailwindcss/package.json
+      - name: Publish IntelliSense
+        env:
+          VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
+        run: >
+          cd packages/vscode-tailwindcss &&
+          npm run publish -- --pre-release -p $VSCODE_TOKEN
+      - name: Build LSP
+        run: npx lerna run build --scope=@tailwindcss/language-server
+      - name: Resolve LSP version
+        run: |
+          echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: 'Version LSP based on commit: 0.0.0-insiders.${{ env.SHA_SHORT }}'
+        run: >
+          cd packages/tailwindcss-language-server &&
+          npm version 0.0.0-insiders.${{ env.SHA_SHORT }} --force --no-git-tag-version
+      - name: Publish LSP
+        run: >
+          cd packages/tailwindcss-language-server &&
+          npm publish --tag insiders --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

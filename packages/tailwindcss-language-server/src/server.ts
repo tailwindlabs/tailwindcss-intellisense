@@ -177,6 +177,7 @@ function firstOptional<T>(...options: Array<() => T>): T | undefined {
 }
 
 interface ProjectService {
+  projectConfig: ProjectConfig
   enabled: () => boolean
   enable: () => void
   documentSelector: () => Array<DocumentSelector>
@@ -211,7 +212,8 @@ enum DocumentSelectorPriority {
   CONTENT_FILE = 1,
   CSS_DIRECTORY = 2,
   CONFIG_DIRECTORY = 3,
-  ROOT_DIRECTORY = 4,
+  PACKAGE_DIRECTORY = 4,
+  ROOT_DIRECTORY = 5,
 }
 type DocumentSelector = { pattern: string; priority: DocumentSelectorPriority }
 
@@ -346,22 +348,29 @@ function changeAffectsFile(change: string, files: string[]): boolean {
 
 // We need to add parent directories to the watcher:
 // https://github.com/microsoft/vscode/issues/60813
-function getWatchPatternsForFile(file: string): string[] {
+function getWatchPatternsForFile(file: string, root: string): string[] {
   let tmp: string
   let dir = path.dirname(file)
   let patterns: string[] = [file, dir]
+  if (dir === root) {
+    return patterns
+  }
   while (true) {
     dir = path.dirname((tmp = dir))
     if (tmp === dir) {
       break
     } else {
       patterns.push(dir)
+      if (dir === root) {
+        break
+      }
     }
   }
   return patterns
 }
 
 async function createProjectService(
+  projectKey: string,
   projectConfig: ProjectConfig,
   connection: Connection,
   params: InitializeParams,
@@ -377,20 +386,33 @@ async function createProjectService(
   const disposables: Array<Disposable | Promise<Disposable>> = []
   let documentSelector = projectConfig.documentSelector
 
+  let itemDefaults =
+    params.capabilities.textDocument?.completion?.completionList?.itemDefaults ?? []
+
+  // VS Code _does_ support `itemDefaults.data` since at least 1.67.0 (this extension's min version)
+  // but it doesn't advertise it in its capabilities. So we manually add it here.
+  // See also: https://github.com/microsoft/vscode-languageserver-node/issues/1181
+  if (params.clientInfo?.name?.includes('Visual Studio Code') && !itemDefaults.includes('data')) {
+    itemDefaults.push('data')
+  }
+
   let state: State = {
     enabled: false,
+    completionItemData: {
+      _projectKey: projectKey,
+    },
     editor: {
       connection,
       folder,
-      userLanguages: params.initializationOptions.userLanguages
+      userLanguages: params.initializationOptions?.userLanguages
         ? params.initializationOptions.userLanguages
         : {},
       // TODO
       capabilities: {
         configuration: true,
         diagnosticRelatedInformation: true,
+        itemDefaults,
       },
-      documents: documentService.documents,
       getConfiguration,
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
@@ -425,8 +447,8 @@ async function createProjectService(
       deps = getModuleDependencies(projectConfig.configPath)
     } catch {}
     watchPatterns([
-      ...getWatchPatternsForFile(projectConfig.configPath),
-      ...deps.flatMap((dep) => getWatchPatternsForFile(dep)),
+      ...getWatchPatternsForFile(projectConfig.configPath, projectConfig.folder),
+      ...deps.flatMap((dep) => getWatchPatternsForFile(dep, projectConfig.folder)),
     ])
   }
 
@@ -444,7 +466,7 @@ async function createProjectService(
       let file = normalizePath(change.file)
 
       let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
-      let isDependency = changeAffectsFile(change.file, state.dependencies ?? [])
+      let isDependency = changeAffectsFile(file, state.dependencies ?? [])
       let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
 
       if (!isConfigFile && !isDependency && !isPackageFile) continue
@@ -551,7 +573,7 @@ async function createProjectService(
       throw new SilentError('No config file found.')
     }
 
-    watchPatterns(getWatchPatternsForFile(configPath))
+    watchPatterns(getWatchPatternsForFile(configPath, projectConfig.folder))
 
     const pnpPath = findUp.sync(
       (dir) => {
@@ -563,7 +585,7 @@ async function createProjectService(
         if (findUp.sync.exists(pnpFile)) {
           return pnpFile
         }
-        if (dir === folder) {
+        if (dir === path.normalize(folder)) {
           return findUp.stop
         }
       },
@@ -588,6 +610,7 @@ async function createProjectService(
     let pluginVersions: string | undefined
     let browserslist: string[] | undefined
     let resolveConfigFn: (config: any) => any
+    let loadConfigFn: (path: string) => any
     let featureFlags: FeatureFlags = { future: [], experimental: [] }
     let applyComplexClasses: any
 
@@ -648,12 +671,16 @@ async function createProjectService(
               './lib/util/mergeConfigWithDefaults.js'
             ))
             const defaultConfig = require(resolveFrom(tailwindDir, './defaultConfig.js'))
-            resolveConfigFn = (config) => resolveConfig(config, defaultConfig())
+            resolveConfigFn = (config) => resolveConfig.default(config, defaultConfig())
           } catch (_) {
             throw Error('Failed to load resolveConfig function.')
           }
         }
       }
+
+      try {
+        loadConfigFn = require(resolveFrom(tailwindDir, './loadConfig.js'))
+      } catch {}
 
       if (semver.gte(tailwindcssVersion, '1.4.0') && semver.lte(tailwindcssVersion, '1.99.0')) {
         const browserslistPath = resolveFrom(tailwindDir, 'browserslist')
@@ -743,6 +770,13 @@ async function createProjectService(
                   .default
             ),
           },
+          evaluateTailwindFunctions: {
+            module: firstOptional(
+              () =>
+                require(resolveFrom(configDir, 'tailwindcss/lib/lib/evaluateTailwindFunctions'))
+                  .default
+            ),
+          },
         }
       } catch (_) {
         try {
@@ -765,6 +799,7 @@ async function createProjectService(
     } catch (error) {
       tailwindcss = require('tailwindcss')
       resolveConfigFn = require('tailwindcss/resolveConfig')
+      loadConfigFn = require('tailwindcss/loadConfig')
       postcss = require('postcss')
       tailwindcssVersion = require('tailwindcss/package.json').version
       postcssVersion = require('postcss/package.json').version
@@ -790,6 +825,7 @@ async function createProjectService(
       postcss: { version: postcssVersion, module: postcss },
       postcssSelectorParser: { module: postcssSelectorParser },
       resolveConfig: { module: resolveConfigFn },
+      loadConfig: { module: loadConfigFn },
       jit: jitModules,
     }
     state.browserslist = browserslist
@@ -873,7 +909,7 @@ async function createProjectService(
 
     clearRequireCache()
 
-    const { tailwindcss, postcss, resolveConfig } = state.modules
+    const { tailwindcss, postcss, resolveConfig, loadConfig } = state.modules
     const sepLocation = semver.gte(tailwindcss.version, '0.99.0')
       ? ['separator']
       : ['options', 'separator']
@@ -881,85 +917,97 @@ async function createProjectService(
     let originalConfig: any
 
     let isV3 = semver.gte(tailwindcss.version, '2.99.0')
+    let hook: Hook
 
-    let hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
-      originalConfig = klona(exports)
-
-      let separator = dlv(exports, sepLocation)
-      if (typeof separator !== 'string') {
-        separator = ':'
-      }
-      dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
-      exports[isV3 ? 'content' : 'purge'] = []
-
-      let mode = getMode(exports)
-      deleteMode(exports)
-
-      let isJit = isV3 || (state.modules.jit && mode === 'jit')
-
-      if (isJit) {
+    if (loadConfig.module) {
+      hook = new Hook(fs.realpathSync(state.configPath))
+      try {
+        originalConfig = await loadConfig.module(state.configPath)
+        originalConfig = originalConfig.default ?? originalConfig
         state.jit = true
-        exports.variants = []
-
-        if (Array.isArray(exports.presets)) {
-          for (let preset of exports.presets) {
-            presetVariants.push(preset.variants)
-            preset.variants = []
-          }
-        }
-      } else {
-        state.jit = false
+      } finally {
+        hook.unhook()
       }
+    } else {
+      hook = new Hook(fs.realpathSync(state.configPath), (exports) => {
+        originalConfig = klona(exports)
 
-      if (state.corePlugins) {
-        let corePluginsConfig = {}
-        for (let pluginName of state.corePlugins) {
-          corePluginsConfig[pluginName] = true
+        let separator = dlv(exports, sepLocation)
+        if (typeof separator !== 'string') {
+          separator = ':'
         }
-        exports.corePlugins = corePluginsConfig
-      }
+        dset(exports, sepLocation, `__TWSEP__${separator}__TWSEP__`)
+        exports[isV3 ? 'content' : 'purge'] = []
 
-      // inject JIT `matchUtilities` function
-      if (Array.isArray(exports.plugins)) {
-        exports.plugins = exports.plugins.map((plugin) => {
-          if (plugin.__isOptionsFunction) {
-            plugin = plugin()
-          }
-          if (typeof plugin === 'function') {
-            let newPlugin = (...args) => {
-              if (!args[0].matchUtilities) {
-                args[0].matchUtilities = () => {}
-              }
-              return plugin(...args)
+        let mode = getMode(exports)
+        deleteMode(exports)
+
+        let isJit = isV3 || (state.modules.jit && mode === 'jit')
+
+        if (isJit) {
+          state.jit = true
+          exports.variants = []
+
+          if (Array.isArray(exports.presets)) {
+            for (let preset of exports.presets) {
+              presetVariants.push(preset.variants)
+              preset.variants = []
             }
-            // @ts-ignore
-            newPlugin.__intellisense_cache_bust = Math.random()
-            return newPlugin
           }
-          if (plugin.handler) {
-            return {
-              ...plugin,
-              handler: (...args) => {
+        } else {
+          state.jit = false
+        }
+
+        if (state.corePlugins) {
+          let corePluginsConfig = {}
+          for (let pluginName of state.corePlugins) {
+            corePluginsConfig[pluginName] = true
+          }
+          exports.corePlugins = corePluginsConfig
+        }
+
+        // inject JIT `matchUtilities` function
+        if (Array.isArray(exports.plugins)) {
+          exports.plugins = exports.plugins.map((plugin) => {
+            if (plugin.__isOptionsFunction) {
+              plugin = plugin()
+            }
+            if (typeof plugin === 'function') {
+              let newPlugin = (...args) => {
                 if (!args[0].matchUtilities) {
                   args[0].matchUtilities = () => {}
                 }
-                return plugin.handler(...args)
-              },
-              __intellisense_cache_bust: Math.random(),
+                return plugin(...args)
+              }
+              // @ts-ignore
+              newPlugin.__intellisense_cache_bust = Math.random()
+              return newPlugin
             }
-          }
-          return plugin
-        })
+            if (plugin.handler) {
+              return {
+                ...plugin,
+                handler: (...args) => {
+                  if (!args[0].matchUtilities) {
+                    args[0].matchUtilities = () => {}
+                  }
+                  return plugin.handler(...args)
+                },
+                __intellisense_cache_bust: Math.random(),
+              }
+            }
+            return plugin
+          })
+        }
+
+        return exports
+      })
+
+      try {
+        require(state.configPath)
+      } catch (error) {
+        hook.unhook()
+        throw error
       }
-
-      return exports
-    })
-
-    try {
-      require(state.configPath)
-    } catch (error) {
-      hook.unhook()
-      throw error
     }
 
     if (!originalConfig) {
@@ -984,32 +1032,44 @@ async function createProjectService(
 
     try {
       state.config = resolveConfig.module(originalConfig)
-      state.separator = state.config.separator
+      state.separator = dlv(state.config, sepLocation)
+      if (typeof state.separator !== 'string') {
+        state.separator = ':'
+      }
+      state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      delete state.config.blocklist
 
       if (state.jit) {
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator
         if (state.jitContext.getClassList) {
-          state.classList = state.jitContext
-            .getClassList()
+          let classList = state.jitContext
+            .getClassList({ includeMetadata: true })
             .filter((className) => className !== '*')
-            .map((className) => {
-              return [className, { color: getColor(state, className) }]
-            })
+          state.classListContainsMetadata = classList.some((cls) => Array.isArray(cls))
+          state.classList = classList.map((className) => {
+            if (Array.isArray(className)) {
+              return [
+                className[0],
+                { color: getColor(state, className[0]), ...(className[1] ?? {}) },
+              ]
+            }
+            return [className, { color: getColor(state, className) }]
+          })
         }
       } else {
         delete state.jitContext
         delete state.classList
       }
     } catch (error) {
-      hook.unhook()
+      hook?.unhook()
       throw error
     }
 
     let postcssResult: Result
 
     if (state.classList) {
-      hook.unhook()
+      hook?.unhook()
     } else {
       try {
         postcssResult = await postcss
@@ -1033,7 +1093,7 @@ async function createProjectService(
       } catch (error) {
         throw error
       } finally {
-        hook.unhook()
+        hook?.unhook()
       }
     }
 
@@ -1042,7 +1102,11 @@ async function createProjectService(
     // }
     state.dependencies = getModuleDependencies(state.configPath)
     // chokidarWatcher?.add(state.dependencies)
-    watchPatterns((state.dependencies ?? []).flatMap((dep) => getWatchPatternsForFile(dep)))
+    watchPatterns(
+      (state.dependencies ?? []).flatMap((dep) =>
+        getWatchPatternsForFile(dep, projectConfig.folder)
+      )
+    )
 
     state.configId = getConfigId(state.configPath, state.dependencies)
 
@@ -1064,6 +1128,7 @@ async function createProjectService(
   }
 
   return {
+    projectConfig,
     enabled() {
       return enabled
     },
@@ -1111,21 +1176,13 @@ async function createProjectService(
         let settings = await state.editor.getConfiguration(document.uri)
         if (!settings.tailwindCSS.suggestions) return null
         if (await isExcluded(state, document)) return null
-        let result = await doComplete(state, document, params.position, params.context)
-        if (!result) return result
-        return {
-          isIncomplete: result.isIncomplete,
-          items: result.items.map((item) => ({
-            ...item,
-            data: { projectKey: JSON.stringify(projectConfig), originalData: item.data },
-          })),
-        }
+        return doComplete(state, document, params.position, params.context)
       }, null)
     },
     onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
       return withFallback(() => {
         if (!state.enabled) return null
-        return resolveCompletionItem(state, { ...item, data: item.data?.originalData })
+        return resolveCompletionItem(state, item)
       }, null)
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
@@ -1135,7 +1192,7 @@ async function createProjectService(
         if (!document) return null
         let settings = await state.editor.getConfiguration(document.uri)
         if (!settings.tailwindCSS.codeActions) return null
-        return doCodeActions(state, params)
+        return doCodeActions(state, params, document)
       }, null)
     },
     onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
@@ -1146,10 +1203,13 @@ async function createProjectService(
         URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
       )
     },
-    provideDiagnostics: debounce((document: TextDocument) => {
-      if (!state.enabled) return
-      provideDiagnostics(state, document)
-    }, 500),
+    provideDiagnostics: debounce(
+      (document: TextDocument) => {
+        if (!state.enabled) return
+        provideDiagnostics(state, document)
+      },
+      params.initializationOptions?.testMode ? 0 : 500
+    ),
     provideDiagnosticsForce: (document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)
@@ -1177,7 +1237,7 @@ async function createProjectService(
 
       let isNamedColor = colorNames.includes(currentColor)
 
-      let color: culori.RgbColor = {
+      let color: culori.Color = {
         mode: 'rgb',
         r: params.color.red,
         g: params.color.green,
@@ -1563,7 +1623,7 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
   if (!match) {
     return null
   }
-  return path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))
+  return normalizePath(path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1)))
 }
 
 function getPackageRoot(cwd: string, rootDir: string) {
@@ -1574,7 +1634,7 @@ function getPackageRoot(cwd: string, rootDir: string) {
         if (findUp.sync.exists(pkgJson)) {
           return pkgJson
         }
-        if (dir === rootDir) {
+        if (dir === path.normalize(rootDir)) {
           return findUp.stop
         }
       },
@@ -1618,10 +1678,11 @@ function getContentDocumentSelectorFromConfigFile(
 }
 
 class TW {
-  private initialized = false
+  private initPromise: Promise<void>
   private lspHandlersAdded = false
   private workspaces: Map<string, { name: string; workspaceFsPath: string }>
   private projects: Map<string, ProjectService>
+  private projectCounter: number
   private documentService: DocumentService
   public initializeParams: InitializeParams
   private registrations: Promise<BulkUnregistration>
@@ -1633,26 +1694,38 @@ class TW {
     this.documentService = new DocumentService(this.connection)
     this.workspaces = new Map()
     this.projects = new Map()
+    this.projectCounter = 0
   }
 
   async init(): Promise<void> {
-    if (this.initialized) return
+    if (!this.initPromise) {
+      this.initPromise = this._init()
+    }
+    await this.initPromise
+  }
 
+  private async _init(): Promise<void> {
     clearRequireCache()
 
-    this.initialized = true
+    let base: string
+    if (this.initializeParams.rootUri) {
+      base = URI.parse(this.initializeParams.rootUri).fsPath
+    } else if (this.initializeParams.rootPath) {
+      base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
+    }
 
-    if (!this.initializeParams.rootPath) {
+    if (!base) {
       console.error('No workspace folders found, not initializing.')
       return
     }
+
+    base = normalizePath(base)
 
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await getConfiguration()
     let ignore = globalSettings.tailwindCSS.files.exclude
     let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
-    let base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
 
@@ -1678,16 +1751,18 @@ class TW {
       }
 
       let configFiles =
-        typeof configFileOrFiles === 'string' ? { [configFileOrFiles]: '**' } : configFileOrFiles
+        typeof configFileOrFiles === 'string'
+          ? { [configFileOrFiles]: path.resolve(base, '**') }
+          : configFileOrFiles
 
       workspaceFolders = Object.entries(configFiles).map(
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
           return {
             folder: base,
-            configPath: path.resolve(userDefinedConfigBase, relativeConfigPath),
+            configPath: normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath)),
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: path.resolve(userDefinedConfigBase, selector),
+              pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
             })),
             isUserConfigured: true,
           }
@@ -1725,6 +1800,13 @@ class TW {
         } catch {}
 
         if (isCssFile && (!semver.gte(twVersion, '3.2.0') || isDefaultVersion)) {
+          continue
+        }
+
+        if (
+          (configPath.endsWith('.ts') || configPath.endsWith('.mjs')) &&
+          !semver.gte(twVersion, '3.3.0')
+        ) {
           continue
         }
 
@@ -1767,7 +1849,7 @@ class TW {
             : []),
           {
             pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
-            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+            priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
           },
         ]
 
@@ -1778,7 +1860,16 @@ class TW {
         }
       }
 
-      if (Object.keys(projects).length > 0) {
+      let projectKeys = Object.keys(projects)
+      let projectCount = projectKeys.length
+
+      if (projectCount > 0) {
+        if (projectCount === 1) {
+          projects[projectKeys[0]].push({
+            pattern: normalizePath(path.join(base, '**')),
+            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+          })
+        }
         workspaceFolders = Object.entries(projects).map(([configPath, documentSelector]) => {
           return {
             folder: base,
@@ -1813,19 +1904,18 @@ class TW {
 
         let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
         if (isPackageFile) {
-          for (let [key] of this.projects) {
-            let projectConfig = JSON.parse(key) as ProjectConfig
+          for (let [, project] of this.projects) {
             let twVersion = require('tailwindcss/package.json').version
             try {
               let v = require(resolveFrom(
-                path.dirname(projectConfig.configPath),
+                path.dirname(project.projectConfig.configPath),
                 'tailwindcss/package.json'
               )).version
               if (typeof v === 'string') {
                 twVersion = v
               }
             } catch {}
-            if (configTailwindVersionMap.get(projectConfig.configPath) !== twVersion) {
+            if (configTailwindVersionMap.get(project.projectConfig.configPath) !== twVersion) {
               needsRestart = true
               break changeLoop
             }
@@ -1835,7 +1925,7 @@ class TW {
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
           dot: true,
         })
-        if (isCssFile) {
+        if (isCssFile && change.type !== FileChangeType.Deleted) {
           let configPath = await getConfigFileFromCssFile(change.file)
           if (
             cssFileConfigMap.has(normalizedFilename) &&
@@ -1857,11 +1947,10 @@ class TW {
           break
         }
 
-        for (let [key] of this.projects) {
-          let projectConfig = JSON.parse(key) as ProjectConfig
+        for (let [, project] of this.projects) {
           if (
             change.type === FileChangeType.Deleted &&
-            changeAffectsFile(normalizedFilename, [projectConfig.configPath])
+            changeAffectsFile(normalizedFilename, [project.projectConfig.configPath])
           ) {
             needsRestart = true
             break changeLoop
@@ -2076,31 +2165,29 @@ class TW {
     watchPatterns: (patterns: string[]) => void,
     tailwindVersion: string
   ): Promise<void> {
-    let key = JSON.stringify(projectConfig)
-
-    if (!this.projects.has(key)) {
-      const project = await createProjectService(
-        projectConfig,
-        this.connection,
-        params,
-        this.documentService,
-        () => this.updateCapabilities(),
-        () => {
-          for (let document of this.documentService.getAllDocuments()) {
-            let project = this.getProject(document)
-            if (project && !project.enabled()) {
-              project.enable()
-              project.tryInit()
-              break
-            }
+    let key = String(this.projectCounter++)
+    const project = await createProjectService(
+      key,
+      projectConfig,
+      this.connection,
+      params,
+      this.documentService,
+      () => this.updateCapabilities(),
+      () => {
+        for (let document of this.documentService.getAllDocuments()) {
+          let project = this.getProject(document)
+          if (project && !project.enabled()) {
+            project.enable()
+            project.tryInit()
+            break
           }
-        },
-        () => this.refreshDiagnostics(),
-        (patterns: string[]) => watchPatterns(patterns),
-        tailwindVersion
-      )
-      this.projects.set(key, project)
-    }
+        }
+      },
+      () => this.refreshDiagnostics(),
+      (patterns: string[]) => watchPatterns(patterns),
+      tailwindVersion
+    )
+    this.projects.set(key, project)
   }
 
   private refreshDiagnostics() {
@@ -2114,7 +2201,7 @@ class TW {
     }
   }
 
-  private setupLSPHandlers() {
+  setupLSPHandlers() {
     if (this.lspHandlersAdded) {
       return
     }
@@ -2163,6 +2250,10 @@ class TW {
   }
 
   private updateCapabilities() {
+    if (!supportsDynamicRegistration(this.initializeParams)) {
+      return
+    }
+
     if (this.registrations) {
       this.registrations.then((r) => r.dispose())
     }
@@ -2196,9 +2287,8 @@ class TW {
     let matchedProject: ProjectService
     let matchedPriority: number = Infinity
 
-    for (let [key, project] of this.projects) {
-      let projectConfig = JSON.parse(key) as ProjectConfig
-      if (projectConfig.configPath) {
+    for (let [, project] of this.projects) {
+      if (project.projectConfig.configPath) {
         let documentSelector = project
           .documentSelector()
           .concat()
@@ -2212,14 +2302,15 @@ class TW {
             }
             return 0
           })
-        for (let { pattern, priority } of documentSelector) {
+        for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
+          let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
           if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
             break
           }
-          if (minimatch(fsPath, pattern, { dot: true }) && priority < matchedPriority) {
+          if (minimatch(fsPath, pattern, { dot: true }) && selector.priority < matchedPriority) {
             matchedProject = project
-            matchedPriority = priority
+            matchedPriority = selector.priority
           }
         }
       } else {
@@ -2237,30 +2328,37 @@ class TW {
   }
 
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onDocumentColor(params) ?? []
   }
 
   async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onColorPresentation(params) ?? []
   }
 
   async onHover(params: TextDocumentPositionParams): Promise<Hover> {
+    await this.init()
     return this.getProject(params.textDocument)?.onHover(params) ?? null
   }
 
   async onCompletion(params: CompletionParams): Promise<CompletionList> {
+    await this.init()
     return this.getProject(params.textDocument)?.onCompletion(params) ?? null
   }
 
   async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
-    return this.projects.get(item.data.projectKey)?.onCompletionResolve(item) ?? null
+    await this.init()
+    return this.projects.get(item.data?._projectKey)?.onCompletionResolve(item) ?? null
   }
 
-  onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+  async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
-  onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+  async onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
+    await this.init()
     return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
   }
 
@@ -2291,7 +2389,7 @@ class TW {
   restart(): void {
     console.log('----------\nRESTARTING\n----------')
     this.dispose()
-    this.initialized = false
+    this.initPromise = undefined
     this.init()
   }
 }
@@ -2323,9 +2421,8 @@ class DocumentService {
   }
 }
 
-function supportsDynamicRegistration(connection: Connection, params: InitializeParams): boolean {
+function supportsDynamicRegistration(params: InitializeParams): boolean {
   return (
-    connection.onInitialized &&
     params.capabilities.textDocument.hover?.dynamicRegistration &&
     params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
     params.capabilities.textDocument.codeAction?.dynamicRegistration &&
@@ -2339,7 +2436,7 @@ const tw = new TW(connection)
 connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
   tw.initializeParams = params
 
-  if (supportsDynamicRegistration(connection, params)) {
+  if (supportsDynamicRegistration(params)) {
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
@@ -2347,7 +2444,7 @@ connection.onInitialize(async (params: InitializeParams): Promise<InitializeResu
     }
   }
 
-  tw.init()
+  tw.setupLSPHandlers()
 
   return {
     capabilities: {

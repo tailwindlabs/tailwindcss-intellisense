@@ -1,24 +1,30 @@
 import { State } from './state'
-import type { Container, Document, Root, Rule } from 'postcss'
-import dlv from 'dlv'
-import { remToPx } from './remToPx'
+import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
+import { addPixelEquivalentsToCss, addPixelEquivalentsToValue } from './pixelEquivalents'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
   return (bigIntValue > 0n) - (bigIntValue < 0n)
 }
 
-export function generateRules(state: State, classNames: string[]): { root: Root; rules: Rule[] } {
+export function generateRules(
+  state: State,
+  classNames: string[],
+  filter: (rule: Rule) => boolean = () => true
+): { root: Root; rules: Rule[] } {
   let rules: [bigint, Rule][] = state.modules.jit.generateRules
     .module(new Set(classNames), state.jitContext)
     .sort(([a], [z]) => bigSign(a - z))
 
   let root = state.modules.postcss.module.root({ nodes: rules.map(([, rule]) => rule) })
   state.modules.jit.expandApplyAtRules.module(state.jitContext)(root)
+  state.modules.jit.evaluateTailwindFunctions?.module?.(state.jitContext)(root)
 
   let actualRules: Rule[] = []
   root.walkRules((subRule) => {
-    actualRules.push(subRule)
+    if (filter(subRule)) {
+      actualRules.push(subRule)
+    }
   })
 
   return {
@@ -35,17 +41,13 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
     node.remove()
   })
 
+  let css = clone.toString()
+
   if (settings.tailwindCSS.showPixelEquivalents) {
-    clone.walkDecls((decl) => {
-      let px = remToPx(decl.value, settings.tailwindCSS.rootFontSize)
-      if (px) {
-        decl.value = `${decl.value}/* ${px} */`
-      }
-    })
+    css = addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
   }
 
-  return clone
-    .toString()
+  return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
     .replace(/^(?:    )+/gm, (indent: string) =>
       ' '.repeat((indent.length / 4) * settings.editor.tabSize)
@@ -64,10 +66,10 @@ export async function stringifyDecls(state: State, rule: Rule, uri?: string): Pr
 
   let result = []
   rule.walkDecls(({ prop, value }) => {
-    let px = settings.tailwindCSS.showPixelEquivalents
-      ? remToPx(value, settings.tailwindCSS.rootFontSize)
-      : undefined
-    result.push(`${prop}: ${value}${px ? `/* ${px} */` : ''};`)
+    if (settings.tailwindCSS.showPixelEquivalents) {
+      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+    }
+    result.push(`${prop}: ${value};`)
   })
   return result.join(' ')
 }
@@ -84,14 +86,17 @@ function replaceClassName(state: State, selector: string, find: string, replace:
   return state.modules.postcssSelectorParser.module(transform).processSync(selector)
 }
 
+function isAtRule(node: Node): node is AtRule {
+  return node.type === 'atrule'
+}
+
 export function getRuleContext(state: State, rule: Rule, className: string): string[] {
   let context: string[] = [replaceClassName(state, rule.selector, className, '__placeholder__')]
 
   let p: Container | Document = rule
   while (p.parent && p.parent.type !== 'root') {
     p = p.parent
-    if (p.type === 'atrule') {
-      // @ts-ignore
+    if (isAtRule(p)) {
       context.unshift(`@${p.name} ${p.params}`)
     }
   }

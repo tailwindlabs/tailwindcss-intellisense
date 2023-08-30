@@ -1,7 +1,8 @@
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassNamesInRange } from '../util/find'
 import { InvalidApplyDiagnostic, DiagnosticKind } from './types'
 import { Settings, State } from '../util/state'
-import type { TextDocument, DiagnosticSeverity } from 'vscode-languageserver'
+import type { DiagnosticSeverity } from 'vscode-languageserver'
 import { validateApply } from '../util/validateApply'
 
 export async function getInvalidApplyDiagnostics(

@@ -1,4 +1,5 @@
-import type { TextDocument, Position } from 'vscode-languageserver'
+import type { Position } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { State } from './state'
 import { jsLanguages } from './languages'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
@@ -19,5 +20,5 @@ export function isJsxContext(state: State, doc: TextDocument, position: Position
 
   let boundaries = getLanguageBoundaries(state, doc, str)
 
-  return boundaries ? boundaries[boundaries.length - 1].type === 'jsx' : false
+  return boundaries ? ['jsx', 'tsx'].includes(boundaries[boundaries.length - 1].type) : false
 }

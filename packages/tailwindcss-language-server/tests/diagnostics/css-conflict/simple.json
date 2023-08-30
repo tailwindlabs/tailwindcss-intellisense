@@ -1,0 +1,111 @@
+{
+  "code": "<div class=\"uppercase lowercase\"></div>",
+  "expected": [
+    {
+      "code": "cssConflict",
+      "className": {
+        "className": "uppercase",
+        "classList": {
+          "classList": "uppercase lowercase",
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 31 }
+          }
+        },
+        "relativeRange": {
+          "start": { "line": 0, "character": 0 },
+          "end": { "line": 0, "character": 9 }
+        },
+        "range": { "start": { "line": 0, "character": 12 }, "end": { "line": 0, "character": 21 } }
+      },
+      "otherClassNames": [
+        {
+          "className": "lowercase",
+          "classList": {
+            "classList": "uppercase lowercase",
+            "range": {
+              "start": { "line": 0, "character": 12 },
+              "end": { "line": 0, "character": 31 }
+            }
+          },
+          "relativeRange": {
+            "start": { "line": 0, "character": 10 },
+            "end": { "line": 0, "character": 19 }
+          },
+          "range": {
+            "start": { "line": 0, "character": 22 },
+            "end": { "line": 0, "character": 31 }
+          }
+        }
+      ],
+      "range": { "start": { "line": 0, "character": 12 }, "end": { "line": 0, "character": 21 } },
+      "severity": 2,
+      "message": "'uppercase' applies the same CSS properties as 'lowercase'.",
+      "relatedInformation": [
+        {
+          "message": "lowercase",
+          "location": {
+            "uri": "{{URI}}",
+            "range": {
+              "start": { "line": 0, "character": 22 },
+              "end": { "line": 0, "character": 31 }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "code": "cssConflict",
+      "className": {
+        "className": "lowercase",
+        "classList": {
+          "classList": "uppercase lowercase",
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 31 }
+          }
+        },
+        "relativeRange": {
+          "start": { "line": 0, "character": 10 },
+          "end": { "line": 0, "character": 19 }
+        },
+        "range": { "start": { "line": 0, "character": 22 }, "end": { "line": 0, "character": 31 } }
+      },
+      "otherClassNames": [
+        {
+          "className": "uppercase",
+          "classList": {
+            "classList": "uppercase lowercase",
+            "range": {
+              "start": { "line": 0, "character": 12 },
+              "end": { "line": 0, "character": 31 }
+            }
+          },
+          "relativeRange": {
+            "start": { "line": 0, "character": 0 },
+            "end": { "line": 0, "character": 9 }
+          },
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 21 }
+          }
+        }
+      ],
+      "range": { "start": { "line": 0, "character": 22 }, "end": { "line": 0, "character": 31 } },
+      "severity": 2,
+      "message": "'lowercase' applies the same CSS properties as 'uppercase'.",
+      "relatedInformation": [
+        {
+          "message": "uppercase",
+          "location": {
+            "uri": "{{URI}}",
+            "range": {
+              "start": { "line": 0, "character": 12 },
+              "end": { "line": 0, "character": 21 }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

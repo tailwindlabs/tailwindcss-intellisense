@@ -1,5 +1,6 @@
 import { State, Settings } from '../util/state'
-import type { TextDocument, Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type {  Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { InvalidTailwindDirectiveDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
@@ -8,6 +9,7 @@ import * as semver from '../util/semver'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
 import { getTextWithoutComments } from '../util/doc'
+import { isSemicolonlessCssLanguage } from '../util/languages'
 
 export function getInvalidTailwindDirectiveDiagnostics(
   state: State,
@@ -28,14 +30,9 @@ export function getInvalidTailwindDirectiveDiagnostics(
     ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
   }
 
-  let notSemicolonLanguages = ['sass', 'sugarss', 'stylus']
   let regex: RegExp
-  if (
-    notSemicolonLanguages.includes(document.languageId) ||
-    (state.editor &&
-      notSemicolonLanguages.includes(state.editor.userLanguages[document.languageId]))
-  ) {
-    regex = /(?:\s|^)@tailwind\s+(?<value>[^\n]+)/g
+  if (isSemicolonlessCssLanguage(document.languageId, state.editor?.userLanguages)) {
+    regex = /(?:\s|^)@tailwind\s+(?<value>[^\r\n]+)/g
   } else {
     regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
   }

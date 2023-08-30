@@ -1,3 +1,5 @@
+import type { EditorState } from './state'
+
 export const htmlLanguages = [
   'aspnetcorerazor',
   'astro',
@@ -17,6 +19,7 @@ export const htmlLanguages = [
   'HTML (Eex)',
   'HTML (EEx)',
   'html-eex',
+  'htmldjango',
   'jade',
   'leaf',
   'liquid',
@@ -56,3 +59,15 @@ export const jsLanguages = [
 export const specialLanguages = ['vue', 'svelte']
 
 export const languages = [...cssLanguages, ...htmlLanguages, ...jsLanguages, ...specialLanguages]
+
+const semicolonlessLanguages = ['sass', 'sugarss', 'stylus']
+
+export function isSemicolonlessCssLanguage(
+  languageId: string,
+  userLanguages: EditorState['userLanguages'] = {}
+) {
+  return (
+    semicolonlessLanguages.includes(languageId) ||
+    semicolonlessLanguages.includes(userLanguages[languageId])
+  )
+}

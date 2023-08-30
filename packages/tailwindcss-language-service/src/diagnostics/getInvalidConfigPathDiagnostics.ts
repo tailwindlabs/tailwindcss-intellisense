@@ -1,5 +1,4 @@
 import { State, Settings } from '../util/state'
-import type { TextDocument } from 'vscode-languageserver'
 import { InvalidConfigPathDiagnostic, DiagnosticKind } from './types'
 import { findHelperFunctionsInDocument } from '../util/find'
 import { stringToPath } from '../util/stringToPath'
@@ -7,6 +6,7 @@ import isObject from '../util/isObject'
 import { closest } from '../util/closest'
 import { combinations } from '../util/combinations'
 import dlv from 'dlv'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 function pathToString(path: string | string[]): string {
   if (typeof path === 'string') return path

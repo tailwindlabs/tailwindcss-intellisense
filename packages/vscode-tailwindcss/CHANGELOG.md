@@ -1,5 +1,102 @@
 # Changelog
 
+## Unreleased
+
+Nothing yet.
+
+## 0.10.0
+
+- Fix `classRegex` offset (#846)
+- Fix language server initialisation outside of VS Code (#803)
+- Fix recommended variant order linting in Tailwind v2 (#849)
+
+## 0.9.13
+
+- Fix CSS conflict regression (#842)
+
+## 0.9.12
+
+- Increase class search range (#760)
+- Fix CSS conflict diagnostic false negatives (#761)
+- Don't attempt to read from deleted CSS files (#765)
+- Resolve helper functions in CSS previews (#766)
+- Fix CSS conflict diagnostics in semicolonless CSS documents (#771)
+- Enable IntelliSense for `<script lang="tsx">` (#773)
+- Include pixel equivalents in more places (#775)
+- Fix initialisation when using `tailwindcss@^0` (#787)
+- Fix activation when `files.excludes` contains braces (#789)
+- Fix diagnostic false-positive when no CSS properties are present (#793)
+- Add language mode icon (#794)
+- Fix IntelliSense following closing `script`/`style` tag containing whitespace (#808)
+- Fix `classRegex` hovers in unknown contexts (#824)
+- Expand `classRegex` search range (#840)
+
+## 0.9.11
+
+- Fix first-party plugin usage when using bundled version of `tailwindcss` (#751)
+
+## 0.9.10
+
+- Fix use of certain built-in node modules in config file (#745)
+- Exclude classes in `blocklist` from IntelliSense (#746)
+- Fix `theme` helper handling when specifying default value (#747)
+- Fix activation when connected to Windows with Remote SSH extension (#748)
+- Bump bundled version of `tailwindcss` to `v3.3.0` (#749)
+
+## 0.9.9
+
+- Support TypeScript and ESM Tailwind config files when using a version of `tailwindcss` that supports these (currently `tailwindcss@insiders`, since [`tailwindlabs/tailwindcss#10785`](https://github.com/tailwindlabs/tailwindcss/pull/10785)) (#738, #739)
+
+## 0.9.8
+
+- Fix `invalidTailwindDirective` linting with CRLF file endings (#723)
+- Add support for Handlebars template scripts (`<script type="text/x-handlebars-template">`) (#726)
+- Improve JavaScript comment detection (#727)
+- Add modifier completions for `@apply` and `classRegex` setting (#732)
+- Add bundled version of `@tailwindcss/container-queries` (#733)
+- Support `InitializeParams.rootUri` (#725)
+- Add `htmldjango` to default supported languages (#721)
+
+## 0.9.7
+
+- Improve completion list performance (#706)
+- Improve support for Tailwind class modifiers (#707)
+- Fix activation on Windows when using `tailwindCSS.experimental.configFile` setting (#708)
+- Don't watch directories above workspace root (#709)
+- Enable IntelliSense in entire workspace when there is exactly one active Tailwind project (#711)
+
+## 0.9.6
+
+- Fix activation on Windows when project path contains brackets (#699)
+
+## 0.9.5
+
+- Fix error when a `files.excludes` pattern contains braces (#696)
+
+## 0.9.4
+
+- Fix document selector when `tailwindCSS.experimental.configFile` is a string (#693)
+- Fix IntelliSense for project paths containing brackets (#694)
+
+## 0.9.3
+
+- Tweak `theme` helper detection (#689)
+- Remove marketplace "preview" tag (5932d20)
+- Add `typescript` to default languages (#690)
+
+## 0.9.2
+
+- Fix `@layer` syntax highlighting (#637)
+- Improve extraction for variable colors (#638)
+- Improve `experimental.configFile` in multi-root workspaces (#640)
+- Add documentation for `@config` completion (ea5aff5)
+- Boot language servers for nested workspace folders (#642)
+- Remove `typescript` from default languages (#645)
+- Fix duplicate color decorators (#652)
+- Improve theme helper detection (#655)
+- Add class modifier completions (#686)
+- Bump bundled version of `tailwindcss` to `3.2.4` (f07eedd)
+
 ## 0.9.1
 
 - Fix variant completions when using a `DEFAULT` value with `matchVariant` (#635)

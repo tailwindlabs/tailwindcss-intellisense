@@ -1,12 +1,43 @@
 import { joinWithAnd } from '../util/joinWithAnd'
 import { State, Settings } from '../util/state'
-import type { TextDocument, DiagnosticSeverity } from 'vscode-languageserver'
 import { CssConflictDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { getClassNameDecls } from '../util/getClassNameDecls'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 import * as jit from '../util/jit'
+import type { AtRule, Node, Rule } from 'postcss'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
+
+function isCustomProperty(property: string): boolean {
+  return property.startsWith('--')
+}
+
+function isAtRule(node: Node): node is AtRule {
+  return node.type === 'atrule'
+}
+
+function isKeyframes(rule: Rule): boolean {
+  let parent = rule.parent
+  if (!parent) {
+    return false
+  }
+  if (isAtRule(parent) && parent.name === 'keyframes') {
+    return true
+  }
+  return false
+}
+
+function getRuleProperties(rule: Rule): string[] {
+  let properties: string[] = []
+  rule.walkDecls(({ prop }) => {
+    properties.push(prop)
+  })
+  // if (properties.findIndex((p) => !isCustomProperty(p)) > -1) {
+  //   properties = properties.filter((p) => !isCustomProperty(p))
+  // }
+  return properties
+}
 
 export async function getCssConflictDiagnostics(
   state: State,
@@ -20,20 +51,21 @@ export async function getCssConflictDiagnostics(
   const classLists = await findClassListsInDocument(state, document)
 
   classLists.forEach((classList) => {
-    const classNames = getClassNamesInClassList(classList)
+    const classNames = getClassNamesInClassList(classList, state.blocklist)
 
     classNames.forEach((className, index) => {
       if (state.jit) {
-        let { rules } = jit.generateRules(state, [className.className])
+        let { rules } = jit.generateRules(
+          state,
+          [className.className],
+          (rule) => !isKeyframes(rule)
+        )
         if (rules.length === 0) {
           return
         }
 
         let info: Array<{ context: string[]; properties: string[] }> = rules.map((rule) => {
-          let properties: string[] = []
-          rule.walkDecls(({ prop }) => {
-            properties.push(prop)
-          })
+          let properties = getRuleProperties(rule)
           let context = jit.getRuleContext(state, rule, className.className)
           return { context, properties }
         })
@@ -41,24 +73,34 @@ export async function getCssConflictDiagnostics(
         let otherClassNames = classNames.filter((_className, i) => i !== index)
 
         let conflictingClassNames = otherClassNames.filter((otherClassName) => {
-          let { rules: otherRules } = jit.generateRules(state, [otherClassName.className])
+          let { rules: otherRules } = jit.generateRules(
+            state,
+            [otherClassName.className],
+            (rule) => !isKeyframes(rule)
+          )
           if (otherRules.length !== rules.length) {
             return false
           }
 
+          let propertiesAreComparable = false
+
           for (let i = 0; i < otherRules.length; i++) {
-            let rule = otherRules[i]
-            let properties: string[] = []
-            rule.walkDecls(({ prop }) => {
-              properties.push(prop)
-            })
+            let otherRule = otherRules[i]
+            let properties = getRuleProperties(otherRule)
+            if (info[i].properties.length > 0 && properties.length > 0) {
+              propertiesAreComparable = true
+            }
             if (!equal(info[i].properties, properties)) {
               return false
             }
-            let context = jit.getRuleContext(state, rule, otherClassName.className)
+            let context = jit.getRuleContext(state, otherRule, otherClassName.className)
             if (!equal(info[i].context, context)) {
               return false
             }
+          }
+
+          if (!propertiesAreComparable) {
+            return false
           }
 
           return true

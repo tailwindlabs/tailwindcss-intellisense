@@ -1,9 +1,19 @@
+import type { Range } from 'vscode-languageserver'
+import { rangesEqual } from './rangesEqual'
+
 export function dedupe<T>(arr: Array<T>): Array<T> {
   return arr.filter((value, index, self) => self.indexOf(value) === index)
 }
 
 export function dedupeBy<T>(arr: Array<T>, transform: (item: T) => any): Array<T> {
   return arr.filter((value, index, self) => self.map(transform).indexOf(transform(value)) === index)
+}
+
+export function dedupeByRange<T extends { range: Range }>(arr: Array<T>): Array<T> {
+  return arr.filter(
+    (classList, classListIndex) =>
+      classListIndex === arr.findIndex((c) => rangesEqual(c.range, classList.range))
+  )
 }
 
 export function ensureArray<T>(value: T | T[]): T[] {
