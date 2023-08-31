@@ -157,6 +157,9 @@ async function getActiveTextEditorProject(): Promise<{ version: string } | null>
   if (!client) {
     return null
   }
+  if (isExcluded(uri.fsPath, folder)) {
+    return null
+  }
   try {
     let project = await client.sendRequest<{ version: string } | null>('@/tailwindCSS/getProject', {
       uri: uri.toString(),
