@@ -60,9 +60,9 @@ By default VS Code will not trigger completions when editing "string" content, f
 
 Reveal the language server log panel. This command is only available when there is an active language server instance.
 
-### `Tailwind CSS: Sort Classes in Selection`
+### `Tailwind CSS: Sort Selection` (pre-release)
 
-Treat the current selection(s) as a list of classes and sort them based on [our recommended class order](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier#how-classes-are-sorted). This command is only available when the current document belongs to an active Tailwind project and the `tailwindcss` version is `3.0.0` or greater.
+When a list of CSS classes is selected this command can be used to sort them in [the same order that Tailwind orders them in your CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier#how-classes-are-sorted). This command is only available when the current document belongs to an active Tailwind project and the `tailwindcss` version is `3.0.0` or greater.
 
 ## Extension Settings
 
