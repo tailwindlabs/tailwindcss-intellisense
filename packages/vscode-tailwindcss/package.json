@@ -60,6 +60,11 @@
         "command": "tailwindCSS.showOutput",
         "title": "Tailwind CSS: Show Output",
         "enablement": "tailwindCSS.hasOutputChannel"
+      },
+      {
+        "command": "tailwindCSS.sortSelection",
+        "title": "Tailwind CSS: Sort Selection",
+        "enablement": "editorHasSelection && resourceScheme == file && tailwindCSS.activeTextEditorSupportsClassSorting"
       }
     ],
     "grammars": [

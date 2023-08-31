@@ -74,7 +74,7 @@ import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import * as parcel from './watcher/index.js'
-import { generateRules } from 'tailwindcss-language-service/src/util/jit'
+import { bigSign } from 'tailwindcss-language-service/src/util/jit'
 import { getColor } from 'tailwindcss-language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
@@ -195,6 +195,7 @@ interface ProjectService {
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
   onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
+  sortClassLists(classLists: string[]): string[]
 }
 
 type ProjectConfig = {
@@ -533,6 +534,7 @@ async function createProjectService(
     state.enabled = false
     refreshDiagnostics()
     updateCapabilities()
+    connection.sendNotification('@/tailwindCSS/projectReset')
   }
 
   async function tryInit() {
@@ -541,6 +543,7 @@ async function createProjectService(
     }
     try {
       await init()
+      connection.sendNotification('@/tailwindCSS/projectInitialized')
     } catch (error) {
       resetState()
       showError(connection, error)
@@ -1270,7 +1273,68 @@ async function createProjectService(
           .replace(/\d+\.\d+(%?)/g, (value, suffix) => `${Math.round(parseFloat(value))}${suffix}`),
       ].map((value) => ({ label: `${prefix}-[${value}]` }))
     },
+    sortClassLists(classLists: string[]): string[] {
+      if (!state.jit) {
+        return classLists
+      }
+
+      return classLists.map((classList) => {
+        let result = ''
+        let parts = classList.split(/(\s+)/)
+        let classes = parts.filter((_, i) => i % 2 === 0)
+        let whitespace = parts.filter((_, i) => i % 2 !== 0)
+
+        if (classes[classes.length - 1] === '') {
+          classes.pop()
+        }
+
+        let classNamesWithOrder = state.jitContext.getClassOrder
+          ? state.jitContext.getClassOrder(classes)
+          : getClassOrderPolyfill(state, classes)
+
+        classes = classNamesWithOrder
+          .sort(([, a], [, z]) => {
+            if (a === z) return 0
+            if (a === null) return -1
+            if (z === null) return 1
+            return bigSign(a - z)
+          })
+          .map(([className]) => className)
+
+        for (let i = 0; i < classes.length; i++) {
+          result += `${classes[i]}${whitespace[i] ?? ''}`
+        }
+
+        return result
+      })
+    },
   }
+}
+
+function prefixCandidate(state: State, selector: string) {
+  let prefix = state.config.prefix
+  return typeof prefix === 'function' ? prefix(selector) : prefix + selector
+}
+
+function getClassOrderPolyfill(state: State, classes: string[]): Array<[string, bigint]> {
+  let parasiteUtilities = new Set([prefixCandidate(state, 'group'), prefixCandidate(state, 'peer')])
+
+  let classNamesWithOrder = []
+
+  for (let className of classes) {
+    let order =
+      state.modules.jit.generateRules
+        .module(new Set([className]), state.jitContext)
+        .sort(([a], [z]) => bigSign(z - a))[0]?.[0] ?? null
+
+    if (order === null && parasiteUtilities.has(className)) {
+      order = state.jitContext.layerOrder.components
+    }
+
+    classNamesWithOrder.push([className, order])
+  }
+
+  return classNamesWithOrder
 }
 
 function isObject(value: unknown): boolean {
@@ -2150,6 +2214,39 @@ class TW {
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
     this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
+    this.connection.onRequest(this.onRequest.bind(this))
+  }
+
+  private onRequest(
+    method: '@/tailwindCSS/sortSelection',
+    params: { uri: string; classLists: string[] }
+  ): { error: string } | { classLists: string[] }
+  private onRequest(
+    method: '@/tailwindCSS/getProject',
+    params: { uri: string }
+  ): { version: string } | null
+  private onRequest(method: string, params: any): any {
+    if (method === '@/tailwindCSS/sortSelection') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project) {
+        return { error: 'no-project' }
+      }
+      try {
+        return { classLists: project.sortClassLists(params.classLists) }
+      } catch {
+        return { error: 'unknown' }
+      }
+    }
+
+    if (method === '@/tailwindCSS/getProject') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project || !project.enabled() || !project.state?.enabled) {
+        return null
+      }
+      return {
+        version: project.state.version,
+      }
+    }
   }
 
   private updateCapabilities() {
@@ -2270,6 +2367,7 @@ class TW {
   }
 
   dispose(): void {
+    connection.sendNotification('@/tailwindCSS/projectsDestroyed')
     for (let [, project] of this.projects) {
       project.dispose()
     }
