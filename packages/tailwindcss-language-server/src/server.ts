@@ -133,21 +133,6 @@ process.on('unhandledRejection', (e: any) => {
   connection.console.error(formatError(`Unhandled exception`, e))
 })
 
-function deletePropertyPath(obj: any, path: string | string[]): void {
-  if (typeof path === 'string') {
-    path = path.split('.')
-  }
-
-  for (let i = 0; i < path.length - 1; i++) {
-    obj = obj[path[i]]
-    if (typeof obj === 'undefined') {
-      return
-    }
-  }
-
-  delete obj[path.pop()]
-}
-
 function getConfigId(configPath: string, configDependencies: string[]): string {
   return JSON.stringify(
     [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs])
