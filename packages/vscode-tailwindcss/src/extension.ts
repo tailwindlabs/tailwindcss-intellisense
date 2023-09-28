@@ -26,7 +26,6 @@ import {
   ProviderResult,
   SnippetString,
   TextEdit,
-  TextEditorSelectionChangeKind,
   Selection,
 } from 'vscode'
 import {
@@ -56,26 +55,6 @@ const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 let clients: Map<string, LanguageClient> = new Map()
 let languages: Map<string, string[]> = new Map()
 let searchedFolders: Set<string> = new Set()
-
-let _sortedWorkspaceFolders: string[] | undefined
-function sortedWorkspaceFolders(): string[] {
-  if (_sortedWorkspaceFolders === void 0) {
-    _sortedWorkspaceFolders = Workspace.workspaceFolders
-      ? Workspace.workspaceFolders
-          .map((folder) => {
-            let result = folder.uri.toString()
-            if (result.charAt(result.length - 1) !== '/') {
-              result = result + '/'
-            }
-            return result
-          })
-          .sort((a, b) => {
-            return a.length - b.length
-          })
-      : []
-  }
-  return _sortedWorkspaceFolders
-}
 
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   const langs = Workspace.getConfiguration('tailwindCSS', folder).includeLanguages
@@ -274,62 +253,6 @@ export async function activate(context: ExtensionContext) {
       await updateActiveTextEditorContext()
     })
   )
-
-  // context.subscriptions.push(
-  //   commands.registerCommand(
-  //     'tailwindCSS.onInsertArbitraryVariantSnippet',
-  //     (
-  //       variantName: string,
-  //       range: {
-  //         start: { line: number; character: number }
-  //         end: { line: number; character: number }
-  //       }
-  //     ) => {
-  //       let listener = Window.onDidChangeTextEditorSelection((event) => {
-  //         if (event.selections.length !== 1) {
-  //           listener.dispose()
-  //           return
-  //         }
-
-  //         let document = event.textEditor.document
-  //         let selection = event.selections[0]
-
-  //         let line = document.lineAt(range.start.line)
-  //         let lineRangeFromCompletion = new Range(
-  //           range.start.line,
-  //           range.start.character,
-  //           line.range.end.line,
-  //           line.range.end.character
-  //         )
-  //         let lineText = document.getText(lineRangeFromCompletion)
-  //         let match = lineText.match(/^(\S+)]:/)
-
-  //         if (!match) {
-  //           listener.dispose()
-  //           return
-  //         }
-
-  //         let arbitraryValueRange = new Range(
-  //           lineRangeFromCompletion.start.translate(0, variantName.length + 2),
-  //           lineRangeFromCompletion.start.translate(0, match[1].length)
-  //         )
-
-  //         if (!arbitraryValueRange.contains(selection)) {
-  //           listener.dispose()
-  //         }
-
-  //         if (
-  //           event.kind === TextEditorSelectionChangeKind.Command &&
-  //           selection.isEmpty &&
-  //           selection.start.isEqual(arbitraryValueRange.end.translate(0, 2))
-  //         ) {
-  //           commands.executeCommand('editor.action.triggerSuggest')
-  //         }
-  //       })
-  //       context.subscriptions.push(listener)
-  //     }
-  //   )
-  // )
 
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
 
@@ -845,8 +768,6 @@ export async function activate(context: ExtensionContext) {
   Workspace.textDocuments.forEach(didOpenTextDocument)
   context.subscriptions.push(
     Workspace.onDidChangeWorkspaceFolders((event) => {
-      _sortedWorkspaceFolders = undefined
-
       for (let folder of event.removed) {
         let client = clients.get(folder.uri.toString())
         if (client) {
