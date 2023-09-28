@@ -20,10 +20,12 @@ let htmlScriptTypes = [
 ]
 
 let text = { text: { match: /[^]/, lineBreaks: true } }
+let styledCssBlockStart = { match: /css(?:\.resolve|\.global)?`/, push: 'styledCssBlock' }
 
 let states = {
   main: {
     cssBlockStart: { match: /<style(?=[>\s])/, push: 'cssBlock' },
+    cssStyledBlockStart: styledCssBlockStart,
     jsBlockStart: { match: '<script', push: 'jsBlock' },
     ...text,
   },
@@ -35,7 +37,13 @@ let states = {
     interp: { match: '{', push: 'interp' },
     ...text,
   },
+  styledCssBlock: {
+    cssBlockEnd: { match: '`', pop: 1 },
+    jsBlockStart: { match: '${', push: 'jsInterp' },
+    ...text,
+  },
   jsBlock: {
+    cssStyledBlockStart: styledCssBlockStart,
     scriptStart: { match: '>', next: 'script' },
     jsBlockEnd: { match: '/>', pop: 1 },
     langAttrStartDouble: { match: 'lang="', push: 'langAttrDouble' },
@@ -45,6 +53,12 @@ let states = {
     attrStartDouble: { match: '"', push: 'attrDouble' },
     attrStartSingle: { match: "'", push: 'attrSingle' },
     interp: { match: '{', push: 'interp' },
+    ...text,
+  },
+  jsInterp: {
+    cssStyledBlockStart: styledCssBlockStart,
+    interp: { match: '{', push: 'jsInterp' },
+    jsBlockEnd: { match: '}', pop: 1 },
     ...text,
   },
   interp: {
@@ -154,7 +168,7 @@ export function getLanguageBoundaries(
   let lexer = defaultType === 'none' ? vueLexer : defaultLexer
   lexer.reset(text)
 
-  let type = defaultType
+  let types = [defaultType]
   let boundaries: LanguageBoundary[] = [
     { type: defaultType, range: { start: { line: 0, character: 0 }, end: undefined } },
   ]
@@ -168,12 +182,13 @@ export function getLanguageBoundaries(
           if (!boundaries[boundaries.length - 1].range.end) {
             boundaries[boundaries.length - 1].range.end = position
           }
-          type = token.type.replace(/BlockStart$/, '')
-          boundaries.push({ type, range: { start: position, end: undefined } })
+          types.push(token.type.replace(/(?:[A-Z].+?)?BlockStart$/, ''))
+          boundaries.push({ type: types[types.length - 1], range: { start: position, end: undefined } })
         } else if (token.type.endsWith('BlockEnd')) {
           let position = indexToPosition(text, offset)
+          types.pop()
           boundaries[boundaries.length - 1].range.end = position
-          boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
+          boundaries.push({ type: types[types.length - 1], range: { start: position, end: undefined } })
         } else if (token.type === 'lang') {
           boundaries[boundaries.length - 1].type = token.text
         } else if (token.type === 'type' && htmlScriptTypes.includes(token.text)) {
