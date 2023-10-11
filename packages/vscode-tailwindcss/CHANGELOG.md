@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.11.x (Pre-Release)
 
 Nothing yet.
+
+## 0.10.1
+
+- Add `Sort Selection` command (#851)
+- Update lockfiles (#853)
 
 ## 0.10.0
 
