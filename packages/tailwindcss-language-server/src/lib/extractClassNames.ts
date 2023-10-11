@@ -52,7 +52,7 @@ function getClassNamesFromSelector(selector: string) {
   return classNames
 }
 
-async function process(root: Root) {
+async function process(root: Root | Document) {
   const tree = {}
   const commonContext = {}
 
