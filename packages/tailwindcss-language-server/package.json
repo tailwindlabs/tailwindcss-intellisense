@@ -73,5 +73,10 @@
     "vscode-languageserver": "8.0.2",
     "vscode-languageserver-textdocument": "1.0.7",
     "vscode-uri": "3.0.2"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 100
   }
 }
