@@ -83,6 +83,8 @@
           "source.css",
           "source.vue",
           "source.svelte",
+          "source.tsx",
+          "source.jsx",
           "text.html"
         ]
       },
@@ -90,14 +92,18 @@
         "scopeName": "tailwindcss.at-rules.scss.injection",
         "path": "./syntaxes/at-rules.scss.tmLanguage.json",
         "injectTo": [
-          "source.css.scss"
+          "source.css.scss",
+          "source.tsx",
+          "source.jsx"
         ]
       },
       {
         "scopeName": "tailwindcss.at-rules.postcss.injection",
         "path": "./syntaxes/at-rules.postcss.tmLanguage.json",
         "injectTo": [
-          "source.css.postcss"
+          "source.css.postcss",
+          "source.tsx",
+          "source.jsx"
         ]
       },
       {
@@ -108,6 +114,8 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
+          "source.tsx",
+          "source.jsx",
           "text.html"
         ]
       },
@@ -119,6 +127,8 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
+          "source.tsx",
+          "source.jsx",
           "text.html"
         ]
       },
@@ -130,6 +140,8 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
+          "source.tsx",
+          "source.jsx",
           "text.html"
         ]
       }
