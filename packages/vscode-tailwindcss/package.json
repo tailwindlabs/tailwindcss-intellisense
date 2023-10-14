@@ -83,7 +83,9 @@
           "source.css",
           "source.vue",
           "source.svelte",
-          "text.html"
+          "text.html",
+          "source.gjs",
+          "source.gts"
         ]
       },
       {
@@ -108,7 +110,9 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
-          "text.html"
+          "text.html",
+          "source.gjs",
+          "source.gts"
         ]
       },
       {
@@ -119,7 +123,9 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
-          "text.html"
+          "text.html",
+          "source.gjs",
+          "source.gts"
         ]
       },
       {
@@ -130,7 +136,9 @@
           "source.css.postcss",
           "source.vue",
           "source.svelte",
-          "text.html"
+          "text.html",
+          "source.gjs",
+          "source.gts"
         ]
       }
     ],
