@@ -1,9 +1,6 @@
 const esbuild = require('esbuild')
-const path = require('path')
 const fs = require('fs')
 const mri = require('mri')
-
-const resolve = (...args) => path.resolve(__dirname, ...args)
 
 const args = mri(process.argv.slice(2), {
   boolean: ['watch', 'minify'],

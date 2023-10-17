@@ -8,5 +8,10 @@
     "esbuild": "0.14.11",
     "semver": "^7.5.4",
     "mri": "1.2.0"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "printWidth": 100
   }
 }
