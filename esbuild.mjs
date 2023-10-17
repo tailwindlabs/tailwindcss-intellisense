@@ -7,14 +7,14 @@ const require = createRequire(import.meta.url)
 
 const args = mri(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
-  string: ['outfile', 'outdir', 'external'],
+  string: ['outfile', 'outdir'],
 })
 
 await esbuild.build({
   entryPoints: args._,
   bundle: true,
   platform: 'node',
-  external: [].concat(args.external),
+  external: ['pnpapi', 'vscode', 'lightningcss', '@tailwindcss/oxide'],
   format: 'cjs',
   outdir: args.outdir,
   outfile: args.outfile,

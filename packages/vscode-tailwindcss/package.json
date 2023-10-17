@@ -325,7 +325,7 @@
     }
   },
   "scripts": {
-    "_esbuild": "node ../../esbuild.mjs src/extension.ts src/server.ts src/cssServer.ts --outdir=dist --external=pnpapi --external=vscode --external=lightningcss --external=@tailwindcss/oxide",
+    "_esbuild": "node ../../esbuild.mjs src/extension.ts src/server.ts src/cssServer.ts --outdir=dist",
     "dev": "concurrently --raw --kill-others \"npm run watch\" \"npm run check -- --watch\"",
     "watch": "npm run clean && npm run _esbuild -- --watch",
     "build": "npm run check && npm run clean && npm run _esbuild -- --minify && move-file dist/server.js dist/tailwindServer.js && move-file dist/cssServer.js dist/tailwindModeServer.js",
