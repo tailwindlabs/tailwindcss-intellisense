@@ -1,13 +1,16 @@
-const esbuild = require('esbuild')
-const fs = require('fs')
-const mri = require('mri')
+import esbuild from 'esbuild'
+import fs from 'fs'
+import { createRequire } from 'module'
+import mri from 'mri'
+
+const require = createRequire(import.meta.url)
 
 const args = mri(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
   string: ['outfile', 'outdir', 'external'],
 })
 
-esbuild.build({
+await esbuild.build({
   entryPoints: args._,
   bundle: true,
   platform: 'node',

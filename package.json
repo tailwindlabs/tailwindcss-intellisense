@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "esbuild": "0.14.11",
+    "esbuild": "0.19.5",
     "semver": "^7.5.4",
     "mri": "1.2.0"
   },
