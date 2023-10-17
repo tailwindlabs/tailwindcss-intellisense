@@ -337,6 +337,7 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@tailwindcss/language-server": "*",
     "@types/braces": "3.0.1",
     "@types/vscode": "1.65.0",
     "braces": "3.0.2",

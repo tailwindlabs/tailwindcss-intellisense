@@ -1,14 +1,12 @@
 {
-  "name": "root",
+  "name": "tailwindcss-intellisense",
   "private": true,
-  "scripts": {
-    "bootstrap": "lerna bootstrap --hoist",
-    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "esbuild": "0.14.11",
     "latest-semver": "^4.0.0",
-    "lerna": "^3.22.1",
     "mri": "1.2.0"
   }
 }
