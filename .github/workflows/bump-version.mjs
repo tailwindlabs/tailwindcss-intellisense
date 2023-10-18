@@ -1,6 +1,26 @@
-import latestSemver from 'latest-semver'
-import * as fs from 'fs/promises'
-import assert from 'assert'
+import * as fs from 'node:fs/promises'
+import assert from 'node:assert'
+import semver from 'semver'
+
+/**
+ * @param {string[]} versions
+ * @returns {semver.SemVer}
+ */
+function latestSemver(versions) {
+  let latest = versions
+    .map((v) => semver.parse(v, { includePrerelease: true, loose: false }))
+    .filter((v) => v !== null)
+    .filter((v) => v.prerelease.length === 0)
+    .sort((a, b) => b.compare(a) || b.compareBuild(a))
+    .at(0)
+
+  // Require the minor version to be odd. This is done because
+  // the VSCode Marketplace suggests using odd numbers for
+  // pre-release builds and even ones for release builds
+  assert(latest && latest.minor % 2 === 1)
+
+  return latest
+}
 
 async function bumpVersion() {
   let res = await fetch(
@@ -31,14 +51,15 @@ async function bumpVersion() {
   let { results } = await res.json()
   let versions = results[0].extensions[0].versions.map(({ version }) => version)
   let latest = latestSemver(versions)
-  let parts = latest.split('.')
+  let nextVersion = latest.inc('patch').format()
 
-  assert(Number(parts[1]) % 2 === 1)
-
-  let nextVersion = `${parts[0]}.${parts[1]}.${Number(parts[2]) + 1}`
   let pkgFilename = 'packages/vscode-tailwindcss/package.json'
   let pkg = JSON.parse(await fs.readFile(pkgFilename, 'utf8'))
-  await fs.writeFile(pkgFilename, JSON.stringify({ ...pkg, version: nextVersion }, null, 2), 'utf8')
+  await fs.writeFile(
+    pkgFilename,
+    JSON.stringify({ ...pkg, version: nextVersion }, null, 2) + '\n',
+    'utf8'
+  )
 }
 
 bumpVersion()
