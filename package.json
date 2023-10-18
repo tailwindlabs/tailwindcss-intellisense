@@ -6,7 +6,6 @@
   ],
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
-    "esbuild": "0.19.5",
     "semver": "^7.5.4",
     "mri": "1.2.0"
   },

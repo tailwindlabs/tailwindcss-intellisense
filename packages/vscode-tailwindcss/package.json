@@ -343,6 +343,7 @@
     "braces": "3.0.2",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
+    "esbuild": "^0.19.5",
     "minimatch": "5.1.4",
     "move-file-cli": "3.0.0",
     "normalize-path": "3.0.0",
