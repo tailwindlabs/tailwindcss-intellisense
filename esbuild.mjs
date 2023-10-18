@@ -10,6 +10,7 @@ const args = minimist(process.argv.slice(2), {
   string: ['outfile', 'outdir'],
 })
 
+console.log('- Preparing')
 let ctx = await esbuild.context({
   entryPoints: args._,
   bundle: true,
@@ -74,10 +75,13 @@ let ctx = await esbuild.context({
   ],
 })
 
+console.log('- Building')
 await ctx.rebuild()
 
 if (args.watch) {
+  console.log('- Watching')
   await ctx.watch()
 } else {
+  console.log('- Cleaning up')
   await ctx.dispose()
 }
