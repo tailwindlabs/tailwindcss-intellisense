@@ -1,7 +1,12 @@
 import esbuild from 'esbuild'
 import path from 'node:path'
+import minimist from 'minimist'
 
 const __dirname = new URL('.', import.meta.url).pathname
+
+const args = minimist(process.argv.slice(2), {
+  boolean: ['watch', 'minify'],
+})
 
 console.log('- Preparing')
 let builds = await Promise.all([
@@ -11,7 +16,7 @@ let builds = await Promise.all([
     platform: 'node',
     external: [],
     outdir: 'dist',
-    minify: process.argv.includes('--minify'),
+    minify: args.minify,
 
     format: 'cjs',
   }),
@@ -22,7 +27,7 @@ let builds = await Promise.all([
     platform: 'node',
     external: [],
     outdir: 'dist',
-    minify: process.argv.includes('--minify'),
+    minify: args.minify,
 
     format: 'esm',
   }),
@@ -31,7 +36,7 @@ let builds = await Promise.all([
 console.log('- Building')
 await Promise.all(builds.map((build) => build.rebuild()))
 
-if (process.argv.includes('--watch')) {
+if (args.watch) {
   console.log('- Watching')
   await Promise.all(builds.map((build) => build.watch()))
 } else {

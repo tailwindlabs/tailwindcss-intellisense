@@ -1,11 +1,11 @@
 import esbuild from 'esbuild'
 import fs from 'fs'
 import { createRequire } from 'module'
-import mri from 'mri'
+import minimist from 'minimist'
 
 const require = createRequire(import.meta.url)
 
-const args = mri(process.argv.slice(2), {
+const args = minimist(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
   string: ['outfile', 'outdir'],
 })
