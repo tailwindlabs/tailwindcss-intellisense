@@ -54,6 +54,8 @@ export const jsLanguages = [
   'rescript',
   'typescript',
   'typescriptreact',
+  'glimmer-js',
+  'glimmer-ts',
 ]
 
 export const specialLanguages = ['vue', 'svelte']

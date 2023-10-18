@@ -2,7 +2,7 @@
 
 ## 0.11.x (Pre-Release)
 
-Nothing yet.
+- Add support for Glimmer (#867)
 
 ## 0.10.1
 
