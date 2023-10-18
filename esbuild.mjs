@@ -10,7 +10,7 @@ const args = mri(process.argv.slice(2), {
   string: ['outfile', 'outdir'],
 })
 
-await esbuild.build({
+let ctx = await esbuild.context({
   entryPoints: args._,
   bundle: true,
   platform: 'node',
@@ -18,7 +18,6 @@ await esbuild.build({
   format: 'cjs',
   outdir: args.outdir,
   outfile: args.outfile,
-  watch: args.watch,
   minify: args.minify,
   plugins: [
     {
@@ -74,3 +73,11 @@ await esbuild.build({
     },
   ],
 })
+
+await ctx.rebuild()
+
+if (args.watch) {
+  await ctx.watch()
+} else {
+  await ctx.dispose()
+}
