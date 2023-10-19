@@ -44,7 +44,6 @@
     "@types/vscode": "1.65.0",
     "browserslist": "^4.22.1",
     "bun-types": "^1.0.6",
-    "tailwindcss-language-service": "*",
     "chokidar": "3.5.1",
     "color-name": "1.1.4",
     "culori": "0.20.1",
