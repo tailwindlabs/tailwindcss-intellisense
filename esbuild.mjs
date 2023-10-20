@@ -1,24 +1,24 @@
-const esbuild = require('esbuild')
-const path = require('path')
-const fs = require('fs')
-const mri = require('mri')
+import esbuild from 'esbuild'
+import fs from 'fs'
+import { createRequire } from 'module'
+import minimist from 'minimist'
 
-const resolve = (...args) => path.resolve(__dirname, ...args)
+const require = createRequire(import.meta.url)
 
-const args = mri(process.argv.slice(2), {
+const args = minimist(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
-  string: ['outfile', 'outdir', 'external'],
+  string: ['outfile', 'outdir'],
 })
 
-esbuild.build({
+console.log('- Preparing')
+let ctx = await esbuild.context({
   entryPoints: args._,
   bundle: true,
   platform: 'node',
-  external: [].concat(args.external),
+  external: ['pnpapi', 'vscode', 'lightningcss', '@tailwindcss/oxide'],
   format: 'cjs',
   outdir: args.outdir,
   outfile: args.outfile,
-  watch: args.watch,
   minify: args.minify,
   plugins: [
     {
@@ -74,3 +74,14 @@ esbuild.build({
     },
   ],
 })
+
+console.log('- Building')
+await ctx.rebuild()
+
+if (args.watch) {
+  console.log('- Watching')
+  await ctx.watch()
+} else {
+  console.log('- Cleaning up')
+  await ctx.dispose()
+}

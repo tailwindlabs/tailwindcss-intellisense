@@ -7,16 +7,14 @@
     "dist"
   ],
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
+    "start": "node ./scripts/build.mjs --watch",
+    "build": "node ./scripts/build.mjs",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@csstools/media-query-list-parser": "2.0.4",
     "@csstools/css-parser-algorithms": "2.1.1",
     "@csstools/css-tokenizer": "2.1.1",
+    "@csstools/media-query-list-parser": "2.0.4",
     "@types/culori": "^2.0.0",
     "@types/moo": "0.5.3",
     "@types/semver": "7.3.10",
@@ -41,8 +39,8 @@
     "vscode-languageserver-textdocument": "1.0.7"
   },
   "devDependencies": {
+    "esbuild": "^0.19.5",
     "prettier": "2.3.0",
-    "tsdx": "0.14.1",
     "tslib": "2.2.0",
     "typescript": "4.6.4"
   }
