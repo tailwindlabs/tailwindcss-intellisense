@@ -45,5 +45,5 @@ assert(latest && latest.minor % 2 === 1)
 
 // Bump the patch version in `package.json`
 let nextVersion = latest.inc('patch').format()
-let pkg = await PackageJson.load('packages/vscode-tailwindcss/package.json')
+let pkg = await PackageJson.load('packages/vscode-tailwindcss')
 await pkg.update({ version: nextVersion }).save()
