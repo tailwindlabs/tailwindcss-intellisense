@@ -18,7 +18,7 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-${{ env.NODE_VERSION }}-node_modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
-        run: npm install && npm run bootstrap
+        run: npm install
       - name: Run tests
         run: >
           cd packages/tailwindcss-language-server &&
