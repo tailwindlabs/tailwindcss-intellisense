@@ -1,4 +1,4 @@
-/// <reference types="bun-types" />
+import { expect, test } from 'vitest'
 import { parse } from 'postcss'
 import extractClassNames from './extractClassNames'
 
@@ -24,7 +24,6 @@ test('ex: 2', async () => {
   expect(result.classNames).toHaveProperty('bar')
   expect(result.classNames['foo']).toEqual({
     __info: {
-      __rule: true,
       __source: undefined,
       __pseudo: [],
       __scope: null,
