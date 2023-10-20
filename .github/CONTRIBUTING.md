@@ -14,6 +14,5 @@ You can build the VSIX package by running these commands in the project root.
 
 ```bash
 npm install
-npm run bootstrap
-npx lerna run package --scope=vscode-tailwindcss
+npx run package --workspace=packages/vscode-tailwindcss
 ```
