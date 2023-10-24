@@ -2,6 +2,7 @@ import type { Diagnostic } from 'vscode-languageserver'
 import { DocumentClassName, DocumentClassList } from '../util/state'
 
 export enum DiagnosticKind {
+  InvalidIdentifier = 'invalidIdentifier',
   CssConflict = 'cssConflict',
   InvalidApply = 'invalidApply',
   InvalidScreen = 'invalidScreen',
