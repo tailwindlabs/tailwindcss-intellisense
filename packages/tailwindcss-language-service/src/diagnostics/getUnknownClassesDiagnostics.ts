@@ -1,5 +1,5 @@
 import { joinWithAnd } from '../util/joinWithAnd'
-import { State, Settings, DocumentClassName } from '../util/state'
+import { State, Settings, DocumentClassName, Variant } from '../util/state'
 import { CssConflictDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { getClassNameDecls } from '../util/getClassNameDecls'
@@ -14,15 +14,39 @@ function isAtRule(node: Node): node is AtRule {
 	return node.type === 'atrule'
   }
 
-function isKeyframes(rule: Rule): boolean {
-	let parent = rule.parent
-	if (!parent) {
-	  return false
-	}
-	if (isAtRule(parent) && parent.name === 'keyframes') {
-	  return true
-	}
-	return false
+function generateHashMaps(state: State)
+{
+	const classes: {[key: string]: State['classList'][0] } = {};
+	const noNumericClasses: {[key: string]: string[]} = {};
+	const variants: {[key: string]: Variant } = {};
+
+	state.classList.forEach((classItem) => {
+		classes[classItem[0]] = classItem;
+		const splittedClass = classItem[0].split('-');
+		if (splittedClass.length != 1) {
+			const lastToken = splittedClass.pop();
+			const joinedName = splittedClass.join('-')
+			
+			if (Array.isArray(noNumericClasses[joinedName]))
+			{
+				noNumericClasses[joinedName].push(lastToken);
+			} else {
+				noNumericClasses[joinedName] = [lastToken];
+			}
+		}
+	})
+
+	state.variants.forEach((variant) => {
+		if (variant.isArbitrary) {
+			variant.values.forEach(value => {
+				variants[`${variant.name}-${value}`] = variant;
+			})
+		} else {
+			variants[variant.name] = variant;
+		}
+	})
+
+	return {classes, variants, noNumericClasses};
 }
 
 function similarity(s1: string, s2: string) {
@@ -80,11 +104,89 @@ function getRuleProperties(rule: Rule): string[] {
 	return properties
   }
 
-function handleClass(state: State, className: DocumentClassName, chunk: string)
+function handleClass(state: State, 
+	className: DocumentClassName,
+	chunk: string,
+	classes: {[key: string]: State['classList'][0] },
+	noNumericClasses: {[key: string]: string[]},
+	)
 {
-	if (chunk.indexOf('[') != -1 || state.classList.find(x => x[0] == chunk)) {
+	if (chunk.indexOf('[') != -1 || classes[chunk] != undefined) {
 		return null;
 	}
+
+	let nonNumericChunk = chunk.split('-');
+	let nonNumericRemainder = nonNumericChunk.pop();
+	const nonNumericValue = nonNumericChunk.join('-');
+
+	if (noNumericClasses[chunk])
+	{
+		return({
+			code: DiagnosticKind.InvalidIdentifier,
+			severity: 3,
+			range: className.range,
+			message: `${chunk} requires an postfix. Choose between ${noNumericClasses[chunk].join(', -')}.`,
+			className,
+			otherClassNames: null
+		})			
+	}
+
+	if (classes[nonNumericValue])
+	{
+		return({
+			code: DiagnosticKind.InvalidIdentifier,
+			severity: 3,
+			range: className.range,
+			message: `${chunk} requires no postfix.`,
+			className,
+			otherClassNames: null
+		})			
+	}
+
+	if (nonNumericValue && noNumericClasses[nonNumericValue])
+	{
+		let closestSuggestion = {
+			value: 0,
+			text: ""
+		};
+
+		debugger;
+
+		for (let i = 0; i < noNumericClasses[nonNumericValue].length; i++) {
+			const e = noNumericClasses[nonNumericValue][i];
+			const match = similarity(e, nonNumericRemainder);
+			if (match > 0.5 && match > closestSuggestion.value) {
+				closestSuggestion = {
+					value: match,
+					text: e
+				}
+			}
+		}
+
+		if (closestSuggestion.text)
+		{
+			return({
+				code: DiagnosticKind.InvalidIdentifier,
+				severity: 3,
+				range: className.range,
+				message: `${chunk} is an invalid value. Did you mean ${nonNumericValue + '-' + closestSuggestion.text}? (${closestSuggestion.value})`,
+				className,
+				otherClassNames: null
+			})
+		}
+		else
+		{
+			return({
+				code: DiagnosticKind.InvalidIdentifier,
+				severity: 3,
+				range: className.range,
+				message: `${chunk} is an invalid value. Choose between ${noNumericClasses[nonNumericValue].join(', ')}.`,
+				className,
+				otherClassNames: null
+			})
+		}
+	}
+
 	// get similar as suggestion
 	let closestSuggestion = {
 		value: 0,
@@ -125,18 +227,10 @@ function handleClass(state: State, className: DocumentClassName, chunk: string)
 	}
 }
 
-function handleVariant(state: State, className: DocumentClassName, chunk: string)
+function handleVariant(state: State, className: DocumentClassName, chunk: string, variants: {[key: string]: Variant })
 {
-	if (chunk.indexOf('[') != -1 || state.variants.find(x => x.name == chunk)) {		
+	if (chunk.indexOf('[') != -1 || variants[chunk]) {		
 		return null;
-	}
-
-	if (chunk.indexOf('-') != -1 &&
-		state.variants.find(x => {
-			return x.isArbitrary ? x.values.find(value => `${x.name}-${value}` == chunk) : undefined
-		})
-		) {
-			return null;
 	}
 
 	// get similar as suggestion
@@ -188,6 +282,8 @@ export async function getUnknownClassesDiagnostics(
 	// let severity = settings.tailwindCSS.lint
 	// if (severity === 'ignore') return [];
 
+	const { classes, variants, noNumericClasses} = generateHashMaps(state);
+
 	let diagnostics: CssConflictDiagnostic[] = [];
 	const classLists = await findClassListsInDocument(state, document)
 	const items = [];
@@ -195,6 +291,7 @@ export async function getUnknownClassesDiagnostics(
 	classLists.forEach((classList) => {
 		const classNames = getClassNamesInClassList(classList, state.blocklist)
 
+		let offset = 0;
 		classNames.forEach((className, index) => {
 			const splitted = className.className.split(state.separator);
 
@@ -207,13 +304,12 @@ export async function getUnknownClassesDiagnostics(
 				// class
 				if (index == splitted.length - 1)
 				{
-					items.push(handleClass(state, className, chunk ));
+					items.push(handleClass(state, className, chunk, classes, noNumericClasses));
 				}
 				// variant
 				else 
 				{
-					items.push(handleVariant(state, className, chunk));
-
+					items.push(handleVariant(state, className, chunk, variants));
 				}
 			})
 		});
