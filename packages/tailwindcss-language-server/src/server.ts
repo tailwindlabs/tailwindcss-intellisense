@@ -256,6 +256,7 @@ async function getConfiguration(uri?: string) {
         colorDecorators: true,
         rootFontSize: 16,
         lint: {
+		  invalidClass: 'error',
           cssConflict: 'warning',
           invalidApply: 'error',
           invalidScreen: 'error',

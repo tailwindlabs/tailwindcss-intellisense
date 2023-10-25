@@ -52,6 +52,7 @@ export type TailwindCssSettings = {
   rootFontSize: number
   colorDecorators: boolean
   lint: {
+    invalidClass: DiagnosticSeveritySetting
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting

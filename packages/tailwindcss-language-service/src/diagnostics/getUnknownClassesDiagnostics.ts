@@ -1,18 +1,21 @@
-import { joinWithAnd } from '../util/joinWithAnd'
 import { State, Settings, DocumentClassName, Variant } from '../util/state'
-import { CssConflictDiagnostic, DiagnosticKind } from './types'
+import { CssConflictDiagnostic, DiagnosticKind, InvalidIdentifierDiagnostic } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
-import { getClassNameDecls } from '../util/getClassNameDecls'
-import { getClassNameMeta } from '../util/getClassNameMeta'
-import { equal } from '../util/array'
-import * as jit from '../util/jit'
-import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { Position, Range } from 'vscode-languageserver'
+import { Range } from 'vscode-languageserver'
 
-function isAtRule(node: Node): node is AtRule {
-	return node.type === 'atrule'
-  }
+function createDiagnostic(className: DocumentClassName, range: Range, message: string, suggestion?: string): InvalidIdentifierDiagnostic
+{
+	return({
+		code: DiagnosticKind.InvalidIdentifier,
+		severity: 3,
+		range: range,
+		message,
+		className,
+		suggestion,
+		otherClassNames: null
+	})
+}
 
 function generateHashMaps(state: State)
 {
@@ -93,22 +96,12 @@ function editDistance(s1: string, s2: string) {
 	return costs[s2.length];
 }
 
-function getRuleProperties(rule: Rule): string[] {
-	let properties: string[] = []
-	rule.walkDecls(({ prop }) => {
-	  properties.push(prop)
-	})
-	// if (properties.findIndex((p) => !isCustomProperty(p)) > -1) {
-	//   properties = properties.filter((p) => !isCustomProperty(p))
-	// }
-	return properties
-  }
-
 function handleClass(state: State, 
 	className: DocumentClassName,
 	chunk: string,
 	classes: {[key: string]: State['classList'][0] },
 	noNumericClasses: {[key: string]: string[]},
+	range: Range
 	)
 {
 	if (chunk.indexOf('[') != -1 || classes[chunk] != undefined) {
@@ -121,26 +114,12 @@ function handleClass(state: State,
 
 	if (noNumericClasses[chunk])
 	{
-		return({
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} requires an postfix. Choose between ${noNumericClasses[chunk].join(', -')}.`,
-			className,
-			otherClassNames: null
-		})			
+		return createDiagnostic(className, range, `${chunk} requires an postfix. Choose between ${noNumericClasses[chunk].join(', -')}.`)
 	}
 
 	if (classes[nonNumericValue])
 	{
-		return({
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} requires no postfix.`,
-			className,
-			otherClassNames: null
-		})			
+		return createDiagnostic(className, range, `${chunk} requires no postfix.`)
 	}
 
 	if (nonNumericValue && noNumericClasses[nonNumericValue])
@@ -149,8 +128,6 @@ function handleClass(state: State,
 			value: 0,
 			text: ""
 		};
-
-		debugger;
 
 		for (let i = 0; i < noNumericClasses[nonNumericValue].length; i++) {
 			const e = noNumericClasses[nonNumericValue][i];
@@ -165,25 +142,11 @@ function handleClass(state: State,
 
 		if (closestSuggestion.text)
 		{
-			return({
-				code: DiagnosticKind.InvalidIdentifier,
-				severity: 3,
-				range: className.range,
-				message: `${chunk} is an invalid value. Did you mean ${nonNumericValue + '-' + closestSuggestion.text}? (${closestSuggestion.value})`,
-				className,
-				otherClassNames: null
-			})
+			return createDiagnostic(className, range, `${chunk} is an invalid value. Did you mean ${nonNumericValue + '-' + closestSuggestion.text}? (${closestSuggestion.value})`, nonNumericValue + '-' + closestSuggestion.text)
 		}
 		else
 		{
-			return({
-				code: DiagnosticKind.InvalidIdentifier,
-				severity: 3,
-				range: className.range,
-				message: `${chunk} is an invalid value. Choose between ${noNumericClasses[nonNumericValue].join(', ')}.`,
-				className,
-				otherClassNames: null
-			})
+			return createDiagnostic(className, range, `${chunk} is an invalid value. Choose between ${noNumericClasses[nonNumericValue].join(', ')}.`)
 		}
 	}
 
@@ -205,29 +168,15 @@ function handleClass(state: State,
 
 	if (closestSuggestion.text)
 	{
-		return({
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} was not found in the registry. Did you mean ${closestSuggestion.text} (${closestSuggestion.value})?`,
-			className,
-			otherClassNames: null
-		})
+		return createDiagnostic(className, range, `${chunk} was not found in the registry. Did you mean ${closestSuggestion.text} (${closestSuggestion.value})?`, closestSuggestion.text)
 	}
 	else
 	{
-		return({
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} was not found in the registry.`,
-			className,
-			otherClassNames: null
-		})
+		return createDiagnostic(className, range, `${chunk} was not found in the registry.`)
 	}
 }
 
-function handleVariant(state: State, className: DocumentClassName, chunk: string, variants: {[key: string]: Variant })
+function handleVariant(state: State, className: DocumentClassName, chunk: string, variants: {[key: string]: Variant }, range: Range)
 {
 	if (chunk.indexOf('[') != -1 || variants[chunk]) {		
 		return null;
@@ -238,38 +187,26 @@ function handleVariant(state: State, className: DocumentClassName, chunk: string
 		value: 0,
 		text: ""
 	};
-	for (let i = 0; i < state.variants.length; i++) {
-		const e = state.variants[i];
-		const match = similarity(e[0], chunk);
-		if (match > 0.5 && match > closestSuggestion.value) {
+
+	Object.keys(variants).forEach(key => {
+		const variant = variants[key];
+		const match = similarity(variant.name, chunk);
+		if (match >= 0.5 && match > closestSuggestion.value) {
 			closestSuggestion = {
 				value: match,
-				text: e[0]
+				text: variant.name
 			}
 		}
-	}
+	})
+
 
 	if (closestSuggestion.text)
 	{
-		return{
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} is an invalid variant. Did you mean ${closestSuggestion.text} (${closestSuggestion.value})?`,
-			className,
-			otherClassNames: null
-		}
+		return createDiagnostic(className, range,  `${chunk} is an invalid variant. Did you mean ${closestSuggestion.text} (${closestSuggestion.value})?`, closestSuggestion.text)
 	}
 	else
 	{
-		return {
-			code: DiagnosticKind.InvalidIdentifier,
-			severity: 3,
-			range: className.range,
-			message: `${chunk} is an invalid variant.`,
-			className,
-			otherClassNames: null
-		}
+		return createDiagnostic(className, range, `${chunk} is an invalid variant.`);
 	}
 
 }
@@ -278,39 +215,40 @@ export async function getUnknownClassesDiagnostics(
 	state: State,
 	document: TextDocument,
 	settings: Settings
-): Promise<CssConflictDiagnostic[]> {
-	// let severity = settings.tailwindCSS.lint
-	// if (severity === 'ignore') return [];
-
+): Promise<InvalidIdentifierDiagnostic[]> {
+	let severity = settings.tailwindCSS.lint.invalidClass
+	if (severity === 'ignore') return [];
+	
+	const items = [];
 	const { classes, variants, noNumericClasses} = generateHashMaps(state);
 
-	let diagnostics: CssConflictDiagnostic[] = [];
 	const classLists = await findClassListsInDocument(state, document)
-	const items = [];
-
 	classLists.forEach((classList) => {
 		const classNames = getClassNamesInClassList(classList, state.blocklist)
-
-		let offset = 0;
 		classNames.forEach((className, index) => {
 			const splitted = className.className.split(state.separator);
 
+			let offset = 0;
 			splitted.forEach((chunk, index) => {
-				if (chunk == 'group-only')
-				{
-					debugger;
-				}
 
-				// class
+				const range: Range = {start: {
+					line: className.range.start.line,
+					character: className.range.start.character + offset,
+				}, end: {
+					line: className.range.start.line,
+					character: className.range.start.character + offset + chunk.length,
+				}}
+
 				if (index == splitted.length - 1)
 				{
-					items.push(handleClass(state, className, chunk, classes, noNumericClasses));
+					items.push(handleClass(state, className, chunk, classes, noNumericClasses, range));
 				}
-				// variant
 				else 
 				{
-					items.push(handleVariant(state, className, chunk, variants));
+					items.push(handleVariant(state, className, chunk, variants, range));
 				}
+
+				offset += chunk.length + 1;
 			})
 		});
 	})
