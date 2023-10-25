@@ -119,7 +119,7 @@ function handleClass(state: State,
 
 	if (classes[nonNumericValue])
 	{
-		return createDiagnostic(className, range, `${chunk} requires no postfix.`)
+		return createDiagnostic(className, range, `${nonNumericValue} requires no postfix.`, nonNumericValue)
 	}
 
 	if (nonNumericValue && noNumericClasses[nonNumericValue])
