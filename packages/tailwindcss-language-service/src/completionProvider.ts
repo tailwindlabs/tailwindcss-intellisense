@@ -169,6 +169,12 @@ export function completionsFromClassList(
           continue
         }
 
+        if (seenVariants.has(variant.name)) {
+          continue
+        }
+
+        seenVariants.add(variant.name)
+
         if (variant.isArbitrary) {
           items.push(
             variantItem({
@@ -228,6 +234,12 @@ export function completionsFromClassList(
           if (existingVariants.includes(`${variant.name}-${value}`)) {
             continue
           }
+
+          if (seenVariants.has(`${variant.name}-${value}`)) {
+            continue
+          }
+
+          seenVariants.add(`${variant.name}-${value}`)
 
           items.push(
             variantItem({
