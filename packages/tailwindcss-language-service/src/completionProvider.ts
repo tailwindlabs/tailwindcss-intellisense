@@ -138,6 +138,7 @@ export function completionsFromClassList(
     }
 
     let items: CompletionItem[] = []
+    let seenVariants = new Set<string>()
 
     if (!important) {
       let variantOrder = 0
@@ -163,85 +164,94 @@ export function completionsFromClassList(
         }
       }
 
-      items.push(
-        ...state.variants.flatMap((variant) => {
-          let items: CompletionItem[] = []
+      for (let variant of state.variants) {
+        if (existingVariants.includes(variant.name)) {
+          continue
+        }
 
-          if (variant.isArbitrary) {
-            items.push(
-              variantItem({
-                label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
-                insertTextFormat: 2,
-                textEditText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
-                // command: {
-                //   title: '',
-                //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
-                //   arguments: [variant.name, replacementRange],
-                // },
-              })
+        if (seenVariants.has(variant.name)) {
+          continue
+        }
+
+        seenVariants.add(variant.name)
+
+        if (variant.isArbitrary) {
+          items.push(
+            variantItem({
+              label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
+              insertTextFormat: 2,
+              textEditText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
+              // command: {
+              //   title: '',
+              //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+              //   arguments: [variant.name, replacementRange],
+              // },
+            })
+          )
+        } else {
+          let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+          let resultingVariants = [...existingVariants, variant.name]
+
+          if (shouldSortVariants) {
+            let allVariants = state.variants.map(({ name }) => name)
+            resultingVariants = resultingVariants.sort(
+              (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
             )
-          } else if (!existingVariants.includes(variant.name)) {
-            let shouldSortVariants = !semver.gte(state.version, '2.99.0')
-            let resultingVariants = [...existingVariants, variant.name]
+          }
 
-            if (shouldSortVariants) {
-              let allVariants = state.variants.map(({ name }) => name)
-              resultingVariants = resultingVariants.sort(
-                (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
-              )
-            }
-
-            items.push(
-              variantItem({
-                label: `${variant.name}${sep}`,
-                detail: variant
-                  .selectors()
-                  .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
-                  .join(', '),
-                textEditText: resultingVariants[resultingVariants.length - 1] + sep,
-                additionalTextEdits:
-                  shouldSortVariants && resultingVariants.length > 1
-                    ? [
-                        {
-                          newText:
-                            resultingVariants.slice(0, resultingVariants.length - 1).join(sep) +
-                            sep,
-                          range: {
-                            start: {
-                              ...classListRange.start,
-                              character: classListRange.end.character - partialClassName.length,
-                            },
-                            end: {
-                              ...replacementRange.start,
-                              character: replacementRange.start.character,
-                            },
+          items.push(
+            variantItem({
+              label: `${variant.name}${sep}`,
+              detail: variant
+                .selectors()
+                .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+                .join(', '),
+              textEditText: resultingVariants[resultingVariants.length - 1] + sep,
+              additionalTextEdits:
+                shouldSortVariants && resultingVariants.length > 1
+                  ? [
+                      {
+                        newText:
+                          resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
+                        range: {
+                          start: {
+                            ...classListRange.start,
+                            character: classListRange.end.character - partialClassName.length,
+                          },
+                          end: {
+                            ...replacementRange.start,
+                            character: replacementRange.start.character,
                           },
                         },
-                      ]
-                    : [],
-              })
-            )
+                      },
+                    ]
+                  : [],
+            })
+          )
+        }
+
+        for (let value of variant.values ?? []) {
+          if (existingVariants.includes(`${variant.name}-${value}`)) {
+            continue
           }
 
-          if (variant.values.length) {
-            items.push(
-              ...variant.values
-                .filter((value) => !existingVariants.includes(`${variant.name}-${value}`))
-                .map((value) =>
-                  variantItem({
-                    label:
-                      value === 'DEFAULT'
-                        ? `${variant.name}${sep}`
-                        : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
-                    detail: variant.selectors({ value }).join(', '),
-                  })
-                )
-            )
+          if (seenVariants.has(`${variant.name}-${value}`)) {
+            continue
           }
 
-          return items
-        })
-      )
+          seenVariants.add(`${variant.name}-${value}`)
+
+          items.push(
+            variantItem({
+              label:
+                value === 'DEFAULT'
+                  ? `${variant.name}${sep}`
+                  : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+              detail: variant.selectors({ value }).join(', '),
+            })
+          )
+        }
+      }
     }
 
     if (state.classList) {
