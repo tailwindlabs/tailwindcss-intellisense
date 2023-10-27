@@ -119,3 +119,35 @@ withFixture('basic', (c) => {
     })
   })
 })
+
+withFixture('overrides-variants', (c) => {
+  async function completion({
+    lang,
+    text,
+    position,
+    context = {
+      triggerKind: 1,
+    },
+    settings,
+  }) {
+    let textDocument = await c.openDocument({ text, lang, settings })
+
+    return c.sendRequest('textDocument/completion', {
+      textDocument,
+      position,
+      context,
+    })
+  }
+
+  test.concurrent(
+    'duplicate variant + value pairs do not produce multiple completions',
+    async () => {
+      let result = await completion({
+        text: '<div class="custom-hover"></div>',
+        position: { line: 0, character: 23 },
+      })
+
+      expect(result.items.filter((item) => item.label.endsWith('custom-hover:')).length).toBe(1)
+    }
+  )
+})
