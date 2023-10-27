@@ -1,7 +1,7 @@
 {
   "include": ["src", "../../types"],
   "compilerOptions": {
-    "module": "esnext",
+    "module": "NodeNext",
     "lib": ["ES2020"],
     "target": "ES2020",
     "importHelpers": true,
@@ -13,7 +13,7 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "jsx": "react",
     "esModuleInterop": true
   }
