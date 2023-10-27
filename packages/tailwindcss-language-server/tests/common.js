@@ -3,13 +3,11 @@ import * as cp from 'node:child_process'
 import * as rpc from 'vscode-jsonrpc'
 import { beforeAll } from 'vitest'
 
-let settings = {}
-let initPromise
-let childProcess
-let docSettings = new Map()
-
 async function init(fixture) {
-  childProcess = cp.fork('./bin/tailwindcss-language-server', { silent: true })
+  let settings = {}
+  let docSettings = new Map()
+
+  let childProcess = cp.fork('./bin/tailwindcss-language-server', { silent: true })
 
   const capabilities = {
     textDocument: {
@@ -116,7 +114,7 @@ async function init(fixture) {
     })
   })
 
-  initPromise = new Promise((resolve) => {
+  let initPromise = new Promise((resolve) => {
     connection.onRequest(new rpc.RequestType('client/registerCapability'), ({ registrations }) => {
       if (registrations.findIndex((r) => r.method === 'textDocument/completion') > -1) {
         resolve()
@@ -177,33 +175,18 @@ async function init(fixture) {
 }
 
 export function withFixture(fixture, callback) {
-  let c
+  let c = {}
 
   beforeAll(async () => {
-    c = await init(fixture)
+    // Using the connection object as the prototype lets us access the connection
+    // without defining getters for all the methods and also lets us add helpers
+    // to the connection object without having to resort to using a Proxy
+    Object.setPrototypeOf(c, await init(fixture))
+
     return () => c.connection.end()
   })
 
-  callback({
-    get connection() {
-      return c.connection
-    },
-    get sendRequest() {
-      return c.sendRequest
-    },
-    get onNotification() {
-      return c.onNotification
-    },
-    get openDocument() {
-      return c.openDocument
-    },
-    get updateSettings() {
-      return c.updateSettings
-    },
-    get updateFile() {
-      return c.updateFile
-    },
-  })
+  callback(c)
 }
 
 // let counter = 0
