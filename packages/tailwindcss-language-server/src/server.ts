@@ -46,45 +46,45 @@ import resolveFrom, { setPnpApi } from './util/resolveFrom'
 import { AtRule, Container, Node, Result } from 'postcss'
 import Module from 'module'
 import Hook from './lib/hook'
-import * as semver from 'tailwindcss-language-service/src/util/semver'
+import * as semver from '@tailwindcss/language-service/src/util/semver'
 import dlv from 'dlv'
 import { dset } from 'dset'
 import pkgUp from 'pkg-up'
 import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
-import { doHover } from 'tailwindcss-language-service/src/hoverProvider'
+import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
 import {
   doComplete,
   resolveCompletionItem,
-} from 'tailwindcss-language-service/src/completionProvider'
+} from '@tailwindcss/language-service/src/completionProvider'
 import {
   State,
   FeatureFlags,
   Settings,
   ClassNames,
   Variant,
-} from 'tailwindcss-language-service/src/util/state'
+} from '@tailwindcss/language-service/src/util/state'
 import { provideDiagnostics } from './lsp/diagnosticsProvider'
-import { doCodeActions } from 'tailwindcss-language-service/src/codeActions/codeActionProvider'
-import { getDocumentColors } from 'tailwindcss-language-service/src/documentColorProvider'
-import { getDocumentLinks } from 'tailwindcss-language-service/src/documentLinksProvider'
+import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
+import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
+import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import * as parcel from './watcher/index.js'
-import { bigSign } from 'tailwindcss-language-service/src/util/jit'
-import { getColor } from 'tailwindcss-language-service/src/util/color'
+import { bigSign } from '@tailwindcss/language-service/src/util/jit'
+import { getColor } from '@tailwindcss/language-service/src/util/color'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
 import isExcluded from './util/isExcluded'
 import { getFileFsPath, normalizeFileNameToFsPath } from './util/uri'
-import { equal } from 'tailwindcss-language-service/src/util/array'
+import { equal } from '@tailwindcss/language-service/src/util/array'
 import preflight from 'tailwindcss/lib/css/preflight.css'
 import merge from 'deepmerge'
-import { getTextWithoutComments } from 'tailwindcss-language-service/src/util/doc'
+import { getTextWithoutComments } from '@tailwindcss/language-service/src/util/doc'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 
 // @ts-ignore

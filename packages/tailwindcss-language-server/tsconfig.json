@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "baseUrl": "..",
     "paths": {
-      "tailwindcss-language-service/*": ["../packages/tailwindcss-language-service/*"]
+      "@tailwindcss/language-service/*": ["../packages/tailwindcss-language-service/*"]
     }
   },
   "include": ["src", "../packages/tailwindcss-language-service", "../../types"]
