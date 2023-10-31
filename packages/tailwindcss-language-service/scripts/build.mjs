@@ -30,7 +30,7 @@ let build = await esbuild.context({
           // Call the tsc command to generate the types
           spawnSync(
             'tsc',
-            ['--emitDeclarationOnly', '--outFile', path.resolve(__dirname, '../dist/index.d.ts')],
+            ['--emitDeclarationOnly', '--outDir', path.resolve(__dirname, '../dist')],
             {
               stdio: 'inherit',
             }
