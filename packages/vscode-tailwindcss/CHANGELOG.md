@@ -2,6 +2,10 @@
 
 ## 0.11.x (Pre-Release)
 
+- Nothing yet
+
+## 0.10.2
+
 - Add support for Glimmer (#867)
 - Ignore duplicate variant + value pairs (#874)
 
