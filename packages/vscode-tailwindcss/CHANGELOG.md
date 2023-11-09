@@ -2,7 +2,7 @@
 
 ## 0.11.x (Pre-Release)
 
-- Nothing yet
+- Enable Sort Selection on a remote host (#878)
 
 ## 0.10.2
 

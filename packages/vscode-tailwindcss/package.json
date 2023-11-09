@@ -64,7 +64,7 @@
       {
         "command": "tailwindCSS.sortSelection",
         "title": "Tailwind CSS: Sort Selection",
-        "enablement": "editorHasSelection && resourceScheme == file && tailwindCSS.activeTextEditorSupportsClassSorting"
+        "enablement": "editorHasSelection && (resourceScheme == file || resourceScheme == vscode-remote) && tailwindCSS.activeTextEditorSupportsClassSorting"
       }
     ],
     "grammars": [
