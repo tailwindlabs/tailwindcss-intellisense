@@ -43,6 +43,7 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
       if (value === null) {
         return null
       }
+
       return {
         contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
         range: helperFn.ranges.path,

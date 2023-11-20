@@ -177,7 +177,7 @@ async function findCustomClassLists(
           })
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   return result
@@ -238,7 +238,7 @@ export async function findClassListsInHtmlRange(
           currentClassList = undefined
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     if (currentClassList) {
       classLists.push({
@@ -326,7 +326,7 @@ export async function findClassListsInDocument(
           .filter((b) => b.type === 'html' || b.type === 'jsx' || b.type == 'rust')
           .map(({ type, range }) => {
             return findClassListsInHtmlRange(state, doc, type === 'html' || type === 'rust' ? 'html' : 'jsx', range)
-        }
+          }
           )
       )),
       ...boundaries
@@ -454,8 +454,8 @@ export async function findClassNameAtPosition(
   else if (isRustContext(doc)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
   }
-  
-   else {
+
+  else {
     classNames = await findClassNamesInRange(state, doc, searchRange)
   }
 

@@ -248,7 +248,7 @@ async function getConfiguration(uri?: string) {
       editor: { tabSize: 2 },
       tailwindCSS: {
         emmetCompletions: false,
-        classAttributes: ['class', 'className', 'ngClass'],
+        classAttributes: ['class', 'className', 'ngClass', '\\w.*_CLASS', '\\w.*_class'],
         codeActions: true,
         hovers: true,
         suggestions: true,
