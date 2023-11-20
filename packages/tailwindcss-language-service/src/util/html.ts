@@ -30,3 +30,7 @@ export function isHtmlContext(state: State, doc: TextDocument, position: Positio
 
   return boundaries ? boundaries[boundaries.length - 1].type === 'html' : false
 }
+
+export function isRustContext(doc: TextDocument): boolean {
+  return doc.languageId === 'rust';
+}

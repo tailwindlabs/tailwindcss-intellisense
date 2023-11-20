@@ -1,3 +1,7 @@
+# THIS IS NOT MAINTED BY TAILWINDCSS TEAM
+
+[Helix issue](https://github.com/helix-editor/helix/issues/2213)
+
 # Tailwind CSS Language Server
 
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) implementation for [Tailwind CSS](https://tailwindcss.com), used by [Tailwind CSS IntelliSense for VS Code](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss).

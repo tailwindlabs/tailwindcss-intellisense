@@ -12,7 +12,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
 import { getColor, getColorFromValue } from './util/color'
-import { isHtmlContext } from './util/html'
+import { isHtmlContext, isRustContext } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
@@ -36,6 +36,7 @@ import {
   addPixelEquivalentsToMediaQuery,
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
+import { trimClass } from './fakeConstructor'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -51,13 +52,14 @@ export function completionsFromClassList(
   context?: CompletionContext
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
-  const partialClassName = classNames[classNames.length - 1]
+  let partialClassName = classNames[classNames.length - 1];
   let sep = state.separator
   let parts = partialClassName.split(sep)
   let subset: any
   let subsetKey: string[] = []
   let isSubset: boolean = false
 
+  let lastClass = trimClass(classList)
   let replacementRange = {
     ...classListRange,
     start: {
@@ -156,9 +158,9 @@ export function completionsFromClassList(
             item.insertTextFormat === 2 // Snippet
               ? undefined
               : {
-                  title: '',
-                  command: 'editor.action.triggerSuggest',
-                },
+                title: '',
+                command: 'editor.action.triggerSuggest',
+              },
           sortText: '-' + naturalExpand(variantOrder++),
           ...item,
         }
@@ -210,21 +212,21 @@ export function completionsFromClassList(
               additionalTextEdits:
                 shouldSortVariants && resultingVariants.length > 1
                   ? [
-                      {
-                        newText:
-                          resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
-                        range: {
-                          start: {
-                            ...classListRange.start,
-                            character: classListRange.end.character - partialClassName.length,
-                          },
-                          end: {
-                            ...replacementRange.start,
-                            character: replacementRange.start.character,
-                          },
+                    {
+                      newText:
+                        resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
+                      range: {
+                        start: {
+                          ...classListRange.start,
+                          character: classListRange.end.character - partialClassName.length,
+                        },
+                        end: {
+                          ...replacementRange.start,
+                          character: replacementRange.start.character,
                         },
                       },
-                    ]
+                    },
+                  ]
                   : [],
             })
           )
@@ -255,34 +257,44 @@ export function completionsFromClassList(
     }
 
     if (state.classList) {
+      let isFirst = false;
+      let items2 = state.classList.reduce<CompletionItem[]>((items2, [className, { color }], index) => {
+        if (
+          state.blocklist?.includes([...existingVariants, className].join(state.separator))
+        ) {
+          return items2
+        }
+
+        let kind: CompletionItemKind = color ? 16 : 21
+        let documentation: string | undefined
+
+        if (color && typeof color !== 'string') {
+          documentation = culori.formatRgb(color)
+        }
+
+        let precise = className.includes(lastClass);
+        if (precise) {
+          if (isFirst == false) {
+            isFirst = true;
+            items = [];
+          }
+          let sortText = precise ? "-000000000" : naturalExpand(index, state.classList.length);
+          items2.push({
+            label: className,
+            kind: kind,
+            ...(documentation ? { documentation } : {}),
+            sortText: sortText
+            // sortText: naturalExpand(index, state.classList.length),
+          })
+        }
+        return items2
+      }, [] as CompletionItem[]);
+
+
       return withDefaults(
         {
           isIncomplete: false,
-          items: items.concat(
-            state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
-              if (
-                state.blocklist?.includes([...existingVariants, className].join(state.separator))
-              ) {
-                return items
-              }
-
-              let kind: CompletionItemKind = color ? 16 : 21
-              let documentation: string | undefined
-
-              if (color && typeof color !== 'string') {
-                documentation = culori.formatRgb(color)
-              }
-
-              items.push({
-                label: className,
-                kind,
-                ...(documentation ? { documentation } : {}),
-                sortText: naturalExpand(index, state.classList.length),
-              })
-
-              return items
-            }, [] as CompletionItem[])
-          ),
+          items: items.concat(items2),
         },
         {
           data: {
@@ -491,7 +503,7 @@ async function provideClassAttributeCompletions(
         context
       )
     }
-  } catch (_) {}
+  } catch (_) { }
 
   return null
 }
@@ -567,7 +579,7 @@ async function provideCustomClassNameCompletions(
           )
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   return null
@@ -634,7 +646,7 @@ async function provideClassNameCompletions(
     return provideAtApplyCompletions(state, document, position, context)
   }
 
-  if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
+  if (isHtmlContext(state, document, position) || isJsxContext(state, document, position) || isRustContext(document)  ) {
     return provideClassAttributeCompletions(state, document, position, context)
   }
 
@@ -759,17 +771,17 @@ function provideCssHelperCompletions(
             ...(insertClosingBrace ? { textEditText: `${item}]` } : {}),
             additionalTextEdits: replaceDot
               ? [
-                  {
-                    newText: '[',
-                    range: {
-                      start: {
-                        ...editRange.start,
-                        character: editRange.start.character - 1,
-                      },
-                      end: editRange.start,
+                {
+                  newText: '[',
+                  range: {
+                    start: {
+                      ...editRange.start,
+                      character: editRange.start.character - 1,
                     },
+                    end: editRange.start,
                   },
-                ]
+                },
+              ]
               : [],
           }
         }),
@@ -806,25 +818,25 @@ function provideTailwindDirectiveCompletions(
   let items = [
     semver.gte(state.version, '1.0.0-beta.1')
       ? {
-          label: 'base',
-          documentation: {
-            kind: 'markdown' as typeof MarkupKind.Markdown,
-            value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
-              state.version,
-              'functions-and-directives/#tailwind'
-            )})`,
-          },
-        }
-      : {
-          label: 'preflight',
-          documentation: {
-            kind: 'markdown' as typeof MarkupKind.Markdown,
-            value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
-              state.version,
-              'functions-and-directives/#tailwind'
-            )})`,
-          },
+        label: 'base',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
         },
+      }
+      : {
+        label: 'preflight',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
+        },
+      },
     {
       label: 'components',
       documentation: {
@@ -847,25 +859,25 @@ function provideTailwindDirectiveCompletions(
     },
     state.jit && semver.gte(state.version, '2.1.99')
       ? {
-          label: 'variants',
-          documentation: {
-            kind: 'markdown' as typeof MarkupKind.Markdown,
-            value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
-              state.version,
-              'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
-            )})`,
-          },
-        }
-      : {
-          label: 'screens',
-          documentation: {
-            kind: 'markdown' as typeof MarkupKind.Markdown,
-            value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
-              state.version,
-              'functions-and-directives/#tailwind'
-            )})`,
-          },
+        label: 'variants',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
+          )})`,
         },
+      }
+      : {
+        label: 'screens',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
+        },
+      },
   ]
 
   return withDefaults(
@@ -1019,29 +1031,29 @@ function withDefaults(
     ...completionList,
     ...(defaultData || defaultRange
       ? {
-          itemDefaults: {
-            ...(defaultData && defaults.data ? { data: defaults.data } : {}),
-            ...(defaultRange && defaults.range ? { editRange: defaults.range } : {}),
-          },
-        }
+        itemDefaults: {
+          ...(defaultData && defaults.data ? { data: defaults.data } : {}),
+          ...(defaultRange && defaults.range ? { editRange: defaults.range } : {}),
+        },
+      }
       : {}),
     items:
       defaultData && defaultRange
         ? completionList.items
         : completionList.items.map(({ textEditText, ...item }) => ({
-            ...item,
-            ...(defaultData || !defaults.data || item.data ? {} : { data: defaults.data }),
-            ...(defaultRange || !defaults.range
-              ? textEditText
-                ? { textEditText }
-                : {}
-              : {
-                  textEdit: {
-                    newText: textEditText ?? item.label,
-                    range: defaults.range,
-                  },
-                }),
-          })),
+          ...item,
+          ...(defaultData || !defaults.data || item.data ? {} : { data: defaults.data }),
+          ...(defaultRange || !defaults.range
+            ? textEditText
+              ? { textEditText }
+              : {}
+            : {
+              textEdit: {
+                newText: textEditText ?? item.label,
+                range: defaults.range,
+              },
+            }),
+        })),
   }
 }
 
@@ -1116,12 +1128,11 @@ function provideCssDirectiveCompletions(
       label: '@tailwind',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
-          state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
-        }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#tailwind'
-        )})`,
+        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
+          }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#tailwind'
+          )})`,
       },
     },
     {
@@ -1146,55 +1157,55 @@ function provideCssDirectiveCompletions(
     },
     ...(semver.gte(state.version, '1.8.0')
       ? [
-          {
-            label: '@layer',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#layer'
-              )})`,
-            },
+        {
+          label: '@layer',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#layer'
+            )})`,
           },
-        ]
+        },
+      ]
       : []),
     ...(semver.gte(state.version, '2.99.0')
       ? []
       : [
-          {
-            label: '@variants',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#variants'
-              )})`,
-            },
+        {
+          label: '@variants',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#variants'
+            )})`,
           },
-          {
-            label: '@responsive',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#responsive'
-              )})`,
-            },
+        },
+        {
+          label: '@responsive',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#responsive'
+            )})`,
           },
-        ]),
+        },
+      ]),
     ...(semver.gte(state.version, '3.2.0')
       ? [
-          {
-            label: '@config',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#config'
-              )})`,
-            },
+        {
+          label: '@config',
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
+              state.version,
+              'functions-and-directives/#config'
+            )})`,
           },
-        ]
+        },
+      ]
       : []),
   ]
 
