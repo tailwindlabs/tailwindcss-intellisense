@@ -75,4 +75,21 @@ withFixture('basic', (c) => {
       end: { line: 0, character: 31 },
     },
   })
+
+  testHover('simplified hovers', {
+    text: '<div class="[[data-important]_&]:bg-purple-300">',
+    position: { line: 0, character: 13 },
+    settings: {
+      tailwindCSS: { simplifyHovers: true },
+    },
+    expected:
+      '[data-important] & {\n' +
+      '  --tw-bg-opacity: 1;\n' +
+      '  background-color: rgb(216 180 254 / var(--tw-bg-opacity));\n' +
+      '}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 46 },
+    },
+  })
 })

@@ -1,5 +1,6 @@
 import { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
+import escapeClassName from 'css.escape'
 import { addPixelEquivalentsToCss, addPixelEquivalentsToValue } from './pixelEquivalents'
 
 export function bigSign(bigIntValue) {
@@ -33,13 +34,26 @@ export function generateRules(
   }
 }
 
-export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
+export async function stringifyRoot(
+  state: State,
+  root: Root,
+  className: string,
+  uri?: string
+): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
   let clone = root.clone()
 
   clone.walkAtRules('defaults', (node) => {
     node.remove()
   })
+
+  if (settings.tailwindCSS.simplifyHovers) {
+    clone.walkRules((rule) => {
+      rule.selectors = rule.selectors.map((selector) => {
+        return selector.replace(`.${escapeClassName(className)}`, '&')
+      })
+    })
+  }
 
   let css = clone.toString()
 

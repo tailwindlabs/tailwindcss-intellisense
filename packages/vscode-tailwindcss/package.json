@@ -195,6 +195,12 @@
           "markdownDescription": "Enable hovers.",
           "scope": "language-overridable"
         },
+        "tailwindCSS.simplifyHovers": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Simplify hovers to use the CSS nesting selector (`&`) in place of the class name.",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.codeActions": {
           "type": "boolean",
           "default": true,

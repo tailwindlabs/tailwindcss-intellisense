@@ -108,6 +108,10 @@ Root font size in pixels. Used to convert `rem` CSS values to their `px` equival
 
 Enable hovers. **Default: `true`**
 
+### `tailwindCSS.simplifyHovers`
+
+Simplify hovers to use the CSS nesting selector (`&`) in place of the class name. **Default: `false`**
+
 ### `tailwindCSS.suggestions`
 
 Enable autocomplete suggestions. **Default: `true`**

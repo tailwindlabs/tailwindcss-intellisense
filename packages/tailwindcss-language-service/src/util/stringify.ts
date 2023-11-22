@@ -49,7 +49,7 @@ export function stringifyCss(className: string, obj: any, settings: Settings): s
       .join('\n')
     return `${acc}${i === 0 ? '' : '\n'}${propStr}`
   }, '')
-  css += `${indentStr}${augmentClassName(className, obj)} {\n${decls}\n${indentStr}}`
+  css += `${indentStr}${augmentClassName(className, obj, settings)} {\n${decls}\n${indentStr}}`
 
   for (let i = context.length - 1; i >= 0; i--) {
     css += `${indent.repeat(i)}\n}`
@@ -62,8 +62,9 @@ export function stringifyCss(className: string, obj: any, settings: Settings): s
   return css
 }
 
-function augmentClassName(className: string, obj: any): string {
+function augmentClassName(className: string, obj: any, settings: Settings): string {
+  const classSelector = settings.tailwindCSS.simplifyHovers ? '&' : `.${escapeClassName(className)}`
   const pseudo = obj.__pseudo.join('')
   const scope = obj.__scope ? `${obj.__scope} ` : ''
-  return `${scope}.${escapeClassName(className)}${pseudo}`
+  return `${scope}${classSelector}${pseudo}`
 }

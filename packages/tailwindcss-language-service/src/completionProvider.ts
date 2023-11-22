@@ -1416,7 +1416,7 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: ['```css', await jit.stringifyRoot(state, root), '```'].join('\n'),
+        value: ['```css', await jit.stringifyRoot(state, root, className), '```'].join('\n'),
       }
     }
     return item
