@@ -114,7 +114,7 @@ withFixture('basic', (c) => {
       detail: 'text-transform: uppercase;',
       documentation: {
         kind: 'markdown',
-        value: '```css\n.uppercase {\n  text-transform: uppercase;\n}\n```',
+        value: '```css\n& {\n  text-transform: uppercase;\n}\n```',
       },
     })
   })

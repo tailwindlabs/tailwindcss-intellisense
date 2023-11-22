@@ -110,7 +110,7 @@ Enable hovers. **Default: `true`**
 
 ### `tailwindCSS.simplifyHovers`
 
-Simplify hovers to use the CSS nesting selector (`&`) in place of the class name. **Default: `false`**
+Simplify hovers to use the CSS nesting selector (`&`) in place of the class name. **Default: `true`**
 
 ### `tailwindCSS.suggestions`
 

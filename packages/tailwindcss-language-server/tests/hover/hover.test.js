@@ -36,7 +36,7 @@ withFixture('basic', (c) => {
     text: '<div class="bg-red-500">',
     position: { line: 0, character: 13 },
     expected:
-      '.bg-red-500 {\n' +
+      '& {\n' +
       '  --tw-bg-opacity: 1;\n' +
       '  background-color: rgb(239 68 68 / var(--tw-bg-opacity));\n' +
       '}',
@@ -49,7 +49,7 @@ withFixture('basic', (c) => {
   testHover('arbitrary value', {
     text: '<div class="p-[3px]">',
     position: { line: 0, character: 13 },
-    expected: '.p-\\[3px\\] {\n' + '  padding: 3px;\n' + '}',
+    expected: '& {\n' + '  padding: 3px;\n' + '}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 19 },
@@ -59,7 +59,7 @@ withFixture('basic', (c) => {
   testHover('arbitrary value with theme function', {
     text: '<div class="p-[theme(spacing.4)]">',
     position: { line: 0, character: 13 },
-    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem/* 16px */;\n' + '}',
+    expected: '& {\n' + '  padding: 1rem/* 16px */;\n' + '}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 32 },
@@ -69,21 +69,21 @@ withFixture('basic', (c) => {
   testHover('arbitrary property', {
     text: '<div class="[text-wrap:balance]">',
     position: { line: 0, character: 13 },
-    expected: '.\\[text-wrap\\:balance\\] {\n' + '  text-wrap: balance;\n' + '}',
+    expected: '& {\n' + '  text-wrap: balance;\n' + '}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 31 },
     },
   })
 
-  testHover('simplified hovers', {
+  testHover('disable simplified hovers', {
     text: '<div class="[[data-important]_&]:bg-purple-300">',
     position: { line: 0, character: 13 },
     settings: {
-      tailwindCSS: { simplifyHovers: true },
+      tailwindCSS: { simplifyHovers: false },
     },
     expected:
-      '[data-important] & {\n' +
+      '[data-important] .\\[\\[data-important\\]_\\&\\]\\:bg-purple-300 {\n' +
       '  --tw-bg-opacity: 1;\n' +
       '  background-color: rgb(216 180 254 / var(--tw-bg-opacity));\n' +
       '}',
