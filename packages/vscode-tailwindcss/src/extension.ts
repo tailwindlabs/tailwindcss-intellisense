@@ -27,6 +27,8 @@ import {
   SnippetString,
   TextEdit,
   Selection,
+  workspace,
+  ConfigurationTarget,
 } from 'vscode'
 import {
   LanguageClient,
@@ -702,6 +704,16 @@ export async function activate(context: ExtensionContext) {
     client.start()
     clients.set(folder.uri.toString(), client)
   }
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.addWordToWorkspaceFileFromServer', (name) => {
+		const storedKeys: string[] = workspace.getConfiguration().get('tailwindCSS.ignoredCSS')
+		
+		storedKeys.push(name);
+		workspace.getConfiguration()
+			.update('tailwindCSS.ignoredCSS', [...new Set(storedKeys)], ConfigurationTarget.Workspace)
+    })
+  )
 
   async function bootClientForFolderIfNeeded(folder: WorkspaceFolder): Promise<void> {
     let settings = Workspace.getConfiguration('tailwindCSS', folder)

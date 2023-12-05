@@ -8,7 +8,7 @@ import { getInvalidVariantDiagnostics } from './getInvalidVariantDiagnostics'
 import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnostics'
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
-import { getUnknownClassesDiagnostics } from './getUnknownClassesDiagnostics'
+import { getInvalidValueDiagnostics } from './getInvalidValueDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -29,7 +29,7 @@ export async function doValidate(
   return settings.tailwindCSS.validate
     ? [
         ...(only.includes(DiagnosticKind.InvalidIdentifier)
-          ? await getUnknownClassesDiagnostics(state, document, settings)
+          ? await getInvalidValueDiagnostics(state, document, settings)
           : []),
 		...(only.includes(DiagnosticKind.CssConflict)
           ? await getCssConflictDiagnostics(state, document, settings)
