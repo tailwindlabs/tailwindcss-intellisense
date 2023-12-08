@@ -3,6 +3,7 @@
 ## 0.11.x (Pre-Release)
 
 - Enable Sort Selection on a remote host (#878)
+- Add `simplifyHovers` option that replaces the class name with the ampersand (#881)
 
 ## 0.10.2
 

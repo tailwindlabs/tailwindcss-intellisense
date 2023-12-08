@@ -251,6 +251,7 @@ async function getConfiguration(uri?: string) {
         classAttributes: ['class', 'className', 'ngClass'],
         codeActions: true,
         hovers: true,
+        simplifyHovers: true,
         suggestions: true,
         validate: true,
         colorDecorators: true,

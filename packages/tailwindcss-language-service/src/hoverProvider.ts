@@ -1,5 +1,5 @@
 import { State } from './util/state'
-import type { Hover,  Position } from 'vscode-languageserver'
+import type { Hover, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
@@ -71,7 +71,7 @@ async function provideClassNameHover(
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, root, document.uri),
+        value: await jit.stringifyRoot(state, root, className.className, document.uri),
       },
       range: className.range,
     }
