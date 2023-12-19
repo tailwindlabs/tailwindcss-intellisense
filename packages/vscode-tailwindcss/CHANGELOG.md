@@ -4,7 +4,8 @@
 
 - Enable Sort Selection on a remote host (#878)
 - Show color decorators in split editors (#888)
-
+- Bump bundled version of `tailwindcss` to `v3.4.0` (#889)
+i
 ## 0.10.2
 
 - Add support for Glimmer (#867)
