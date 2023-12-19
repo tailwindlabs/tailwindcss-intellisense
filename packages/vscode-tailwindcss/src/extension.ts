@@ -613,9 +613,14 @@ export async function activate(context: ExtensionContext) {
             })
           }
 
-          Window.visibleTextEditors
-            .find((editor) => editor.document === document)
-            ?.setDecorations(
+          let editors = Window.visibleTextEditors.filter(
+            (editor) => editor.document === document
+          )
+
+          // Make sure we show document colors for all visible editors
+          // Not just the first one for a given document
+          editors.forEach((editor) => {
+            editor.setDecorations(
               colorDecorationType,
               nonEditableColors.map(({ range, color }) => ({
                 range,
@@ -628,6 +633,7 @@ export async function activate(context: ExtensionContext) {
                 },
               }))
             )
+          })
 
           return editableColors
         },

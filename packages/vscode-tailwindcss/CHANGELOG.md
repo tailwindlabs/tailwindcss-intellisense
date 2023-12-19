@@ -3,6 +3,7 @@
 ## 0.11.x (Pre-Release)
 
 - Enable Sort Selection on a remote host (#878)
+- Show color decorators in split editors (#888)
 
 ## 0.10.2
 
