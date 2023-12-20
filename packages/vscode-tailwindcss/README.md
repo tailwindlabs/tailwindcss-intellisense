@@ -88,7 +88,7 @@ Enable completions when using [Emmet](https://emmet.io/)-style syntax, for examp
 
 ### `tailwindCSS.classAttributes`
 
-The HTML attributes for which to provide class completions, hover previews, linting etc. **Default: `class`, `className`, `ngClass`**
+The HTML attributes for which to provide class completions, hover previews, linting etc. **Default: `class`, `className`, `ngClass`, `class:list`**
 
 ### `tailwindCSS.colorDecorators`
 
