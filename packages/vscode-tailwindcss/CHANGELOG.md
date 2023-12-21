@@ -2,6 +2,10 @@
 
 ## 0.11.x (Pre-Release)
 
+- No changes yet!
+
+## 0.10.4
+
 - Enable Sort Selection on a remote host (#878)
 - Show color decorators in split editors (#888)
 - Bump bundled version of `tailwindcss` to `v3.4.0` (#889)
