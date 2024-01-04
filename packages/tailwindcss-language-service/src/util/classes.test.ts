@@ -160,11 +160,51 @@ let table: TestRecord[] = [
 
   // Edge cases
   {
-    name: 'regex matches empty string',
+    name: 'container regex matches empty string',
     text: `let _ = ""`,
     cursor: 9,
     filters: [['(?<=")(\\w*)(?=")']],
     expected: [{ classList: '', range: [9, 9] }],
+  },
+
+  {
+    name: 'container regex matches empty string (no cursor)',
+    text: `let _ = ""`,
+    cursor: null,
+    filters: [['(?<=")(\\w*)(?=")']],
+    expected: [{ classList: '', range: [9, 9] }],
+  },
+
+  {
+    name: 'class regex matches empty string',
+    text: `let _ = clsx("")`,
+    cursor: 14,
+    filters: [['clsx\\(([^)]*)\\)', '(?<=")([^"]*)(?<=")']],
+    expected: [{ classList: '', range: [14, 14] }],
+  },
+
+  {
+    name: 'class regex matches empty string (no cursor)',
+    text: `let _ = clsx("")`,
+    cursor: null,
+    filters: [['clsx\\(([^)]*)\\)', '(?<=")([^"]*)(?<=")']],
+    expected: [{ classList: '', range: [14, 14] }, { classList: '', range: [15, 15] }],
+  },
+
+  {
+    name: 'container regex is missing a capture group',
+    text: `let _ = ""`,
+    cursor: null,
+    filters: [['(?<=")\\w*(?=")']],
+    expected: [],
+  },
+
+  {
+    name: 'class regex is missing a capture group',
+    text: `let _ = clsx("")`,
+    cursor: null,
+    filters: [['clsx\\(([^)]*)\\)', '"[^"]*"']],
+    expected: [],
   },
 ]
 

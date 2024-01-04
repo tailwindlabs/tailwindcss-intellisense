@@ -34,6 +34,12 @@ function *matchesIn(
   cursor: number | null,
 ): Iterable<ClassMatch> {
   for (let containerMatch of text.matchAll(containerRegex)) {
+    // Don't crash when there's no capture group
+    if (containerMatch[1] === undefined) {
+      console.warn(`Regex /${containerRegex.source}/ must have exactly one capture group`)
+      continue
+    }
+
     const matchStart = containerMatch.indices[1][0]
     const matchEnd = matchStart + containerMatch[1].length
 
@@ -54,6 +60,12 @@ function *matchesIn(
 
     // Handle class matches inside the "container"
     for (let classMatch of containerMatch[1].matchAll(classRegex)) {
+      // Don't crash when there's no capture group
+      if (classMatch[1] === undefined) {
+        console.warn(`Regex /${classRegex.source}/ must have exactly one capture group`)
+        continue
+      }
+
       const classMatchStart = matchStart + classMatch.indices[1][0]
       const classMatchEnd = classMatchStart + classMatch[1].length
 
