@@ -1,5 +1,6 @@
 {
   "include": ["src", "../../types"],
+  "exclude": ["src/**/*.test.ts"],
   "compilerOptions": {
     "module": "NodeNext",
     "lib": ["ES2022"],
