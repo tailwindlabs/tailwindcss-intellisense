@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node ./scripts/build.mjs --watch",
     "build": "node ./scripts/build.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest"
   },
   "dependencies": {
     "@csstools/css-parser-algorithms": "2.1.1",
@@ -43,6 +44,7 @@
     "esbuild-node-externals": "^1.9.0",
     "prettier": "2.3.0",
     "tslib": "2.2.0",
-    "typescript": "^5.2"
+    "typescript": "^5.2",
+    "vitest": "^1.1.2"
   }
 }

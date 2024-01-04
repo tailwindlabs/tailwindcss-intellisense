@@ -72,7 +72,7 @@
     "tailwindcss": "3.4.1",
     "@tailwindcss/language-service": "*",
     "typescript": "4.6.4",
-    "vitest": "0.34.2",
+    "vitest": "^1.1.2",
     "vscode-css-languageservice": "6.2.9",
     "vscode-jsonrpc": "8.1.0",
     "vscode-languageserver": "8.0.2",

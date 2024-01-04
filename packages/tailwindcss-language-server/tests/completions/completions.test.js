@@ -84,6 +84,19 @@ withFixture('basic', (c) => {
     })
   })
 
+  test.concurrent('classRegex simple (no matches)', async () => {
+    let result = await completion({
+      text: 'tron ',
+      position: {
+        line: 0,
+        character: 5,
+      },
+      settings: { tailwindCSS: { experimental: { classRegex: ['test (\\S*)'] } } },
+    })
+
+    expect(result).toBe(null)
+  })
+
   test.concurrent('classRegex nested', async () => {
     await expectCompletions({
       text: 'test ""',
@@ -95,6 +108,68 @@ withFixture('basic', (c) => {
         tailwindCSS: { experimental: { classRegex: [['test (\\S*)', '"([^"]*)"']] } },
       },
     })
+  })
+
+  test.concurrent('classRegex nested (no matches, container)', async () => {
+    let result = await completion({
+      text: 'tron ""',
+      position: {
+        line: 0,
+        character: 6,
+      },
+      settings: {
+        tailwindCSS: { experimental: { classRegex: [['test (\\S*)', '"([^"]*)"']] } },
+      },
+    })
+
+    expect(result).toBe(null)
+  })
+
+  test.concurrent('classRegex nested (no matches, class)', async () => {
+    let result = await completion({
+      text: 'test ``',
+      position: {
+        line: 0,
+        character: 6,
+      },
+      settings: {
+        tailwindCSS: { experimental: { classRegex: [['test (\\S*)', '"([^"]*)"']] } },
+      },
+    })
+
+    expect(result).toBe(null)
+  })
+
+  test('classRegex matching empty string', async () => {
+    try {
+      let result = await completion({
+        text: "let _ = ''",
+        position: {
+          line: 0,
+          character: 18,
+        },
+        settings: {
+          tailwindCSS: { experimental: { classRegex: [["(?<=')(\\w*)(?=')"]] } },
+        },
+      })
+      expect(result).toBe(null)
+    } catch (err) {
+      console.log(err.toJson())
+      throw err
+    }
+
+    let result2 = await completion({
+      text: "let _ = ''; let _2 = 'text-",
+      position: {
+        line: 0,
+        character: 27,
+      },
+      settings: {
+        tailwindCSS: { experimental: { classRegex: [["(?<=')(\\w*)(?=')"]] } },
+      },
+    })
+
+    expect(result2).toBe(null)
   })
 
   test.concurrent('resolve', async () => {
