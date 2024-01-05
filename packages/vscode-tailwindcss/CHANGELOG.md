@@ -2,6 +2,10 @@
 
 ## 0.11.x (Pre-Release)
 
+- Nothing yet!
+
+## 0.10.5
+
 - Bump bundled version of `tailwindcss` to `v3.4.1` (#898)
 
 ## 0.10.4
