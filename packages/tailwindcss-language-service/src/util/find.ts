@@ -10,9 +10,9 @@ import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { resolveRange } from './resolveRange'
-import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
+import { customClassesIn } from './classes'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -132,52 +132,24 @@ async function findCustomClassLists(
 ): Promise<DocumentClassList[]> {
   const settings = await state.editor.getConfiguration(doc.uri)
   const regexes = settings.tailwindCSS.experimental.classRegex
-
   if (!Array.isArray(regexes) || regexes.length === 0) return []
 
   const text = doc.getText(range ? { ...range, start: doc.positionAt(0) } : undefined)
   const result: DocumentClassList[] = []
 
-  for (let i = 0; i < regexes.length; i++) {
-    try {
-      let [containerRegexString, classRegexString] = Array.isArray(regexes[i])
-        ? regexes[i]
-        : [regexes[i]]
-
-      let containerRegex = new Regex(containerRegexString, 'g')
-      let containerMatch: ReturnType<Regex['exec']>
-
-      while ((containerMatch = containerRegex.exec(text)) !== null) {
-        const searchStart = doc.offsetAt({ line: 0, character: 0 })
-        const matchStart = searchStart + containerMatch.index[1]
-        const matchEnd = matchStart + containerMatch[1].length
-
-        if (classRegexString) {
-          let classRegex = new Regex(classRegexString, 'g')
-          let classMatch: ReturnType<Regex['exec']>
-
-          while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
-            const classMatchStart = matchStart + classMatch.index[1]
-            const classMatchEnd = classMatchStart + classMatch[1].length
-            result.push({
-              classList: classMatch[1],
-              range: {
-                start: doc.positionAt(classMatchStart),
-                end: doc.positionAt(classMatchEnd),
-              },
-            })
-          }
-        } else {
-          result.push({
-            classList: containerMatch[1],
-            range: {
-              start: doc.positionAt(matchStart),
-              end: doc.positionAt(matchEnd),
-            },
-          })
-        }
-      }
-    } catch (_) {}
+  try {
+    for (let match of customClassesIn({ text, filters: regexes })) {
+      result.push({
+        classList: match.classList,
+        range: {
+          start: doc.positionAt(match.range[0]),
+          end: doc.positionAt(match.range[1]),
+        },
+      })
+    }
+  } catch (err) {
+    console.log(JSON.stringify({ text, filters: regexes }))
+    throw new Error('Failed to parse custom class regex')
   }
 
   return result

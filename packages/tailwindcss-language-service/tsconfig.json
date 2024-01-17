@@ -1,9 +1,10 @@
 {
   "include": ["src", "../../types"],
+  "exclude": ["src/**/*.test.ts"],
   "compilerOptions": {
     "module": "NodeNext",
-    "lib": ["ES2020"],
-    "target": "ES2020",
+    "lib": ["ES2022"],
+    "target": "ES2022",
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,

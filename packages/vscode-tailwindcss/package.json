@@ -341,6 +341,7 @@
     "@types/braces": "3.0.1",
     "@types/vscode": "1.65.0",
     "@vscode/vsce": "2.21.1",
+    "typescript": "5.3.3",
     "braces": "3.0.2",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",

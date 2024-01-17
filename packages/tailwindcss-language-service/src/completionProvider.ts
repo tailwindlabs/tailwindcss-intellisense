@@ -31,11 +31,11 @@ import { flagEnabled } from './util/flagEnabled'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
-import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 import {
   addPixelEquivalentsToMediaQuery,
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
+import { customClassesIn } from './util/classes'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -503,71 +503,32 @@ async function provideCustomClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
-  const regexes = settings.tailwindCSS.experimental.classRegex
-  if (regexes.length === 0) return null
+  const filters = settings.tailwindCSS.experimental.classRegex
+  if (filters.length === 0) return null
 
-  const positionOffset = document.offsetAt(position)
+  const cursor = document.offsetAt(position)
 
-  const searchRange: Range = {
+  let text = document.getText({
     start: document.positionAt(0),
-    end: document.positionAt(positionOffset + 2000),
-  }
+    end: document.positionAt(cursor + 2000),
+  })
 
-  let str = document.getText(searchRange)
-
-  for (let i = 0; i < regexes.length; i++) {
-    try {
-      let [containerRegexString, classRegexString] = Array.isArray(regexes[i])
-        ? regexes[i]
-        : [regexes[i]]
-
-      let containerRegex = new Regex(containerRegexString, 'g')
-      let containerMatch: ReturnType<Regex['exec']>
-
-      while ((containerMatch = containerRegex.exec(str)) !== null) {
-        const searchStart = document.offsetAt(searchRange.start)
-        const matchStart = searchStart + containerMatch.index[1]
-        const matchEnd = matchStart + containerMatch[1].length
-        const cursor = document.offsetAt(position)
-        if (cursor >= matchStart && cursor <= matchEnd) {
-          let classList: string
-
-          if (classRegexString) {
-            let classRegex = new Regex(classRegexString, 'g')
-            let classMatch: ReturnType<Regex['exec']>
-
-            while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
-              const classMatchStart = matchStart + classMatch.index[1]
-              const classMatchEnd = classMatchStart + classMatch[1].length
-              if (cursor >= classMatchStart && cursor <= classMatchEnd) {
-                classList = classMatch[1].substr(0, cursor - classMatchStart)
-              }
-            }
-
-            if (typeof classList === 'undefined') {
-              throw Error()
-            }
-          } else {
-            classList = containerMatch[1].substr(0, cursor - matchStart)
-          }
-
-          return completionsFromClassList(
-            state,
-            classList,
-            {
-              start: {
-                line: position.line,
-                character: position.character - classList.length,
-              },
-              end: position,
-            },
-            settings.tailwindCSS.rootFontSize,
-            undefined,
-            context
-          )
-        }
-      }
-    } catch (_) {}
+  // Get completions from the first matching regex or regex pair
+  for (let match of customClassesIn({ text, cursor, filters })) {
+    return completionsFromClassList(
+      state,
+      match.classList,
+      {
+        start: {
+          line: position.line,
+          character: position.character - match.classList.length,
+        },
+        end: position,
+      },
+      settings.tailwindCSS.rootFontSize,
+      undefined,
+      context
+    )
   }
 
   return null

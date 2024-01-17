@@ -2,7 +2,7 @@
 
 ## 0.11.x (Pre-Release)
 
-- Nothing yet!
+- Fix crash when class regex matches an empty string (#897)
 
 ## 0.10.5
 

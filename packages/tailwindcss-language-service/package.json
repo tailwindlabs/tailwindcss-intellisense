@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node ./scripts/build.mjs --watch",
     "build": "node ./scripts/build.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest"
   },
   "dependencies": {
     "@csstools/css-parser-algorithms": "2.1.1",
@@ -18,7 +19,6 @@
     "@types/culori": "^2.0.0",
     "@types/moo": "0.5.3",
     "@types/semver": "7.3.10",
-    "becke-ch--regex--s0-0-v1--base--pl--lib": "1.4.0",
     "color-name": "1.1.4",
     "css.escape": "1.5.1",
     "culori": "0.20.1",
@@ -43,6 +43,7 @@
     "esbuild-node-externals": "^1.9.0",
     "prettier": "2.3.0",
     "tslib": "2.2.0",
-    "typescript": "^5.2"
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.2"
   }
 }
