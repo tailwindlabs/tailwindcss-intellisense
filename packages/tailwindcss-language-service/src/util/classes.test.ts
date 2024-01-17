@@ -1,164 +1,173 @@
 import { expect, test } from 'vitest'
-import { ClassRegexEntry, customClassesIn } from './classes'
+import { ClassMatch, ClassRegexFilter, customClassesIn } from './classes'
 
 interface TestRecord {
   name: string,
-  input: string,
-  cursor: number,
-  regexes: ClassRegexEntry[],
-  expected: { classList: string } | null
+  text: string,
+  cursor: number | null,
+  filters: ClassRegexFilter[],
+  expected: ClassMatch[]
 }
 
 let table: TestRecord[] = [
   {
     name: 'empty',
-    input: 'test ',
+    text: 'test ',
     cursor: 0,
-    regexes: [],
-    expected: null
+    filters: [],
+    expected: [],
   },
 
   // Container regex only
   {
     name: 'simple (single, matches: yes)',
-    input: 'test ""',
+    text: 'test ""',
     cursor: 5,
-    regexes: [['test (\\S*)']],
-    expected: { classList: '' }
+    filters: [['test (\\S*)']],
+    expected: [{ classList: '', range: [5, 7] }],
   },
 
   {
     name: 'simple (single, matches: no)',
-    input: 'tron ""',
+    text: 'tron ""',
     cursor: 5,
-    regexes: [['test (\\S*)']],
-    expected: null
+    filters: [['test (\\S*)']],
+    expected: []
   },
 
   {
     name: 'simple (multiple, matches: yes)',
-    input: 'tron ""',
+    text: 'tron ""',
     cursor: 5,
-    regexes: [['test (\\S*)'], ['tron (\\S*)']],
-    expected: { classList: '' }
+    filters: [['test (\\S*)'], ['tron (\\S*)']],
+    expected: [{ classList: '', range: [5, 7] }],
   },
 
   {
     name: 'simple (multiple, matches: no)',
-    input: 'nope ""',
+    text: 'nope ""',
     cursor: 5,
-    regexes: [['test (\\S*)'], ['tron (\\S*)']],
-    expected: null
+    filters: [['test (\\S*)'], ['tron (\\S*)']],
+    expected: []
   },
 
   // Container + class regex
   {
     name: 'nested (single, matches: yes)',
-    input: 'test ""',
+    text: 'test ""',
     cursor: 6,
-    regexes: [['test (\\S*)', '"([^"]*)"']],
-    expected: { classList: '' }
+    filters: [['test (\\S*)', '"([^"]*)"']],
+    expected: [{ classList: '', range: [6, 6] }],
   },
 
   {
     name: 'nested (single, matches: no)',
-    input: 'tron ""',
+    text: 'tron ""',
     cursor: 6,
-    regexes: [['test (\\S*)', '"([^"]*)"']],
-    expected: null
+    filters: [['test (\\S*)', '"([^"]*)"']],
+    expected: []
   },
 
   {
     name: 'nested (multiple, matches: yes)',
-    input: 'tron ""',
+    text: 'tron ""',
     cursor: 6,
-    regexes: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
-    expected: { classList: '' }
+    filters: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
+    expected: [{ classList: '', range: [6, 6] }],
   },
 
   {
     name: 'nested (multiple, matches: no)',
-    input: 'nope ""',
+    text: 'nope ""',
     cursor: 6,
-    regexes: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
-    expected: null
+    filters: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
+    expected: []
   },
 
   // Cursor position validation
   {
     name: 'cursor, container: inside #1',
-    input: `<div class="text-" /> <div class="bg-" />`,
+    text: `<div class="text-" /> <div class="bg-" />`,
     cursor: 17,
-    regexes: [['class="([^"]*)"']],
-    expected: { classList: 'text-' }
+    filters: [['class="([^"]*)"']],
+    expected: [{ classList: 'text-', range: [12, 17] }],
   },
 
   {
     name: 'cursor, container: inside #2',
-    input: `<div class="text-" /> <div class="bg-" />`,
+    text: `<div class="text-" /> <div class="bg-" />`,
     cursor: 37,
-    regexes: [['class="([^"]*)"']],
-    expected: { classList: 'bg-' }
+    filters: [['class="([^"]*)"']],
+    expected: [{ classList: 'bg-', range: [34, 37] }],
   },
 
   {
     name: 'cursor, container: outside',
-    input: `<div class="text-" /> <div class="bg-" />`,
+    text: `<div class="text-" /> <div class="bg-" />`,
     cursor: 11,
-    regexes: [['class="([^"]*)"']],
-    expected: null
+    filters: [['class="([^"]*)"']],
+    expected: []
   },
 
   {
     name: 'cursor, container: inside #1, class: inside #1',
-    input: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
+    text: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
     cursor: 23,
-    regexes: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
-    expected: { classList: 'text-' }
+    filters: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
+    expected: [{ classList: 'text-', range: [18, 23] }],
   },
 
   {
     name: 'cursor, container: inside #1, class: inside #2',
-    input: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
+    text: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
     cursor: 38,
-    regexes: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
-    expected: { classList: 'decoration-' }
+    filters: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
+    expected: [{ classList: 'decoration-', range: [27, 38] }],
   },
 
   {
     name: 'cursor, container: inside #2, class: inside #1',
-    input: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
+    text: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
     cursor: 66,
-    regexes: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
-    expected: { classList: 'bg-' }
+    filters: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
+    expected: [{ classList: 'bg-', range: [63, 66] }],
   },
 
   {
     name: 'cursor, container: inside #1, class: outside',
-    input: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
+    text: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
     cursor: 17,
-    regexes: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
-    expected: null,
+    filters: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
+    expected: [],
   },
 
   {
     name: 'cursor, container: inside #2, class: outside',
-    input: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
+    text: `<div class={clsx("text-", "decoration-")} /> <div class={clsx("bg-")} />`,
     cursor: 62,
-    regexes: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
-    expected: null,
+    filters: [['clsx\\(([^)]*)\\)', '"([^"]*)"']],
+    expected: [],
+  },
+
+  // No cursor = multiple results
+  {
+    name: 'cursor, container: inside #1',
+    text: `<div class="text-" /> <div class="bg-" />`,
+    cursor: null,
+    filters: [['class="([^"]*)"']],
+    expected: [{ classList: 'text-', range: [12, 17] }, { classList: 'bg-', range: [34, 37] }],
   },
 
   // Edge cases
   {
     name: 'regex matches empty string',
-    input: `let _ = ""`,
+    text: `let _ = ""`,
     cursor: 9,
-    regexes: [['(?<=")(\\w*)(?=")']],
-    expected: { classList: '' },
+    filters: [['(?<=")(\\w*)(?=")']],
+    expected: [{ classList: '', range: [9, 9] }],
   },
 ]
 
-test.each(table)('customClassesIn: $name', ({ input, cursor, regexes, expected }) => {
-  expect(customClassesIn(input, cursor, regexes)).toStrictEqual(expected)
+test.each(table)('customClassesIn: $name', ({ text, cursor, filters, expected }) => {
+  expect(Array.from(customClassesIn({ text, filters, cursor }))).toStrictEqual(expected)
 })

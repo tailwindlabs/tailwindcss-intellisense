@@ -31,7 +31,6 @@ import { flagEnabled } from './util/flagEnabled'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
 import * as culori from 'culori'
-import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 import {
   addPixelEquivalentsToMediaQuery,
   addPixelEquivalentsToValue,
@@ -504,19 +503,18 @@ async function provideCustomClassNameCompletions(
   context?: CompletionContext
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
-  const regexes = settings.tailwindCSS.experimental.classRegex
-  if (regexes.length === 0) return null
+  const filters = settings.tailwindCSS.experimental.classRegex
+  if (filters.length === 0) return null
 
   const cursor = document.offsetAt(position)
 
-  let str = document.getText({
+  let text = document.getText({
     start: document.positionAt(0),
     end: document.positionAt(cursor + 2000),
   })
 
   // Get completions from the first matching regex or regex pair
-  let match = customClassesIn(str, cursor, regexes)
-  if (match) {
+  for (let match of customClassesIn({ text, cursor, filters })) {
     return completionsFromClassList(
       state,
       match.classList,

@@ -1,73 +1,73 @@
-
-export type ClassRegexEntry = string | [string] | [string, string]
-export type ClassRegex = [container: RegExp, cls?: RegExp]
+export type ClassRegexFilter = string | [string] | [string, string]
 export interface ClassMatch {
   classList: string
+  range: [start: number, end: number]
 }
 
-export function customClassesIn(
-  str: string,
-  cursor: number,
-  patterns: ClassRegexEntry[],
-): ClassMatch | null {
-  for (let pattern of patterns) {
-    let normalized = Array.isArray(pattern)
-      ? pattern
-      : [pattern]
+export function *customClassesIn({
+  text,
+  filters,
+  cursor = null,
+} : {
+  text: string,
+  filters: ClassRegexFilter[],
+  cursor?: number | null,
+}): Iterable<ClassMatch> {
+  for (let filter of filters) {
+    let [containerPattern, classPattern] = Array.isArray(filter)
+      ? filter
+      : [filter]
 
-    let regexes = normalized.map((pattern) => new RegExp(pattern, 'gd'))
+    let containerRegex = new RegExp(containerPattern, 'gd')
+    let classRegex = classPattern ? new RegExp(classPattern, 'gd') : undefined
 
-    let match = firstMatchIn(str, cursor, regexes as ClassRegex)
-
-    if (match) {
-      return match
+    for (let match of matchesIn(text, containerRegex, classRegex, cursor)) {
+      yield match
     }
   }
-
-  return null
 }
 
-function firstMatchIn(
-  str: string,
-  cursor: number,
-  [containerRegex, classRegex]: ClassRegex,
-): ClassMatch | null {
-  let containerMatch: ReturnType<RegExp['exec']>
-
-  while ((containerMatch = containerRegex.exec(str)) !== null) {
+function *matchesIn(
+  text: string,
+  containerRegex: RegExp,
+  classRegex: RegExp | undefined,
+  cursor: number | null,
+): Iterable<ClassMatch> {
+  for (let containerMatch of text.matchAll(containerRegex)) {
     const matchStart = containerMatch.indices[1][0]
     const matchEnd = matchStart + containerMatch[1].length
 
     // Cursor is outside of the match
-    if (cursor < matchStart || cursor > matchEnd) {
+    if (cursor !== null && (cursor < matchStart || cursor > matchEnd)) {
       continue
     }
 
     if (! classRegex) {
-      return {
-        classList: containerMatch[1].slice(0, cursor - matchStart)
+      yield {
+        classList: cursor !== null
+          ? containerMatch[1].slice(0, cursor - matchStart)
+          : containerMatch[1],
+        range: [matchStart, matchEnd],
       }
+      continue
     }
 
     // Handle class matches inside the "container"
-    let classMatch: ReturnType<RegExp['exec']>
-
-    while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
+    for (let classMatch of containerMatch[1].matchAll(classRegex)) {
       const classMatchStart = matchStart + classMatch.indices[1][0]
       const classMatchEnd = classMatchStart + classMatch[1].length
 
       // Cursor is outside of the match
-      if (cursor < classMatchStart || cursor > classMatchEnd) {
+      if (cursor !== null && (cursor < classMatchStart || cursor > classMatchEnd)) {
         continue
       }
 
-      return {
-        classList: classMatch[1].slice(0, cursor - classMatchStart),
+      yield {
+        classList: cursor !== null
+          ? classMatch[1].slice(0, cursor - classMatchStart)
+          : classMatch[1],
+        range: [classMatchStart, classMatchEnd],
       }
     }
-
-    return null
   }
-
-  return null
 }
