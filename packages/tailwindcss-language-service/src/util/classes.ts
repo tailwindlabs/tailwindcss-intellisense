@@ -1,7 +1,6 @@
-import Regex from 'becke-ch--regex--s0-0-v1--base--pl--lib'
 
 export type ClassRegexEntry = string | [string] | [string, string]
-export type ClassRegex = [container: Regex, cls?: Regex]
+export type ClassRegex = [container: RegExp, cls?: RegExp]
 export interface ClassMatch {
   classList: string
 }
@@ -16,7 +15,7 @@ export function customClassesIn(
       ? pattern
       : [pattern]
 
-    let regexes = normalized.map((pattern) => new Regex(pattern, 'g'))
+    let regexes = normalized.map((pattern) => new RegExp(pattern, 'gd'))
 
     let match = firstMatchIn(str, cursor, regexes as ClassRegex)
 
@@ -33,10 +32,10 @@ function firstMatchIn(
   cursor: number,
   [containerRegex, classRegex]: ClassRegex,
 ): ClassMatch | null {
-  let containerMatch: ReturnType<Regex['exec']>
+  let containerMatch: ReturnType<RegExp['exec']>
 
   while ((containerMatch = containerRegex.exec(str)) !== null) {
-    const matchStart = containerMatch.index[1]
+    const matchStart = containerMatch.indices[1][0]
     const matchEnd = matchStart + containerMatch[1].length
 
     // Cursor is outside of the match
@@ -51,10 +50,10 @@ function firstMatchIn(
     }
 
     // Handle class matches inside the "container"
-    let classMatch: ReturnType<Regex['exec']>
+    let classMatch: ReturnType<RegExp['exec']>
 
     while ((classMatch = classRegex.exec(containerMatch[1])) !== null) {
-      const classMatchStart = matchStart + classMatch.index[1]
+      const classMatchStart = matchStart + classMatch.indices[1][0]
       const classMatchEnd = classMatchStart + classMatch[1].length
 
       // Cursor is outside of the match
