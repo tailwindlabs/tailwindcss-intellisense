@@ -51,11 +51,15 @@ export type TailwindCssSettings = {
   showPixelEquivalents: boolean
   rootFontSize: number
   colorDecorators: boolean
+  ignoredCSS: string[]
   lint: {
+    invalidClass: DiagnosticSeveritySetting
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
-    invalidVariant: DiagnosticSeveritySetting
+    invalidVariant: DiagnosticSeveritySetting,
+	validateClasses: DiagnosticSeveritySetting,
+	onlyAllowTailwindCSS: boolean,
     invalidConfigPath: DiagnosticSeveritySetting
     invalidTailwindDirective: DiagnosticSeveritySetting
     recommendedVariantOrder: DiagnosticSeveritySetting
