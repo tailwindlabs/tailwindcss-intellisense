@@ -42,7 +42,7 @@ function postcssPlugin({
   return {
     postcssPlugin: 'plugin',
     Declaration(decl) {
-      if (!decl.value.includes('rgb')) {
+      if (!decl.value.includes('rgb') && !decl.value.includes('hsl')) {
         return
       }
 
@@ -51,7 +51,7 @@ function postcssPlugin({
           return true
         }
 
-        if (node.value !== 'rgb') {
+        if (node.value !== 'rgb' && node.value !== 'rgba' && node.value !== 'hsl' && node.value !== 'hsla') {
           return false
         }
 
