@@ -100,10 +100,6 @@ Controls whether the editor should render inline color decorators for Tailwind C
 
 Show `px` equivalents for `rem` CSS values in completions and hovers. **Default: `true`**
 
-## `tailwindCSS.colorFormat`
-
-The format to use for color values in completions and hovers. **Default: `rgb`**
-
 ### `tailwindCSS.rootFontSize`
 
 Root font size in pixels. Used to convert `rem` CSS values to their `px` equivalents. See [`tailwindCSS.showPixelEquivalents`](#tailwindcssshowpixelequivalents). **Default: `16`**

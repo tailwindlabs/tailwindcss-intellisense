@@ -41,16 +41,14 @@ let isUtil = (className) =>
     ? className.__info.some((x) => x.__source === 'utilities')
     : className.__info.__source === 'utilities'
 
-export async function completionsFromClassList(
+export function completionsFromClassList(
   state: State,
-  document: TextDocument,
   classList: string,
   classListRange: Range,
   rootFontSize: number,
   filter?: (item: CompletionItem) => boolean,
   context?: CompletionContext
-): Promise<CompletionList> {
-  const settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
+): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
   let sep = state.separator
@@ -110,7 +108,7 @@ export async function completionsFromClassList(
               if (color !== null) {
                 kind = 16
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = formatColor(color, settings)
+                  documentation = formatColor(color)
                 }
               }
 
@@ -271,7 +269,7 @@ export async function completionsFromClassList(
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
-                documentation = formatColor(color, settings)
+                documentation = formatColor(color)
               }
 
               items.push({
@@ -318,7 +316,7 @@ export async function completionsFromClassList(
                 if (color !== null) {
                   kind = 16
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                    documentation = formatColor(color, settings)
+                    documentation = formatColor(color)
                   }
                 }
 
@@ -404,7 +402,7 @@ export async function completionsFromClassList(
               if (color !== null) {
                 kind = 16
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = formatColor(color, settings)
+                  documentation = formatColor(color)
                 }
               }
 
@@ -477,9 +475,8 @@ async function provideClassAttributeCompletions(
         }
       }
 
-      return await completionsFromClassList(
+      return completionsFromClassList(
         state,
-        document,
         classList,
         {
           start: {
@@ -556,9 +553,8 @@ async function provideAtApplyCompletions(
 
   const classList = match.groups.classList
 
-  return await completionsFromClassList(
+  return completionsFromClassList(
     state,
-    document,
     classList,
     {
       start: {
@@ -605,11 +601,11 @@ async function provideClassNameCompletions(
   return null
 }
 
-async function provideCssHelperCompletions(
+function provideCssHelperCompletions(
   state: State,
   document: TextDocument,
   position: Position
-): Promise<CompletionList> {
+): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
   }
@@ -640,7 +636,6 @@ async function provideCssHelperCompletions(
     return null
   }
 
-  const settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
   let parts = path.split(/([\[\].]+)/)
   let keys = parts.filter((_, i) => i % 2 === 0)
@@ -719,7 +714,7 @@ async function provideCssHelperCompletions(
             // VS Code bug causes some values to not display in some cases
             detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
             ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-              ? { documentation: formatColor(color, settings) }
+              ? { documentation: formatColor(color) }
               : {}),
             ...(insertClosingBrace ? { textEditText: `${item}]` } : {}),
             additionalTextEdits: replaceDot
@@ -1303,9 +1298,8 @@ async function provideEmmetCompletions(
   const parts = emmetItems.items[0].label.split('.')
   if (parts.length < 2) return null
 
-  return await completionsFromClassList(
+  return completionsFromClassList(
     state,
-    document,
     parts[parts.length - 1],
     {
       start: {
@@ -1328,7 +1322,7 @@ export async function doComplete(
 
   const result =
     (await provideClassNameCompletions(state, document, position, context)) ||
-    (await provideCssHelperCompletions(state, document, position)) ||
+    provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
     provideVariantsDirectiveCompletions(state, document, position) ||

@@ -1,12 +1,11 @@
 import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import postcss from 'postcss'
-import { TailwindCssSettings } from './state'
 import { formatColor, getColorFromValue } from './color'
 
 type Comment = { index: number; value: string }
 
-export function addColorEquivalentsToCss(css: string, settings: TailwindCssSettings): string {
+export function addColorEquivalentsToCss(css: string): string {
   if (!css.includes('rgb')) {
     return css
   }
@@ -14,7 +13,7 @@ export function addColorEquivalentsToCss(css: string, settings: TailwindCssSetti
   let comments: Comment[] = []
 
   try {
-    postcss([postcssPlugin({ comments, settings })]).process(css, { from: undefined }).css
+    postcss([postcssPlugin({ comments })]).process(css, { from: undefined }).css
   } catch {
     return css
   }
@@ -37,10 +36,8 @@ function applyComments(str: string, comments: Comment[]): string {
 
 function postcssPlugin({
   comments,
-  settings,
 }: {
   comments: Comment[]
-  settings: TailwindCssSettings
 }): Plugin {
   return {
     postcssPlugin: 'plugin',
@@ -73,7 +70,7 @@ function postcssPlugin({
             decl.source.start.offset +
             `${decl.prop}${decl.raws.between}`.length +
             node.sourceEndIndex,
-          value: formatColor(color, settings),
+          value: formatColor(color),
         })
 
         return false

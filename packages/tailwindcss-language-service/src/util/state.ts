@@ -49,7 +49,6 @@ export type TailwindCssSettings = {
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean
-  colorFormat: 'rgb' | 'hex'
   rootFontSize: number
   colorDecorators: boolean
   lint: {

@@ -59,11 +59,8 @@ export function stringifyCss(className: string, obj: any, settings: Settings): s
   if (settings.tailwindCSS.showPixelEquivalents) {
     return addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
   }
-  if (settings.tailwindCSS.colorFormat !== 'rgb') {
-    return addColorEquivalentsToCss(css, settings.tailwindCSS)
-  }
 
-  return css
+  return addColorEquivalentsToCss(css)
 }
 
 function augmentClassName(className: string, obj: any): string {

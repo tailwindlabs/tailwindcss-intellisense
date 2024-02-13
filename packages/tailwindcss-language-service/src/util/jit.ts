@@ -47,9 +47,8 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   if (settings.tailwindCSS.showPixelEquivalents) {
     css = addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
   }
-  if (settings.tailwindCSS.colorFormat !== 'rgb') {
-    css = addColorEquivalentsToCss(css, settings.tailwindCSS)
-  }
+
+  css = addColorEquivalentsToCss(css)
 
   return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
