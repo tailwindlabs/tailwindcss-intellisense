@@ -4,7 +4,7 @@ import {
   ResolverFactory,
   Resolver,
   ResolveOptions,
-} from 'enhanced-resolve-301'
+} from 'enhanced-resolve'
 
 export function createResolver(options: Partial<ResolveOptions> = {}): Resolver {
   return ResolverFactory.createResolver({
