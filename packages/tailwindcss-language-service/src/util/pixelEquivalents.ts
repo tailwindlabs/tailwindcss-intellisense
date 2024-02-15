@@ -3,8 +3,8 @@ import parseValue from 'postcss-value-parser'
 import { parse as parseMediaQueryList } from '@csstools/media-query-list-parser'
 import postcss from 'postcss'
 import { isTokenNode } from '@csstools/css-parser-algorithms'
-
-type Comment = { index: number; value: string }
+import type { Comment } from './comments'
+import { applyComments } from './comments'
 
 export function addPixelEquivalentsToValue(value: string, rootFontSize: number): string {
   if (!value.includes('rem')) {
@@ -31,10 +31,6 @@ export function addPixelEquivalentsToValue(value: string, rootFontSize: number):
 }
 
 export function addPixelEquivalentsToCss(css: string, rootFontSize: number): string {
-  if (!css.includes('em')) {
-    return css
-  }
-
   let comments: Comment[] = []
 
   try {
@@ -44,19 +40,6 @@ export function addPixelEquivalentsToCss(css: string, rootFontSize: number): str
   }
 
   return applyComments(css, comments)
-}
-
-function applyComments(str: string, comments: Comment[]): string {
-  let offset = 0
-
-  for (let comment of comments) {
-    let index = comment.index + offset
-    let commentStr = `/* ${comment.value} */`
-    str = str.slice(0, index) + commentStr + str.slice(index)
-    offset += commentStr.length
-  }
-
-  return str
 }
 
 function getPixelEquivalentsForMediaQuery(params: string, rootFontSize: number): Comment[] {

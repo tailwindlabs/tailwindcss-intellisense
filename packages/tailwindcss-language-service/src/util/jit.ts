@@ -1,7 +1,7 @@
 import { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToCss, addPixelEquivalentsToValue } from './pixelEquivalents'
-import { addColorEquivalentsToCss } from './colorEquivalent';
+import { addColorEquivalentsToCss } from './colorEquivalents'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore

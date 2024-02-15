@@ -2,14 +2,10 @@ import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import postcss from 'postcss'
 import { formatColor, getColorFromValue } from './color'
-
-type Comment = { index: number; value: string }
+import type { Comment } from './comments'
+import { applyComments } from './comments'
 
 export function addColorEquivalentsToCss(css: string): string {
-  if (!css.includes('rgb')) {
-    return css
-  }
-
   let comments: Comment[] = []
 
   try {
@@ -21,24 +17,7 @@ export function addColorEquivalentsToCss(css: string): string {
   return applyComments(css, comments)
 }
 
-function applyComments(str: string, comments: Comment[]): string {
-  let offset = 0
-
-  for (let comment of comments) {
-    let index = comment.index + offset
-    let commentStr = `/* ${comment.value} */`
-    str = str.slice(0, index) + commentStr + str.slice(index)
-    offset += commentStr.length
-  }
-
-  return str
-}
-
-function postcssPlugin({
-  comments,
-}: {
-  comments: Comment[]
-}): Plugin {
+function postcssPlugin({ comments }: { comments: Comment[] }): Plugin {
   return {
     postcssPlugin: 'plugin',
     Declaration(decl) {
@@ -51,7 +30,12 @@ function postcssPlugin({
           return true
         }
 
-        if (node.value !== 'rgb' && node.value !== 'rgba' && node.value !== 'hsl' && node.value !== 'hsla') {
+        if (
+          node.value !== 'rgb' &&
+          node.value !== 'rgba' &&
+          node.value !== 'hsl' &&
+          node.value !== 'hsla'
+        ) {
           return false
         }
 
@@ -60,7 +44,7 @@ function postcssPlugin({
           return false
         }
 
-        const color = getColorFromValue(`rgb(${values.join(', ')})`);
+        const color = getColorFromValue(`rgb(${values.join(', ')})`)
         if (!color || typeof color === 'string') {
           return false
         }

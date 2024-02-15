@@ -6,7 +6,7 @@ import stringifyObject from 'stringify-object'
 import isObject from './isObject'
 import { Settings } from './state'
 import { addPixelEquivalentsToCss } from './pixelEquivalents'
-import { addColorEquivalentsToCss } from './colorEquivalent'
+import { addColorEquivalentsToCss } from './colorEquivalents'
 
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
