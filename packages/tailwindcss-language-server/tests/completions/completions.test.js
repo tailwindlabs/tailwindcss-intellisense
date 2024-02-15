@@ -199,6 +199,85 @@ withFixture('basic', (c) => {
   })
 })
 
+withFixture('basic', (c) => {
+  let completion = buildCompletion(c)
+
+  test('Completions have default pixel equivalents (1rem == 16px)', async () => {
+    let result = await completion({
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'text-sm')
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: 'font-size: 0.875rem/* 14px */; line-height: 1.25rem/* 20px */;',
+      documentation: {
+        kind: 'markdown',
+        value:
+          '```css\n.text-sm {\n  font-size: 0.875rem/* 14px */;\n  line-height: 1.25rem/* 20px */;\n}\n```',
+      },
+    })
+  })
+})
+
+withFixture('basic', (c) => {
+  let completion = buildCompletion(c)
+
+  test('Completions have customizable pixel equivalents (1rem == 10px)', async () => {
+    await c.updateSettings({
+      tailwindCSS: {
+        rootFontSize: 10,
+      },
+    })
+
+    let result = await completion({
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'text-sm')
+
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: 'font-size: 0.875rem/* 8.75px */; line-height: 1.25rem/* 12.5px */;',
+      documentation: {
+        kind: 'markdown',
+        value:
+          '```css\n.text-sm {\n  font-size: 0.875rem/* 8.75px */;\n  line-height: 1.25rem/* 12.5px */;\n}\n```',
+      },
+    })
+  })
+})
+
+withFixture('basic', (c) => {
+  let completion = buildCompletion(c)
+
+  test('Completions have color equivalents presented as hex', async () => {
+    let result = await completion({
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'bg-red-500')
+
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: "--tw-bg-opacity: 1; background-color: rgb(239 68 68 / var(--tw-bg-opacity));",
+      documentation: "#ef4444",
+    })
+  })
+})
+
 withFixture('overrides-variants', (c) => {
   let completion = buildCompletion(c)
 
