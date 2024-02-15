@@ -1,7 +1,7 @@
 import { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
-import { addPixelEquivalentsToCss, addPixelEquivalentsToValue } from './pixelEquivalents'
-import { addColorEquivalentsToCss } from './colorEquivalents'
+import { addPixelEquivalentsToValue } from './pixelEquivalents'
+import { addEquivalents } from './equivalents'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -44,11 +44,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   let css = clone.toString()
 
-  if (settings.tailwindCSS.showPixelEquivalents) {
-    css = addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
-  }
-
-  css = addColorEquivalentsToCss(css)
+  css = addEquivalents(css, settings.tailwindCSS)
 
   return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
