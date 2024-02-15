@@ -1,13 +1,29 @@
 import type { TailwindCssSettings } from './state'
-import { addPixelEquivalentsToCss } from './pixelEquivalents'
-import { addColorEquivalentsToCss } from './colorEquivalents'
+import { equivalentPixelValues } from './pixelEquivalents'
+import { equivalentColorValues } from './colorEquivalents'
+import postcss, { AcceptedPlugin } from 'postcss'
+import { applyComments, type Comment } from './comments'
 
 export function addEquivalents(css: string, settings: TailwindCssSettings): string {
+  let comments: Comment[] = []
+
+  let plugins: AcceptedPlugin[] = []
+
   if (settings.showPixelEquivalents) {
-    css = addPixelEquivalentsToCss(css, settings.rootFontSize)
+    plugins.push(equivalentPixelValues({
+      comments,
+      rootFontSize: settings.rootFontSize,
+    }))
   }
 
-  css = addColorEquivalentsToCss(css)
+  plugins.push(equivalentColorValues({ comments }))
 
-  return css
+  try {
+    postcss(plugins).process(css, { from: undefined })
+      .css
+  } catch {
+    return css
+  }
+
+  return applyComments(css, comments)
 }

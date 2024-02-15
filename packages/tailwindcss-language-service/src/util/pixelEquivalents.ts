@@ -30,18 +30,6 @@ export function addPixelEquivalentsToValue(value: string, rootFontSize: number):
   return value
 }
 
-export function addPixelEquivalentsToCss(css: string, rootFontSize: number): string {
-  let comments: Comment[] = []
-
-  try {
-    postcss([postcssPlugin({ comments, rootFontSize })]).process(css, { from: undefined }).css
-  } catch {
-    return css
-  }
-
-  return applyComments(css, comments)
-}
-
 function getPixelEquivalentsForMediaQuery(params: string, rootFontSize: number): Comment[] {
   let comments: Comment[] = []
 
@@ -74,7 +62,7 @@ export function addPixelEquivalentsToMediaQuery(query: string, rootFontSize: num
   })
 }
 
-function postcssPlugin({
+export function equivalentPixelValues({
   comments,
   rootFontSize,
 }: {
@@ -127,4 +115,4 @@ function postcssPlugin({
     },
   }
 }
-postcssPlugin.postcss = true
+equivalentPixelValues.postcss = true

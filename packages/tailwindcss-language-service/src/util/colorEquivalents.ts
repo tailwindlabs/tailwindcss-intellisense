@@ -1,23 +1,9 @@
 import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
-import postcss from 'postcss'
 import { formatColor, getColorFromValue } from './color'
 import type { Comment } from './comments'
-import { applyComments } from './comments'
 
-export function addColorEquivalentsToCss(css: string): string {
-  let comments: Comment[] = []
-
-  try {
-    postcss([postcssPlugin({ comments })]).process(css, { from: undefined }).css
-  } catch {
-    return css
-  }
-
-  return applyComments(css, comments)
-}
-
-function postcssPlugin({ comments }: { comments: Comment[] }): Plugin {
+export function equivalentColorValues({ comments }: { comments: Comment[] }): Plugin {
   return {
     postcssPlugin: 'plugin',
     Declaration(decl) {
@@ -62,4 +48,4 @@ function postcssPlugin({ comments }: { comments: Comment[] }): Plugin {
     },
   }
 }
-postcssPlugin.postcss = true
+equivalentColorValues.postcss = true
