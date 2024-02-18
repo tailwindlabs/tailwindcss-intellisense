@@ -5,6 +5,7 @@ import preflight from 'tailwindcss/lib/css/preflight.css'
 import { TW } from './tw'
 
 // @ts-ignore
+// new Function(…) is used to work around issues with esbuild
 global.__preflight = preflight
 new Function(
   'require',
