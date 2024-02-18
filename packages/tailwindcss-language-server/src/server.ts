@@ -93,6 +93,7 @@ import {
   withFallback,
   isObject,
 } from './utils'
+import { DocumentService } from './documents'
 
 // @ts-ignore
 global.__preflight = preflight
@@ -2320,33 +2321,6 @@ class TW {
     this.dispose()
     this.initPromise = undefined
     this.init()
-  }
-}
-
-class DocumentService {
-  public documents: TextDocuments<TextDocument>
-
-  constructor(conn: Connection) {
-    this.documents = new TextDocuments(TextDocument)
-    this.documents.listen(conn)
-  }
-
-  getDocument(uri: string) {
-    return this.documents.get(uri)
-  }
-
-  getAllDocuments() {
-    return this.documents.all()
-  }
-
-  get onDidChangeContent() {
-    return this.documents.onDidChangeContent
-  }
-  get onDidClose() {
-    return this.documents.onDidClose
-  }
-  get onDidOpen() {
-    return this.documents.onDidOpen
   }
 }
 
