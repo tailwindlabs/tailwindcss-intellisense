@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
@@ -20,7 +20,7 @@ withFixture('basic', (c) => {
     })
   }
 
-  async function expectCompletions({ lang, text, position, settings }) {
+  async function expectCompletions({ expect, lang, text, position, settings }) {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
@@ -35,12 +35,17 @@ withFixture('basic', (c) => {
     })
   }
 
-  test.concurrent('HTML', async () => {
-    await expectCompletions({ text: '<div class=""></div>', position: { line: 0, character: 12 } })
+  test.concurrent('HTML', async ({ expect }) => {
+    await expectCompletions({
+      expect,
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
   })
 
-  test.concurrent('JSX', async () => {
+  test.concurrent('JSX', async ({ expect }) => {
     await expectCompletions({
+      expect,
       lang: 'javascriptreact',
       text: "<div className={''}></div>",
       position: {
@@ -50,8 +55,9 @@ withFixture('basic', (c) => {
     })
   })
 
-  test.concurrent('JSX concatination', async () => {
+  test.concurrent('JSX concatination', async ({ expect }) => {
     await expectCompletions({
+      expect,
       lang: 'javascriptreact',
       text: "<div className={'' + ''}></div>",
       position: {
@@ -61,7 +67,7 @@ withFixture('basic', (c) => {
     })
   })
 
-  test.concurrent('JSX outside strings', async () => {
+  test.concurrent('JSX outside strings', async ({ expect }) => {
     let result = await completion({
       lang: 'javascriptreact',
       text: "<div className={'' + ''}></div>",
@@ -73,8 +79,9 @@ withFixture('basic', (c) => {
     expect(result).toBe(null)
   })
 
-  test.concurrent('classRegex simple', async () => {
+  test.concurrent('classRegex simple', async ({ expect }) => {
     await expectCompletions({
+      expect,
       text: 'test ',
       position: {
         line: 0,
@@ -84,7 +91,7 @@ withFixture('basic', (c) => {
     })
   })
 
-  test.concurrent('classRegex simple (no matches)', async () => {
+  test.concurrent('classRegex simple (no matches)', async ({ expect }) => {
     let result = await completion({
       text: 'tron ',
       position: {
@@ -97,8 +104,9 @@ withFixture('basic', (c) => {
     expect(result).toBe(null)
   })
 
-  test.concurrent('classRegex nested', async () => {
+  test.concurrent('classRegex nested', async ({ expect }) => {
     await expectCompletions({
+      expect,
       text: 'test ""',
       position: {
         line: 0,
@@ -110,7 +118,7 @@ withFixture('basic', (c) => {
     })
   })
 
-  test.concurrent('classRegex nested (no matches, container)', async () => {
+  test.concurrent('classRegex nested (no matches, container)', async ({ expect }) => {
     let result = await completion({
       text: 'tron ""',
       position: {
@@ -125,7 +133,7 @@ withFixture('basic', (c) => {
     expect(result).toBe(null)
   })
 
-  test.concurrent('classRegex nested (no matches, class)', async () => {
+  test.concurrent('classRegex nested (no matches, class)', async ({ expect }) => {
     let result = await completion({
       text: 'test ``',
       position: {
@@ -140,7 +148,7 @@ withFixture('basic', (c) => {
     expect(result).toBe(null)
   })
 
-  test('classRegex matching empty string', async () => {
+  test('classRegex matching empty string', async ({ expect }) => {
     try {
       let result = await completion({
         text: "let _ = ''",
@@ -172,7 +180,7 @@ withFixture('basic', (c) => {
     expect(result2).toBe(null)
   })
 
-  test.concurrent('resolve', async () => {
+  test.concurrent('resolve', async ({ expect }) => {
     let result = await completion({
       text: '<div class="">',
       position: {
@@ -216,7 +224,7 @@ withFixture('overrides-variants', (c) => {
 
   test.concurrent(
     'duplicate variant + value pairs do not produce multiple completions',
-    async () => {
+    async ({ expect }) => {
       let result = await completion({
         text: '<div class="custom-hover"></div>',
         position: { line: 0, character: 23 },

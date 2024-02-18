@@ -1,9 +1,9 @@
-import { test, expect } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
   async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
-    test.concurrent(name, async () => {
+    test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,

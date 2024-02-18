@@ -1,9 +1,9 @@
-import { test, expect } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
   async function testColors(name, { text, expected }) {
-    test.concurrent(name, async () => {
+    test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text })
       let res = await c.sendRequest('textDocument/documentColor', {
         textDocument,
