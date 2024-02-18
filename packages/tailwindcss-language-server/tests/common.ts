@@ -13,10 +13,24 @@ import {
   InitializeParams,
   DidOpenTextDocumentParams,
 } from 'vscode-languageserver-protocol'
+import type { ProtocolConnection } from 'vscode-languageclient'
 
-async function init(fixture: string) {
-  type Settings = any
+type Settings = any
 
+interface FixtureContext
+  extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
+  client: ProtocolConnection
+  openDocument: (params: {
+    text: string
+    lang?: string
+    dir?: string
+    settings?: Settings
+  }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
+  updateSettings: (settings: Settings) => Promise<void>
+  updateFile: (file: string, text: string) => Promise<void>
+}
+
+async function init(fixture: string): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
@@ -190,8 +204,8 @@ async function init(fixture: string) {
   }
 }
 
-export function withFixture(fixture, callback) {
-  let c: Awaited<ReturnType<typeof init>> = {} as any
+export function withFixture(fixture, callback: (c: FixtureContext) => void) {
+  let c: FixtureContext = {} as any
 
   beforeAll(async () => {
     // Using the connection object as the prototype lets us access the connection
