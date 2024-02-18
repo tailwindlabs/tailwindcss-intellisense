@@ -3,7 +3,12 @@ import { isObject } from './utils'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { Connection } from 'vscode-languageserver'
 
-export function createSettingsCache(connection: Connection) {
+export interface SettingsCache {
+  getConfiguration(uri?: string): Promise<Settings>
+  clear(): void
+}
+
+export function createSettingsCache(connection: Connection): SettingsCache {
   const documentSettingsCache: Map<string, Settings> = new Map()
 
   async function getConfiguration(uri?: string) {
@@ -63,7 +68,9 @@ export function createSettingsCache(connection: Connection) {
   }
 
   return {
-    documentSettingsCache,
     getConfiguration,
+    clear() {
+      documentSettingsCache.clear()
+    },
   }
 }
