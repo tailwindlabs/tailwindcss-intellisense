@@ -179,7 +179,7 @@ export class TW {
     base = normalizePath(base)
 
     let workspaceFolders: Array<ProjectConfig> = []
-    let globalSettings = await this.settingsCache.getConfiguration()
+    let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
     let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
@@ -230,7 +230,7 @@ export class TW {
 
       let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
         cwd: base,
-        ignore: (await this.settingsCache.getConfiguration()).tailwindCSS.files.exclude,
+        ignore: (await this.settingsCache.get()).tailwindCSS.files.exclude,
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
@@ -575,7 +575,7 @@ export class TW {
 
         this.settingsCache.clear()
 
-        globalSettings = await this.settingsCache.getConfiguration()
+        globalSettings = await this.settingsCache.get()
 
         if (!equal(previousExclude, globalSettings.tailwindCSS.files.exclude)) {
           this.restart()
@@ -644,7 +644,7 @@ export class TW {
       () => this.refreshDiagnostics(),
       (patterns: string[]) => watchPatterns(patterns),
       tailwindVersion,
-      this.settingsCache.getConfiguration
+      this.settingsCache.get
     )
     this.projects.set(key, project)
   }
