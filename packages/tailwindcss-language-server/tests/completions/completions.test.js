@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest'
 import { withFixture } from '../common'
 
-withFixture('basic', (c) => {
-  async function completion({
+function buildCompletion(c) {
+  return async function completion({
     lang,
     text,
     position,
@@ -19,6 +19,10 @@ withFixture('basic', (c) => {
       context,
     })
   }
+}
+
+withFixture('basic', (c) => {
+  let completion = buildCompletion(c)
 
   async function expectCompletions({ lang, text, position, settings }) {
     let result = await completion({ lang, text, position, settings })
@@ -140,7 +144,7 @@ withFixture('basic', (c) => {
     expect(result).toBe(null)
   })
 
-  test('classRegex matching empty string', async () => {
+  test.concurrent('classRegex matching empty string', async () => {
     try {
       let result = await completion({
         text: "let _ = ''",
@@ -196,23 +200,7 @@ withFixture('basic', (c) => {
 })
 
 withFixture('overrides-variants', (c) => {
-  async function completion({
-    lang,
-    text,
-    position,
-    context = {
-      triggerKind: 1,
-    },
-    settings,
-  }) {
-    let textDocument = await c.openDocument({ text, lang, settings })
-
-    return c.sendRequest('textDocument/completion', {
-      textDocument,
-      position,
-      context,
-    })
-  }
+  let completion = buildCompletion(c)
 
   test.concurrent(
     'duplicate variant + value pairs do not produce multiple completions',

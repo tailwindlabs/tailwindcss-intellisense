@@ -1,7 +1,7 @@
 import * as path from 'node:path'
 import * as cp from 'node:child_process'
-import * as rpc from 'vscode-jsonrpc'
-import { beforeAll } from 'vitest'
+import * as rpc from 'vscode-jsonrpc/node'
+import { describe, beforeAll } from 'vitest'
 
 async function init(fixture) {
   let settings = {}
@@ -174,19 +174,22 @@ async function init(fixture) {
   }
 }
 
+let id = 0
 export function withFixture(fixture, callback) {
-  let c = {}
+  describe(fixture, async () => {
+    let c = {}
 
-  beforeAll(async () => {
-    // Using the connection object as the prototype lets us access the connection
-    // without defining getters for all the methods and also lets us add helpers
-    // to the connection object without having to resort to using a Proxy
-    Object.setPrototypeOf(c, await init(fixture))
+    beforeAll(async (t) => {
+      // Using the connection object as the prototype lets us access the connection
+      // without defining getters for all the methods and also lets us add helpers
+      // to the connection object without having to resort to using a Proxy
+      Object.setPrototypeOf(c, await init(fixture))
 
-    return () => c.connection.end()
+      return () => c.connection.end()
+    })
+
+    await callback(c)
   })
-
-  callback(c)
 }
 
 // let counter = 0
