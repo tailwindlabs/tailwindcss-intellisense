@@ -44,7 +44,6 @@ import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
 import { AtRule, Container, Node, Result } from 'postcss'
-import Module from 'module'
 import Hook from './lib/hook'
 import * as semver from '@tailwindcss/language-service/src/util/semver'
 import dlv from 'dlv'
@@ -86,6 +85,14 @@ import preflight from 'tailwindcss/lib/css/preflight.css'
 import merge from 'deepmerge'
 import { getTextWithoutComments } from '@tailwindcss/language-service/src/util/doc'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
+import {
+  first,
+  firstOptional,
+  withoutLogs,
+  clearRequireCache,
+  withFallback,
+  isObject,
+} from './utils'
 
 // @ts-ignore
 global.__preflight = preflight
@@ -137,28 +144,6 @@ function getConfigId(configPath: string, configDependencies: string[]): string {
   return JSON.stringify(
     [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs])
   )
-}
-
-function first<T>(...options: Array<() => T>): T {
-  for (let i = 0; i < options.length; i++) {
-    let option = options[i]
-    if (i === options.length - 1) {
-      return option()
-    } else {
-      try {
-        return option()
-      } catch (_) {}
-    }
-  }
-}
-
-function firstOptional<T>(...options: Array<() => T>): T | undefined {
-  for (let i = 0; i < options.length; i++) {
-    let option = options[i]
-    try {
-      return option()
-    } catch (_) {}
-  }
 }
 
 interface ProjectService {
@@ -278,43 +263,6 @@ async function getConfiguration(uri?: string) {
   )
   documentSettingsCache.set(uri, config)
   return config
-}
-
-function clearRequireCache(): void {
-  Object.keys(require.cache).forEach((key) => {
-    if (!key.endsWith('.node')) {
-      delete require.cache[key]
-    }
-  })
-  Object.keys((Module as any)._pathCache).forEach((key) => {
-    delete (Module as any)._pathCache[key]
-  })
-}
-
-function withoutLogs<T>(getter: () => T): T {
-  let fns = {
-    log: console.log,
-    warn: console.warn,
-    error: console.error,
-  }
-  for (let key in fns) {
-    console[key] = () => {}
-  }
-  try {
-    return getter()
-  } finally {
-    for (let key in fns) {
-      console[key] = fns[key]
-    }
-  }
-}
-
-function withFallback<T>(getter: () => T, fallback: T): T {
-  try {
-    return getter()
-  } catch (e) {
-    return fallback
-  }
 }
 
 function dirContains(dir: string, file: string): boolean {
@@ -1320,10 +1268,6 @@ function getClassOrderPolyfill(state: State, classes: string[]): Array<[string, 
   }
 
   return classNamesWithOrder
-}
-
-function isObject(value: unknown): boolean {
-  return Object.prototype.toString.call(value) === '[object Object]'
 }
 
 type SimplePlugin = (api: any) => {}
