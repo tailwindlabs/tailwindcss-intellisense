@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 import { beforeAll } from 'vitest'
-import { launch } from './connection'
+import { connect } from './connection'
 import {
   CompletionRequest,
   ConfigurationRequest,
@@ -20,7 +20,7 @@ async function init(fixture: string) {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
-  const { client } = await launch()
+  const { client } = await connect()
 
   const capabilities = {
     textDocument: {
