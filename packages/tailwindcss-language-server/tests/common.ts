@@ -1,5 +1,5 @@
 import * as path from 'node:path'
-import { beforeAll } from 'vitest'
+import { beforeAll, describe } from 'vitest'
 import { connect } from './connection'
 import {
   CompletionRequest,
@@ -17,8 +17,7 @@ import type { ProtocolConnection } from 'vscode-languageclient'
 
 type Settings = any
 
-interface FixtureContext
-  extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
+interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
   client: ProtocolConnection
   openDocument: (params: {
     text: string
@@ -205,16 +204,18 @@ async function init(fixture: string): Promise<FixtureContext> {
 }
 
 export function withFixture(fixture, callback: (c: FixtureContext) => void) {
-  let c: FixtureContext = {} as any
+  describe(fixture, () => {
+    let c: FixtureContext = {} as any
 
-  beforeAll(async () => {
-    // Using the connection object as the prototype lets us access the connection
-    // without defining getters for all the methods and also lets us add helpers
-    // to the connection object without having to resort to using a Proxy
-    Object.setPrototypeOf(c, await init(fixture))
+    beforeAll(async () => {
+      // Using the connection object as the prototype lets us access the connection
+      // without defining getters for all the methods and also lets us add helpers
+      // to the connection object without having to resort to using a Proxy
+      Object.setPrototypeOf(c, await init(fixture))
 
-    return () => c.client.dispose()
+      return () => c.client.dispose()
+    })
+
+    callback(c)
   })
-
-  callback(c)
 }
