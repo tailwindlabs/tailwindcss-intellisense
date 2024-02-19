@@ -230,7 +230,7 @@ export class TW {
 
       let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
         cwd: base,
-        ignore: (await this.settingsCache.get()).tailwindCSS.files.exclude,
+        ignore: globalSettings.tailwindCSS.files.exclude,
         onlyFiles: true,
         absolute: true,
         suppressErrors: true,
