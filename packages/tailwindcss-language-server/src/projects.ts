@@ -452,12 +452,12 @@ export async function createProjectService(
 
       log(`Loaded Tailwind CSS config file: ${configPath}`)
 
+      tailwindcss = require(tailwindcssPath)
+      log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
+
       postcss = require(postcssPath)
       postcssSelectorParser = require(postcssSelectorParserPath)
       log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
-
-      tailwindcss = require(tailwindcssPath)
-      log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       try {
         resolveConfigFn = require(resolveFrom(tailwindDir, './resolveConfig.js'))

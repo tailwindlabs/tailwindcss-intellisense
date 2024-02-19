@@ -54,6 +54,7 @@ import {
   ProjectConfig,
 } from './projects'
 import { SettingsCache, createSettingsCache } from './config'
+import { Feature, supportedFeatures } from './features'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -73,8 +74,14 @@ const TRIGGER_CHARACTERS = [
   '/',
 ] as const
 
+async function readCssFile(filepath: string): Promise<string | null> {
+  let contents = await fs.promises.readFile(filepath, 'utf8')
+
+  return getTextWithoutComments(contents, 'css')
+}
+
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
-  let css = getTextWithoutComments(await fs.promises.readFile(cssFile, 'utf8'), 'css')
+  let css = await readCssFile(cssFile)
   let match = css.match(/@config\s*(?<config>'[^']+'|"[^"]+")/)
   if (!match) {
     return null
@@ -104,14 +111,14 @@ function getPackageRoot(cwd: string, rootDir: string) {
 
 function getContentDocumentSelectorFromConfigFile(
   configPath: string,
-  tailwindVersion: string,
+  twFeatures: Feature[],
   rootDir: string,
   actualConfig?: any
 ): DocumentSelector[] {
   let config = actualConfig ?? require(configPath)
   let contentConfig: unknown = config.content?.files ?? config.content
   let content = Array.isArray(contentConfig) ? contentConfig : []
-  let relativeEnabled = semver.gte(tailwindVersion, '3.2.0')
+  let relativeEnabled = twFeatures.includes('relative-content-paths')
     ? config.future?.relativeContentPathsByDefault || config.content?.relative
     : false
   let contentBase: string
@@ -241,7 +248,13 @@ export class TW {
       for (let filename of files) {
         let normalizedFilename = normalizePath(filename)
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, { dot: true })
-        let configPath = isCssFile ? await getConfigFileFromCssFile(filename) : filename
+
+        let configPath: string = filename
+
+        if (isCssFile) {
+          configPath = await getConfigFileFromCssFile(filename)
+        }
+
         if (!configPath) {
           continue
         }
@@ -256,22 +269,37 @@ export class TW {
           }
         } catch {}
 
-        if (isCssFile && (!semver.gte(twVersion, '3.2.0') || isDefaultVersion)) {
-          continue
+        let twFeatures = supportedFeatures(twVersion)
+
+        if (isDefaultVersion) {
+          console.log(`[Global] Using Tailwind Version: ${twVersion} (Bundled) for ${configPath}`)
+        } else {
+          console.log(`[Global] Using Tailwind Version: ${twVersion} (Local) for ${configPath}`)
         }
 
-        if (
-          (configPath.endsWith('.ts') || configPath.endsWith('.mjs')) &&
-          !semver.gte(twVersion, '3.3.0')
-        ) {
-          continue
+        console.log(`[Global] Supported features`, JSON.stringify(twFeatures))
+
+        // Verify `@config` directive support
+        if (isCssFile) {
+          if (twFeatures.includes('css-at-config') && !isDefaultVersion) {
+            // This is good!
+          } else {
+            continue
+          }
+        }
+
+        // Verify TS/ESM config support
+        if (!twFeatures.includes('transpiled-configs')) {
+          if (configPath.endsWith('.ts') || configPath.endsWith('.mjs')) {
+            continue
+          }
         }
 
         configTailwindVersionMap.set(configPath, twVersion)
 
         let contentSelector: Array<DocumentSelector> = []
         try {
-          contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twVersion, base)
+          contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twFeatures, base)
         } catch {}
 
         let documentSelector: DocumentSelector[] = [
