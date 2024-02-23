@@ -73,6 +73,7 @@ import {
   changeAffectsFile,
 } from './utils'
 import { DocumentService } from './documents'
+import { ProjectConfig } from './project-locator'
 
 const colorNames = Object.keys(namedColors)
 
@@ -102,13 +103,6 @@ export interface ProjectService {
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
   onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
   sortClassLists(classLists: string[]): string[]
-}
-
-export type ProjectConfig = {
-  folder: string
-  configPath?: string
-  documentSelector?: Array<DocumentSelector>
-  isUserConfigured: boolean
 }
 
 export enum DocumentSelectorPriority {
