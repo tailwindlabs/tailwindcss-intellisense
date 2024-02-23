@@ -29,32 +29,22 @@ import {
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
-import glob from 'fast-glob'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
-import * as os from 'os'
-import * as fs from 'fs'
 import type * as chokidar from 'chokidar'
 import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom from './util/resolveFrom'
-import * as semver from '@tailwindcss/language-service/src/util/semver'
 import * as parcel from './watcher/index.js'
 import { normalizeFileNameToFsPath } from './util/uri'
 import { equal } from '@tailwindcss/language-service/src/util/array'
-import { getTextWithoutComments } from '@tailwindcss/language-service/src/util/doc'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
 import { DocumentService } from './documents'
-import {
-  createProjectService,
-  ProjectService,
-  DocumentSelector,
-  DocumentSelectorPriority,
-  ProjectConfig,
-} from './projects'
+import { createProjectService, ProjectService, DocumentSelectorPriority } from './projects'
 import { SettingsCache, createSettingsCache } from './config'
-import { Feature, supportedFeatures } from './features'
+import { readCssFile } from './util/css'
+import { ProjectLocator, ProjectConfig } from './project-locator'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -74,12 +64,6 @@ const TRIGGER_CHARACTERS = [
   '/',
 ] as const
 
-async function readCssFile(filepath: string): Promise<string | null> {
-  let contents = await fs.promises.readFile(filepath, 'utf8')
-
-  return getTextWithoutComments(contents, 'css')
-}
-
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
   let css = await readCssFile(cssFile)
   let match = css.match(/@config\s*(?<config>'[^']+'|"[^"]+")/)
@@ -87,57 +71,6 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
     return null
   }
   return normalizePath(path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1)))
-}
-
-function getPackageRoot(cwd: string, rootDir: string) {
-  try {
-    let pkgJsonPath = findUp.sync(
-      (dir) => {
-        let pkgJson = path.join(dir, 'package.json')
-        if (findUp.sync.exists(pkgJson)) {
-          return pkgJson
-        }
-        if (dir === path.normalize(rootDir)) {
-          return findUp.stop
-        }
-      },
-      { cwd }
-    )
-    return pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
-  } catch {
-    return rootDir
-  }
-}
-
-function getContentDocumentSelectorFromConfigFile(
-  configPath: string,
-  twFeatures: Feature[],
-  rootDir: string,
-  actualConfig?: any
-): DocumentSelector[] {
-  let config = actualConfig ?? require(configPath)
-  let contentConfig: unknown = config.content?.files ?? config.content
-  let content = Array.isArray(contentConfig) ? contentConfig : []
-  let relativeEnabled = twFeatures.includes('relative-content-paths')
-    ? config.future?.relativeContentPathsByDefault || config.content?.relative
-    : false
-  let contentBase: string
-  if (relativeEnabled) {
-    contentBase = path.dirname(configPath)
-  } else {
-    contentBase = getPackageRoot(path.dirname(configPath), rootDir)
-  }
-  return content
-    .filter((item): item is string => typeof item === 'string')
-    .map((item) =>
-      item.startsWith('!')
-        ? `!${path.resolve(contentBase, item.slice(1))}`
-        : path.resolve(contentBase, item)
-    )
-    .map((item) => ({
-      pattern: normalizePath(item),
-      priority: DocumentSelectorPriority.CONTENT_FILE,
-    }))
 }
 
 export class TW {
@@ -221,9 +154,14 @@ export class TW {
 
       workspaceFolders = Object.entries(configFiles).map(
         ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
+          let configPath = normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath))
+
           return {
             folder: base,
-            configPath: normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath)),
+            configPath,
+            config: {
+              path: configPath,
+            },
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
               pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
@@ -233,145 +171,46 @@ export class TW {
         }
       )
     } else {
-      let projects: Record<string, Array<DocumentSelector>> = {}
+      let locator = new ProjectLocator(base, globalSettings)
 
-      let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
-        cwd: base,
-        ignore: globalSettings.tailwindCSS.files.exclude,
-        onlyFiles: true,
-        absolute: true,
-        suppressErrors: true,
-        dot: true,
-        concurrency: Math.max(os.cpus().length, 1),
-      })
+      let projects = await locator.search()
 
-      for (let filename of files) {
-        let normalizedFilename = normalizePath(filename)
-        let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, { dot: true })
+      if (projects.length === 1) {
+        projects[0].documentSelector.push({
+          pattern: normalizePath(path.join(base, '**')),
+          priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+        })
+      }
 
-        let configPath: string = filename
+      for (let project of projects) {
+        // Track the Tailwind version for a given config
+        configTailwindVersionMap.set(project.config.path, project.tailwind.version)
 
-        if (isCssFile) {
-          configPath = await getConfigFileFromCssFile(filename)
-        }
+        if (project.config.source !== 'css') continue
 
-        if (!configPath) {
-          continue
-        }
-
-        let twVersion = require('tailwindcss/package.json').version
-        let isDefaultVersion = true
-        try {
-          let v = require(resolveFrom(path.dirname(configPath), 'tailwindcss/package.json')).version
-          if (typeof v === 'string') {
-            twVersion = v
-            isDefaultVersion = false
-          }
-        } catch {}
-
-        let twFeatures = supportedFeatures(twVersion)
-
-        if (isDefaultVersion) {
-          console.log(`[Global] Using Tailwind Version: ${twVersion} (Bundled) for ${configPath}`)
-        } else {
-          console.log(`[Global] Using Tailwind Version: ${twVersion} (Local) for ${configPath}`)
-        }
-
-        console.log(`[Global] Supported features`, JSON.stringify(twFeatures))
-
-        // Verify `@config` directive support
-        if (isCssFile) {
-          if (twFeatures.includes('css-at-config') && !isDefaultVersion) {
-            // This is good!
-          } else {
-            continue
-          }
-        }
-
-        // Verify TS/ESM config support
-        if (!twFeatures.includes('transpiled-configs')) {
-          if (configPath.endsWith('.ts') || configPath.endsWith('.mjs')) {
-            continue
-          }
-        }
-
-        configTailwindVersionMap.set(configPath, twVersion)
-
-        let contentSelector: Array<DocumentSelector> = []
-        try {
-          contentSelector = getContentDocumentSelectorFromConfigFile(configPath, twFeatures, base)
-        } catch {}
-
-        let documentSelector: DocumentSelector[] = [
-          {
-            pattern: normalizePath(filename),
-            priority: isCssFile
-              ? DocumentSelectorPriority.CSS_FILE
-              : DocumentSelectorPriority.CONFIG_FILE,
-          },
-          ...(isCssFile
-            ? [
-                {
-                  pattern: normalizePath(configPath),
-                  priority: DocumentSelectorPriority.CONFIG_FILE,
-                },
-              ]
-            : []),
-          ...contentSelector,
-          {
-            pattern: normalizePath(path.join(path.dirname(filename), '**')),
-            priority: isCssFile
-              ? DocumentSelectorPriority.CSS_DIRECTORY
-              : DocumentSelectorPriority.CONFIG_DIRECTORY,
-          },
-          ...(isCssFile
-            ? [
-                {
-                  pattern: normalizePath(path.join(path.dirname(configPath), '**')),
-                  priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
-                },
-              ]
-            : []),
-          {
-            pattern: normalizePath(path.join(getPackageRoot(path.dirname(configPath), base), '**')),
-            priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
-          },
-        ]
-
-        projects[configPath] = [...(projects[configPath] ?? []), ...documentSelector]
-
-        if (isCssFile) {
-          cssFileConfigMap.set(normalizedFilename, configPath)
+        // Track the config file for a given CSS file
+        for (let file of project.config.entries) {
+          if (file.type !== 'css') continue
+          cssFileConfigMap.set(file.path, project.config.path)
         }
       }
 
-      let projectKeys = Object.keys(projects)
-      let projectCount = projectKeys.length
-
-      if (projectCount > 0) {
-        if (projectCount === 1) {
-          projects[projectKeys[0]].push({
-            pattern: normalizePath(path.join(base, '**')),
-            priority: DocumentSelectorPriority.ROOT_DIRECTORY,
-          })
-        }
-        workspaceFolders = Object.entries(projects).map(([configPath, documentSelector]) => {
-          return {
-            folder: base,
-            configPath,
-            isUserConfigured: false,
-            documentSelector: documentSelector
-              .sort((a, z) => a.priority - z.priority)
-              .filter(
-                ({ pattern }, index, documentSelectors) =>
-                  documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index
-              ),
-          }
-        })
+      if (projects.length > 0) {
+        workspaceFolders = projects
       }
     }
 
-    console.log(`[Global] Creating projects: ${JSON.stringify(workspaceFolders)}`)
+    let workspaceDescription = workspaceFolders.map((workspace) => {
+      return {
+        folder: workspace.folder,
+        config: workspace.config.path,
+        selectors: workspace.documentSelector,
+        user: workspace.isUserConfigured,
+        tailwind: workspace.tailwind,
+      }
+    })
+
+    console.log(`[Global] Creating projects: ${JSON.stringify(workspaceDescription)}`)
 
     const onDidChangeWatchedFiles = async (
       changes: Array<{ file: string; type: FileChangeType }>
