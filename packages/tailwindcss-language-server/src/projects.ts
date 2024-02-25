@@ -74,6 +74,10 @@ import {
 } from './utils'
 import { DocumentService } from './documents'
 import { ProjectConfig } from './project-locator'
+import { supportedFeatures } from './features'
+import { loadDesignSystem } from './util/v4'
+import { readCssFile } from './util/css'
+import type { AstNode } from 'tailwindcss-language-service/src/util/v4'
 
 const colorNames = Object.keys(namedColors)
 
@@ -449,6 +453,26 @@ export async function createProjectService(
       tailwindcss = require(tailwindcssPath)
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
+      let features = supportedFeatures(tailwindcssVersion)
+      log(`supported features: ${JSON.stringify(features)}`)
+
+      if (features.includes('css-at-theme')) {
+        state.configPath = configPath
+        state.version = tailwindcssVersion
+        // TODO: Handle backwards compat stuff here too
+        state.isCssConfig = true
+        state.v4 = true
+        state.jit = true
+        state.modules = {
+          tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
+          postcss: { version: null, module: null },
+          resolveConfig: { module: null },
+          loadConfig: { module: null },
+        }
+
+        return tryRebuild()
+      }
+
       postcss = require(postcssPath)
       postcssSelectorParser = require(postcssSelectorParserPath)
       log(`Loaded postcss v${postcssVersion}: ${postcssDir}`)
@@ -693,7 +717,38 @@ export async function createProjectService(
     let isV3 = semver.gte(tailwindcss.version, '2.99.0')
     let hook: Hook
 
-    if (loadConfig.module) {
+    if (state.isCssConfig) {
+      try {
+        let css = await readCssFile(state.configPath)
+        let designSystem = await loadDesignSystem(
+          state.modules.tailwindcss.module,
+          state.configPath,
+          css
+        )
+
+        state.designSystem = designSystem
+
+        let { parse, toCss, optimizeCss } = state.modules.tailwindcss.module
+
+        Object.assign(designSystem, {
+          parse(classes: string[]): AstNode[] {
+            return parse(classes, designSystem, { throwOnInvalid: false })
+          },
+
+          toCss(nodes: AstNode[]) {
+            return toCss(nodes)
+          },
+
+          optimizeCss(css: string) {
+            return optimizeCss(css)
+          },
+        })
+
+        originalConfig = { theme: {} }
+      } catch {
+        //
+      }
+    } else if (loadConfig.module) {
       hook = new Hook(fs.realpathSync(state.configPath))
       try {
         originalConfig = await loadConfig.module(state.configPath)
@@ -777,7 +832,9 @@ export async function createProjectService(
       })
 
       try {
-        require(state.configPath)
+        if (!state.isCssConfig) {
+          require(state.configPath)
+        }
       } catch (error) {
         hook.unhook()
         throw error
@@ -805,7 +862,7 @@ export async function createProjectService(
     //////////////////////
 
     try {
-      state.config = resolveConfig.module(originalConfig)
+      state.config = state.isCssConfig ? originalConfig : resolveConfig.module(originalConfig)
       state.separator = dlv(state.config, sepLocation)
       if (typeof state.separator !== 'string') {
         state.separator = ':'
@@ -813,7 +870,17 @@ export async function createProjectService(
       state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
       delete state.config.blocklist
 
-      if (state.jit) {
+      if (state.v4) {
+        state.classList = state.designSystem.getClassList().map((className) => {
+          return [
+            className[0],
+            {
+              ...className[1],
+              color: getColor(state, className[0]),
+            },
+          ]
+        })
+      } else if (state.jit) {
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator
         if (state.jitContext.getClassList) {
@@ -1062,9 +1129,15 @@ export async function createProjectService(
           classes.pop()
         }
 
-        let classNamesWithOrder = state.jitContext.getClassOrder
-          ? state.jitContext.getClassOrder(classes)
-          : getClassOrderPolyfill(state, classes)
+        let classNamesWithOrder: [string, bigint | null][]
+
+        if (state.v4) {
+          classNamesWithOrder = state.designSystem.getClassOrder(classes)
+        } else if (state.jitContext.getClassOrder) {
+          classNamesWithOrder = state.jitContext.getClassOrder(classes)
+        } else {
+          classNamesWithOrder = getClassOrderPolyfill(state, classes)
+        }
 
         classes = classNamesWithOrder
           .sort(([, a], [, z]) => {
@@ -1164,6 +1237,10 @@ function isAtRule(node: Node): node is AtRule {
 }
 
 function getVariants(state: State): Array<Variant> {
+  if (state.v4) {
+    return state.designSystem.getVariants()
+  }
+
   if (state.jitContext?.getVariants) {
     return state.jitContext.getVariants()
   }
