@@ -1,0 +1,6 @@
+{
+  "workspaces": ["packages/*"],
+  "dependencies": {
+    "tailwindcss": "file:tailwindcss-4.0.0.tgz"
+  }
+}

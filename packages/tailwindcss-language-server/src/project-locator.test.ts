@@ -56,3 +56,20 @@ testFixture('multi-config-content', [
   { config: 'tailwind.config.one.js' },
   { config: 'tailwind.config.two.js' },
 ])
+
+testFixture('v4/basic', [
+  //
+  { config: 'app.css' },
+])
+
+testFixture('v4/multi-config', [
+  //
+  { config: 'admin/app.css' },
+  { config: 'web/app.css' },
+])
+
+testFixture('v4/workspaces', [
+  { config: 'packages/admin/app.css' },
+  // { config: 'packages/shared/ui.css' }, // Should this be included?
+  { config: 'packages/web/app.css' },
+])
