@@ -36,6 +36,7 @@ import {
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
+import { Declaration, visit } from './util/v4'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -64,6 +65,218 @@ export function completionsFromClassList(
       ...classListRange.start,
       character: classListRange.end.character - partialClassName.length,
     },
+  }
+
+  if (state.v4) {
+    let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
+
+    if (
+      context &&
+      (context.triggerKind === 1 ||
+        (context.triggerKind === 2 && context.triggerCharacter === '/')) &&
+      partialClassName.includes('/')
+    ) {
+      // modifiers
+      let modifiers: string[]
+      let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
+
+      let baseClassName = beforeSlash.slice(offset)
+      modifiers = state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
+        ?.modifiers
+
+      if (modifiers) {
+        return withDefaults(
+          {
+            isIncomplete: false,
+            items: modifiers.map((modifier, index) => {
+              let className = `${beforeSlash}/${modifier}`
+              let kind: CompletionItemKind = 21
+              let documentation: string | undefined
+
+              const color = getColor(state, className)
+              if (color !== null) {
+                kind = 16
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
+                }
+              }
+
+              return {
+                label: className,
+                ...(documentation ? { documentation } : {}),
+                kind,
+                sortText: naturalExpand(index),
+              }
+            }),
+          },
+          {
+            range: replacementRange,
+            data: state.completionItemData,
+          },
+          state.editor.capabilities.itemDefaults
+        )
+      }
+    }
+
+    replacementRange.start.character += offset
+
+    let important = partialClassName.substr(offset).endsWith('!')
+    if (important) {
+      replacementRange.end.character -= 1
+    }
+
+    let items: CompletionItem[] = []
+    let seenVariants = new Set<string>()
+
+    let variantOrder = 0
+
+    function variantItem(
+      item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>
+    ): CompletionItem {
+      return {
+        kind: 9,
+        data: {
+          ...(state.completionItemData ?? {}),
+          _type: 'variant',
+        },
+        command:
+          item.insertTextFormat === 2 // Snippet
+            ? undefined
+            : {
+                title: '',
+                command: 'editor.action.triggerSuggest',
+              },
+        sortText: '-' + naturalExpand(variantOrder++),
+        ...item,
+      }
+    }
+
+    for (let variant of state.variants) {
+      if (existingVariants.includes(variant.name)) {
+        continue
+      }
+
+      if (seenVariants.has(variant.name)) {
+        continue
+      }
+
+      seenVariants.add(variant.name)
+
+      if (variant.isArbitrary) {
+        items.push(
+          variantItem({
+            label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
+            insertTextFormat: 2,
+            textEditText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
+            // command: {
+            //   title: '',
+            //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+            //   arguments: [variant.name, replacementRange],
+            // },
+          })
+        )
+      } else {
+        let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+        let resultingVariants = [...existingVariants, variant.name]
+
+        if (shouldSortVariants) {
+          let allVariants = state.variants.map(({ name }) => name)
+          resultingVariants = resultingVariants.sort(
+            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+          )
+        }
+
+        items.push(
+          variantItem({
+            label: `${variant.name}${sep}`,
+            detail: variant
+              .selectors()
+              .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+              .join(', '),
+            textEditText: resultingVariants[resultingVariants.length - 1] + sep,
+            additionalTextEdits:
+              shouldSortVariants && resultingVariants.length > 1
+                ? [
+                    {
+                      newText:
+                        resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
+                      range: {
+                        start: {
+                          ...classListRange.start,
+                          character: classListRange.end.character - partialClassName.length,
+                        },
+                        end: {
+                          ...replacementRange.start,
+                          character: replacementRange.start.character,
+                        },
+                      },
+                    },
+                  ]
+                : [],
+          })
+        )
+      }
+
+      for (let value of variant.values ?? []) {
+        if (existingVariants.includes(`${variant.name}-${value}`)) {
+          continue
+        }
+
+        if (seenVariants.has(`${variant.name}-${value}`)) {
+          continue
+        }
+
+        seenVariants.add(`${variant.name}-${value}`)
+
+        items.push(
+          variantItem({
+            label:
+              value === 'DEFAULT'
+                ? `${variant.name}${sep}`
+                : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+            detail: variant.selectors({ value }).join(', '),
+          })
+        )
+      }
+    }
+
+    return withDefaults(
+      {
+        isIncomplete: false,
+        items: items.concat(
+          state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
+            if (state.blocklist?.includes([...existingVariants, className].join(state.separator))) {
+              return items
+            }
+
+            let kind: CompletionItemKind = color ? 16 : 21
+            let documentation: string | undefined
+
+            if (color && typeof color !== 'string') {
+              documentation = culori.formatRgb(color)
+            }
+
+            items.push({
+              label: className,
+              kind,
+              ...(documentation ? { documentation } : {}),
+              sortText: naturalExpand(index, state.classList.length),
+            })
+
+            return items
+          }, [] as CompletionItem[])
+        ),
+      },
+      {
+        data: {
+          ...(state.completionItemData ?? {}),
+          ...(important ? { important } : {}),
+          variants: existingVariants,
+        },
+        range: replacementRange,
+      },
+      state.editor.capabilities.itemDefaults
+    )
   }
 
   if (state.jit) {
@@ -1361,6 +1574,37 @@ export async function resolveCompletionItem(
     className = `!${className}`
   }
   let variants = item.data?.variants ?? []
+
+  if (state.v4) {
+    if (item.kind === 9) return item
+    if (item.detail && item.documentation) return item
+    let rules = state.designSystem.parse([[...variants, className].join(state.separator)])
+    if (rules.length === 0) return item
+
+    if (!item.detail) {
+      if (rules.length === 1) {
+        let decls: Declaration[] = []
+
+        visit(rules, (node) => {
+          if (node.kind !== 'declaration') return
+          decls.push(node)
+        })
+
+        item.detail = state.designSystem.toCss(decls)
+      } else {
+        item.detail = `${rules.length} rules`
+      }
+    }
+
+    if (!item.documentation) {
+      item.documentation = {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: ['```css', state.designSystem.toCss(rules), '```'].join('\n'),
+      }
+    }
+
+    return item
+  }
 
   if (state.jit) {
     if (item.kind === 9) return item

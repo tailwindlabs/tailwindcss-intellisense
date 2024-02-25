@@ -1,11 +1,12 @@
 import { joinWithAnd } from '../util/joinWithAnd'
-import { State, Settings } from '../util/state'
+import { State, Settings, DocumentClassName } from '../util/state'
 import { CssConflictDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { getClassNameDecls } from '../util/getClassNameDecls'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 import * as jit from '../util/jit'
+import * as v4 from '../util/v4'
 import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
@@ -52,6 +53,39 @@ export async function getCssConflictDiagnostics(
 
   classLists.forEach((classList) => {
     const classNames = getClassNamesInClassList(classList, state.blocklist)
+
+    if (state.v4) {
+      const groups = recordClassDetails(state, classNames)
+
+      for (let [className, conflictingClassNames] of findConflicts(classNames, groups)) {
+        diagnostics.push({
+          code: DiagnosticKind.CssConflict,
+          className,
+          otherClassNames: conflictingClassNames,
+          range: className.range,
+          severity:
+            severity === 'error'
+              ? 1 /* DiagnosticSeverity.Error */
+              : 2 /* DiagnosticSeverity.Warning */,
+          message: `'${className.className}' applies the same CSS properties as ${joinWithAnd(
+            conflictingClassNames.map(
+              (conflictingClassName) => `'${conflictingClassName.className}'`
+            )
+          )}.`,
+          relatedInformation: conflictingClassNames.map((conflictingClassName) => {
+            return {
+              message: conflictingClassName.className,
+              location: {
+                uri: document.uri,
+                range: conflictingClassName.range,
+              },
+            }
+          }),
+        })
+      }
+
+      return
+    }
 
     classNames.forEach((className, index) => {
       if (state.jit) {
@@ -190,4 +224,114 @@ export async function getCssConflictDiagnostics(
   })
 
   return diagnostics
+}
+
+interface RuleEntry {
+  properties: string[]
+  context: string[]
+}
+
+type ClassDetails = Record<string, RuleEntry[]>
+
+function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDetails {
+  const { parse } = state.modules.tailwindcss.module
+  const groups: Record<string, RuleEntry[]> = {}
+
+  // Get all the properties for each class
+  for (let className of classes) {
+    let rules = state.designSystem.parse([className.className])
+
+    v4.visit(rules, (node, path) => {
+      if (node.kind !== 'rule') return
+
+      let properties: string[] = []
+
+      for (let child of node.nodes ?? []) {
+        if (child.kind === 'declaration') {
+          properties.push(child.property)
+        }
+      }
+
+      if (properties.length === 0) return
+
+      // We have to slice off the first `context` item because it's the class name and that's always different
+      groups[className.className] ??= []
+      groups[className.className].push({
+        properties,
+        context: path
+          .map((p) => p.selector)
+          .filter(Boolean)
+          .slice(1),
+      })
+    })
+  }
+
+  return groups
+}
+
+function* findConflicts(
+  classes: DocumentClassName[],
+  groups: ClassDetails
+): Iterable<[DocumentClassName, DocumentClassName[]]> {
+  // Compare each class to each other
+  // If they have the same properties and context, they are conflicting and we should report it
+  for (let className of classes) {
+    let entries = groups[className.className]
+    let conflictingClassNames: DocumentClassName[] = []
+
+    for (let otherClassName of classes) {
+      if (className === otherClassName) continue
+
+      let otherEntries = groups[otherClassName.className]
+
+      // There is _some_ difference so we can skip this
+      if (entries.length !== otherEntries.length) continue
+
+      let hasConflict = false
+
+      for (let i = 0; i < entries.length; i++) {
+        let entry = entries[i]
+        let otherEntry = otherEntries[i]
+
+        // Different number of properties so no conflict is happening
+        if (entry.properties.length !== otherEntry.properties.length) {
+          hasConflict = false
+          break
+        }
+
+        // Different depth of context so no conflict is happening
+        if (entry.context.length !== otherEntry.context.length) {
+          hasConflict = false
+          break
+        }
+
+        // Different properties so no conflict is happening
+        if (!equal(entry.properties, otherEntry.properties)) {
+          hasConflict = false
+          break
+        }
+
+        // Different context so no conflict is happening
+        if (!equal(entry.context, otherEntry.context)) {
+          hasConflict = false
+          break
+        }
+
+        // If there are no properties keep checking
+        if (entry.properties.length === 0 && otherEntry.properties.length === 0) {
+          continue
+        }
+
+        hasConflict = true
+      }
+
+      if (!hasConflict) continue
+
+      conflictingClassNames.push(otherClassName)
+    }
+
+    if (conflictingClassNames.length === 0) return
+
+    yield [className, conflictingClassNames]
+  }
 }

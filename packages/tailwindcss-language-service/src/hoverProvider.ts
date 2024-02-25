@@ -10,6 +10,7 @@ import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import postcss from 'postcss'
 
 export async function doHover(
   state: State,
@@ -60,6 +61,25 @@ async function provideClassNameHover(
 ): Promise<Hover> {
   let className = await findClassNameAtPosition(state, document, position)
   if (className === null) return null
+
+  if (state.v4) {
+    let ast = state.designSystem.parse([className.className])
+
+    if (ast.length === 0) {
+      return null
+    }
+
+    let css = state.designSystem.toCss(ast)
+    let root = postcss.parse(css)
+
+    return {
+      contents: {
+        language: 'css',
+        value: await jit.stringifyRoot(state, root, document.uri),
+      },
+      range: className.range,
+    }
+  }
 
   if (state.jit) {
     let { root, rules } = jit.generateRules(state, [className.className])

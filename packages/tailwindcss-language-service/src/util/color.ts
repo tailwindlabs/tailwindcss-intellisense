@@ -7,6 +7,8 @@ import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
+import * as v4 from './v4'
+import postcss from 'postcss'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -130,6 +132,32 @@ function getColorFromDecls(
 }
 
 export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
+  if (state.v4) {
+    let ast = state.designSystem.parse([className])
+    let decls: Record<string, string[]> = {}
+
+    let rule = postcss.rule({
+      selector: '.x',
+      nodes: [],
+    })
+
+    v4.visit(ast, (node) => {
+      if (node.kind !== 'declaration') return
+
+      rule.append(postcss.decl({ prop: node.property, value: node.value }))
+    })
+
+    let root = postcss.root({ nodes: [rule] })
+    let css = postcss.parse(state.designSystem.optimizeCss(root.toString()))
+
+    css.walkDecls((decl) => {
+      decls[decl.prop] ??= []
+      decls[decl.prop].push(decl.value)
+    })
+
+    return getColorFromDecls(decls)
+  }
+
   if (state.jit) {
     if (state.classNames) {
       const item = dlv(state.classNames.classNames, [className, '__info'])
