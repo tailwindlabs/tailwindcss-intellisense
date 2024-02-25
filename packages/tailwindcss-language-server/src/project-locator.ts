@@ -7,6 +7,9 @@ import normalizePath from 'normalize-path'
 import type { Settings } from 'tailwindcss-language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
+import { Graph } from './graph'
+import postcss, { Message } from 'postcss'
+import postcssImport from 'postcss-import'
 import { DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
@@ -71,6 +74,14 @@ export class ProjectLocator {
 
       // This version of Tailwind doesn't support `@config` directives
       if (!tailwind.features.includes('css-at-config')) {
+        return null
+      }
+    }
+
+    // This is a CSS-based Tailwind config
+    if (config.type === 'css') {
+      // This version of Tailwind doesn't support CSS-based configuration
+      if (!tailwind.features.includes('css-at-theme')) {
         return null
       }
     }
@@ -197,6 +208,9 @@ export class ProjectLocator {
     // Read the content of all the CSS files
     await Promise.all(css.map((entry) => entry.read()))
 
+    // Keep track of files that might import or involve Tailwind in some way
+    let imports: FileEntry[] = []
+
     for (let file of css) {
       // If the CSS file couldn't be read for some reason, skip it
       if (!file.content) continue
@@ -219,6 +233,52 @@ export class ProjectLocator {
           }))
         )
         continue
+      }
+
+      // Look for `@import` or `@tailwind` directives
+      if (file.isMaybeTailwindRelated()) {
+        imports.push(file)
+        continue
+      }
+    }
+
+    // Resolve imports in all the CSS files
+    await Promise.all(imports.map((file) => file.resolveImports()))
+
+    // Create a graph of all the CSS files that might (indirectly) use Tailwind
+    let graph = new Graph<FileEntry>()
+
+    for (let file of imports) {
+      graph.add(file.path, file)
+
+      for (let msg of file.deps) {
+        let importedPath: string = normalizePath(msg.file)
+
+        // Record that `file.path` imports `msg.file`
+        graph.add(importedPath, new FileEntry('css', importedPath))
+
+        graph.connect(file.path, importedPath)
+      }
+    }
+
+    for (let root of graph.roots()) {
+      let config: ConfigEntry = configs.remember(root.path, () => ({
+        source: 'css',
+        type: 'css',
+        path: root.path,
+        entries: [],
+        packageRoot: null,
+        content: [{ kind: 'auto' }],
+      }))
+
+      // The root is a CSS entrypoint so lets use it as the "config" file
+      // We'll pass the parsed contents when loading the Design System for v4
+      root.configs.push(config)
+
+      // And add the config to all their descendants as we need to track updates
+      // that might affect the config / project
+      for (let child of graph.descendants(root.path)) {
+        child.configs.push(config)
       }
     }
 
@@ -263,6 +323,10 @@ function contentSelectorsFromConfig(
   features: Feature[],
   actualConfig?: any
 ): AsyncIterable<DocumentSelector> {
+  if (entry.type === 'css') {
+    return contentSelectorsFromCssConfig(entry)
+  }
+
   if (entry.type === 'js') {
     return contentSelectorsFromJsConfig(entry, features, actualConfig)
   }
@@ -297,10 +361,52 @@ async function* contentSelectorsFromJsConfig(
   }
 }
 
-type ContentItem = { kind: 'file'; file: string } | { kind: 'raw'; content: string }
+async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable<DocumentSelector> {
+  let auto = false
+  for (let item of entry.content) {
+    if (item.kind === 'file') {
+      yield {
+        pattern: normalizePath(item.file),
+        priority: DocumentSelectorPriority.CONTENT_FILE,
+      }
+    } else if (item.kind === 'auto' && !auto) {
+      auto = true
+      for await (let file of detectContentFiles(entry.packageRoot)) {
+        yield {
+          pattern: normalizePath(file),
+          priority: DocumentSelectorPriority.CONTENT_FILE,
+        }
+      }
+    }
+  }
+}
+
+async function* detectContentFiles(base: string): AsyncIterable<string> {
+  try {
+    let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
+
+    // This isn't a v4 project
+    const oxide = await import(oxidePath)
+    if (!oxide.scanDir) {
+      return
+    }
+
+    let { files, globs } = await oxide.scanDir({ base, globs: true })
+
+    yield* files
+    yield* globs
+  } catch {
+    //
+  }
+}
+
+type ContentItem =
+  | { kind: 'file'; file: string }
+  | { kind: 'raw'; content: string }
+  | { kind: 'auto' }
 
 type ConfigEntry = {
-  type: 'js'
+  type: 'js' | 'css'
   source: 'js' | 'css'
   path: string
   entries: FileEntry[]
@@ -308,8 +414,10 @@ type ConfigEntry = {
   content: ContentItem[]
 }
 
+let resolveImports = postcss([postcssImport()])
 class FileEntry {
   content: string | null
+  deps: Message[] = []
 
   constructor(public type: 'js' | 'css', public path: string, public configs: ConfigEntry[] = []) {}
 
@@ -318,6 +426,18 @@ class FileEntry {
       this.content = await readCssFile(this.path)
     } catch {
       this.content = null
+    }
+  }
+
+  async resolveImports() {
+    try {
+      let result = await resolveImports.process(this.content, { from: this.path })
+      this.deps = result.messages.filter((msg) => msg.type === 'dependency')
+
+      // Replace the file content with the processed CSS
+      this.content = result.css
+    } catch {
+      //
     }
   }
 
@@ -335,5 +455,24 @@ class FileEntry {
     }
 
     return normalizePath(path.resolve(path.dirname(this.path), match.groups.config.slice(1, -1)))
+  }
+
+  /**
+   * Look for `@import` or `@tailwind` directives in a CSS file. This means that
+   * participates in the CSS "graph" for the project and we need to traverse
+   * the graph to find all the CSS files that are considered entrypoints.
+   */
+  isMaybeTailwindRelated(): boolean {
+    if (!this.content) return false
+
+    let HAS_IMPORT = /@import\s*(?<config>'[^']+'|"[^"]+");/
+    let HAS_TAILWIND = /@tailwind\s*[^;]+;/
+    let HAS_THEME = /@theme\s*\{/
+
+    return (
+      HAS_IMPORT.test(this.content) ||
+      HAS_TAILWIND.test(this.content) ||
+      HAS_THEME.test(this.content)
+    )
   }
 }

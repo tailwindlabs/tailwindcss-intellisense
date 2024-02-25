@@ -3,6 +3,7 @@ import * as semver from '@tailwindcss/language-service/src/util/semver'
 export type Feature =
   | 'layer:preflight'
   | 'layer:base'
+  | 'css-at-theme'
   | 'css-at-config'
   | 'transpiled-configs'
   | 'relative-content-paths'
@@ -20,6 +21,10 @@ export type Feature =
  */
 export function supportedFeatures(version: string): Feature[] {
   let features: Feature[] = []
+
+  if (semver.gte(version, '4.0.0')) {
+    return ['css-at-theme', 'layer:base', 'content-list']
+  }
 
   if (semver.gte(version, '0.99.0')) {
     // `@tailwind base`` (and `@layer base`)
