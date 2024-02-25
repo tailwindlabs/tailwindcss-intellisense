@@ -514,6 +514,19 @@ export class TW {
       this.settingsCache.get
     )
     this.projects.set(key, project)
+
+    if (!this.supportsTailwindProjectDetails) {
+      return
+    }
+
+    this.connection.sendNotification('tailwind/projectDetails', {
+      config: projectConfig.configPath,
+      tailwind: projectConfig.tailwind,
+    })
+  }
+
+  private get supportsTailwindProjectDetails() {
+    return this.initializeParams.capabilities.experimental['tailwind']?.projectDetails ?? false
   }
 
   private refreshDiagnostics() {

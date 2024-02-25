@@ -13,7 +13,8 @@ import {
   InitializeParams,
   DidOpenTextDocumentParams,
 } from 'vscode-languageserver-protocol'
-import type { ProtocolConnection } from 'vscode-languageclient'
+import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
+import { Feature } from '../src/features'
 
 type Settings = any
 
@@ -27,6 +28,15 @@ interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNot
   }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
   updateSettings: (settings: Settings) => Promise<void>
   updateFile: (file: string, text: string) => Promise<void>
+
+  readonly project: {
+    config: string
+    tailwind: {
+      version: string
+      features: Feature[]
+      isDefaultVersion: boolean
+    }
+  }
 }
 
 async function init(fixture: string): Promise<FixtureContext> {
@@ -35,7 +45,7 @@ async function init(fixture: string): Promise<FixtureContext> {
 
   const { client } = await connect()
 
-  const capabilities = {
+  const capabilities: ClientCapabilities = {
     textDocument: {
       codeAction: { dynamicRegistration: true },
       codeLens: { dynamicRegistration: true },
@@ -108,6 +118,11 @@ async function init(fixture: string): Promise<FixtureContext> {
       workspaceEdit: { documentChanges: true },
       workspaceFolders: true,
     },
+    experimental: {
+      tailwind: {
+        projectDetails: true,
+      },
+    },
   }
 
   await client.sendRequest(InitializeRequest.type, {
@@ -143,10 +158,20 @@ async function init(fixture: string): Promise<FixtureContext> {
     })
   })
 
+  let projectDetails: any = null
+
+  client.onNotification('tailwind/projectDetails', (params) => {
+    console.log('[TEST] Project detailed changed')
+    projectDetails = params
+  })
+
   let counter = 0
 
   return {
     client,
+    get project() {
+      return projectDetails
+    },
     sendRequest(type: any, params: any) {
       return client.sendRequest(type, params)
     },
