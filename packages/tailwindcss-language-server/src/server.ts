@@ -33,5 +33,8 @@ process.on('unhandledRejection', (e: any) => {
 
 const tw = new TW(connection)
 
+console.log('Setting up server…')
 tw.setup()
+
+console.log('Listening for messages…')
 tw.listen()

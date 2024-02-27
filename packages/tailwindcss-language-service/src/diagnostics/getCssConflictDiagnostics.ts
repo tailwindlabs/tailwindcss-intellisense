@@ -234,7 +234,6 @@ interface RuleEntry {
 type ClassDetails = Record<string, RuleEntry[]>
 
 function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDetails {
-  const { parse } = state.modules.tailwindcss.module
   const groups: Record<string, RuleEntry[]> = {}
 
   // Get all the properties for each class
@@ -259,7 +258,7 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
       groups[className.className].push({
         properties,
         context: path
-          .map((p) => p.selector)
+          .map((p) => (p as v4.Rule).selector)
           .filter(Boolean)
           .slice(1),
       })

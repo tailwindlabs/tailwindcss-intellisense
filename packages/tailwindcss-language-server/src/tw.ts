@@ -161,16 +161,23 @@ export class TW {
             configPath,
             config: {
               path: configPath,
-            },
+            } as any,
             documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
               priority: DocumentSelectorPriority.USER_CONFIGURED,
               pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
             })),
             isUserConfigured: true,
+            tailwind: {
+              version: null,
+              features: [],
+              isDefaultVersion: false,
+            },
           }
         }
       )
     } else {
+      console.log("Searching for Tailwind CSS projects in the workspace's folders.")
+
       let locator = new ProjectLocator(base, globalSettings)
 
       let projects = await locator.search()
@@ -526,7 +533,7 @@ export class TW {
   }
 
   private get supportsTailwindProjectDetails() {
-    return this.initializeParams.capabilities.experimental['tailwind']?.projectDetails ?? false
+    return this.initializeParams.capabilities.experimental?.['tailwind']?.projectDetails ?? false
   }
 
   private refreshDiagnostics() {

@@ -241,7 +241,7 @@ export async function createProjectService(
     },
   }
 
-  if (projectConfig.configPath) {
+  if (projectConfig.configPath && projectConfig.config.source === 'js') {
     let deps = []
     try {
       deps = getModuleDependencies(projectConfig.configPath)
@@ -398,7 +398,8 @@ export async function createProjectService(
       setPnpApi(pnpApi)
     }
 
-    const configDependencies = getModuleDependencies(configPath)
+    const configDependencies =
+      projectConfig.config.source === 'js' ? getModuleDependencies(configPath) : []
     const configId = getConfigId(configPath, configDependencies)
     const configDir = path.dirname(configPath)
     let tailwindcss: any
@@ -418,6 +419,35 @@ export async function createProjectService(
       const tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
       const tailwindcssPkgPath = resolveFrom(configDir, 'tailwindcss/package.json')
       const tailwindDir = path.dirname(tailwindcssPkgPath)
+      tailwindcssVersion = require(tailwindcssPkgPath).version
+
+      let features = supportedFeatures(tailwindcssVersion)
+      log(`supported features: ${JSON.stringify(features)}`)
+
+      if (features.includes('css-at-theme')) {
+        state.configPath = configPath
+        state.version = tailwindcssVersion
+        // TODO: Handle backwards compat stuff here too
+        state.isCssConfig = true
+        state.v4 = true
+        state.jit = true
+        state.modules = {
+          tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
+          postcss: { version: null, module: null },
+          resolveConfig: { module: null },
+          loadConfig: { module: null },
+        }
+
+        return tryRebuild()
+      }
+
+      if (projectConfig.config.source === 'css') {
+        state.enabled = false
+        enabled = false
+        // CSS-based configuration is not supported before Tailwind CSS v4 so bail
+        // TODO: Fall back to built-in version of v4
+        return
+      }
 
       const postcssPath = resolveFrom(tailwindDir, 'postcss')
       const postcssPkgPath = resolveFrom(tailwindDir, 'postcss/package.json')
@@ -425,7 +455,6 @@ export async function createProjectService(
       const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
 
       postcssVersion = require(postcssPkgPath).version
-      tailwindcssVersion = require(tailwindcssPkgPath).version
 
       pluginVersions = Object.keys(tailwindPlugins)
         .map((plugin) => {
@@ -452,26 +481,6 @@ export async function createProjectService(
 
       tailwindcss = require(tailwindcssPath)
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
-
-      let features = supportedFeatures(tailwindcssVersion)
-      log(`supported features: ${JSON.stringify(features)}`)
-
-      if (features.includes('css-at-theme')) {
-        state.configPath = configPath
-        state.version = tailwindcssVersion
-        // TODO: Handle backwards compat stuff here too
-        state.isCssConfig = true
-        state.v4 = true
-        state.jit = true
-        state.modules = {
-          tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
-          postcss: { version: null, module: null },
-          resolveConfig: { module: null },
-          loadConfig: { module: null },
-        }
-
-        return tryRebuild()
-      }
 
       postcss = require(postcssPath)
       postcssSelectorParser = require(postcssSelectorParserPath)
@@ -617,6 +626,7 @@ export async function createProjectService(
         } catch (_) {}
       }
     } catch (error) {
+      console.log(JSON.stringify({ error }))
       tailwindcss = require('tailwindcss')
       resolveConfigFn = require('tailwindcss/resolveConfig')
       loadConfigFn = require('tailwindcss/loadConfig')
@@ -746,7 +756,10 @@ export async function createProjectService(
 
         originalConfig = { theme: {} }
       } catch {
-        //
+        // TODO: Fall back to built-in v4 stuff
+        enabled = false
+        state.enabled = false
+        return
       }
     } else if (loadConfig.module) {
       hook = new Hook(fs.realpathSync(state.configPath))
@@ -832,7 +845,7 @@ export async function createProjectService(
       })
 
       try {
-        if (!state.isCssConfig) {
+        if (projectConfig.config.source === 'js') {
           require(state.configPath)
         }
       } catch (error) {
