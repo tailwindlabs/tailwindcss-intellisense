@@ -26,6 +26,10 @@ export function supportedFeatures(version: string): Feature[] {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
+  if (version.startsWith('0.0.0-development')) {
+    return ['css-at-theme', 'layer:base', 'content-list']
+  }
+
   if (semver.gte(version, '0.99.0')) {
     // `@tailwind base`` (and `@layer base`)
     features.push('layer:base')
