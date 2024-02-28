@@ -424,6 +424,9 @@ export async function createProjectService(
       let features = supportedFeatures(tailwindcssVersion)
       log(`supported features: ${JSON.stringify(features)}`)
 
+      tailwindcss = await import(tailwindcssPath)
+      log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
+
       if (features.includes('css-at-theme')) {
         state.configPath = configPath
         state.version = tailwindcssVersion
@@ -479,9 +482,6 @@ export async function createProjectService(
       }
 
       log(`Loaded Tailwind CSS config file: ${configPath}`)
-
-      tailwindcss = require(tailwindcssPath)
-      log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       postcss = require(postcssPath)
       postcssSelectorParser = require(postcssSelectorParserPath)
@@ -736,6 +736,7 @@ export async function createProjectService(
           state.configPath,
           css
         )
+        console.log({ designSystem })
 
         state.designSystem = designSystem
 
@@ -743,7 +744,7 @@ export async function createProjectService(
 
         Object.assign(designSystem, {
           parse(classes: string[]): AstNode[] {
-            return parse(classes, designSystem, { throwOnInvalid: false })
+            return parse(classes, designSystem, { throwOnInvalid: false }).astNodes
           },
 
           toCss(nodes: AstNode[]) {

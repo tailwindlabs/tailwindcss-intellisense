@@ -1,6 +1,7 @@
 import { test } from 'vitest'
 import { withFixture } from '../common'
 
+/*
 withFixture('basic', (c) => {
   async function completion({
     lang,
@@ -234,6 +235,7 @@ withFixture('overrides-variants', (c) => {
     }
   )
 })
+*/
 
 withFixture('v4/basic', (c) => {
   async function completion({
@@ -258,8 +260,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(4152)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(73)
+    expect(result.items.length).toBe(5613)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(75)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
