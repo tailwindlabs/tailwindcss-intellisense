@@ -442,6 +442,7 @@ export async function createProjectService(
       }
 
       if (projectConfig.config.source === 'css') {
+        log('CSS-based configuration is not supported before Tailwind CSS v4')
         state.enabled = false
         enabled = false
         // CSS-based configuration is not supported before Tailwind CSS v4 so bail

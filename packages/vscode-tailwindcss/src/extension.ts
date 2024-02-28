@@ -193,7 +193,7 @@ export async function activate(context: ExtensionContext) {
 
   await commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
 
-  outputChannel.appendLine(`Loading server…`)
+  outputChannel.appendLine(`Locating server…`)
 
   let module = context.asAbsolutePath(path.join('dist', 'server.js'))
   let prod = path.join('dist', 'tailwindServer.js')
