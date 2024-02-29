@@ -148,7 +148,13 @@ export function getColor(state: State, className: string): culori.Color | Keywor
     })
 
     let root = postcss.root({ nodes: [rule] })
-    let css = postcss.parse(state.designSystem.optimizeCss(root.toString()))
+    let cssStr = root.toString()
+
+    try {
+      cssStr = state.designSystem.optimizeCss(cssStr)
+    } catch {}
+
+    let css = postcss.parse(cssStr)
 
     css.walkDecls((decl) => {
       decls[decl.prop] ??= []

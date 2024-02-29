@@ -275,13 +275,13 @@ function* findConflicts(
   // Compare each class to each other
   // If they have the same properties and context, they are conflicting and we should report it
   for (let className of classes) {
-    let entries = groups[className.className]
+    let entries = groups[className.className] ?? []
     let conflictingClassNames: DocumentClassName[] = []
 
     for (let otherClassName of classes) {
       if (className === otherClassName) continue
 
-      let otherEntries = groups[otherClassName.className]
+      let otherEntries = groups[otherClassName.className] ?? []
 
       // There is _some_ difference so we can skip this
       if (entries.length !== otherEntries.length) continue

@@ -627,7 +627,9 @@ export async function createProjectService(
         } catch (_) {}
       }
     } catch (error) {
-      console.log(JSON.stringify({ error }))
+      let util = await import('node:util')
+
+      console.error(util.format(error))
       tailwindcss = require('tailwindcss')
       resolveConfigFn = require('tailwindcss/resolveConfig')
       loadConfigFn = require('tailwindcss/loadConfig')

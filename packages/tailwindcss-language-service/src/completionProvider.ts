@@ -37,6 +37,7 @@ import {
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
 import { Declaration, visit } from './util/v4'
+import * as util from 'node:util'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -69,6 +70,9 @@ export function completionsFromClassList(
 
   if (state.v4) {
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
+
+    console.log('completionsFromClassList')
+    console.log(JSON.stringify({ partialClassName }))
 
     if (
       context &&
@@ -150,7 +154,7 @@ export function completionsFromClassList(
         ...item,
       }
     }
-
+    // console.log(JSON.stringify(state.variants, null, 2))
     for (let variant of state.variants) {
       if (existingVariants.includes(variant.name)) {
         continue
@@ -186,11 +190,28 @@ export function completionsFromClassList(
           )
         }
 
+        let selectors: string[] = []
+
+        try {
+          selectors = variant.selectors()
+        } catch (err) {
+          // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            util.format({
+              variant,
+              err,
+            })
+          )
+        }
+
+        if (selectors.length === 0) {
+          continue
+        }
+
         items.push(
           variantItem({
             label: `${variant.name}${sep}`,
-            detail: variant
-              .selectors()
+            detail: selectors
               .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
               .join(', '),
             textEditText: resultingVariants[resultingVariants.length - 1] + sep,
@@ -228,13 +249,31 @@ export function completionsFromClassList(
 
         seenVariants.add(`${variant.name}-${value}`)
 
+        let selectors: string[] = []
+
+        try {
+          selectors = variant.selectors({ value })
+        } catch (err) {
+          // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            util.format({
+              variant,
+              err,
+            })
+          )
+        }
+
+        if (selectors.length === 0) {
+          continue
+        }
+
         items.push(
           variantItem({
             label:
               value === 'DEFAULT'
                 ? `${variant.name}${sep}`
                 : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
-            detail: variant.selectors({ value }).join(', '),
+            detail: selectors.join(', '),
           })
         )
       }

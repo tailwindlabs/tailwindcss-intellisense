@@ -58,10 +58,14 @@ const TRIGGER_CHARACTERS = [
   // config/theme helper
   '(',
   '[',
+  // End of an arbitrary value
+  ']',
   // JIT "important" prefix
   '!',
   // JIT opacity modifiers
   '/',
+  // Between parts of a variant or class
+  '-',
 ] as const
 
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
