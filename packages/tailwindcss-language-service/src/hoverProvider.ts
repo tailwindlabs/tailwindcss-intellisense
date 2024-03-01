@@ -63,14 +63,11 @@ async function provideClassNameHover(
   if (className === null) return null
 
   if (state.v4) {
-    let ast = state.designSystem.parse([className.className])
+    let root = state.designSystem.compile([className.className])
 
-    if (ast.length === 0) {
+    if (root.nodes.length === 0) {
       return null
     }
-
-    let css = state.designSystem.toCss(ast)
-    let root = postcss.parse(css)
 
     return {
       contents: {

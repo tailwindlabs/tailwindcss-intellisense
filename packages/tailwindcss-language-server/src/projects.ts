@@ -78,6 +78,7 @@ import { supportedFeatures } from './features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import type { AstNode } from 'tailwindcss-language-service/src/util/v4'
+import * as postcss8 from "postcss"
 
 const colorNames = Object.keys(namedColors)
 
@@ -738,25 +739,8 @@ export async function createProjectService(
           state.configPath,
           css
         )
-        console.log({ designSystem })
 
         state.designSystem = designSystem
-
-        let { parse, toCss, optimizeCss } = state.modules.tailwindcss.module
-
-        Object.assign(designSystem, {
-          parse(classes: string[]): AstNode[] {
-            return parse(classes, designSystem, { throwOnInvalid: false }).astNodes
-          },
-
-          toCss(nodes: AstNode[]) {
-            return toCss(nodes)
-          },
-
-          optimizeCss(css: string) {
-            return optimizeCss(css)
-          },
-        })
 
         originalConfig = { theme: {} }
       } catch {

@@ -36,8 +36,30 @@ export async function loadDesignSystem(
   // Step 2: Use postcss to resolve `@import` rules in the CSS file
   // TODO: What if someone is actively editing their config and introduces a syntax error?
   // We don't want to necessarily throw away the knowledge that we have a v4 project.
-  let result = await resolveImports.process(css, { from: filepath })
+  let resolved = await resolveImports.process(css, { from: filepath })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
-  return tailwindcss.loadDesignSystem(result.css)
+  let design = tailwindcss.loadDesignSystem(resolved.css)
+
+  // Step 4: Augment the design system with some additional APIs that the LSP needs
+  Object.assign(design, {
+    optimizeCss(css: string) {
+      return tailwindcss.optimizeCss(css)
+    },
+
+    compile(classes: string[]): postcss.Root {
+      let parsed = tailwindcss.parse(classes, design, { throwOnInvalid: false })
+      let result: string = tailwindcss.toCss(parsed.astNodes)
+
+      return postcss.parse(result)
+    },
+
+    toCss(nodes: postcss.Root | postcss.Node[]): string {
+      return Array.isArray(nodes)
+        ? postcss.root({ nodes }).toString()
+        : nodes.toString()
+    },
+  })
+
+  return design
 }

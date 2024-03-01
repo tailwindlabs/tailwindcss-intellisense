@@ -38,6 +38,7 @@ import {
 import { customClassesIn } from './util/classes'
 import { Declaration, visit } from './util/v4'
 import * as util from 'node:util'
+import * as postcss from 'postcss'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -1617,15 +1618,15 @@ export async function resolveCompletionItem(
   if (state.v4) {
     if (item.kind === 9) return item
     if (item.detail && item.documentation) return item
-    let rules = state.designSystem.parse([[...variants, className].join(state.separator)])
+    let root = state.designSystem.compile([[...variants, className].join(state.separator)])
+    let rules = root.nodes.filter((node) => node.type === 'rule')
     if (rules.length === 0) return item
 
     if (!item.detail) {
       if (rules.length === 1) {
-        let decls: Declaration[] = []
+        let decls: postcss.Declaration[] = []
 
-        visit(rules, (node) => {
-          if (node.kind !== 'declaration') return
+        root.walkDecls((node) => {
           decls.push(node)
         })
 

@@ -133,7 +133,7 @@ function getColorFromDecls(
 
 export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
   if (state.v4) {
-    let ast = state.designSystem.parse([className])
+    let css = state.designSystem.compile([className])
     let decls: Record<string, string[]> = {}
 
     let rule = postcss.rule({
@@ -141,20 +141,16 @@ export function getColor(state: State, className: string): culori.Color | Keywor
       nodes: [],
     })
 
-    v4.visit(ast, (node) => {
-      if (node.kind !== 'declaration') return
-
-      rule.append(postcss.decl({ prop: node.property, value: node.value }))
+    css.walkDecls((decl) => {
+      rule.append(decl.clone())
     })
 
-    let root = postcss.root({ nodes: [rule] })
-    let cssStr = root.toString()
-
+    // Optimize the CSS if possible
     try {
-      cssStr = state.designSystem.optimizeCss(cssStr)
+      let str = state.designSystem.toCss(css)
+      str = state.designSystem.optimizeCss(str)
+      css = postcss.parse(str)
     } catch {}
-
-    let css = postcss.parse(cssStr)
 
     css.walkDecls((decl) => {
       decls[decl.prop] ??= []

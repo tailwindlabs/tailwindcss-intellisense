@@ -7,6 +7,7 @@ import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 import * as jit from '../util/jit'
 import * as v4 from '../util/v4'
+import * as postcss from 'postcss'
 import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
@@ -233,22 +234,36 @@ interface RuleEntry {
 
 type ClassDetails = Record<string, RuleEntry[]>
 
+export function visit(
+  nodes: postcss.AnyNode[],
+  cb: (node: postcss.AnyNode, path: postcss.AnyNode[]) => void,
+  path: postcss.AnyNode[] = []
+) {
+  for (let child of nodes) {
+    path = [...path, child]
+    cb(child, path)
+    if ('nodes' in child && child.nodes && child.nodes.length > 0) {
+      visit(child.nodes, cb, path)
+    }
+  }
+}
+
+
 function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDetails {
   const groups: Record<string, RuleEntry[]> = {}
 
   // Get all the properties for each class
   for (let className of classes) {
-    let rules = state.designSystem.parse([className.className])
+    let root = state.designSystem.compile([className.className])
 
-    v4.visit(rules, (node, path) => {
-      if (node.kind !== 'rule') return
+    visit([root], (node, path) => {
+      if (node.type !== 'rule' && node.type !== 'atrule') return
 
       let properties: string[] = []
 
       for (let child of node.nodes ?? []) {
-        if (child.kind === 'declaration') {
-          properties.push(child.property)
-        }
+        if (child.type !== 'decl') continue
+        properties.push(child.prop)
       }
 
       if (properties.length === 0) return
@@ -258,7 +273,14 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
       groups[className.className].push({
         properties,
         context: path
-          .map((p) => (p as v4.Rule).selector)
+          .map((node) => {
+            if (node.type === 'rule') {
+              return node.selector
+            } else if (node.type === 'atrule') {
+              return `@${node.name} ${node.params}`
+            }
+            return ''
+          })
           .filter(Boolean)
           .slice(1),
       })

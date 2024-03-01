@@ -1,3 +1,4 @@
+import postcss from 'postcss'
 import type { AstNode, Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
@@ -29,7 +30,7 @@ export interface DesignSystem {
 }
 
 export interface DesignSystem {
-  parse(classes: string[]): AstNode[]
-  toCss(classes: AstNode[]): string
+  compile(classes: string[]): postcss.Root
+  toCss(nodes: postcss.Root | postcss.Node[]): string
   optimizeCss(css: string): string
 }
