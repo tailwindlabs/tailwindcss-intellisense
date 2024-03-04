@@ -75,9 +75,6 @@ export function completionsFromClassList(
   if (state.v4) {
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
-    // console.log('completionsFromClassList')
-    // console.log(JSON.stringify({ partialClassName }))
-
     if (
       context &&
       (context.triggerKind === 1 ||
@@ -157,7 +154,7 @@ export function completionsFromClassList(
         ...item,
       }
     }
-    // console.log(JSON.stringify(state.variants, null, 2))
+
     for (let variant of state.variants) {
       if (existingVariants.includes(variant.name)) {
         continue
@@ -199,6 +196,9 @@ export function completionsFromClassList(
           selectors = variant.selectors()
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            "Error while trying to get selectors for variant",
+          )
           console.log(
             util.format({
               variant,
@@ -258,6 +258,9 @@ export function completionsFromClassList(
           selectors = variant.selectors({ value })
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            "Error while trying to get selectors for variant",
+          )
           console.log(
             util.format({
               variant,
