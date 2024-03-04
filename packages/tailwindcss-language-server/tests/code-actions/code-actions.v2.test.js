@@ -24,7 +24,6 @@ withFixture('v2', (c) => {
           diagnostics,
         },
       })
-      // console.log(JSON.stringify(res))
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', textDocument.uri))
 
