@@ -423,8 +423,8 @@ withFixture('v4/basic', (c) => {
       position: { line: 0, character: 11 },
     })
 
-    console.log(result.items)
-    expect(result.items.length).toBe(7)
+    expect(result.items.length).toBe(23)
+    expect(result.items.filter((item) => item.label.startsWith('--')).length).toBe(23)
   })
 
   test.concurrent('resolve', async ({ expect }) => {

@@ -1,12 +1,12 @@
 import { Settings, State } from './util/state'
-import type {
-  CompletionItem,
+import {
+  type CompletionItem,
   CompletionItemKind,
-  Range,
-  MarkupKind,
-  CompletionList,
-  Position,
-  CompletionContext,
+  type Range,
+  type MarkupKind,
+  type CompletionList,
+  type Position,
+  type CompletionContext,
 } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
@@ -18,11 +18,13 @@ import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
+import braceLevel from './util/braceLevel'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
 import { isJsDoc, isJsxContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
+import { getTextWithoutComments } from './util/doc'
 import { docsUrl } from './util/docsUrl'
 import { ensureArray } from './util/array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
@@ -95,17 +97,16 @@ export function completionsFromClassList(
             isIncomplete: false,
             items: modifiers.map((modifier, index) => {
               let className = `${beforeSlash}/${modifier}`
-              let kind: CompletionItemKind = 21
+              let kind:CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                kind = 16
+                kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = culori.formatRgb(color)
                 }
               }
-
               return {
                 label: className,
                 ...(documentation ? { documentation } : {}),
@@ -289,7 +290,7 @@ export function completionsFromClassList(
               return items
             }
 
-            let kind: CompletionItemKind = color ? 16 : 21
+            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
             let documentation: string | undefined
 
             if (color && typeof color !== 'string') {
@@ -355,12 +356,12 @@ export function completionsFromClassList(
             isIncomplete: false,
             items: modifiers.map((modifier, index) => {
               let className = `${beforeSlash}/${modifier}`
-              let kind: CompletionItemKind = 21
+              let kind:CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                kind = 16
+                kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = culori.formatRgb(color)
                 }
@@ -519,7 +520,7 @@ export function completionsFromClassList(
                 return items
               }
 
-              let kind: CompletionItemKind = color ? 16 : 21
+            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
@@ -563,12 +564,12 @@ export function completionsFromClassList(
                 return item.__info && isUtil(item)
               })
               .map((className, index, classNames) => {
-                let kind: CompletionItemKind = 21
+                let kind: CompletionItemKind =CompletionItemKind.Constant 
                 let documentation: string | undefined
 
                 const color = getColor(state, className)
                 if (color !== null) {
-                  kind = 16
+                  kind = CompletionItemKind.Color 
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                     documentation = culori.formatRgb(color)
                   }
@@ -649,12 +650,12 @@ export function completionsFromClassList(
               dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
             )
             .map((className, index, classNames) => {
-              let kind: CompletionItemKind = 21
+                let kind: CompletionItemKind =CompletionItemKind.Constant 
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                kind = 16
+                  kind = CompletionItemKind.Color 
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = culori.formatRgb(color)
                 }
@@ -787,19 +788,54 @@ async function provideCustomClassNameCompletions(
   return null
 }
 
-async function provideThemeVariableCompletions(
+function provideThemeVariableCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
-): Promise<CompletionList> {
-  // 1. Make sure we're in a CSS "context'
-  // 2. Make sure we're inside a `@theme` block
-  // 3. Make sure we're completing a variable name (so start with `--`)
-  // If none of these are true return null
-  // Otherwise return a hardcoded list of theme keys
-  //
-  // Make sure you use the cursor position to determine if in a theme and if in a variable name
+  _context?: CompletionContext
+): CompletionList {
+  // Make sure we're in a CSS "context'
+  if (!isCssContext(state, document, position)) return null
+  let text = getTextWithoutComments(document, 'css', {
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+  // Make sure we're completing a variable name (so start with `--`)
+  if (!text.endsWith('--')) return null
+  // Make sure we're inside a `@theme` block
+  let themeBlock = text.lastIndexOf('@theme')
+  if (themeBlock === -1) return null
+  if (braceLevel(text.slice(themeBlock)) !== 1) return null
+
+  let kind = CompletionItemKind.Variable
+  return {
+    isIncomplete: false,
+    items: [
+      { label: '--default-transition-duration', kind },
+      { label: '--default-transition-timing-function', kind },
+      { label: '--default-font-family', kind },
+      { label: '--default-font-feature-settings', kind },
+      { label: '--default-font-variation-settings', kind },
+      { label: '--default-mono-font-family', kind },
+      { label: '--default-mono-font-feature-settings', kind },
+      { label: '--default-mono-font-variation-settings', kind },
+      { label: '--breakpoint', kind },
+      { label: '--color', kind },
+      { label: '--animate', kind },
+      { label: '--blur', kind },
+      { label: '--radius', kind },
+      { label: '--shadow', kind },
+      { label: '--inset-shadow', kind },
+      { label: '--drop-shadow', kind },
+      { label: '--spacing', kind },
+      { label: '--width', kind },
+      { label: '--font-family', kind },
+      { label: '--font-size', kind },
+      { label: '--letter-spacing', kind },
+      { label: '--line-height', kind },
+      { label: '--transition-timing-function', kind },
+    ],
+  }
 }
 
 async function provideAtApplyCompletions(
@@ -1613,7 +1649,7 @@ export async function doComplete(
     provideLayerDirectiveCompletions(state, document, position) ||
     (await provideConfigDirectiveCompletions(state, document, position)) ||
     (await provideCustomClassNameCompletions(state, document, position, context)) ||
-    (await provideThemeVariableCompletions(state, document, position, context))
+    provideThemeVariableCompletions(state, document, position, context)
 
   if (result) return result
 
