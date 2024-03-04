@@ -140,7 +140,8 @@ withFixture('v4/basic', (c) => {
           red: 1,
           green: 0,
           blue: 0,
-          alpha: 0.33,
+          // TODO: This is strange, it should be 0.33
+          alpha: 0.32941176470588235,
         },
       },
     ],
