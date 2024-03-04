@@ -787,6 +787,21 @@ async function provideCustomClassNameCompletions(
   return null
 }
 
+async function provideThemeVariableCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+  context?: CompletionContext
+): Promise<CompletionList> {
+  // 1. Make sure we're in a CSS "context'
+  // 2. Make sure we're inside a `@theme` block
+  // 3. Make sure we're completing a variable name (so start with `--`)
+  // If none of these are true return null
+  // Otherwise return a hardcoded list of theme keys
+  //
+  // Make sure you use the cursor position to determine if in a theme and if in a variable name
+}
+
 async function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
@@ -1410,6 +1425,20 @@ function provideCssDirectiveCompletions(
           },
         ]
       : []),
+    ...(semver.gte(state.version, '4.0.0')
+      ? [
+          {
+            label: '@theme',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#config'
+              )})`,
+            },
+          },
+        ]
+      : []),
   ]
 
   return withDefaults(
@@ -1583,7 +1612,8 @@ export async function doComplete(
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
     (await provideConfigDirectiveCompletions(state, document, position)) ||
-    (await provideCustomClassNameCompletions(state, document, position, context))
+    (await provideCustomClassNameCompletions(state, document, position, context)) ||
+    (await provideThemeVariableCompletions(state, document, position, context))
 
   if (result) return result
 
