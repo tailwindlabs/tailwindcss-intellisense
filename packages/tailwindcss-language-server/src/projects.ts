@@ -78,7 +78,7 @@ import { supportedFeatures } from './features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import type { AstNode } from 'tailwindcss-language-service/src/util/v4'
-import * as postcss8 from "postcss"
+import * as postcss8 from 'postcss'
 
 const colorNames = Object.keys(namedColors)
 
@@ -426,6 +426,7 @@ export async function createProjectService(
       log(`supported features: ${JSON.stringify(features)}`)
 
       tailwindcss = await import(tailwindcssPath)
+      tailwindcss = tailwindcss.default ?? tailwindcss
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       if (features.includes('css-at-theme')) {
