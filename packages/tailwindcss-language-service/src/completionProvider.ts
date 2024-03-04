@@ -7,6 +7,7 @@ import {
   type CompletionList,
   type Position,
   type CompletionContext,
+  InsertTextFormat,
 } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
@@ -564,12 +565,12 @@ export function completionsFromClassList(
                 return item.__info && isUtil(item)
               })
               .map((className, index, classNames) => {
-                let kind: CompletionItemKind =CompletionItemKind.Constant 
+                let kind: CompletionItemKind =CompletionItemKind.Constant
                 let documentation: string | undefined
 
                 const color = getColor(state, className)
                 if (color !== null) {
-                  kind = CompletionItemKind.Color 
+                  kind = CompletionItemKind.Color
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                     documentation = culori.formatRgb(color)
                   }
@@ -650,12 +651,12 @@ export function completionsFromClassList(
               dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
             )
             .map((className, index, classNames) => {
-                let kind: CompletionItemKind =CompletionItemKind.Constant 
+                let kind: CompletionItemKind =CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                  kind = CompletionItemKind.Color 
+                  kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = culori.formatRgb(color)
                 }
@@ -800,42 +801,69 @@ function provideThemeVariableCompletions(
     start: { line: 0, character: 0 },
     end: position,
   })
-  // Make sure we're completing a variable name (so start with `--`)
-  if (!text.endsWith('--')) return null
+
+  // Make sure we're completing a variable name (so start with `-`)
+  // We don't check for `--` because VSCode does not call us again when the user types the second `-`
+  if (!text.endsWith('-')) return null
   // Make sure we're inside a `@theme` block
   let themeBlock = text.lastIndexOf('@theme')
   if (themeBlock === -1) return null
   if (braceLevel(text.slice(themeBlock)) !== 1) return null
 
-  let kind = CompletionItemKind.Variable
-  return {
-    isIncomplete: false,
-    items: [
-      { label: '--default-transition-duration', kind },
-      { label: '--default-transition-timing-function', kind },
-      { label: '--default-font-family', kind },
-      { label: '--default-font-feature-settings', kind },
-      { label: '--default-font-variation-settings', kind },
-      { label: '--default-mono-font-family', kind },
-      { label: '--default-mono-font-feature-settings', kind },
-      { label: '--default-mono-font-variation-settings', kind },
-      { label: '--breakpoint', kind },
-      { label: '--color', kind },
-      { label: '--animate', kind },
-      { label: '--blur', kind },
-      { label: '--radius', kind },
-      { label: '--shadow', kind },
-      { label: '--inset-shadow', kind },
-      { label: '--drop-shadow', kind },
-      { label: '--spacing', kind },
-      { label: '--width', kind },
-      { label: '--font-family', kind },
-      { label: '--font-size', kind },
-      { label: '--letter-spacing', kind },
-      { label: '--line-height', kind },
-      { label: '--transition-timing-function', kind },
-    ],
+  function themeVar(label: string) {
+    return {
+      label,
+      kind: CompletionItemKind.Variable,
+      // insertTextFormat: InsertTextFormat.Snippet,
+      // textEditText: `${label}-[\${1}]`,
+    }
   }
+
+  function themeNamespace(label: string) {
+    return {
+      label: `${label}-`,
+      kind: CompletionItemKind.Variable,
+      // insertTextFormat: InsertTextFormat.Snippet,
+      // textEditText: `${label}-[\${1}]`,
+    }
+  }
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: [
+        themeVar('--default-transition-duration'),
+        themeVar('--default-transition-timing-function'),
+        themeVar('--default-font-family'),
+        themeVar('--default-font-feature-settings'),
+        themeVar('--default-font-variation-settings'),
+        themeVar('--default-mono-font-family'),
+        themeVar('--default-mono-font-feature-settings'),
+        themeVar('--default-mono-font-variation-settings'),
+        themeNamespace('--breakpoint'),
+        themeNamespace('--color'),
+        themeNamespace('--animate'),
+        themeNamespace('--blur'),
+        themeNamespace('--radius'),
+        themeNamespace('--shadow'),
+        themeNamespace('--inset-shadow'),
+        themeNamespace('--drop-shadow'),
+        themeNamespace('--spacing'),
+        themeNamespace('--width'),
+        themeNamespace('--font-family'),
+        themeNamespace('--font-size'),
+        themeNamespace('--letter-spacing'),
+        themeNamespace('--line-height'),
+        themeNamespace('--transition-timing-function'),
+      ],
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 async function provideAtApplyCompletions(
