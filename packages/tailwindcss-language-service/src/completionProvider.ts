@@ -74,8 +74,8 @@ export function completionsFromClassList(
   if (state.v4) {
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
-    console.log('completionsFromClassList')
-    console.log(JSON.stringify({ partialClassName }))
+    // console.log('completionsFromClassList')
+    // console.log(JSON.stringify({ partialClassName }))
 
     if (
       context &&

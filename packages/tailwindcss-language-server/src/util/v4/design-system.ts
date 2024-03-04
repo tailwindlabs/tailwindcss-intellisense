@@ -26,7 +26,7 @@ export async function loadDesignSystem(
   css: string
 ): Promise<DesignSystem | null> {
   // This isn't a v4 project
-  if (!tailwindcss.loadDesignSystem) return null
+  if (!tailwindcss.__unstable__loadDesignSystem) return null
 
   // We don't have any theme stuff we can use
   if (!isMaybeV4(css)) {
@@ -39,7 +39,7 @@ export async function loadDesignSystem(
   let resolved = await resolveImports.process(css, { from: filepath })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
-  let design = tailwindcss.loadDesignSystem(resolved.css)
+  let design = tailwindcss.__unstable__loadDesignSystem(resolved.css)
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
@@ -48,16 +48,11 @@ export async function loadDesignSystem(
     },
 
     compile(classes: string[]): postcss.Root {
-      let parsed = tailwindcss.parse(classes, design, { throwOnInvalid: false })
-      let result: string = tailwindcss.toCss(parsed.astNodes)
-
-      return postcss.parse(result)
+      return postcss.parse(design.candidatesToCss(classes))
     },
 
     toCss(nodes: postcss.Root | postcss.Node[]): string {
-      return Array.isArray(nodes)
-        ? postcss.root({ nodes }).toString()
-        : nodes.toString()
+      return Array.isArray(nodes) ? postcss.root({ nodes }).toString() : nodes.toString()
     },
   })
 
