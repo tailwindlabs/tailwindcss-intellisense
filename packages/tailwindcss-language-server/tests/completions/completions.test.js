@@ -416,6 +416,17 @@ withFixture('v4/basic', (c) => {
     expect(result2).toBe(null)
   })
 
+  test.concurrent('Theme variable completions', async ({ expect }) => {
+    let result = await completion({
+      lang: 'css',
+      text: '@theme { -- }',
+      position: { line: 0, character: 11 },
+    })
+
+    console.log(result.items)
+    expect(result.items.length).toBe(7)
+  })
+
   test.concurrent('resolve', async ({ expect }) => {
     let result = await completion({
       text: '<div class="">',
