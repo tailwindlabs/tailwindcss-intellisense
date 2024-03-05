@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '@private/shared/ui.css';
+@theme {
+  --color-potato: #907a70;
+}

@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('dependencies', (c) => {
@@ -20,7 +20,7 @@ withFixture('dependencies', (c) => {
     })
   }
 
-  test.concurrent('@config', async () => {
+  test.concurrent('@config', async ({ expect }) => {
     let result = await completion({
       text: '@config "',
       lang: 'css',
@@ -56,7 +56,7 @@ withFixture('dependencies', (c) => {
     })
   })
 
-  test.concurrent('@config directory', async () => {
+  test.concurrent('@config directory', async ({ expect }) => {
     let result = await completion({
       text: '@config "./sub-dir/',
       lang: 'css',

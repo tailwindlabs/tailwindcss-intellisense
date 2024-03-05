@@ -1,10 +1,10 @@
-import { test, expect } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 import * as path from 'path'
 
 withFixture('basic', (c) => {
   async function testDocumentLinks(name, { text, lang, expected }) {
-    test.concurrent(name, async () => {
+    test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang })
       let res = await c.sendRequest('textDocument/documentLink', {
         textDocument,

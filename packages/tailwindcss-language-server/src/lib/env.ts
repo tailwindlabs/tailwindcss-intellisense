@@ -12,5 +12,12 @@ let oldResolveFilename = (Module as any)._resolveFilename
   if (typeof id === 'string' && isBuiltinModule(id)) {
     return oldResolveFilename(id, parent)
   }
-  return resolveFrom(path.dirname(parent.id), id)
+
+  if (parent) {
+    return resolveFrom(path.dirname(parent.id), id)
+  }
+
+  // console.log(`Resolving w/o parent ${id}`)
+
+  return resolveFrom(process.cwd(), id)
 }
