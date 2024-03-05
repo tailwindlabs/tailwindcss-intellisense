@@ -3,6 +3,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "tailwindcss": "file:tailwindcss-0.0.0-oxide.2.tgz"
+    "tailwindcss": "0.0.0-oxide.3"
   }
 }
