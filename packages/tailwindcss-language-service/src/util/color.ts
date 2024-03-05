@@ -162,7 +162,9 @@ export function getColor(state: State, className: string): culori.Color | Keywor
   if (state.v4) {
     let css = state.designSystem.compile([className])[0]
 
-    return getColorFromRoot(state, css)
+    let color = getColorFromRoot(state, css)
+
+    return color
   }
 
   if (state.jit) {

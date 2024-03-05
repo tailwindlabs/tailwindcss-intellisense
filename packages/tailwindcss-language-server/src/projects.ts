@@ -868,7 +868,9 @@ export async function createProjectService(
       delete state.config.blocklist
 
       if (state.v4) {
-        state.classList = state.designSystem.getClassList().map((className) => {
+        let classList = state.designSystem.getClassList()
+
+        state.classList = classList.map((className) => {
           return [
             className[0],
             {
