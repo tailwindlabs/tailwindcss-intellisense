@@ -91,6 +91,11 @@ export class ProjectLocator {
       }
     }
 
+    // Don't boot a project for the CS config if using Tailwind v4
+    if (config.type === 'js' && tailwind.features.includes('css-at-theme')) {
+      return null
+    }
+
     // This is a TypeScript or ESM-based Tailwind config
     if (config.type === 'js' && (config.path.endsWith('.ts') || config.path.endsWith('.mjs'))) {
       // This version of Tailwind doesn't support transpiling configs
