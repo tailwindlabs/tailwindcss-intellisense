@@ -84,7 +84,7 @@ const colorNames = Object.keys(namedColors)
 
 function getConfigId(configPath: string, configDependencies: string[]): string {
   return JSON.stringify(
-    [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs])
+    [configPath, ...configDependencies].map((file) => [file, fs.statSync(file).mtimeMs]),
   )
 }
 
@@ -180,7 +180,7 @@ export async function createProjectService(
   refreshDiagnostics: () => void,
   watchPatterns: (patterns: string[]) => void,
   initialTailwindVersion: string,
-  getConfiguration: (uri?: string) => Promise<Settings>
+  getConfiguration: (uri?: string) => Promise<Settings>,
 ): Promise<ProjectService> {
   let enabled = false
   const folder = projectConfig.folder
@@ -228,11 +228,11 @@ export async function createProjectService(
               return (await isExcluded(
                 state,
                 document,
-                path.join(directory, dirent.name, isDirectory ? '/' : '')
+                path.join(directory, dirent.name, isDirectory ? '/' : ''),
               ))
                 ? null
                 : [dirent.name, { isDirectory }]
-            })
+            }),
           )
           return result.filter((item) => item !== null)
         } catch {
@@ -255,7 +255,7 @@ export async function createProjectService(
 
   function log(...args: string[]): void {
     console.log(
-      `[${path.relative(projectConfig.folder, projectConfig.configPath)}] ${args.join(' ')}`
+      `[${path.relative(projectConfig.folder, projectConfig.configPath)}] ${args.join(' ')}`,
     )
   }
 
@@ -280,12 +280,12 @@ export async function createProjectService(
         ) {
           documentSelector = [
             ...documentSelector.filter(
-              ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+              ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE,
             ),
             ...getContentDocumentSelectorFromConfigFile(
               projectConfig.configPath,
               initialTailwindVersion,
-              projectConfig.folder
+              projectConfig.folder,
             ),
           ]
 
@@ -390,7 +390,7 @@ export async function createProjectService(
           return findUp.stop
         }
       },
-      { cwd: folder }
+      { cwd: folder },
     )
 
     if (pnpPath) {
@@ -498,10 +498,9 @@ export async function createProjectService(
           resolveConfigFn = (config) => resolveConfig([config, defaultConfig])
         } catch (_) {
           try {
-            const resolveConfig = require(resolveFrom(
-              tailwindDir,
-              './lib/util/mergeConfigWithDefaults.js'
-            ))
+            const resolveConfig = require(
+              resolveFrom(tailwindDir, './lib/util/mergeConfigWithDefaults.js'),
+            )
             const defaultConfig = require(resolveFrom(tailwindDir, './defaultConfig.js'))
             resolveConfigFn = (config) => resolveConfig.default(config, defaultConfig())
           } catch (_) {
@@ -522,7 +521,7 @@ export async function createProjectService(
 
       if (semver.gte(tailwindcssVersion, '1.99.0')) {
         applyComplexClasses = firstOptional(() =>
-          require(resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules'))
+          require(resolveFrom(tailwindDir, './lib/lib/substituteClassApplyAtRules')),
         )
       } else if (semver.gte(tailwindcssVersion, '1.7.0')) {
         applyComplexClasses = require(resolveFrom(tailwindDir, './lib/flagged/applyComplexClasses'))
@@ -541,43 +540,39 @@ export async function createProjectService(
       try {
         let createContext = first(
           () => {
-            let createContextFn = require(resolveFrom(
-              configDir,
-              'tailwindcss/lib/lib/setupContextUtils'
-            )).createContext
+            let createContextFn = require(
+              resolveFrom(configDir, 'tailwindcss/lib/lib/setupContextUtils'),
+            ).createContext
             assert.strictEqual(typeof createContextFn, 'function')
             return (state) => createContextFn(state.config)
           },
           () => {
-            let createContextFn = require(resolveFrom(
-              configDir,
-              'tailwindcss/lib/jit/lib/setupContextUtils'
-            )).createContext
+            let createContextFn = require(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContextUtils'),
+            ).createContext
             assert.strictEqual(typeof createContextFn, 'function')
             return (state) => createContextFn(state.config)
           },
           // TODO: the next two are canary releases only so can probably be removed
           () => {
-            let setupTrackingContext = require(resolveFrom(
-              configDir,
-              'tailwindcss/lib/jit/lib/setupTrackingContext'
-            )).default
+            let setupTrackingContext = require(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupTrackingContext'),
+            ).default
             assert.strictEqual(typeof setupTrackingContext, 'function')
             return (state) =>
               setupTrackingContext(
                 state.configPath,
                 tailwindDirectives,
-                registerDependency
+                registerDependency,
               )(result, root)
           },
           () => {
-            let setupContext = require(resolveFrom(
-              configDir,
-              'tailwindcss/lib/jit/lib/setupContext'
-            )).default
+            let setupContext = require(
+              resolveFrom(configDir, 'tailwindcss/lib/jit/lib/setupContext'),
+            ).default
             assert.strictEqual(typeof setupContext, 'function')
             return (state) => setupContext(state.configPath, tailwindDirectives)(result, root)
-          }
+          },
         )
 
         jitModules = {
@@ -587,7 +582,7 @@ export async function createProjectService(
                 require(resolveFrom(configDir, 'tailwindcss/lib/lib/generateRules')).generateRules,
               () =>
                 require(resolveFrom(configDir, 'tailwindcss/lib/jit/lib/generateRules'))
-                  .generateRules
+                  .generateRules,
             ),
           },
           createContext: {
@@ -599,14 +594,14 @@ export async function createProjectService(
                 require(resolveFrom(configDir, 'tailwindcss/lib/lib/expandApplyAtRules')).default,
               () =>
                 require(resolveFrom(configDir, 'tailwindcss/lib/jit/lib/expandApplyAtRules'))
-                  .default
+                  .default,
             ),
           },
           evaluateTailwindFunctions: {
             module: firstOptional(
               () =>
                 require(resolveFrom(configDir, 'tailwindcss/lib/lib/evaluateTailwindFunctions'))
-                  .default
+                  .default,
             ),
           },
         }
@@ -670,7 +665,7 @@ export async function createProjectService(
 
     try {
       state.corePlugins = Object.keys(
-        require(resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/plugins/index.js'))
+        require(resolveFrom(path.dirname(state.configPath), 'tailwindcss/lib/plugins/index.js')),
       )
     } catch (_) {}
 
@@ -693,7 +688,7 @@ export async function createProjectService(
               rule.before(
                 postcss.comment({
                   text: '__ORIGINAL_SELECTOR__:' + rule.selector,
-                })
+                }),
               )
               rule.selector = newSelector
             }
@@ -738,7 +733,7 @@ export async function createProjectService(
         let designSystem = await loadDesignSystem(
           state.modules.tailwindcss.module,
           state.configPath,
-          css
+          css,
         )
 
         state.designSystem = designSystem
@@ -851,13 +846,13 @@ export async function createProjectService(
     if (!projectConfig.isUserConfigured) {
       documentSelector = [
         ...documentSelector.filter(
-          ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE
+          ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE,
         ),
         ...getContentDocumentSelectorFromConfigFile(
           state.configPath,
           tailwindcss.version,
           projectConfig.folder,
-          originalConfig
+          originalConfig,
         ),
       ]
     }
@@ -931,7 +926,7 @@ export async function createProjectService(
               .join('\n'),
             {
               from: undefined,
-            }
+            },
           )
       } catch (error) {
         throw error
@@ -947,8 +942,8 @@ export async function createProjectService(
     // chokidarWatcher?.add(state.dependencies)
     watchPatterns(
       (state.dependencies ?? []).flatMap((dep) =>
-        getWatchPatternsForFile(dep, projectConfig.folder)
-      )
+        getWatchPatternsForFile(dep, projectConfig.folder),
+      ),
     )
 
     state.configId = getConfigId(state.configPath, state.dependencies)
@@ -1043,7 +1038,7 @@ export async function createProjectService(
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
       return getDocumentLinks(state, document, (linkPath) =>
-        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString()
+        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString(),
       )
     },
     provideDiagnostics: debounce(
@@ -1051,7 +1046,7 @@ export async function createProjectService(
         if (!state.enabled) return
         provideDiagnostics(state, document)
       },
-      params.initializationOptions?.testMode ? 0 : 500
+      params.initializationOptions?.testMode ? 0 : 500,
     ),
     provideDiagnosticsForce: (document: TextDocument) => {
       if (!state.enabled) return
@@ -1071,7 +1066,7 @@ export async function createProjectService(
       if (!document) return []
       let className = document.getText(params.range)
       let match = className.match(
-        new RegExp(`-\\[(${colorNames.join('|')}|(?:(?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`, 'i')
+        new RegExp(`-\\[(${colorNames.join('|')}|(?:(?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`, 'i'),
       )
       // let match = className.match(/-\[((?:#|rgba?\(|hsla?\()[^\]]+)\]$/i)
       if (match === null) return []
@@ -1193,7 +1188,7 @@ type Plugin = SimplePlugin | WrappedPlugin
 function runPlugin(
   plugin: Plugin,
   state: State,
-  apiOverrides: Record<string, Function> = {}
+  apiOverrides: Record<string, Function> = {},
 ): void {
   let config = state.config
   let postcss = state.modules.postcss.module
@@ -1266,7 +1261,7 @@ function getVariants(state: State): Array<Variant> {
             }
 
             let fns = (Array.isArray(variantFnOrFns[0]) ? variantFnOrFns : [variantFnOrFns]).map(
-              ([_sort, fn]) => fn
+              ([_sort, fn]) => fn,
             )
 
             let placeholder = '__variant_placeholder__'
@@ -1324,7 +1319,7 @@ function getVariants(state: State): Array<Variant> {
                       definition = `@${rule.name} ${rule.params}`
                     }
                   },
-                })
+                }),
               )
 
               if (!definition) {
@@ -1355,7 +1350,7 @@ function getVariants(state: State): Array<Variant> {
             return definitions
           },
         })
-      }
+      },
     )
 
     return result
@@ -1454,7 +1449,7 @@ async function getPlugins(config: any) {
       return {
         name: fnName,
       }
-    })
+    }),
   )
 }
 
@@ -1470,7 +1465,7 @@ function getPackageRoot(cwd: string, rootDir: string) {
           return findUp.stop
         }
       },
-      { cwd }
+      { cwd },
     )
     return pkgJsonPath ? path.dirname(pkgJsonPath) : rootDir
   } catch {
@@ -1482,7 +1477,7 @@ function getContentDocumentSelectorFromConfigFile(
   configPath: string,
   tailwindVersion: string,
   rootDir: string,
-  actualConfig?: any
+  actualConfig?: any,
 ): DocumentSelector[] {
   let config = actualConfig ?? require(configPath)
   let contentConfig: unknown = config.content?.files ?? config.content
@@ -1501,7 +1496,7 @@ function getContentDocumentSelectorFromConfigFile(
     .map((item) =>
       item.startsWith('!')
         ? `!${path.resolve(contentBase, item.slice(1))}`
-        : path.resolve(contentBase, item)
+        : path.resolve(contentBase, item),
     )
     .map((item) => ({
       pattern: normalizePath(item),
