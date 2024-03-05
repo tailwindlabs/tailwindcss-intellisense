@@ -1,7 +1,6 @@
 import { test } from 'vitest'
 import { withFixture } from '../common'
 
-/*
 withFixture('basic', (c) => {
   async function completion({
     lang,
@@ -235,7 +234,6 @@ withFixture('overrides-variants', (c) => {
     }
   )
 })
-*/
 
 withFixture('v4/basic', (c) => {
   async function completion({
