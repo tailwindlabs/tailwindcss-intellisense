@@ -523,10 +523,6 @@ export async function activate(context: ExtensionContext) {
           if (workspaceFolder !== folder) {
             return null
           }
-          outputChannel.appendLine('Provide Completion Item')
-          outputChannel.appendLine(`[PCI]: ${JSON.stringify(position)}`)
-          outputChannel.appendLine(`[PCI]: ${JSON.stringify(context)}`)
-          outputChannel.appendLine(`[PCI]: ${JSON.stringify(token)}`)
           return next(document, position, context, token)
         },
         provideHover(document, position, token, next) {
