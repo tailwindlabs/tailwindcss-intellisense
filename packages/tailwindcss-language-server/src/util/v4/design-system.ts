@@ -62,36 +62,58 @@ export async function loadDesignSystem(
 
       // TODO: Formatting with prettier would be preferable, but it's too slow
       // Need to figure out why and if we can make it faster
-      css = css.map((str) => {
-        if (!str) return null
+      let roots = css.map((str) => {
+        if (str === null) return postcss.root()
 
-        let lines = str
-          //
-          .replaceAll('{', ' {\n')
-          .replaceAll(';', ' ;\n')
-          .replaceAll('}', ' }\n')
-          .split('\n')
+        let result = ''
+        for (let i = 0; i < str.length; ++i) {
+          if (str[i] === '\\') {
+            result += str[i] + str[i + 1]
+            i += 1
+          } else if (str[i] === '"') {
+            let end = str.indexOf('"', i + 1)
+            result += str.slice(i, end + 1)
+            i = end
+          } else if (str[i] === "'") {
+            let end = str.indexOf("'", i + 1)
+            result += str.slice(i, end + 1)
+            i = end
+          } else if (str[i] === '{') {
+            result += ' {\n'
+          } else if (str[i] === '}') {
+            result += '}\n'
+          } else if (str[i] === ';') {
+            result += ';\n'
+          } else if (str[i] === ':') {
+            result += ': '
+          } else {
+            result += str[i]
+          }
+        }
+
+        let lines = result.split('\n')
 
         let depth = 0
 
         for (let i = 0; i < lines.length; ++i) {
           let line = lines[i]
           if (line.includes('}')) depth--
-          let indent = '  '.repeat(depth)
+          let indent = '  '.repeat(Math.max(0, depth))
           line = indent + line
           if (line.includes('{')) depth++
           lines[i] = line
         }
 
-        return lines.join('\n')
+        let pretty = lines.join('\n').trim()
+
+        try {
+          return postcss.parse(pretty)
+        } catch {
+          return postcss.parse(str)
+        }
       })
 
-      let root = css.map((str) => {
-        if (str === null) return postcss.root()
-        return postcss.parse(str)
-      })
-
-      return root
+      return roots
     },
 
     toCss(nodes: postcss.Root | postcss.Node[]): string {
