@@ -26,10 +26,6 @@ export function supportedFeatures(version: string): Feature[] {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
-  if (version.startsWith('0.0.0-development')) {
-    return ['css-at-theme', 'layer:base', 'content-list']
-  }
-
   if (version.startsWith('0.0.0-oxide')) {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
