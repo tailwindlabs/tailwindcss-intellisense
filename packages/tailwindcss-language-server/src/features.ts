@@ -22,7 +22,7 @@ export type Feature =
 export function supportedFeatures(version: string): Feature[] {
   let features: Feature[] = []
 
-  if (semver.gte(version, '4.0.0')) {
+  if (semver.gte(version, '4.0.0-alpha.1')) {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
