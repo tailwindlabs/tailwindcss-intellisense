@@ -41,7 +41,10 @@ export interface ProjectConfig {
 }
 
 export class ProjectLocator {
-  constructor(private base: string, private settings: Settings) {}
+  constructor(
+    private base: string,
+    private settings: Settings,
+  ) {}
 
   async search(): Promise<ProjectConfig[]> {
     // Locate all the Tailwind CSS config files in the project
@@ -149,7 +152,7 @@ export class ProjectLocator {
     // Eliminate duplicate selector patterns
     selectors = selectors.filter(
       ({ pattern }, index, documentSelectors) =>
-        documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index
+        documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index,
     )
 
     return {
@@ -232,7 +235,7 @@ export class ProjectLocator {
             entries: [],
             packageRoot: null,
             content: [],
-          }))
+          })),
         )
         continue
       }
@@ -323,7 +326,7 @@ export class ProjectLocator {
 function contentSelectorsFromConfig(
   entry: ConfigEntry,
   features: Feature[],
-  actualConfig?: any
+  actualConfig?: any,
 ): AsyncIterable<DocumentSelector> {
   if (entry.type === 'css') {
     return contentSelectorsFromCssConfig(entry)
@@ -337,7 +340,7 @@ function contentSelectorsFromConfig(
 async function* contentSelectorsFromJsConfig(
   entry: ConfigEntry,
   features: Feature[],
-  actualConfig?: any
+  actualConfig?: any,
 ): AsyncIterable<DocumentSelector> {
   let config = actualConfig ?? require(entry.path)
   let files: unknown = config.content?.files ?? config.content
@@ -421,7 +424,11 @@ class FileEntry {
   content: string | null
   deps: Message[] = []
 
-  constructor(public type: 'js' | 'css', public path: string, public configs: ConfigEntry[] = []) {}
+  constructor(
+    public type: 'js' | 'css',
+    public path: string,
+    public configs: ConfigEntry[] = [],
+  ) {}
 
   async read() {
     try {
