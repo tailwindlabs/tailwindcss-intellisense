@@ -64,7 +64,7 @@ export async function loadDesignSystem(
         if (str === null) return postcss.root()
 
         try {
-          return postcss.parse(str)
+          return postcss.parse(str.trimEnd())
         } catch {
           return null
         }
