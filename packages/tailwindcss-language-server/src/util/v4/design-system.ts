@@ -48,26 +48,39 @@ export async function loadDesignSystem(
       return tailwindcss.optimizeCss(css)
     },
 
-    compile(classes: string[]): postcss.Root {
-      let css = design.candidatesToCss(classes).join('\n')
+    compile(classes: string[]): postcss.Root[] {
+      let css = design.candidatesToCss(classes) as (string | null)[]
 
       // Downlevel syntax
       // TODO: Either don't downlevel nesting or make `recordClassDetails` more robust
-      // try {
-      //   css = tailwindcss.optimizeCss(css)
-      // } catch {}
+      // css = css.map((str) => {
+      //   if (!str) return null
+      //   try {
+      //     return tailwindcss.optimizeCss(str)
+      //   } catch {}
+      //   return str
+      // })
 
       // Reformat with Prettier
-      try {
-        css = format(css, {
-          parser: 'css',
-          singleQuote: true,
-          trailingComma: 'all',
-          filepath: 'input.css',
-        }).trim()
-      } catch {}
+      let opts = {
+        parser: 'css',
+        singleQuote: true,
+        trailingComma: 'all',
+        filepath: 'input.css',
+      }
 
-      return postcss.parse(css)
+      css = css.map((str) => {
+        if (!str) return null
+        try {
+          return format(str, opts).trim()
+        } catch {}
+        return str
+      })
+
+      return css.map((str) => {
+        if (str === null) return postcss.root()
+        return postcss.parse(str)
+      })
     },
 
     toCss(nodes: postcss.Root | postcss.Node[]): string {

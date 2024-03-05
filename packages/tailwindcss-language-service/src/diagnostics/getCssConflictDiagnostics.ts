@@ -248,13 +248,14 @@ export function visit(
   }
 }
 
-
 function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDetails {
   const groups: Record<string, RuleEntry[]> = {}
 
+  let roots = state.designSystem.compile(classes.map((c) => c.className))
+
   // Get all the properties for each class
-  for (let className of classes) {
-    let root = state.designSystem.compile([className.className])
+  for (let [idx, root] of roots.entries()) {
+    let { className } = classes[idx]
 
     visit([root], (node, path) => {
       if (node.type !== 'rule' && node.type !== 'atrule') return
@@ -269,8 +270,8 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
       if (properties.length === 0) return
 
       // We have to slice off the first `context` item because it's the class name and that's always different
-      groups[className.className] ??= []
-      groups[className.className].push({
+      groups[className] ??= []
+      groups[className].push({
         properties,
         context: path
           .map((node) => {

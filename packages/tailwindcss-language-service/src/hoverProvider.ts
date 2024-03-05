@@ -1,5 +1,5 @@
 import { State } from './util/state'
-import type { Hover,  Position } from 'vscode-languageserver'
+import type { Hover, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
@@ -63,7 +63,7 @@ async function provideClassNameHover(
   if (className === null) return null
 
   if (state.v4) {
-    let root = state.designSystem.compile([className.className])
+    let root = state.designSystem.compile([className.className])[0]
 
     if (root.nodes.length === 0) {
       return null

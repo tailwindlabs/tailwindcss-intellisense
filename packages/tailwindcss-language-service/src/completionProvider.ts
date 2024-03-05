@@ -1715,7 +1715,7 @@ export async function resolveCompletionItem(
   if (state.v4) {
     if (item.kind === 9) return item
     if (item.detail && item.documentation) return item
-    let root = state.designSystem.compile([[...variants, className].join(state.separator)])
+    let root = state.designSystem.compile([[...variants, className].join(state.separator)])[0]
     let rules = root.nodes.filter((node) => node.type === 'rule')
     if (rules.length === 0) return item
 
