@@ -47,10 +47,13 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
     css = addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
   }
 
+  let identSize = state.v4 ? 2 : 4
+  let identPattern = state.v4 ? /^(?:  )+/gm : /^(?:    )+/gm
+
   return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
-    .replace(/^(?:    )+/gm, (indent: string) =>
-      ' '.repeat((indent.length / 4) * settings.editor.tabSize)
+    .replace(identPattern, (indent: string) =>
+      ' '.repeat((indent.length / identSize) * settings.editor.tabSize)
     )
 }
 
