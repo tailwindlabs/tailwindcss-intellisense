@@ -2,7 +2,6 @@ import type { DesignSystem } from 'tailwindcss-language-service/src/util/v4'
 
 import postcss from 'postcss'
 import postcssImport from 'postcss-import'
-import { format } from 'prettier'
 
 const resolveImports = postcss([postcssImport()])
 
@@ -61,26 +60,38 @@ export async function loadDesignSystem(
       //   return str
       // })
 
-      // Reformat with Prettier
-      let opts = {
-        parser: 'css',
-        singleQuote: true,
-        trailingComma: 'all',
-        filepath: 'input.css',
-      }
-
+      // TODO: Formatting with prettier would be preferable, but it's too slow
+      // Need to figure out why and if we can make it faster
       css = css.map((str) => {
         if (!str) return null
-        try {
-          return format(str, opts).trim()
-        } catch {}
-        return str
+
+        let lines = str
+          //
+          .replaceAll('{', ' {\n')
+          .replaceAll(';', ' ;\n')
+          .replaceAll('}', ' }\n')
+          .split('\n')
+
+        let depth = 0
+
+        for (let i = 0; i < lines.length; ++i) {
+          let line = lines[i]
+          if (line.includes('}')) depth--
+          let indent = '  '.repeat(depth)
+          line = indent + line
+          if (line.includes('{')) depth++
+          lines[i] = line
+        }
+
+        return lines.join('\n')
       })
 
-      return css.map((str) => {
+      let root = css.map((str) => {
         if (str === null) return postcss.root()
         return postcss.parse(str)
       })
+
+      return root
     },
 
     toCss(nodes: postcss.Root | postcss.Node[]): string {
