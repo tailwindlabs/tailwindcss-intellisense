@@ -39,7 +39,7 @@ export async function loadDesignSystem(
   let resolved = await resolveImports.process(css, { from: filepath })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
-  let design = tailwindcss.__unstable__loadDesignSystem(resolved.css)
+  let design = tailwindcss.__unstable__loadDesignSystem(resolved.css) as DesignSystem
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
@@ -48,7 +48,7 @@ export async function loadDesignSystem(
     },
 
     compile(classes: string[]): postcss.Root[] {
-      let css = design.candidatesToCss(classes) as (string | null)[]
+      let css = design.candidatesToCss(classes)
 
       // Downlevel syntax
       // TODO: Either don't downlevel nesting or make `recordClassDetails` more robust

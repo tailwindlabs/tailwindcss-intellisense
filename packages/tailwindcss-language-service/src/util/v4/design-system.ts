@@ -24,6 +24,7 @@ export interface DesignSystem {
   theme: Theme
   variants: Map<string, VariantFn>
   utilities: Map<string, unknown>
+  candidatesToCss(classes: string[]): (string | null)[]
   getClassOrder(classes: string[]): [string, bigint | null][]
   getClassList(): ClassEntry[]
   getVariants(): VariantEntry[]
