@@ -111,7 +111,7 @@ withFixture('v4/basic', (c) => {
   testHover('hover', {
     text: '<div class="bg-red-500">',
     position: { line: 0, character: 13 },
-    expected: '.bg-red-500 {\n  background-color: #ef4444;\n}',
+    expected: '.bg-red-500{background-color:#ef4444;}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 22 },
@@ -121,7 +121,7 @@ withFixture('v4/basic', (c) => {
   testHover('arbitrary value', {
     text: '<div class="p-[3px]">',
     position: { line: 0, character: 13 },
-    expected: '.p-\\[3px\\] {\n  padding: 3px;\n}',
+    expected: '.p-\\[3px\\]{padding:3px;}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 19 },
@@ -142,7 +142,7 @@ withFixture('v4/basic', (c) => {
   testHover('arbitrary property', {
     text: '<div class="[text-wrap:balance]">',
     position: { line: 0, character: 13 },
-    expected: '.\\[text-wrap\\:balance\\] {\n  text-wrap: balance;\n}',
+    expected: '.\\[text-wrap\\:balance\\]{text-wrap:balance;}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 31 },

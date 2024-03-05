@@ -439,10 +439,10 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'text-transform: uppercase',
+      detail: 'text-transform:uppercase',
       documentation: {
         kind: 'markdown',
-        value: '```css\n.uppercase {\n    text-transform: uppercase;\n}\n```',
+        value: '```css\n.uppercase{text-transform:uppercase;}\n```',
       },
     })
   })
