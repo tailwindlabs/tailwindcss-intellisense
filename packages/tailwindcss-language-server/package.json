@@ -66,7 +66,7 @@
     "postcss": "8.4.31",
     "postcss-load-config": "3.0.1",
     "postcss-selector-parser": "6.0.2",
-    "prettier": "2.3.0",
+    "prettier": "^2.8.8",
     "resolve": "1.20.0",
     "rimraf": "3.0.2",
     "stack-trace": "0.0.10",

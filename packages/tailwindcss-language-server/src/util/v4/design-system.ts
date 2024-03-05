@@ -2,6 +2,7 @@ import type { DesignSystem } from 'tailwindcss-language-service/src/util/v4'
 
 import postcss from 'postcss'
 import postcssImport from 'postcss-import'
+import { format } from 'prettier'
 
 const resolveImports = postcss([postcssImport()])
 
@@ -23,7 +24,7 @@ export async function isMaybeV4(css: string): Promise<boolean> {
 export async function loadDesignSystem(
   tailwindcss: any,
   filepath: string,
-  css: string
+  css: string,
 ): Promise<DesignSystem | null> {
   // This isn't a v4 project
   if (!tailwindcss.__unstable__loadDesignSystem) return null
@@ -48,11 +49,31 @@ export async function loadDesignSystem(
     },
 
     compile(classes: string[]): postcss.Root {
-      return postcss.parse(design.candidatesToCss(classes))
+      let css = design.candidatesToCss(classes).join('\n')
+
+      // Downlevel syntax
+      // TODO: Either don't downlevel nesting or make `recordClassDetails` more robust
+      // try {
+      //   css = tailwindcss.optimizeCss(css)
+      // } catch {}
+
+      // Reformat with Prettier
+      try {
+        css = format(css, {
+          parser: 'css',
+          singleQuote: true,
+          trailingComma: 'all',
+          filepath: 'input.css',
+        }).trim()
+      } catch {}
+
+      return postcss.parse(css)
     },
 
     toCss(nodes: postcss.Root | postcss.Node[]): string {
-      return Array.isArray(nodes) ? postcss.root({ nodes }).toString() : nodes.toString()
+      return Array.isArray(nodes)
+        ? postcss.root({ nodes }).toString().trim()
+        : nodes.toString().trim()
     },
   })
 
