@@ -227,6 +227,7 @@ export class TW {
       changes: Array<{ file: string; type: FileChangeType }>,
     ): Promise<void> => {
       let needsRestart = false
+      let needsSoftRestart = false
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
@@ -257,6 +258,20 @@ export class TW {
               break changeLoop
             }
           }
+        }
+
+        for (let [, project] of this.projects) {
+          if (!project.state.v4) continue
+
+          let reloadableFiles = [
+            project.projectConfig.configPath,
+            ...project.projectConfig.config.entries.map((entry) => entry.path),
+          ]
+
+          if (!changeAffectsFile(normalizedFilename, reloadableFiles)) continue
+
+          needsSoftRestart = true
+          break changeLoop
         }
 
         let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
@@ -297,6 +312,15 @@ export class TW {
 
       if (needsRestart) {
         this.restart()
+        return
+      }
+
+      if (needsSoftRestart) {
+        try {
+          await this.softRestart()
+        } catch {
+          this.restart()
+        }
         return
       }
 
@@ -775,6 +799,18 @@ export class TW {
     this.dispose()
     this.initPromise = undefined
     this.init()
+  }
+
+  async softRestart(): Promise<void> {
+    // Tell each v4 project to reload it's design system'
+    for (let [, project] of this.projects) {
+      if (!project.state.v4) continue
+
+      // "soft"-reload the project
+      try {
+        await project.reload()
+      } catch {}
+    }
   }
 }
 

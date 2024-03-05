@@ -108,6 +108,8 @@ export interface ProjectService {
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
   onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
   sortClassLists(classLists: string[]): string[]
+
+  reload(): Promise<void>
 }
 
 export enum DocumentSelectorPriority {
@@ -975,6 +977,42 @@ export async function createProjectService(
     enable() {
       enabled = true
     },
+
+    async reload() {
+      if (!state.v4) return
+
+      console.log('---- RELOADING DESIGN SYSTEM ----')
+      let css = await readCssFile(state.configPath)
+      let designSystem = await loadDesignSystem(
+        state.modules.tailwindcss.module,
+        state.configPath,
+        css,
+      )
+
+      // TODO: This is weird and should be changed
+      // We use Object.create so no global state is mutated until necessary
+      let pseudoState = Object.create(state, {
+        designSystem: {
+          value: designSystem,
+        },
+      })
+
+      let classList = designSystem.getClassList().map((className) => {
+        return [
+          className[0],
+          {
+            ...className[1],
+            color: getColor(pseudoState, className[0]),
+          },
+        ]
+      })
+
+      state.designSystem = designSystem
+      state.classList = classList as any
+
+      console.log('---- RELOADED ----')
+    },
+
     state,
     documentSelector() {
       return documentSelector
