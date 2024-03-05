@@ -85,7 +85,16 @@ export async function loadDesignSystem(
           } else if (str[i] === ';') {
             result += ';\n'
           } else if (str[i] === ':') {
-            result += ': '
+            let prev = str.charCodeAt(i - 1)
+            if (
+              (prev >= 65 && prev <= 90) ||
+              (prev >= 97 && prev <= 122) ||
+              (prev >= 48 && prev <= 57)
+            ) {
+              result += ': '
+            } else {
+              result += ':'
+            }
           } else {
             result += str[i]
           }
@@ -98,10 +107,9 @@ export async function loadDesignSystem(
         for (let i = 0; i < lines.length; ++i) {
           let line = lines[i]
           if (line.includes('}')) depth--
-          let indent = '  '.repeat(Math.max(0, depth))
-          line = indent + line
+          let indent = '    '.repeat(Math.max(0, depth))
+          lines[i] = indent + line
           if (line.includes('{')) depth++
-          lines[i] = line
         }
 
         let pretty = lines.join('\n').trim()
