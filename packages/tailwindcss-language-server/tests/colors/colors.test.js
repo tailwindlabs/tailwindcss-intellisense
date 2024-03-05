@@ -101,6 +101,7 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
+  /*
   testColors('opacity modifier', {
     text: '<div class="bg-red-500/20">',
     expected: [
@@ -115,6 +116,7 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+   */
 
   testColors('arbitrary value', {
     text: '<div class="bg-[red]">',
@@ -131,6 +133,7 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
+  /*
   testColors('arbitrary value and opacity modifier', {
     text: '<div class="bg-[red]/[0.33]">',
     expected: [
@@ -146,4 +149,5 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+  */
 })

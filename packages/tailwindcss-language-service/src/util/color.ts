@@ -144,11 +144,11 @@ function getColorFromRoot(state: State, css: postcss.Root): culori.Color | Keywo
   })
 
   // Optimize the CSS if possible
-  try {
-    let str = state.designSystem.toCss(css)
-    str = state.designSystem.optimizeCss(str)
-    css = postcss.parse(str)
-  } catch {}
+  // try {
+  //   let str = state.designSystem.toCss(css)
+  //   str = state.designSystem.optimizeCss(str)
+  //   css = postcss.parse(str)
+  // } catch {}
 
   css.walkDecls((decl) => {
     decls[decl.prop] ??= []
