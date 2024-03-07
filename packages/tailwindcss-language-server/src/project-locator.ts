@@ -347,7 +347,19 @@ async function* contentSelectorsFromJsConfig(
   features: Feature[],
   actualConfig?: any,
 ): AsyncIterable<DocumentSelector> {
-  let config = actualConfig ?? require(entry.path)
+  let config: any
+
+  // This is wrapped in a try catch because a user might be using an ESM- or TypeScript-based config
+  // and we don't want to stop the project from loading just because of that. We'll recover the list
+  // of document selectors later in the loading process when initializing the project by using
+  // Tailwind's `loadConfig` API. Ideally the configuration loading is either NOT done here or
+  // all of it is done here. But that's a much larger refactor.
+  try {
+    config = actualConfig ?? require(entry.path)
+  } catch {
+    return
+  }
+
   let files: unknown = config.content?.files ?? config.content
   let content: (string | {})[] = Array.isArray(files) ? files : []
 

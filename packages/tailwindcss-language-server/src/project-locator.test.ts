@@ -57,6 +57,18 @@ testFixture('multi-config-content', [
   { config: 'tailwind.config.two.js' },
 ])
 
+
+testFixture('v3/esm-config', [
+  //
+  { config: 'tailwind.config.mjs' },
+])
+
+testFixture('v3/ts-config', [
+  //
+  { config: 'tailwind.config.ts' },
+])
+
+
 testFixture('v4/basic', [
   //
   { config: 'app.css' },
