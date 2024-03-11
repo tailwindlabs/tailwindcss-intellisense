@@ -194,13 +194,11 @@ export class ProjectLocator {
     // Create a map of config paths to metadata
     let configs = new CacheMap<string, ConfigEntry>()
 
-    let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
+    let isCss = picomatch(`**/${CSS_GLOB}`, { dot: true })
 
     // Create a list of entries for each file
     let entries = files.map((filepath: string): FileEntry => {
-      let isCss = isCssMatcher(filepath)
-
-      if (isCss) {
+      if (isCss(filepath)) {
         return new FileEntry('css', filepath)
       }
 
