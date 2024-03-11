@@ -1,4 +1,4 @@
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import * as path from 'path'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { State } from '@tailwindcss/language-service/src/util/state'
@@ -12,7 +12,7 @@ export default async function isExcluded(
   let settings = await state.editor.getConfiguration(document.uri)
 
   for (let pattern of settings.tailwindCSS.files.exclude) {
-    if (minimatch(file, path.join(state.editor.folder, pattern))) {
+    if (picomatch(path.join(state.editor.folder, pattern))(file)) {
       return true
     }
   }

@@ -24,7 +24,7 @@ import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as fs from 'fs'
 import findUp from 'find-up'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
 import type { AtRule, Container, Node, Result } from 'postcss'
 import Hook from './lib/hook'
@@ -264,12 +264,14 @@ export async function createProjectService(
     let needsInit = false
     let needsRebuild = false
 
+    let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+
     for (let change of changes) {
       let file = normalizePath(change.file)
 
       let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
       let isDependency = changeAffectsFile(file, state.dependencies ?? [])
-      let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+      let isPackageFile = isPackageMatcher(file)
 
       if (!isConfigFile && !isDependency && !isPackageFile) continue
 

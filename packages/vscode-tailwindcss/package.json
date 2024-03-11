@@ -339,18 +339,19 @@
   "devDependencies": {
     "@tailwindcss/language-server": "*",
     "@types/braces": "3.0.1",
+    "@types/picomatch": "^2.3.3",
     "@types/vscode": "1.65.0",
     "@vscode/vsce": "2.21.1",
-    "typescript": "5.3.3",
     "braces": "3.0.2",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
     "esbuild": "^0.19.5",
-    "minimatch": "5.1.4",
     "minimist": "^1.2.8",
     "move-file-cli": "3.0.0",
     "normalize-path": "3.0.0",
+    "picomatch": "^4.0.1",
     "rimraf": "3.0.2",
+    "typescript": "5.3.3",
     "vscode-languageclient": "8.0.2"
   }
 }

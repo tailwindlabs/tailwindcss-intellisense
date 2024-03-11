@@ -41,7 +41,7 @@ import * as semver from '@tailwindcss/language-service/src/util/semver'
 import isObject from '@tailwindcss/language-service/src/util/isObject'
 import { dedupe, equal } from '@tailwindcss/language-service/src/util/array'
 import namedColors from 'color-name'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
 import braces from 'braces'
 import normalizePath from 'normalize-path'
@@ -77,10 +77,10 @@ function getExcludePatterns(scope: ConfigurationScope): string[] {
 }
 
 function isExcluded(file: string, folder: WorkspaceFolder): boolean {
-  let exclude = getExcludePatterns(folder)
+  for (let pattern of getExcludePatterns(folder)) {
+    let matcher = picomatch(path.join(folder.uri.fsPath, pattern))
 
-  for (let pattern of exclude) {
-    if (minimatch(file, path.join(folder.uri.fsPath, pattern))) {
+    if (matcher(file)) {
       return true
     }
   }

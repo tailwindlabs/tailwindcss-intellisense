@@ -34,7 +34,7 @@ import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
 import type * as chokidar from 'chokidar'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { normalizeFileNameToFsPath } from './util/uri'
@@ -230,16 +230,22 @@ export class TW {
       let needsRestart = false
       let needsSoftRestart = false
 
+      let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+      let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
+      let isConfigMatcher = picomatch(`**/${CONFIG_GLOB}`, { dot: true })
+
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
 
         for (let ignorePattern of ignore) {
-          if (minimatch(normalizedFilename, ignorePattern, { dot: true })) {
+          let isIgnored = picomatch(ignorePattern, { dot: true })
+
+          if (isIgnored(normalizedFilename)) {
             continue changeLoop
           }
         }
 
-        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+        let isPackageFile = isPackageMatcher(normalizedFilename)
         if (isPackageFile) {
           for (let [, project] of this.projects) {
             let twVersion = require('tailwindcss/package.json').version
@@ -275,9 +281,7 @@ export class TW {
           break changeLoop
         }
 
-        let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
-          dot: true,
-        })
+        let isCssFile = isCssMatcher(`**/${CSS_GLOB}`)
         if (isCssFile && change.type !== FileChangeType.Deleted) {
           let configPath = await getConfigFileFromCssFile(change.file)
           if (
@@ -292,9 +296,7 @@ export class TW {
           }
         }
 
-        let isConfigFile = minimatch(normalizedFilename, `**/${CONFIG_GLOB}`, {
-          dot: true,
-        })
+        let isConfigFile = isConfigMatcher(normalizedFilename)
         if (isConfigFile && change.type === FileChangeType.Created) {
           needsRestart = true
           break
@@ -682,10 +684,10 @@ export class TW {
         for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
-          if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
+          if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {
             break
           }
-          if (minimatch(fsPath, pattern, { dot: true }) && selector.priority < matchedPriority) {
+          if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
             matchedProject = project
             matchedPriority = selector.priority
           }

@@ -2,7 +2,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import glob from 'fast-glob'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import normalizePath from 'normalize-path'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
@@ -194,9 +194,11 @@ export class ProjectLocator {
     // Create a map of config paths to metadata
     let configs = new CacheMap<string, ConfigEntry>()
 
+    let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
+
     // Create a list of entries for each file
     let entries = files.map((filepath: string): FileEntry => {
-      let isCss = minimatch(filepath, `**/${CSS_GLOB}`, { dot: true })
+      let isCss = isCssMatcher(filepath)
 
       if (isCss) {
         return new FileEntry('css', filepath)
