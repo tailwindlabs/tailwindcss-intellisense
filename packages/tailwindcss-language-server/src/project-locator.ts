@@ -64,7 +64,51 @@ export class ProjectLocator {
       }
     }
 
+    if (projects.length === 1) {
+      projects[0].documentSelector.push({
+        pattern: normalizePath(path.join(this.base, '**')),
+        priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+      })
+    }
+
     return projects
+  }
+
+  async loadAllFromWorkspace(
+    configs: [config: string, selectors: string[]][],
+  ): Promise<ProjectConfig[]> {
+    return Promise.all(configs.map((config) => this.loadFromWorkspace(config[0], config[1])))
+  }
+
+  private async loadFromWorkspace(
+    configPath: string,
+    selectors: string[],
+  ): Promise<ProjectConfig | null> {
+    let config: ConfigEntry = {
+      type: 'js',
+      path: configPath,
+      source: 'js',
+      entries: [],
+      content: [],
+      packageRoot: '',
+    }
+
+    let tailwind = await this.detectTailwindVersion(config)
+
+    // Look for the package root for the config
+    config.packageRoot = await getPackageRoot(path.dirname(config.path), this.base)
+
+    return {
+      config,
+      folder: this.base,
+      isUserConfigured: true,
+      configPath: config.path,
+      documentSelector: selectors.map((selector) => ({
+        priority: DocumentSelectorPriority.USER_CONFIGURED,
+        pattern: selector,
+      })),
+      tailwind,
+    }
   }
 
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {

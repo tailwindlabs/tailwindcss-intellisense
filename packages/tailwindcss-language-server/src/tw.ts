@@ -46,6 +46,7 @@ import { createProjectService, type ProjectService, DocumentSelectorPriority } f
 import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
+import type { TailwindCssSettings } from 'tailwindcss-language-service/src/util/state'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -126,7 +127,6 @@ export class TW {
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
-    let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
@@ -136,79 +136,72 @@ export class TW {
       ? path.dirname(this.initializeParams.initializationOptions.workspaceFile)
       : base
 
-    if (configFileOrFiles) {
-      if (
-        typeof configFileOrFiles !== 'string' &&
-        (!isObject(configFileOrFiles) ||
-          !Object.entries(configFileOrFiles).every(([key, value]) => {
-            if (typeof key !== 'string') return false
-            if (Array.isArray(value)) {
-              return value.every((item) => typeof item === 'string')
-            }
-            return typeof value === 'string'
-          }))
-      ) {
-        console.error('Invalid `experimental.configFile` configuration, not initializing.')
-        return
+    function getExplicitConfigFiles(settings: TailwindCssSettings) {
+      function resolvePathForConfig(filepath: string) {
+        return normalizePath(path.resolve(userDefinedConfigBase, filepath))
       }
 
-      let configFiles =
-        typeof configFileOrFiles === 'string'
-          ? { [configFileOrFiles]: path.resolve(base, '**') }
-          : configFileOrFiles
+      let configFileOrFiles = settings.experimental.configFile
+      let configs: Record<string, string[]> = {}
 
-      workspaceFolders = Object.entries(configFiles).map(
-        ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
-          let configPath = normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath))
+      if (typeof configFileOrFiles === 'string') {
+        let configFile = resolvePathForConfig(configFileOrFiles)
+        let docSelectors = [resolvePathForConfig(path.resolve(base, '**'))]
 
-          return {
-            folder: base,
-            configPath,
-            config: {
-              path: configPath,
-            } as any,
-            documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
-              priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
-            })),
-            isUserConfigured: true,
-            tailwind: {
-              version: null,
-              features: [],
-              isDefaultVersion: false,
-            },
+        configs[configFile] = docSelectors
+      } else if (isObject(configFileOrFiles)) {
+        for (let [configFile, selectors] of Object.entries(configFileOrFiles)) {
+          if (typeof configFile !== 'string') return null
+          configFile = resolvePathForConfig(configFile)
+
+          let docSelectors: string[]
+
+          if (typeof selectors === 'string') {
+            docSelectors = [resolvePathForConfig(selectors)]
+          } else if (Array.isArray(selectors)) {
+            docSelectors = selectors.map(resolvePathForConfig)
+          } else {
+            return null
           }
-        },
-      )
+
+          configs[configFile] = docSelectors
+        }
+      } else if (configFileOrFiles) {
+        return null
+      }
+
+      return Object.entries(configs)
+    }
+
+    let configs = getExplicitConfigFiles(globalSettings.tailwindCSS)
+
+    if (configs === null) {
+      console.error('Invalid `experimental.configFile` configuration, not initializing.')
+      return
+    }
+
+    let locator = new ProjectLocator(base, globalSettings)
+
+    if (configs.length > 0) {
+      console.log('Loading Tailwind CSS projects from the workspace settings.')
+
+      workspaceFolders = await locator.loadAllFromWorkspace(configs)
     } else {
       console.log("Searching for Tailwind CSS projects in the workspace's folders.")
 
-      let locator = new ProjectLocator(base, globalSettings)
+      workspaceFolders = await locator.search()
+    }
 
-      let projects = await locator.search()
+    for (let project of workspaceFolders) {
+      // Track the Tailwind version for a given config
+      configTailwindVersionMap.set(project.config.path, project.tailwind.version)
 
-      if (projects.length === 1) {
-        projects[0].documentSelector.push({
-          pattern: normalizePath(path.join(base, '**')),
-          priority: DocumentSelectorPriority.ROOT_DIRECTORY,
-        })
-      }
+      if (project.config.source !== 'css') continue
 
-      for (let project of projects) {
-        // Track the Tailwind version for a given config
-        configTailwindVersionMap.set(project.config.path, project.tailwind.version)
-
-        if (project.config.source !== 'css') continue
-
-        // Track the config file for a given CSS file
-        for (let file of project.config.entries) {
-          if (file.type !== 'css') continue
-          cssFileConfigMap.set(file.path, project.config.path)
-        }
-      }
-
-      if (projects.length > 0) {
-        workspaceFolders = projects
+      // Track the config file for a given CSS file
+      for (let file of project.config.entries) {
+        if (file.type !== 'css') continue
+        cssFileConfigMap.set(file.path, project.config.path)
       }
     }
 
