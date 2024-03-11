@@ -101,9 +101,10 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color)
                 }
               }
+
               return {
                 label: className,
                 ...(documentation ? { documentation } : {}),
@@ -297,7 +298,7 @@ export function completionsFromClassList(
             let documentation: string | undefined
 
             if (color && typeof color !== 'string') {
-              documentation = culori.formatRgb(color)
+              documentation = formatColor(color)
             }
 
             items.push({
