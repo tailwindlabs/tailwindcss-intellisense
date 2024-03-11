@@ -19,7 +19,7 @@ import type {
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import { showError, type SilentError } from './util/error'
+import { showError, SilentError } from './util/error'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -1460,6 +1460,7 @@ async function getPlugins(config: any) {
             name: fnName,
           }
         }
+        // @ts-ignore
         const file = trace[0].fileName
         const dir = path.dirname(file)
         let pkgPath = pkgUp.sync({ cwd: dir })

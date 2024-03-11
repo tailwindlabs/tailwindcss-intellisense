@@ -1787,7 +1787,7 @@ export async function resolveCompletionItem(
 }
 
 function isContextItem(state: State, keys: string[]): boolean {
-  const item = dlv(state.classNames.classNames, [keys])
+  const item = dlv(state.classNames.classNames, keys)
 
   if (!isObject(item)) {
     return false

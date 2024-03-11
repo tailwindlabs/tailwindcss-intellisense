@@ -399,7 +399,7 @@ export function findHelperFunctionsInRange(
 }
 
 export function indexToPosition(str: string, index: number): Position {
-  const { line, col } = lineColumn(str + '\n', index)
+  const { line, col } = lineColumn(str + '\n').fromIndex(index) ?? { line: 1, col: 1 }
   return { line: line - 1, character: col - 1 }
 }
 
