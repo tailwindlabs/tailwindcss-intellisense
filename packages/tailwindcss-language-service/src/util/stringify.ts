@@ -5,7 +5,7 @@ import { ensureArray } from './array'
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
 import { Settings } from './state'
-import { addPixelEquivalentsToCss } from './pixelEquivalents'
+import { addEquivalents } from './equivalents'
 
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
@@ -55,9 +55,7 @@ export function stringifyCss(className: string, obj: any, settings: Settings): s
     css += `${indent.repeat(i)}\n}`
   }
 
-  if (settings.tailwindCSS.showPixelEquivalents) {
-    return addPixelEquivalentsToCss(css, settings.tailwindCSS.rootFontSize)
-  }
+  css = addEquivalents(css, settings.tailwindCSS)
 
   return css
 }

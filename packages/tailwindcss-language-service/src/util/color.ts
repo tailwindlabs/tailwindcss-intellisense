@@ -1,7 +1,7 @@
 import dlv from 'dlv'
 import { State } from './state'
 import removeMeta from './removeMeta'
-import { ensureArray, dedupe, flatten } from './array'
+import { ensureArray, dedupe } from './array'
 import type { Color } from 'vscode-languageserver'
 import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
@@ -228,4 +228,12 @@ let toRgb = culori.converter('rgb')
 export function culoriColorToVscodeColor(color: culori.Color): Color {
   let rgb = toRgb(color)
   return { red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha ?? 1 }
+}
+
+export function formatColor(color: culori.Color): string {
+    if (color.alpha === undefined || color.alpha === 1) {
+      return culori.formatHex(color)
+    }
+
+    return culori.formatHex8(color)
 }

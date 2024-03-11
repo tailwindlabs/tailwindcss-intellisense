@@ -12,7 +12,7 @@ import {
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
-import { getColor, getColorFromValue } from './util/color'
+import { formatColor, getColor, getColorFromValue } from './util/color'
 import { isHtmlContext } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
@@ -33,7 +33,6 @@ import { validateApply } from './util/validateApply'
 import { flagEnabled } from './util/flagEnabled'
 import * as jit from './util/jit'
 import { getVariantsFromClassName } from './util/getVariantsFromClassName'
-import * as culori from 'culori'
 import {
   addPixelEquivalentsToMediaQuery,
   addPixelEquivalentsToValue,
@@ -102,9 +101,10 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color)
                 }
               }
+
               return {
                 label: className,
                 ...(documentation ? { documentation } : {}),
@@ -298,7 +298,7 @@ export function completionsFromClassList(
             let documentation: string | undefined
 
             if (color && typeof color !== 'string') {
-              documentation = culori.formatRgb(color)
+              documentation = formatColor(color)
             }
 
             items.push({
@@ -367,7 +367,7 @@ export function completionsFromClassList(
               if (color !== null) {
                 kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color)
                 }
               }
 
@@ -528,7 +528,7 @@ export function completionsFromClassList(
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
-                documentation = culori.formatRgb(color)
+                documentation = formatColor(color)
               }
 
               items.push({
@@ -575,7 +575,7 @@ export function completionsFromClassList(
                 if (color !== null) {
                   kind = CompletionItemKind.Color
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                    documentation = culori.formatRgb(color)
+                    documentation = formatColor(color)
                   }
                 }
 
@@ -661,7 +661,7 @@ export function completionsFromClassList(
               if (color !== null) {
                   kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
-                  documentation = culori.formatRgb(color)
+                  documentation = formatColor(color)
                 }
               }
 
@@ -1050,7 +1050,7 @@ function provideCssHelperCompletions(
             // VS Code bug causes some values to not display in some cases
             detail: detail === '0' || detail === 'transparent' ? `${detail} ` : detail,
             ...(color && typeof color !== 'string' && (color.alpha ?? 1) !== 0
-              ? { documentation: culori.formatRgb(color) }
+              ? { documentation: formatColor(color) }
               : {}),
             ...(insertClosingBrace ? { textEditText: `${item}]` } : {}),
             additionalTextEdits: replaceDot
@@ -1727,7 +1727,9 @@ export async function resolveCompletionItem(
           decls.push(node)
         })
 
-        item.detail = state.designSystem.toCss(decls)
+        item.detail = await jit.stringifyDecls(state, postcss.rule({
+          nodes: decls,
+        }))
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -1736,7 +1738,7 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: ['```css', state.designSystem.toCss(rules), '```'].join('\n'),
+        value: ['```css', await jit.stringifyRoot(state, postcss.root({ nodes: rules })), '```'].join('\n'),
       }
     }
 
