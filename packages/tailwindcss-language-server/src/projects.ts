@@ -867,18 +867,8 @@ export async function createProjectService(
       state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
       delete state.config.blocklist
 
-      if (state.v4) {
-        let classList = state.designSystem.getClassList()
-
-        state.classList = classList.map((className) => {
-          return [
-            className[0],
-            {
-              ...className[1],
-              color: getColor(state, className[0]),
-            },
-          ]
-        })
+      if (state.api) {
+        await state.api.prepare()
       } else if (state.jit) {
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator

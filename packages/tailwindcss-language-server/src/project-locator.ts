@@ -423,12 +423,12 @@ async function* detectContentFiles(base: string): AsyncIterable<string> {
   }
 }
 
-type ContentItem =
+export type ContentItem =
   | { kind: 'file'; file: string }
   | { kind: 'raw'; content: string }
   | { kind: 'auto' }
 
-type ConfigEntry = {
+export type ConfigEntry = {
   type: 'js' | 'css'
   source: 'js' | 'css'
   path: string
