@@ -1,7 +1,6 @@
 import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import { parse as parseMediaQueryList } from '@csstools/media-query-list-parser'
-import postcss from 'postcss'
 import { isTokenNode } from '@csstools/css-parser-algorithms'
 import type { Comment } from './comments'
 import { applyComments } from './comments'

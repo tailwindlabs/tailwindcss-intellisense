@@ -4,7 +4,7 @@ import escapeClassName from 'css.escape'
 import { ensureArray } from './array'
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
-import { Settings } from './state'
+import type { Settings } from './state'
 import { addEquivalents } from './equivalents'
 
 export function stringifyConfigValue(x: any): string {

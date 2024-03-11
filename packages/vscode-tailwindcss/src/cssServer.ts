@@ -1,1 +1,1 @@
-import 'tailwindcss-language-server/src/language/cssServer'
+import '@tailwindcss/language-server/src/language/cssServer'

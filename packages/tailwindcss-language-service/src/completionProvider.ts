@@ -7,7 +7,6 @@ import {
   type CompletionList,
   type Position,
   type CompletionContext,
-  InsertTextFormat,
 } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
@@ -38,7 +37,6 @@ import {
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
-import { Declaration, visit } from './util/v4'
 import * as util from 'node:util'
 import * as postcss from 'postcss'
 

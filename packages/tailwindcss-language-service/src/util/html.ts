@@ -1,6 +1,6 @@
 import type { Position } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from './state'
+import type { State } from './state'
 import { htmlLanguages } from './languages'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 

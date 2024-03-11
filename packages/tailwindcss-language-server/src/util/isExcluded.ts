@@ -1,7 +1,7 @@
 import minimatch from 'minimatch'
 import * as path from 'path'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from 'tailwindcss-language-service/src/util/state'
+import type { State } from '@tailwindcss/language-service/src/util/state'
 import { getFileFsPath } from './uri'
 
 export default async function isExcluded(

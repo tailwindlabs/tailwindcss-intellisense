@@ -1,6 +1,6 @@
-import { State } from '../util/state'
+import type { State } from '../util/state'
 import type { CodeActionParams, CodeAction } from 'vscode-languageserver'
-import {
+import type {
   InvalidConfigPathDiagnostic,
   InvalidTailwindDirectiveDiagnostic,
   InvalidScreenDiagnostic,

@@ -1,4 +1,4 @@
-import { State } from './util/state'
+import type { State } from './util/state'
 import type { Hover, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'

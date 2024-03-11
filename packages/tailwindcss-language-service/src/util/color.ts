@@ -1,5 +1,5 @@
 import dlv from 'dlv'
-import { State } from './state'
+import type { State } from './state'
 import removeMeta from './removeMeta'
 import { ensureArray, dedupe } from './array'
 import type { Color } from 'vscode-languageserver'
@@ -7,7 +7,6 @@ import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
-import * as v4 from './v4'
 import postcss from 'postcss'
 
 const COLOR_PROPS = [

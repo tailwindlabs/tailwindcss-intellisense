@@ -1,7 +1,7 @@
 import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
-import { State } from './state'
+import type { State } from './state'
 import { indexToPosition } from './find'
 import { isJsDoc } from './js'
 import moo from 'moo'

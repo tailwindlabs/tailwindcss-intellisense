@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import * as jit from './jit'
 
 export function getVariantsFromClassName(

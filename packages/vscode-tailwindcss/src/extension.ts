@@ -3,47 +3,46 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as path from 'path'
+import type {
+  ExtensionContext,
+  TextDocument,
+  WorkspaceFolder,
+  TextEditorDecorationType,
+  ConfigurationScope,
+  WorkspaceConfiguration,
+  CompletionList,
+  ProviderResult,
+  Selection,
+} from 'vscode'
 import {
   workspace as Workspace,
   window as Window,
   languages as Languages,
-  ExtensionContext,
-  TextDocument,
-  OutputChannel,
-  WorkspaceFolder,
   Uri,
   commands,
   SymbolInformation,
   Position,
   Range,
-  TextEditorDecorationType,
   RelativePattern,
-  ConfigurationScope,
-  WorkspaceConfiguration,
   CompletionItem,
   CompletionItemKind,
-  CompletionList,
-  ProviderResult,
   SnippetString,
   TextEdit,
-  Selection,
 } from 'vscode'
+import type { LanguageClientOptions, ServerOptions, Disposable } from 'vscode-languageclient/node'
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
   TransportKind,
   State as LanguageClientState,
   RevealOutputChannelOn,
-  Disposable,
 } from 'vscode-languageclient/node'
-import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
-import * as semver from 'tailwindcss-language-service/src/util/semver'
-import isObject from 'tailwindcss-language-service/src/util/isObject'
-import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
+import { languages as defaultLanguages } from '@tailwindcss/language-service/src/util/languages'
+import * as semver from '@tailwindcss/language-service/src/util/semver'
+import isObject from '@tailwindcss/language-service/src/util/isObject'
+import { dedupe, equal } from '@tailwindcss/language-service/src/util/array'
 import namedColors from 'color-name'
 import minimatch from 'minimatch'
-import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
+import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
 import braces from 'braces'
 import normalizePath from 'normalize-path'
 

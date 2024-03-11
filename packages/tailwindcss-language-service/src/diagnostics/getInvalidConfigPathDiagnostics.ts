@@ -1,5 +1,5 @@
-import { State, Settings } from '../util/state'
-import { InvalidConfigPathDiagnostic, DiagnosticKind } from './types'
+import type { State, Settings } from '../util/state'
+import { type InvalidConfigPathDiagnostic, DiagnosticKind } from './types'
 import { findHelperFunctionsInDocument } from '../util/find'
 import { stringToPath } from '../util/stringToPath'
 import isObject from '../util/isObject'

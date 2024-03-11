@@ -1,6 +1,6 @@
-import { State } from '../util/state'
+import type { State } from '../util/state'
 import type { CodeActionParams, CodeAction } from 'vscode-languageserver'
-import { CssConflictDiagnostic } from '../diagnostics/types'
+import type { CssConflictDiagnostic } from '../diagnostics/types'
 import { joinWithAnd } from '../util/joinWithAnd'
 import { removeRangesFromString } from '../util/removeRangesFromString'
 

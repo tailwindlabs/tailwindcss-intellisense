@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'

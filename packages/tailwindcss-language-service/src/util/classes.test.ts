@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { ClassMatch, ClassRegexFilter, customClassesIn } from './classes'
+import { type ClassMatch, type ClassRegexFilter, customClassesIn } from './classes'
 
 interface TestRecord {
   name: string

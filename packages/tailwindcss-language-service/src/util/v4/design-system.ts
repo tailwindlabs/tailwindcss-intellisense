@@ -1,5 +1,5 @@
 import postcss from 'postcss'
-import type { AstNode, Rule } from './ast'
+import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
 export interface Theme {}
