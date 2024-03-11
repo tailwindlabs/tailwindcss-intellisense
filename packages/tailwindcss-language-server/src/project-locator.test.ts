@@ -2,7 +2,7 @@ import { test } from 'vitest'
 import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
-import { Settings } from 'tailwindcss-language-service/src/util/state'
+import { Settings } from '@tailwindcss/language-service/src/util/state'
 
 let settings: Settings = {
   tailwindCSS: {

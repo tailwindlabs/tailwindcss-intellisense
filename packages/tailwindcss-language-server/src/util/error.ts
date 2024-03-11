@@ -1,4 +1,4 @@
-import { Connection } from 'vscode-languageserver/node'
+import type { Connection } from 'vscode-languageserver/node'
 
 function toString(err: any, includeStack: boolean = true): string {
   if (err instanceof Error) {

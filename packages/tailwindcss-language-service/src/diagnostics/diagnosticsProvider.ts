@@ -1,6 +1,6 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from '../util/state'
-import { DiagnosticKind, AugmentedDiagnostic } from './types'
+import type { State } from '../util/state'
+import { DiagnosticKind, type AugmentedDiagnostic } from './types'
 import { getCssConflictDiagnostics } from './getCssConflictDiagnostics'
 import { getInvalidApplyDiagnostics } from './getInvalidApplyDiagnostics'
 import { getInvalidScreenDiagnostics } from './getInvalidScreenDiagnostics'

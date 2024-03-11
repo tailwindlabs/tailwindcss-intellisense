@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import { combinations } from './combinations'
 import dlv from 'dlv'
 

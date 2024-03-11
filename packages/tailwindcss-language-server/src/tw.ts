@@ -1,4 +1,4 @@
-import {
+import type {
   CompletionItem,
   CompletionList,
   CompletionParams,
@@ -12,27 +12,28 @@ import {
   ColorPresentationParams,
   CodeActionParams,
   CodeAction,
+  BulkUnregistration,
+  Disposable,
+  TextDocumentIdentifier,
+  DocumentLinkParams,
+  DocumentLink,
+  InitializeResult,
+} from 'vscode-languageserver/node'
+import {
   CompletionRequest,
   DocumentColorRequest,
   BulkRegistration,
   CodeActionRequest,
-  BulkUnregistration,
   HoverRequest,
   DidChangeWatchedFilesNotification,
   FileChangeType,
-  Disposable,
-  TextDocumentIdentifier,
   DocumentLinkRequest,
-  DocumentLinkParams,
-  DocumentLink,
-  InitializeResult,
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
 import type * as chokidar from 'chokidar'
-import findUp from 'find-up'
 import minimatch from 'minimatch'
 import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
@@ -41,10 +42,10 @@ import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
 import { DocumentService } from './documents'
-import { createProjectService, ProjectService, DocumentSelectorPriority } from './projects'
-import { SettingsCache, createSettingsCache } from './config'
+import { createProjectService, type ProjectService, DocumentSelectorPriority } from './projects'
+import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
-import { ProjectLocator, ProjectConfig } from './project-locator'
+import { ProjectLocator, type ProjectConfig } from './project-locator'
 
 const TRIGGER_CHARACTERS = [
   // class attributes

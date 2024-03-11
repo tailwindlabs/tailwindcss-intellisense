@@ -1,13 +1,12 @@
-import { State, Settings } from '../util/state'
-import type { Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { State, Settings } from '../util/state'
+import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { InvalidScreenDiagnostic, DiagnosticKind } from './types'
+import { type InvalidScreenDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-import dlv from 'dlv'
 import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidScreenDiagnostics(

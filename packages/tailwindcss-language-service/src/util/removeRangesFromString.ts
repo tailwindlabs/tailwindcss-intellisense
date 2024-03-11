@@ -1,4 +1,4 @@
-import { Range } from 'vscode-languageserver'
+import type { Range } from 'vscode-languageserver'
 import lineColumn from 'line-column'
 import { ensureArray } from './array'
 

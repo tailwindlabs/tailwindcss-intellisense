@@ -1,4 +1,4 @@
-import { Connection, TextDocuments } from 'vscode-languageserver/node'
+import { type Connection, TextDocuments } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 
 export class DocumentService {

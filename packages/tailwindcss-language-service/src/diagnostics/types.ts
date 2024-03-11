@@ -1,5 +1,5 @@
 import type { Diagnostic } from 'vscode-languageserver'
-import { DocumentClassName, DocumentClassList } from '../util/state'
+import type { DocumentClassName } from '../util/state'
 
 export enum DiagnosticKind {
   CssConflict = 'cssConflict',

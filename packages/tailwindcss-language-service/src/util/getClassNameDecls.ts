@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import { getClassNameParts } from './getClassNameAtPosition'
 import removeMeta from './removeMeta'
 import dlv from 'dlv'

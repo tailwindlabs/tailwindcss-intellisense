@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import { getClassNameMeta } from './getClassNameMeta'
 import { flagEnabled } from './flagEnabled'
 import * as semver from './semver'

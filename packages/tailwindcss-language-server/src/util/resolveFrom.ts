@@ -5,7 +5,7 @@ import {
   Resolver,
   ResolveOptions,
 } from 'enhanced-resolve-301'
-import { equal } from 'tailwindcss-language-service/src/util/array'
+import { equal } from '@tailwindcss/language-service/src/util/array'
 
 let pnpApi: any
 let extensions = Object.keys(require.extensions)

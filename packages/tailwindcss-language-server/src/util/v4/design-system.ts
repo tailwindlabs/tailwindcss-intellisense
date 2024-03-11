@@ -1,4 +1,4 @@
-import type { DesignSystem } from 'tailwindcss-language-service/src/util/v4'
+import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
 import postcssImport from 'postcss-import'
