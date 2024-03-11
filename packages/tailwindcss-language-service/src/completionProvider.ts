@@ -1727,7 +1727,9 @@ export async function resolveCompletionItem(
           decls.push(node)
         })
 
-        item.detail = state.designSystem.toCss(decls)
+        item.detail = await jit.stringifyDecls(state, postcss.rule({
+          nodes: decls,
+        }))
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -1736,7 +1738,7 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: ['```css', state.designSystem.toCss(rules), '```'].join('\n'),
+        value: ['```css', await jit.stringifyRoot(state, postcss.root({ nodes: rules })), '```'].join('\n'),
       }
     }
 
