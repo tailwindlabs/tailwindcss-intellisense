@@ -33,7 +33,7 @@ let build = await esbuild.context({
             ['--emitDeclarationOnly', '--outDir', path.resolve(__dirname, '../dist')],
             {
               stdio: 'inherit',
-            }
+            },
           )
         })
       },

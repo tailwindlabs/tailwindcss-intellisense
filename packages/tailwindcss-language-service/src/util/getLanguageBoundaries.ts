@@ -125,7 +125,7 @@ let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000
 export function getLanguageBoundaries(
   state: State,
   doc: TextDocument,
-  text: string = doc.getText()
+  text: string = doc.getText(),
 ): LanguageBoundary[] | null {
   let cacheKey = `${doc.languageId}:${text}`
 
@@ -139,10 +139,10 @@ export function getLanguageBoundaries(
   let defaultType = isVueDoc(doc)
     ? 'none'
     : isHtmlDoc(state, doc) || isSvelteDoc(doc)
-    ? 'html'
-    : isJs
-    ? 'jsx'
-    : null
+      ? 'html'
+      : isJs
+        ? 'jsx'
+        : null
 
   if (defaultType === null) {
     cache.set(cacheKey, null)

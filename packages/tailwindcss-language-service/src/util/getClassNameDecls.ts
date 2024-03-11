@@ -5,7 +5,7 @@ import dlv from 'dlv'
 
 export function getClassNameDecls(
   state: State,
-  className: string
+  className: string,
 ): Record<string, string> | Record<string, string>[] | null {
   const parts = getClassNameParts(state, className)
   if (!parts) return null

@@ -31,7 +31,7 @@ export type EditorState = {
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
   readDirectory: (
     document: TextDocument,
-    directory: string
+    directory: string,
   ) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 

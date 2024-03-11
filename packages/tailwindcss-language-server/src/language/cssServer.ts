@@ -51,7 +51,7 @@ let foldingRangeLimit = Number.MAX_VALUE
 const MEDIA_MARKER = '℘'
 
 const stylesheets = getLanguageModelCache<Stylesheet>(10, 60, (document) =>
-  cssLanguageService.parseStylesheet(document)
+  cssLanguageService.parseStylesheet(document),
 )
 documents.onDidClose(({ document }) => {
   stylesheets.onDocumentRemoved(document)
@@ -72,7 +72,7 @@ connection.onInitialize((params: InitializeParams) => {
   foldingRangeLimit = dlv(
     params.capabilities,
     'textDocument.foldingRange.rangeLimit',
-    Number.MAX_VALUE
+    Number.MAX_VALUE,
   )
 
   return {
@@ -96,7 +96,7 @@ connection.onInitialize((params: InitializeParams) => {
 
 function getDocumentContext(
   documentUri: string,
-  workspaceFolders: WorkspaceFolder[]
+  workspaceFolders: WorkspaceFolder[],
 ): DocumentContext {
   function getRootFolder(): string | undefined {
     for (let folder of workspaceFolders) {
@@ -131,7 +131,7 @@ async function withDocumentAndSettings<T>(
   callback: (result: {
     document: TextDocument
     settings: LanguageSettings | undefined
-  }) => T | Promise<T>
+  }) => T | Promise<T>,
 ): Promise<T> {
   let document = documents.get(uri)
   if (!document) {
@@ -150,7 +150,7 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
       position,
       stylesheets.get(document),
       getDocumentContext(document.uri, workspaceFolders),
-      settings?.completion
+      settings?.completion,
     )
     return {
       isIncomplete: result.isIncomplete,
@@ -182,43 +182,43 @@ connection.onCompletion(async ({ textDocument, position }, _token) =>
         return item
       }),
     }
-  })
+  }),
 )
 
 connection.onHover(({ textDocument, position }, _token) =>
   withDocumentAndSettings(textDocument.uri, ({ document, settings }) =>
-    cssLanguageService.doHover(document, position, stylesheets.get(document), settings?.hover)
-  )
+    cssLanguageService.doHover(document, position, stylesheets.get(document), settings?.hover),
+  ),
 )
 
 connection.onFoldingRanges(({ textDocument }, _token) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.getFoldingRanges(document, { rangeLimit: foldingRangeLimit })
-  )
+    cssLanguageService.getFoldingRanges(document, { rangeLimit: foldingRangeLimit }),
+  ),
 )
 
 connection.onDocumentColor(({ textDocument }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.findDocumentColors(document, stylesheets.get(document))
-  )
+    cssLanguageService.findDocumentColors(document, stylesheets.get(document)),
+  ),
 )
 
 connection.onColorPresentation(({ textDocument, color, range }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.getColorPresentations(document, stylesheets.get(document), color, range)
-  )
+    cssLanguageService.getColorPresentations(document, stylesheets.get(document), color, range),
+  ),
 )
 
 connection.onDefinition(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.findDefinition(document, position, stylesheets.get(document))
-  )
+    cssLanguageService.findDefinition(document, position, stylesheets.get(document)),
+  ),
 )
 
 connection.onDocumentHighlight(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.findDocumentHighlights(document, position, stylesheets.get(document))
-  )
+    cssLanguageService.findDocumentHighlights(document, position, stylesheets.get(document)),
+  ),
 )
 
 connection.onDocumentSymbol(({ textDocument }) =>
@@ -233,26 +233,26 @@ connection.onDocumentSymbol(({ textDocument }) =>
         }
       }
       return symbol
-    })
-  )
+    }),
+  ),
 )
 
 connection.onSelectionRanges(({ textDocument, positions }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.getSelectionRanges(document, positions, stylesheets.get(document))
-  )
+    cssLanguageService.getSelectionRanges(document, positions, stylesheets.get(document)),
+  ),
 )
 
 connection.onReferences(({ textDocument, position }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.findReferences(document, position, stylesheets.get(document))
-  )
+    cssLanguageService.findReferences(document, position, stylesheets.get(document)),
+  ),
 )
 
 connection.onCodeAction(({ textDocument, range, context }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.doCodeActions2(document, range, context, stylesheets.get(document))
-  )
+    cssLanguageService.doCodeActions2(document, range, context, stylesheets.get(document)),
+  ),
 )
 
 connection.onDocumentLinks(({ textDocument }) =>
@@ -260,15 +260,15 @@ connection.onDocumentLinks(({ textDocument }) =>
     cssLanguageService.findDocumentLinks2(
       document,
       stylesheets.get(document),
-      getDocumentContext(document.uri, workspaceFolders)
-    )
-  )
+      getDocumentContext(document.uri, workspaceFolders),
+    ),
+  ),
 )
 
 connection.onRenameRequest(({ textDocument, position, newName }) =>
   withDocumentAndSettings(textDocument.uri, ({ document }) =>
-    cssLanguageService.doRename(document, position, newName, stylesheets.get(document))
-  )
+    cssLanguageService.doRename(document, position, newName, stylesheets.get(document)),
+  ),
 )
 
 let documentSettings: { [key: string]: Thenable<LanguageSettings | undefined> } = {}
@@ -340,7 +340,7 @@ function replace(delta = 0) {
     let lines = p1.split('\n')
     if (lines.length > 1) {
       return `@media(${MEDIA_MARKER})${'\n'.repeat(lines.length - 1)}${' '.repeat(
-        lines[lines.length - 1].length
+        lines[lines.length - 1].length,
       )}{`
     }
     return `@media(${MEDIA_MARKER})${' '.repeat(p1.length + delta)}{`
@@ -360,9 +360,9 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
       .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
       .replace(
         /@media(\s+screen\s*\([^)]+\))/g,
-        (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`
+        (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
       )
-      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
+      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_'),
   )
 }
 

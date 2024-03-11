@@ -2,10 +2,7 @@ import { Range } from 'vscode-languageserver'
 import lineColumn from 'line-column'
 import { ensureArray } from './array'
 
-export function removeRangesFromString(
-  str: string,
-  rangeOrRanges: Range | Range[]
-): string {
+export function removeRangesFromString(str: string, rangeOrRanges: Range | Range[]): string {
   let ranges = ensureArray(rangeOrRanges)
   let finder = lineColumn(str + '\n', { origin: 0 })
   let indexRanges: { start: number; end: number }[] = []

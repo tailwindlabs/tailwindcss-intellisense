@@ -73,7 +73,7 @@ export function createSettingsCache(connection: Connection): SettingsCache {
     return merge<Settings>(
       getDefaultSettings(),
       { editor, tailwindCSS },
-      { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray }
+      { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray },
     )
   }
 

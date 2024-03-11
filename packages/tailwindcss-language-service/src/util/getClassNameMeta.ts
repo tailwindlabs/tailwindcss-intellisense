@@ -4,7 +4,7 @@ import dlv from 'dlv'
 
 export function getClassNameMeta(
   state: State,
-  classNameOrParts: string | string[]
+  classNameOrParts: string | string[],
 ): ClassNameMeta | ClassNameMeta[] {
   const parts = Array.isArray(classNameOrParts)
     ? classNameOrParts

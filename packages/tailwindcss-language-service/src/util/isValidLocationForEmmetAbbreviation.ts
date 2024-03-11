@@ -1,9 +1,9 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import type {  Range, Position } from 'vscode-languageserver'
+import type { Range, Position } from 'vscode-languageserver'
 
 export function isValidLocationForEmmetAbbreviation(
   document: TextDocument,
-  abbreviationRange: Range
+  abbreviationRange: Range,
 ): boolean {
   const startAngle = '<'
   const endAngle = '>'

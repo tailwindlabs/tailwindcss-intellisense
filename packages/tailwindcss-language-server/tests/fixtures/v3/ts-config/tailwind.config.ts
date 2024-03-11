@@ -1,7 +1,7 @@
 export default {
   theme: {
-    colors: { cool: 'blue' }
-  }
+    colors: { cool: 'blue' },
+  },
 } satisfies {
   theme: Record<string, any>
 }

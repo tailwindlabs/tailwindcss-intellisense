@@ -177,7 +177,7 @@ export class TW {
               isDefaultVersion: false,
             },
           }
-        }
+        },
       )
     } else {
       console.log("Searching for Tailwind CSS projects in the workspace's folders.")
@@ -224,7 +224,7 @@ export class TW {
     console.log(`[Global] Creating projects: ${JSON.stringify(workspaceDescription)}`)
 
     const onDidChangeWatchedFiles = async (
-      changes: Array<{ file: string; type: FileChangeType }>
+      changes: Array<{ file: string; type: FileChangeType }>,
     ): Promise<void> => {
       let needsRestart = false
       let needsSoftRestart = false
@@ -243,10 +243,12 @@ export class TW {
           for (let [, project] of this.projects) {
             let twVersion = require('tailwindcss/package.json').version
             try {
-              let v = require(resolveFrom(
-                path.dirname(project.projectConfig.configPath),
-                'tailwindcss/package.json'
-              )).version
+              let v = require(
+                resolveFrom(
+                  path.dirname(project.projectConfig.configPath),
+                  'tailwindcss/package.json',
+                ),
+              ).version
               if (typeof v === 'string') {
                 twVersion = v
               }
@@ -338,11 +340,11 @@ export class TW {
             .filter(
               (change, changeIndex, changes) =>
                 changes.findIndex((c) => c.file === change.file && c.type === change.type) ===
-                changeIndex
+                changeIndex,
             )
 
           await onDidChangeWatchedFiles(normalizedChanges)
-        })
+        }),
       )
 
       let disposable = await this.connection.client.register(
@@ -353,7 +355,7 @@ export class TW {
             { globPattern: `**/${PACKAGE_LOCK_GLOB}` },
             { globPattern: `**/${CSS_GLOB}` },
           ],
-        }
+        },
       )
 
       this.disposables.push(disposable)
@@ -382,14 +384,14 @@ export class TW {
         base,
         (err, events) => {
           onDidChangeWatchedFiles(
-            events.map((event) => ({ file: event.path, type: typeMap[event.type] }))
+            events.map((event) => ({ file: event.path, type: typeMap[event.type] })),
           )
         },
         {
           ignore: ignore.map((ignorePattern) =>
-            path.resolve(base, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, ''))
+            path.resolve(base, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, '')),
           ),
-        }
+        },
       )
 
       this.disposables.push({
@@ -410,7 +412,7 @@ export class TW {
             stabilityThreshold: 100,
             pollInterval: 20,
           },
-        }
+        },
       )
 
       await new Promise<void>((resolve) => {
@@ -421,17 +423,17 @@ export class TW {
         .on('add', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Created },
-          ])
+          ]),
         )
         .on('change', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Changed },
-          ])
+          ]),
         )
         .on('unlink', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Deleted },
-          ])
+          ]),
         )
 
       this.disposables.push({
@@ -455,9 +457,9 @@ export class TW {
           projectConfig,
           this.initializeParams,
           this.watchPatterns,
-          configTailwindVersionMap.get(projectConfig.configPath)
-        )
-      )
+          configTailwindVersionMap.get(projectConfig.configPath),
+        ),
+      ),
     )
 
     // init projects for documents that are _already_ open
@@ -487,19 +489,19 @@ export class TW {
         for (let [, project] of this.projects) {
           project.onUpdateSettings(settings)
         }
-      })
+      }),
     )
 
     this.disposables.push(
       this.connection.onShutdown(() => {
         this.dispose()
-      })
+      }),
     )
 
     this.disposables.push(
       this.documentService.onDidChangeContent((change) => {
         this.getProject(change.document)?.provideDiagnostics(change.document)
-      })
+      }),
     )
 
     this.disposables.push(
@@ -509,7 +511,7 @@ export class TW {
           project.enable()
           project.tryInit()
         }
-      })
+      }),
     )
   }
 
@@ -523,7 +525,7 @@ export class TW {
     projectConfig: ProjectConfig,
     params: InitializeParams,
     watchPatterns: (patterns: string[]) => void,
-    tailwindVersion: string
+    tailwindVersion: string,
   ): Promise<void> {
     let key = String(this.projectCounter++)
     const project = await createProjectService(
@@ -546,7 +548,7 @@ export class TW {
       () => this.refreshDiagnostics(),
       (patterns: string[]) => watchPatterns(patterns),
       tailwindVersion,
-      this.settingsCache.get
+      this.settingsCache.get,
     )
     this.projects.set(key, project)
 
@@ -593,11 +595,11 @@ export class TW {
 
   private onRequest(
     method: '@/tailwindCSS/sortSelection',
-    params: { uri: string; classLists: string[] }
+    params: { uri: string; classLists: string[] },
   ): { error: string } | { classLists: string[] }
   private onRequest(
     method: '@/tailwindCSS/getProject',
-    params: { uri: string }
+    params: { uri: string },
   ): { version: string } | null
   private onRequest(method: string, params: any): any {
     if (method === '@/tailwindCSS/sortSelection') {

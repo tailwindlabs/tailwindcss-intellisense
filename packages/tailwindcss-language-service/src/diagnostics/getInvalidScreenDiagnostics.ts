@@ -13,7 +13,7 @@ import { getTextWithoutComments } from '../util/doc'
 export function getInvalidScreenDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): InvalidScreenDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidScreen
   if (severity === 'ignore') return []
@@ -53,11 +53,11 @@ export function getInvalidScreenDiagnostics(
           {
             start: indexToPosition(
               text,
-              match.index + match[0].length - match.groups.screen.length
+              match.index + match[0].length - match.groups.screen.length,
             ),
             end: indexToPosition(text, match.index + match[0].length),
           },
-          range
+          range,
         ),
         severity:
           severity === 'error'

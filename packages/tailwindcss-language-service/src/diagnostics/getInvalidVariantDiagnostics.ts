@@ -13,7 +13,7 @@ import { getTextWithoutComments } from '../util/doc'
 export function getInvalidVariantDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): InvalidVariantDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidVariant
   if (severity === 'ignore') return []
@@ -36,7 +36,7 @@ export function getInvalidVariantDiagnostics(
   let possibleVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
       return variant.values.map((value) =>
-        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`,
       )
     }
     return [variant.name]
@@ -78,7 +78,7 @@ export function getInvalidVariantDiagnostics(
               start: indexToPosition(text, variantStartIndex),
               end: indexToPosition(text, variantStartIndex + variant.length),
             },
-            range
+            range,
           ),
           severity:
             severity === 'error'

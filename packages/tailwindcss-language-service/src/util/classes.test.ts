@@ -2,10 +2,10 @@ import { expect, test } from 'vitest'
 import { ClassMatch, ClassRegexFilter, customClassesIn } from './classes'
 
 interface TestRecord {
-  name: string,
-  text: string,
-  cursor: number | null,
-  filters: ClassRegexFilter[],
+  name: string
+  text: string
+  cursor: number | null
+  filters: ClassRegexFilter[]
   expected: ClassMatch[]
 }
 
@@ -32,7 +32,7 @@ let table: TestRecord[] = [
     text: 'tron ""',
     cursor: 5,
     filters: [['test (\\S*)']],
-    expected: []
+    expected: [],
   },
 
   {
@@ -48,7 +48,7 @@ let table: TestRecord[] = [
     text: 'nope ""',
     cursor: 5,
     filters: [['test (\\S*)'], ['tron (\\S*)']],
-    expected: []
+    expected: [],
   },
 
   // Container + class regex
@@ -65,14 +65,17 @@ let table: TestRecord[] = [
     text: 'tron ""',
     cursor: 6,
     filters: [['test (\\S*)', '"([^"]*)"']],
-    expected: []
+    expected: [],
   },
 
   {
     name: 'nested (multiple, matches: yes)',
     text: 'tron ""',
     cursor: 6,
-    filters: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
+    filters: [
+      ['test (\\S*)', '"([^"]*)"'],
+      ['tron (\\S*)', '"([^"]*)"'],
+    ],
     expected: [{ classList: '', range: [6, 6] }],
   },
 
@@ -80,8 +83,11 @@ let table: TestRecord[] = [
     name: 'nested (multiple, matches: no)',
     text: 'nope ""',
     cursor: 6,
-    filters: [['test (\\S*)', '"([^"]*)"'], ['tron (\\S*)', '"([^"]*)"']],
-    expected: []
+    filters: [
+      ['test (\\S*)', '"([^"]*)"'],
+      ['tron (\\S*)', '"([^"]*)"'],
+    ],
+    expected: [],
   },
 
   // Cursor position validation
@@ -106,7 +112,7 @@ let table: TestRecord[] = [
     text: `<div class="text-" /> <div class="bg-" />`,
     cursor: 11,
     filters: [['class="([^"]*)"']],
-    expected: []
+    expected: [],
   },
 
   {
@@ -155,7 +161,10 @@ let table: TestRecord[] = [
     text: `<div class="text-" /> <div class="bg-" />`,
     cursor: null,
     filters: [['class="([^"]*)"']],
-    expected: [{ classList: 'text-', range: [12, 17] }, { classList: 'bg-', range: [34, 37] }],
+    expected: [
+      { classList: 'text-', range: [12, 17] },
+      { classList: 'bg-', range: [34, 37] },
+    ],
   },
 
   // Edge cases
@@ -188,7 +197,10 @@ let table: TestRecord[] = [
     text: `let _ = clsx("")`,
     cursor: null,
     filters: [['clsx\\(([^)]*)\\)', '(?<=")([^"]*)(?<=")']],
-    expected: [{ classList: '', range: [14, 14] }, { classList: '', range: [15, 15] }],
+    expected: [
+      { classList: '', range: [14, 14] },
+      { classList: '', range: [15, 15] },
+    ],
   },
 
   {

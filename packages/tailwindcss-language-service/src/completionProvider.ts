@@ -53,7 +53,7 @@ export function completionsFromClassList(
   classListRange: Range,
   rootFontSize: number,
   filter?: (item: CompletionItem) => boolean,
-  context?: CompletionContext
+  context?: CompletionContext,
 ): CompletionList {
   let classNames = classList.split(/[\s+]/)
   const partialClassName = classNames[classNames.length - 1]
@@ -94,7 +94,7 @@ export function completionsFromClassList(
             isIncomplete: false,
             items: modifiers.map((modifier, index) => {
               let className = `${beforeSlash}/${modifier}`
-              let kind:CompletionItemKind = CompletionItemKind.Constant
+              let kind: CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
@@ -117,7 +117,7 @@ export function completionsFromClassList(
             range: replacementRange,
             data: state.completionItemData,
           },
-          state.editor.capabilities.itemDefaults
+          state.editor.capabilities.itemDefaults,
         )
       }
     }
@@ -135,7 +135,7 @@ export function completionsFromClassList(
     let variantOrder = 0
 
     function variantItem(
-      item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>
+      item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>,
     ): CompletionItem {
       return {
         kind: 9,
@@ -177,7 +177,7 @@ export function completionsFromClassList(
             //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
             //   arguments: [variant.name, replacementRange],
             // },
-          })
+          }),
         )
       } else {
         let shouldSortVariants = !semver.gte(state.version, '2.99.0')
@@ -186,7 +186,7 @@ export function completionsFromClassList(
         if (shouldSortVariants) {
           let allVariants = state.variants.map(({ name }) => name)
           resultingVariants = resultingVariants.sort(
-            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a),
           )
         }
 
@@ -196,14 +196,12 @@ export function completionsFromClassList(
           selectors = variant.selectors()
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
-          console.log(
-            "Error while trying to get selectors for variant",
-          )
+          console.log('Error while trying to get selectors for variant')
           console.log(
             util.format({
               variant,
               err,
-            })
+            }),
           )
         }
 
@@ -237,7 +235,7 @@ export function completionsFromClassList(
                     },
                   ]
                 : [],
-          })
+          }),
         )
       }
 
@@ -258,14 +256,12 @@ export function completionsFromClassList(
           selectors = variant.selectors({ value })
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
-          console.log(
-            "Error while trying to get selectors for variant",
-          )
+          console.log('Error while trying to get selectors for variant')
           console.log(
             util.format({
               variant,
               err,
-            })
+            }),
           )
         }
 
@@ -280,7 +276,7 @@ export function completionsFromClassList(
                 ? `${variant.name}${sep}`
                 : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
             detail: selectors.join(', '),
-          })
+          }),
         )
       }
     }
@@ -309,7 +305,7 @@ export function completionsFromClassList(
             })
 
             return items
-          }, [] as CompletionItem[])
+          }, [] as CompletionItem[]),
         ),
       },
       {
@@ -320,7 +316,7 @@ export function completionsFromClassList(
         },
         range: replacementRange,
       },
-      state.editor.capabilities.itemDefaults
+      state.editor.capabilities.itemDefaults,
     )
   }
 
@@ -340,7 +336,7 @@ export function completionsFromClassList(
       if (state.classListContainsMetadata) {
         let baseClassName = beforeSlash.slice(offset)
         modifiers = state.classList.find(
-          (cls) => Array.isArray(cls) && cls[0] === baseClassName
+          (cls) => Array.isArray(cls) && cls[0] === baseClassName,
         )?.[1]?.modifiers
       } else {
         let testClass = beforeSlash + '/[0]'
@@ -360,7 +356,7 @@ export function completionsFromClassList(
             isIncomplete: false,
             items: modifiers.map((modifier, index) => {
               let className = `${beforeSlash}/${modifier}`
-              let kind:CompletionItemKind = CompletionItemKind.Constant
+              let kind: CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
@@ -383,7 +379,7 @@ export function completionsFromClassList(
             range: replacementRange,
             data: state.completionItemData,
           },
-          state.editor.capabilities.itemDefaults
+          state.editor.capabilities.itemDefaults,
         )
       }
     }
@@ -402,7 +398,7 @@ export function completionsFromClassList(
       let variantOrder = 0
 
       function variantItem(
-        item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>
+        item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>,
       ): CompletionItem {
         return {
           kind: 9,
@@ -444,7 +440,7 @@ export function completionsFromClassList(
               //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
               //   arguments: [variant.name, replacementRange],
               // },
-            })
+            }),
           )
         } else {
           let shouldSortVariants = !semver.gte(state.version, '2.99.0')
@@ -453,7 +449,7 @@ export function completionsFromClassList(
           if (shouldSortVariants) {
             let allVariants = state.variants.map(({ name }) => name)
             resultingVariants = resultingVariants.sort(
-              (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+              (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a),
             )
           }
 
@@ -484,7 +480,7 @@ export function completionsFromClassList(
                       },
                     ]
                   : [],
-            })
+            }),
           )
         }
 
@@ -506,7 +502,7 @@ export function completionsFromClassList(
                   ? `${variant.name}${sep}`
                   : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
               detail: variant.selectors({ value }).join(', '),
-            })
+            }),
           )
         }
       }
@@ -524,7 +520,7 @@ export function completionsFromClassList(
                 return items
               }
 
-            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
+              let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
@@ -539,7 +535,7 @@ export function completionsFromClassList(
               })
 
               return items
-            }, [] as CompletionItem[])
+            }, [] as CompletionItem[]),
           ),
         },
         {
@@ -550,7 +546,7 @@ export function completionsFromClassList(
           },
           range: replacementRange,
         },
-        state.editor.capabilities.itemDefaults
+        state.editor.capabilities.itemDefaults,
       )
     }
 
@@ -568,7 +564,7 @@ export function completionsFromClassList(
                 return item.__info && isUtil(item)
               })
               .map((className, index, classNames) => {
-                let kind: CompletionItemKind =CompletionItemKind.Constant
+                let kind: CompletionItemKind = CompletionItemKind.Constant
                 let documentation: string | undefined
 
                 const color = getColor(state, className)
@@ -585,7 +581,7 @@ export function completionsFromClassList(
                   ...(documentation ? { documentation } : {}),
                   sortText: naturalExpand(index, classNames.length),
                 } as CompletionItem
-              })
+              }),
           )
           .filter((item) => {
             if (item === null) {
@@ -605,7 +601,7 @@ export function completionsFromClassList(
           ...(important ? { important } : {}),
         },
       },
-      state.editor.capabilities.itemDefaults
+      state.editor.capabilities.itemDefaults,
     )
   }
 
@@ -651,15 +647,15 @@ export function completionsFromClassList(
         .concat(
           Object.keys(isSubset ? subset : state.classNames.classNames)
             .filter((className) =>
-              dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
+              dlv(state.classNames.classNames, [...subsetKey, className, '__info']),
             )
             .map((className, index, classNames) => {
-                let kind: CompletionItemKind =CompletionItemKind.Constant
+              let kind: CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                  kind = CompletionItemKind.Color
+                kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = formatColor(color)
                 }
@@ -671,7 +667,7 @@ export function completionsFromClassList(
                 ...(documentation ? { documentation } : {}),
                 sortText: naturalExpand(index, classNames.length),
               }
-            })
+            }),
         )
         .filter((item) => {
           if (item === null) {
@@ -690,7 +686,7 @@ export function completionsFromClassList(
         variants: subsetKey,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
@@ -698,7 +694,7 @@ async function provideClassAttributeCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
+  context?: CompletionContext,
 ): Promise<CompletionList> {
   let str = document.getText({
     start: document.positionAt(Math.max(0, document.offsetAt(position) - 2000)),
@@ -746,7 +742,7 @@ async function provideClassAttributeCompletions(
         },
         settings.rootFontSize,
         undefined,
-        context
+        context,
       )
     }
   } catch (_) {}
@@ -758,7 +754,7 @@ async function provideCustomClassNameCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
+  context?: CompletionContext,
 ): Promise<CompletionList> {
   const settings = await state.editor.getConfiguration(document.uri)
   const filters = settings.tailwindCSS.experimental.classRegex
@@ -785,7 +781,7 @@ async function provideCustomClassNameCompletions(
       },
       settings.tailwindCSS.rootFontSize,
       undefined,
-      context
+      context,
     )
   }
 
@@ -796,7 +792,7 @@ function provideThemeVariableCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  _context?: CompletionContext
+  _context?: CompletionContext,
 ): CompletionList {
   // Make sure we're in a CSS "context'
   if (!isCssContext(state, document, position)) return null
@@ -865,7 +861,7 @@ function provideThemeVariableCompletions(
         ...(state.completionItemData ?? {}),
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
@@ -873,7 +869,7 @@ async function provideAtApplyCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
+  context?: CompletionContext,
 ): Promise<CompletionList> {
   let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
   let str = document.getText({
@@ -911,7 +907,7 @@ async function provideAtApplyCompletions(
       let validated = validateApply(state, [...variants, className])
       return validated !== null && validated.isApplyable === true
     },
-    context
+    context,
   )
 }
 
@@ -924,7 +920,7 @@ async function provideClassNameCompletions(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
+  context?: CompletionContext,
 ): Promise<CompletionList> {
   if (isCssContext(state, document, position)) {
     return provideAtApplyCompletions(state, document, position, context)
@@ -940,7 +936,7 @@ async function provideClassNameCompletions(
 function provideCssHelperCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1044,7 +1040,7 @@ function provideCssHelperCompletions(
             label: item,
             sortText: naturalExpand(index, items.length),
             commitCharacters: [!item.includes('.') && '.', !item.includes('[') && '['].filter(
-              Boolean
+              Boolean,
             ),
             kind: color ? 16 : isObject(obj[item]) ? 9 : 10,
             // VS Code bug causes some values to not display in some cases
@@ -1077,14 +1073,14 @@ function provideCssHelperCompletions(
         _type: 'helper',
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 function provideTailwindDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1107,7 +1103,7 @@ function provideTailwindDirectiveCompletions(
             kind: 'markdown' as typeof MarkupKind.Markdown,
             value: `This injects Tailwind’s base styles and any base styles registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
               state.version,
-              'functions-and-directives/#tailwind'
+              'functions-and-directives/#tailwind',
             )})`,
           },
         }
@@ -1117,7 +1113,7 @@ function provideTailwindDirectiveCompletions(
             kind: 'markdown' as typeof MarkupKind.Markdown,
             value: `This injects Tailwind’s base styles, which is a combination of Normalize.css and some additional base styles.\n\n[Tailwind CSS Documentation](${docsUrl(
               state.version,
-              'functions-and-directives/#tailwind'
+              'functions-and-directives/#tailwind',
             )})`,
           },
         },
@@ -1127,7 +1123,7 @@ function provideTailwindDirectiveCompletions(
         kind: 'markdown' as typeof MarkupKind.Markdown,
         value: `This injects Tailwind’s component classes and any component classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#tailwind'
+          'functions-and-directives/#tailwind',
         )})`,
       },
     },
@@ -1137,7 +1133,7 @@ function provideTailwindDirectiveCompletions(
         kind: 'markdown' as typeof MarkupKind.Markdown,
         value: `This injects Tailwind’s utility classes and any utility classes registered by plugins.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#tailwind'
+          'functions-and-directives/#tailwind',
         )})`,
       },
     },
@@ -1148,7 +1144,7 @@ function provideTailwindDirectiveCompletions(
             kind: 'markdown' as typeof MarkupKind.Markdown,
             value: `Use this directive to control where Tailwind injects the utility variants.\n\nThis directive is considered an advanced escape hatch and it is recommended to omit it whenever possible. If omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
               state.version,
-              'just-in-time-mode#variants-are-inserted-at-tailwind-variants'
+              'just-in-time-mode#variants-are-inserted-at-tailwind-variants',
             )})`,
           },
         }
@@ -1158,7 +1154,7 @@ function provideTailwindDirectiveCompletions(
             kind: 'markdown' as typeof MarkupKind.Markdown,
             value: `Use this directive to control where Tailwind injects the responsive variations of each utility.\n\nIf omitted, Tailwind will append these classes to the very end of your stylesheet by default.\n\n[Tailwind CSS Documentation](${docsUrl(
               state.version,
-              'functions-and-directives/#tailwind'
+              'functions-and-directives/#tailwind',
             )})`,
           },
         },
@@ -1185,14 +1181,14 @@ function provideTailwindDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 function provideVariantsDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1218,7 +1214,7 @@ function provideVariantsDirectiveCompletions(
   let possibleVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
       return variant.values.map((value) =>
-        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`,
       )
     }
     return [variant.name]
@@ -1255,14 +1251,14 @@ function provideVariantsDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 function provideLayerDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1299,14 +1295,14 @@ function provideLayerDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 function withDefaults(
   completionList: CompletionList,
   defaults: Partial<{ data: any; range: Range }>,
-  supportedDefaults: string[]
+  supportedDefaults: string[],
 ): CompletionList {
   let defaultData = supportedDefaults.includes('data')
   let defaultRange = supportedDefaults.includes('editRange')
@@ -1344,7 +1340,7 @@ function withDefaults(
 function provideScreenDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1385,14 +1381,14 @@ function provideScreenDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 function provideCssDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): CompletionList {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1416,7 +1412,7 @@ function provideCssDirectiveCompletions(
           state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
         }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#tailwind'
+          'functions-and-directives/#tailwind',
         )})`,
       },
     },
@@ -1426,7 +1422,7 @@ function provideCssDirectiveCompletions(
         kind: 'markdown' as typeof MarkupKind.Markdown,
         value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#screen'
+          'functions-and-directives/#screen',
         )})`,
       },
     },
@@ -1436,7 +1432,7 @@ function provideCssDirectiveCompletions(
         kind: 'markdown' as typeof MarkupKind.Markdown,
         value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#apply'
+          'functions-and-directives/#apply',
         )})`,
       },
     },
@@ -1448,7 +1444,7 @@ function provideCssDirectiveCompletions(
               kind: 'markdown' as typeof MarkupKind.Markdown,
               value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
-                'functions-and-directives/#layer'
+                'functions-and-directives/#layer',
               )})`,
             },
           },
@@ -1463,7 +1459,7 @@ function provideCssDirectiveCompletions(
               kind: 'markdown' as typeof MarkupKind.Markdown,
               value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
-                'functions-and-directives/#variants'
+                'functions-and-directives/#variants',
               )})`,
             },
           },
@@ -1473,7 +1469,7 @@ function provideCssDirectiveCompletions(
               kind: 'markdown' as typeof MarkupKind.Markdown,
               value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
-                'functions-and-directives/#responsive'
+                'functions-and-directives/#responsive',
               )})`,
             },
           },
@@ -1486,7 +1482,7 @@ function provideCssDirectiveCompletions(
               kind: 'markdown' as typeof MarkupKind.Markdown,
               value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
-                'functions-and-directives/#config'
+                'functions-and-directives/#config',
               )})`,
             },
           },
@@ -1500,7 +1496,7 @@ function provideCssDirectiveCompletions(
               kind: 'markdown' as typeof MarkupKind.Markdown,
               value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
                 state.version,
-                'functions-and-directives/#config'
+                'functions-and-directives/#config',
               )})`,
             },
           },
@@ -1529,14 +1525,14 @@ function provideCssDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 async function provideConfigDirectiveCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<CompletionList> {
   if (!isCssContext(state, document, position)) {
     return null
@@ -1581,14 +1577,14 @@ async function provideConfigDirectiveCompletions(
         end: position,
       },
     },
-    state.editor.capabilities.itemDefaults
+    state.editor.capabilities.itemDefaults,
   )
 }
 
 async function provideEmmetCompletions(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<CompletionList> {
   let settings = await state.editor.getConfiguration(document.uri)
   if (settings.tailwindCSS.emmetCompletions !== true) return null
@@ -1627,7 +1623,7 @@ async function provideEmmetCompletions(
       symbols.find(
         (symbol) =>
           abbreviation === symbol.name ||
-          (abbreviation.startsWith(symbol.name + '.') && !/>|\*|\+/.test(abbreviation))
+          (abbreviation.startsWith(symbol.name + '.') && !/>|\*|\+/.test(abbreviation)),
       )
     ) {
       return null
@@ -1658,7 +1654,7 @@ async function provideEmmetCompletions(
       },
       end: position,
     },
-    settings.tailwindCSS.rootFontSize
+    settings.tailwindCSS.rootFontSize,
   )
 }
 
@@ -1666,7 +1662,7 @@ export async function doComplete(
   state: State,
   document: TextDocument,
   position: Position,
-  context?: CompletionContext
+  context?: CompletionContext,
 ) {
   if (state === null) return { items: [], isIncomplete: false }
 
@@ -1689,11 +1685,11 @@ export async function doComplete(
 
 export async function resolveCompletionItem(
   state: State,
-  item: CompletionItem
+  item: CompletionItem,
 ): Promise<CompletionItem> {
   if (
     ['helper', 'directive', 'variant', 'layer', '@tailwind', 'filesystem'].includes(
-      item.data?._type
+      item.data?._type,
     )
   ) {
     return item
@@ -1727,9 +1723,12 @@ export async function resolveCompletionItem(
           decls.push(node)
         })
 
-        item.detail = await jit.stringifyDecls(state, postcss.rule({
-          nodes: decls,
-        }))
+        item.detail = await jit.stringifyDecls(
+          state,
+          postcss.rule({
+            nodes: decls,
+          }),
+        )
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -1738,7 +1737,11 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: ['```css', await jit.stringifyRoot(state, postcss.root({ nodes: rules })), '```'].join('\n'),
+        value: [
+          '```css',
+          await jit.stringifyRoot(state, postcss.root({ nodes: rules })),
+          '```',
+        ].join('\n'),
       }
     }
 
@@ -1818,7 +1821,7 @@ function stringifyDecls(obj: any, settings: Settings): string {
           }
           return `${prop}: ${value};`
         })
-        .join(' ')
+        .join(' '),
     )
     .join(' ')
 }
