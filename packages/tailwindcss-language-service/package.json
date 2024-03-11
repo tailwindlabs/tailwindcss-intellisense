@@ -41,7 +41,6 @@
   "devDependencies": {
     "esbuild": "^0.19.5",
     "esbuild-node-externals": "^1.9.0",
-    "prettier": "2.3.0",
     "tslib": "2.2.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.2"
