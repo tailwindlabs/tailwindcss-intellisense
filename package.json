@@ -6,6 +6,7 @@
   ],
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
+    "prettier": "^3.2.5",
     "semver": "^7.5.4"
   },
   "prettier": {
