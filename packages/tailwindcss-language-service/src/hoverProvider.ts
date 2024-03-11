@@ -10,7 +10,6 @@ import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import postcss from 'postcss'
 
 export async function doHover(
   state: State,
