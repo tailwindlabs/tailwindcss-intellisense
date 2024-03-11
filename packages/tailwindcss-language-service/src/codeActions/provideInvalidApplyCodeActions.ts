@@ -23,7 +23,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 export async function provideInvalidApplyCodeActions(
   state: State,
   document: TextDocument,
-  diagnostic: InvalidApplyDiagnostic
+  diagnostic: InvalidApplyDiagnostic,
 ): Promise<CodeAction[]> {
   if (!document) return []
   let documentText = getTextWithoutComments(document, 'css')
@@ -74,7 +74,7 @@ export async function provideInvalidApplyCodeActions(
                   state,
                   classNameParts,
                   rule.selector,
-                  diagnostic.className.classList.important
+                  diagnostic.className.classList.important,
                 )
 
                 if (!ast) return false
@@ -90,7 +90,7 @@ export async function provideInvalidApplyCodeActions(
                     range: diagnostic.className.classList.range,
                     newText: removeRangesFromString(
                       diagnostic.className.classList.classList,
-                      diagnostic.className.relativeRange
+                      diagnostic.className.relativeRange,
                     ),
                   })
                 }
@@ -168,7 +168,7 @@ function classNameToAst(
   state: State,
   classNameParts: string[],
   selector: string,
-  important: boolean = false
+  important: boolean = false,
 ) {
   const baseClassName = classNameParts[classNameParts.length - 1]
   const validatedBaseClassName = validateApply(state, [baseClassName])

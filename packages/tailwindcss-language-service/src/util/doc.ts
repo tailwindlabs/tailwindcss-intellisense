@@ -1,17 +1,17 @@
-import type {  Range } from 'vscode-languageserver'
+import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import moo from 'moo'
 
 export function getTextWithoutComments(
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx' | 'css',
-  range?: Range
+  range?: Range,
 ): string
 export function getTextWithoutComments(text: string, type: 'html' | 'js' | 'jsx' | 'css'): string
 export function getTextWithoutComments(
   docOrText: TextDocument | string,
   type: 'html' | 'js' | 'jsx' | 'css',
-  range?: Range
+  range?: Range,
 ): string {
   let text = typeof docOrText === 'string' ? docOrText : docOrText.getText(range)
 

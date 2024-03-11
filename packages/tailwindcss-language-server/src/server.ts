@@ -18,7 +18,7 @@ new Function(
       }
       return oldReadFileSync(filename, ...args)
     }
-  `
+  `,
 )(require, __dirname)
 
 const connection =

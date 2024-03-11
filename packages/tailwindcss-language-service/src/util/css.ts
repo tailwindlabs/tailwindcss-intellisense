@@ -8,7 +8,7 @@ import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
-    cssLanguages.includes(state.editor.userLanguages[lang])
+    cssLanguages.includes(state.editor.userLanguages[lang]),
   )
 
   return [...cssLanguages, ...userCssLanguages].indexOf(doc.languageId) !== -1

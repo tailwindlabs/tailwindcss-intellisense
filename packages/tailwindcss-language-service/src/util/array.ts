@@ -12,7 +12,7 @@ export function dedupeBy<T>(arr: Array<T>, transform: (item: T) => any): Array<T
 export function dedupeByRange<T extends { range: Range }>(arr: Array<T>): Array<T> {
   return arr.filter(
     (classList, classListIndex) =>
-      classListIndex === arr.findIndex((c) => rangesEqual(c.range, classList.range))
+      classListIndex === arr.findIndex((c) => rangesEqual(c.range, classList.range)),
   )
 }
 

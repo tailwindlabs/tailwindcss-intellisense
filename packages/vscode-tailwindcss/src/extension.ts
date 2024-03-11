@@ -72,7 +72,7 @@ function getExcludePatterns(scope: ConfigurationScope): string[] {
   return [
     ...getGlobalExcludePatterns(scope),
     ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')).filter(
-      Boolean
+      Boolean,
     ),
   ]
 }
@@ -117,7 +117,7 @@ async function fileMayBeTailwindRelated(uri: Uri) {
 
 function selectionsAreEqual(
   aSelections: readonly Selection[],
-  bSelections: readonly Selection[]
+  bSelections: readonly Selection[],
 ): boolean {
   if (aSelections.length !== bSelections.length) {
     return false
@@ -172,7 +172,7 @@ async function updateActiveTextEditorContext(): Promise<void> {
   commands.executeCommand(
     'setContext',
     'tailwindCSS.activeTextEditorSupportsClassSorting',
-    await activeTextEditorSupportsClassSorting()
+    await activeTextEditorSupportsClassSorting(),
   )
 }
 
@@ -188,7 +188,7 @@ export async function activate(context: ExtensionContext) {
       if (outputChannel) {
         outputChannel.show()
       }
-    })
+    }),
   )
 
   await commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
@@ -227,7 +227,7 @@ export async function activate(context: ExtensionContext) {
       {
         uri: document.uri.toString(),
         classLists: selections.map((selection) => document.getText(selection)),
-      }
+      },
     )
 
     if (
@@ -241,7 +241,7 @@ export async function activate(context: ExtensionContext) {
       throw Error(
         {
           'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
-        }[result.error] ?? 'An unknown error occurred.'
+        }[result.error] ?? 'An unknown error occurred.',
       )
     }
 
@@ -260,13 +260,13 @@ export async function activate(context: ExtensionContext) {
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${error.message}`)
       }
-    })
+    }),
   )
 
   context.subscriptions.push(
     Window.onDidChangeActiveTextEditor(async () => {
       await updateActiveTextEditorContext()
-    })
+    }),
   )
 
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
@@ -342,7 +342,7 @@ export async function activate(context: ExtensionContext) {
         clients.delete(folder.uri.toString())
         bootClientForFolderIfNeeded(folder)
       }
-    })
+    }),
   )
 
   let cssServerBooted = false
@@ -399,7 +399,7 @@ export async function activate(context: ExtensionContext) {
               }
             }
             function updateProposals(
-              r: CompletionItem[] | CompletionList | null | undefined
+              r: CompletionItem[] | CompletionList | null | undefined,
             ): CompletionItem[] | CompletionList | null | undefined {
               if (r) {
                 ;(Array.isArray(r) ? r : r.items).forEach(updateRanges)
@@ -417,7 +417,7 @@ export async function activate(context: ExtensionContext) {
             return updateProposals(r)
           },
         },
-      }
+      },
     )
 
     await client.start()
@@ -481,7 +481,7 @@ export async function activate(context: ExtensionContext) {
     if (!languages.has(folder.uri.toString())) {
       languages.set(
         folder.uri.toString(),
-        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
+        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))]),
       )
     }
 
@@ -565,8 +565,8 @@ export async function activate(context: ExtensionContext) {
                 new Position(selection.start.line, selection.start.character - length),
                 new Position(
                   selection.start.line,
-                  selection.start.character - length + prefixLength
-                )
+                  selection.start.character - length + prefixLength,
+                ),
               )
             })
             if (
@@ -597,7 +597,7 @@ export async function activate(context: ExtensionContext) {
             let text =
               Workspace.textDocuments.find((doc) => doc === document)?.getText(color.range) ?? ''
             return new RegExp(
-              `-\\[(${colorNames.join('|')}|((?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`
+              `-\\[(${colorNames.join('|')}|((?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`,
             ).test(text)
           })
           let nonEditableColors = colors.filter((color) => !editableColors.includes(color))
@@ -640,7 +640,7 @@ export async function activate(context: ExtensionContext) {
                     }, ${color.alpha})`,
                   },
                 },
-              }))
+              })),
             )
           })
 
@@ -704,7 +704,7 @@ export async function activate(context: ExtensionContext) {
     client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
       return commands.executeCommand<SymbolInformation[]>(
         'vscode.executeDocumentSymbolProvider',
-        Uri.parse(uri)
+        Uri.parse(uri),
       )
     })
 
@@ -734,7 +734,7 @@ export async function activate(context: ExtensionContext) {
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       exclude,
-      1
+      1,
     )
 
     if (configFile) {
@@ -793,7 +793,7 @@ export async function activate(context: ExtensionContext) {
           client.stop()
         }
       }
-    })
+    }),
   )
 }
 

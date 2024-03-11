@@ -47,7 +47,7 @@ export async function loadDesignSystem(
       return tailwindcss.optimizeCss(css)
     },
 
-    compile(classes: string[]): postcss.Root[] {
+    compile(classes: string[]): (postcss.Root | null)[] {
       let css = design.candidatesToCss(classes)
 
       // Downlevel syntax

@@ -7,7 +7,7 @@ import { getFileFsPath } from './uri'
 export default async function isExcluded(
   state: State,
   document: TextDocument,
-  file: string = getFileFsPath(document.uri)
+  file: string = getFileFsPath(document.uri),
 ): Promise<boolean> {
   let settings = await state.editor.getConfiguration(document.uri)
 

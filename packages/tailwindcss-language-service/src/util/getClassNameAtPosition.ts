@@ -8,15 +8,14 @@ export function getClassNameParts(state: State, className: string): string[] {
   let parts: string[] = className.split(separator)
 
   if (parts.length === 1) {
-    return dlv(state.classNames.classNames, [className, '__info', '__rule']) ===
-      true ||
+    return dlv(state.classNames.classNames, [className, '__info', '__rule']) === true ||
       Array.isArray(dlv(state.classNames.classNames, [className, '__info']))
       ? [className]
       : null
   }
 
   let points = combinations('123456789'.substr(0, parts.length - 1)).map((x) =>
-    x.split('').map((x) => parseInt(x, 10))
+    x.split('').map((x) => parseInt(x, 10)),
   )
 
   let possibilities: string[][] = [

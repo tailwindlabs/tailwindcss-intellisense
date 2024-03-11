@@ -1,5 +1,5 @@
 import { State, Settings } from '../util/state'
-import type {  Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { Range, DiagnosticSeverity } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { InvalidTailwindDirectiveDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
@@ -14,7 +14,7 @@ import { isSemicolonlessCssLanguage } from '../util/languages'
 export function getInvalidTailwindDirectiveDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): InvalidTailwindDirectiveDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidTailwindDirective
   if (severity === 'ignore') return []
@@ -84,7 +84,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
             start: indexToPosition(text, match.index + match[0].length - match.groups.value.length),
             end: indexToPosition(text, match.index + match[0].length),
           },
-          range
+          range,
         ),
         severity:
           severity === 'error'

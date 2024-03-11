@@ -20,7 +20,7 @@ function pathToString(path: string | string[]): string {
 export function validateConfigPath(
   state: State,
   path: string | string[],
-  base: string[] = []
+  base: string[] = [],
 ): { isValid: true; value: any } | { isValid: false; reason: string; suggestions: string[] } {
   let keys = Array.isArray(path) ? path : stringToPath(path)
   let value = dlv(state.config, [...base, ...keys])
@@ -28,7 +28,7 @@ export function validateConfigPath(
 
   function findAlternativePath(): string[] {
     let points = combinations('123456789'.substr(0, keys.length - 1)).map((x) =>
-      x.split('').map((x) => parseInt(x, 10))
+      x.split('').map((x) => parseInt(x, 10)),
     )
 
     let possibilities: string[][] = points
@@ -56,8 +56,8 @@ export function validateConfigPath(
       let closestValidKey = closest(
         keys[keys.length - 1],
         Object.keys(parentValue).filter(
-          (key) => validateConfigPath(state, [...parentPath, key]).isValid
-        )
+          (key) => validateConfigPath(state, [...parentPath, key]).isValid,
+        ),
       )
       if (closestValidKey) {
         suggestions.push(pathToString([...keys.slice(0, keys.length - 1), closestValidKey]))
@@ -95,7 +95,7 @@ export function validateConfigPath(
 
     if (isObject(value)) {
       let validKeys = Object.keys(value).filter(
-        (key) => validateConfigPath(state, [...keys, key], base).isValid
+        (key) => validateConfigPath(state, [...keys, key], base).isValid,
       )
       if (validKeys.length) {
         suggestions.push(...validKeys.map((validKey) => pathToString([...keys, validKey])))
@@ -157,7 +157,7 @@ export function validateConfigPath(
 export function getInvalidConfigPathDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): InvalidConfigPathDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidConfigPath
   if (severity === 'ignore') return []

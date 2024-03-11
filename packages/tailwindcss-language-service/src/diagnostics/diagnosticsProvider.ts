@@ -20,7 +20,7 @@ export async function doValidate(
     DiagnosticKind.InvalidConfigPath,
     DiagnosticKind.InvalidTailwindDirective,
     DiagnosticKind.RecommendedVariantOrder,
-  ]
+  ],
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
 

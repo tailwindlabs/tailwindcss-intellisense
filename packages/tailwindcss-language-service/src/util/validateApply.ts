@@ -5,7 +5,7 @@ import * as semver from './semver'
 
 export function validateApply(
   state: State,
-  classNameOrParts: string | string[]
+  classNameOrParts: string | string[],
 ): { isApplyable: true } | { isApplyable: false; reason: string } | null {
   if (state.jit) {
     return { isApplyable: true }

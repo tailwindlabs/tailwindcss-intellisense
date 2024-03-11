@@ -10,7 +10,7 @@ import * as semver from '../util/semver'
 export async function getRecommendedVariantOrderDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): Promise<RecommendedVariantOrderDiagnostic[]> {
   if (state.v4) return []
   if (!state.jit) return []

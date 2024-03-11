@@ -66,7 +66,7 @@ const semicolonlessLanguages = ['sass', 'sugarss', 'stylus']
 
 export function isSemicolonlessCssLanguage(
   languageId: string,
-  userLanguages: EditorState['userLanguages'] = {}
+  userLanguages: EditorState['userLanguages'] = {},
 ) {
   return (
     semicolonlessLanguages.includes(languageId) ||

@@ -23,7 +23,7 @@ function getDeps(dir, dev = false) {
   return Object.entries(
     JSON.parse(readFileSync(resolve(dir, 'package.json'), 'utf-8'))[
       dev ? 'devDependencies' : 'dependencies'
-    ]
+    ],
   ).map(([name, version]) => `${name}@${version}`)
 }
 
@@ -67,6 +67,6 @@ function getLicenses(dir) {
   writeFileSync(
     resolve(__dirname, '../ThirdPartyNotices.txt'),
     contents.join(`\n\n${'='.repeat(80)}\n\n`),
-    'utf-8'
+    'utf-8',
   )
 })()

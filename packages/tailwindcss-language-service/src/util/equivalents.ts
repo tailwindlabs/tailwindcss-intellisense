@@ -10,17 +10,18 @@ export function addEquivalents(css: string, settings: TailwindCssSettings): stri
   let plugins: AcceptedPlugin[] = []
 
   if (settings.showPixelEquivalents) {
-    plugins.push(equivalentPixelValues({
-      comments,
-      rootFontSize: settings.rootFontSize,
-    }))
+    plugins.push(
+      equivalentPixelValues({
+        comments,
+        rootFontSize: settings.rootFontSize,
+      }),
+    )
   }
 
   plugins.push(equivalentColorValues({ comments }))
 
   try {
-    postcss(plugins).process(css, { from: undefined })
-      .css
+    postcss(plugins).process(css, { from: undefined }).css
   } catch {
     return css
   }

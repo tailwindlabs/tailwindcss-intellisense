@@ -18,7 +18,7 @@ export type CssConflictDiagnostic = Diagnostic & {
 }
 
 export function isCssConflictDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is CssConflictDiagnostic {
   return diagnostic.code === DiagnosticKind.CssConflict
 }
@@ -29,7 +29,7 @@ export type InvalidApplyDiagnostic = Diagnostic & {
 }
 
 export function isInvalidApplyDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is InvalidApplyDiagnostic {
   return diagnostic.code === DiagnosticKind.InvalidApply
 }
@@ -40,7 +40,7 @@ export type InvalidScreenDiagnostic = Diagnostic & {
 }
 
 export function isInvalidScreenDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is InvalidScreenDiagnostic {
   return diagnostic.code === DiagnosticKind.InvalidScreen
 }
@@ -51,7 +51,7 @@ export type InvalidVariantDiagnostic = Diagnostic & {
 }
 
 export function isInvalidVariantDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is InvalidVariantDiagnostic {
   return diagnostic.code === DiagnosticKind.InvalidVariant
 }
@@ -62,7 +62,7 @@ export type InvalidConfigPathDiagnostic = Diagnostic & {
 }
 
 export function isInvalidConfigPathDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is InvalidConfigPathDiagnostic {
   return diagnostic.code === DiagnosticKind.InvalidConfigPath
 }
@@ -73,7 +73,7 @@ export type InvalidTailwindDirectiveDiagnostic = Diagnostic & {
 }
 
 export function isInvalidTailwindDirectiveDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is InvalidTailwindDirectiveDiagnostic {
   return diagnostic.code === DiagnosticKind.InvalidTailwindDirective
 }
@@ -84,7 +84,7 @@ export type RecommendedVariantOrderDiagnostic = Diagnostic & {
 }
 
 export function isRecommendedVariantOrderDiagnostic(
-  diagnostic: AugmentedDiagnostic
+  diagnostic: AugmentedDiagnostic,
 ): diagnostic is RecommendedVariantOrderDiagnostic {
   return diagnostic.code === DiagnosticKind.RecommendedVariantOrder
 }

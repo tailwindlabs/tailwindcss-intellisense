@@ -298,7 +298,7 @@ withFixture('overrides-variants', (c) => {
       })
 
       expect(result.items.filter((item) => item.label.endsWith('custom-hover:')).length).toBe(1)
-    }
+    },
   )
 })
 

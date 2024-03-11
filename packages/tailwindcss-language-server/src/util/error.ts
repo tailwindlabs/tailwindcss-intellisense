@@ -22,7 +22,7 @@ export function formatError(message: string, err: any, includeStack: boolean = t
 export function showError(
   connection: Connection,
   err: any,
-  message: string = 'Tailwind CSS'
+  message: string = 'Tailwind CSS',
 ): void {
   console.error(formatError(message, err))
   // if (!(err instanceof SilentError)) {

@@ -82,8 +82,8 @@ export function equivalentPixelValues({
             ({ index, value }) => ({
               index: index + atRule.source.start.offset + `@media${atRule.raws.afterName}`.length,
               value,
-            })
-          )
+            }),
+          ),
         )
       },
     },

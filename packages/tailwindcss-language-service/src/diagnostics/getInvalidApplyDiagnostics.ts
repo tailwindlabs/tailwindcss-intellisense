@@ -8,7 +8,7 @@ import { validateApply } from '../util/validateApply'
 export async function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): Promise<InvalidApplyDiagnostic[]> {
   let severity = settings.tailwindCSS.lint.invalidApply
   if (severity === 'ignore') return []

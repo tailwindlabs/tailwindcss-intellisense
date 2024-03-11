@@ -19,7 +19,7 @@ withFixture('basic', (c) => {
               },
               range: expectedRange,
             }
-          : expected
+          : expected,
       )
     })
   }
@@ -95,7 +95,7 @@ withFixture('v4/basic', (c) => {
               },
               range: expectedRange,
             }
-          : expected
+          : expected,
       )
     })
   }

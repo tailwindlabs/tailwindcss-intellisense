@@ -6,7 +6,7 @@ import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function isHtmlDoc(state: State, doc: TextDocument): boolean {
   const userHtmlLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
-    htmlLanguages.includes(state.editor.userLanguages[lang])
+    htmlLanguages.includes(state.editor.userLanguages[lang]),
   )
 
   return [...htmlLanguages, ...userHtmlLanguages].indexOf(doc.languageId) !== -1
