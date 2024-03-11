@@ -99,9 +99,20 @@ function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationSco
   }
 }
 
-async function fileContainsAtConfig(uri: Uri) {
+async function fileMayBeTailwindRelated(uri: Uri) {
   let contents = (await Workspace.fs.readFile(uri)).toString()
-  return /@config\s*['"]/.test(contents)
+
+  let HAS_CONFIG = /@config\s*['"]/
+  let HAS_IMPORT = /@import\s*['"]/
+  let HAS_TAILWIND = /@tailwind\s*[^;]+;/
+  let HAS_THEME = /@theme\s*\{/
+
+  return (
+    HAS_CONFIG.test(contents) ||
+    HAS_IMPORT.test(contents) ||
+    HAS_TAILWIND.test(contents) ||
+    HAS_THEME.test(contents)
+  )
 }
 
 function selectionsAreEqual(
@@ -170,16 +181,8 @@ function resetActiveTextEditorContext(): void {
 }
 
 export async function activate(context: ExtensionContext) {
-  let module = context.asAbsolutePath(path.join('dist', 'server.js'))
-  let prod = path.join('dist', 'tailwindServer.js')
-
-  try {
-    await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
-    module = context.asAbsolutePath(prod)
-  } catch (_) {}
-
-  let outputChannel: OutputChannel
-
+  let outputChannel = Window.createOutputChannel(CLIENT_NAME)
+  context.subscriptions.push(outputChannel)
   context.subscriptions.push(
     commands.registerCommand('tailwindCSS.showOutput', () => {
       if (outputChannel) {
@@ -187,6 +190,18 @@ export async function activate(context: ExtensionContext) {
       }
     })
   )
+
+  await commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
+
+  outputChannel.appendLine(`Locating server…`)
+
+  let module = context.asAbsolutePath(path.join('dist', 'server.js'))
+  let prod = path.join('dist', 'tailwindServer.js')
+
+  try {
+    await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
+    module = context.asAbsolutePath(prod)
+  } catch (_) {}
 
   async function sortSelection(): Promise<void> {
     let { document, selections } = Window.activeTextEditor
@@ -268,18 +283,18 @@ export async function activate(context: ExtensionContext) {
 
   let cssWatcher = Workspace.createFileSystemWatcher(`**/${CSS_GLOB}`, false, false, true)
 
-  async function bootClientIfCssFileContainsAtConfig(uri: Uri) {
+  async function bootClientIfCssFileMayBeTailwindRelated(uri: Uri) {
     let folder = Workspace.getWorkspaceFolder(uri)
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    if (await fileContainsAtConfig(uri)) {
+    if (await fileMayBeTailwindRelated(uri)) {
       bootWorkspaceClient(folder)
     }
   }
 
-  cssWatcher.onDidCreate(bootClientIfCssFileContainsAtConfig)
-  cssWatcher.onDidChange(bootClientIfCssFileContainsAtConfig)
+  cssWatcher.onDidCreate(bootClientIfCssFileMayBeTailwindRelated)
+  cssWatcher.onDidChange(bootClientIfCssFileMayBeTailwindRelated)
 
   context.subscriptions.push(cssWatcher)
 
@@ -458,6 +473,8 @@ export async function activate(context: ExtensionContext) {
       },
     })
 
+    outputChannel.appendLine(`Booting server for ${folder.uri.toString()}...`)
+
     // placeholder so we don't boot another server before this one is ready
     clients.set(folder.uri.toString(), null)
 
@@ -466,12 +483,6 @@ export async function activate(context: ExtensionContext) {
         folder.uri.toString(),
         dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
       )
-    }
-
-    if (!outputChannel) {
-      outputChannel = Window.createOutputChannel(CLIENT_NAME)
-      context.subscriptions.push(outputChannel)
-      commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
     }
 
     let configuration = {
@@ -613,9 +624,7 @@ export async function activate(context: ExtensionContext) {
             })
           }
 
-          let editors = Window.visibleTextEditors.filter(
-            (editor) => editor.document === document
-          )
+          let editors = Window.visibleTextEditors.filter((editor) => editor.document === document)
 
           // Make sure we show document colors for all visible editors
           // Not just the first one for a given document
@@ -736,7 +745,9 @@ export async function activate(context: ExtensionContext) {
     let cssFiles = await Workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude)
 
     for (let cssFile of cssFiles) {
-      if (await fileContainsAtConfig(cssFile)) {
+      outputChannel.appendLine(`Checking if ${cssFile.fsPath} may be Tailwind-related…`)
+
+      if (await fileMayBeTailwindRelated(cssFile)) {
         bootWorkspaceClient(folder)
         return
       }

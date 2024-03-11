@@ -1,12 +1,13 @@
 import { Settings, State } from './util/state'
-import type {
-  CompletionItem,
+import {
+  type CompletionItem,
   CompletionItemKind,
-  Range,
-  MarkupKind,
-  CompletionList,
-  Position,
-  CompletionContext,
+  type Range,
+  type MarkupKind,
+  type CompletionList,
+  type Position,
+  type CompletionContext,
+  InsertTextFormat,
 } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
@@ -18,11 +19,13 @@ import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
+import braceLevel from './util/braceLevel'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
 import { isJsDoc, isJsxContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
+import { getTextWithoutComments } from './util/doc'
 import { docsUrl } from './util/docsUrl'
 import { ensureArray } from './util/array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './util/lexers'
@@ -35,6 +38,9 @@ import {
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
+import { Declaration, visit } from './util/v4'
+import * as util from 'node:util'
+import * as postcss from 'postcss'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -63,6 +69,258 @@ export function completionsFromClassList(
       ...classListRange.start,
       character: classListRange.end.character - partialClassName.length,
     },
+  }
+
+  if (state.v4) {
+    let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
+
+    if (
+      context &&
+      (context.triggerKind === 1 ||
+        (context.triggerKind === 2 && context.triggerCharacter === '/')) &&
+      partialClassName.includes('/')
+    ) {
+      // modifiers
+      let modifiers: string[]
+      let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
+
+      let baseClassName = beforeSlash.slice(offset)
+      modifiers = state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
+        ?.modifiers
+
+      if (modifiers) {
+        return withDefaults(
+          {
+            isIncomplete: false,
+            items: modifiers.map((modifier, index) => {
+              let className = `${beforeSlash}/${modifier}`
+              let kind:CompletionItemKind = CompletionItemKind.Constant
+              let documentation: string | undefined
+
+              const color = getColor(state, className)
+              if (color !== null) {
+                kind = CompletionItemKind.Color
+                if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+                  documentation = culori.formatRgb(color)
+                }
+              }
+              return {
+                label: className,
+                ...(documentation ? { documentation } : {}),
+                kind,
+                sortText: naturalExpand(index),
+              }
+            }),
+          },
+          {
+            range: replacementRange,
+            data: state.completionItemData,
+          },
+          state.editor.capabilities.itemDefaults
+        )
+      }
+    }
+
+    replacementRange.start.character += offset
+
+    let important = partialClassName.substr(offset).endsWith('!')
+    if (important) {
+      replacementRange.end.character -= 1
+    }
+
+    let items: CompletionItem[] = []
+    let seenVariants = new Set<string>()
+
+    let variantOrder = 0
+
+    function variantItem(
+      item: Omit<CompletionItem, 'kind' | 'data' | 'command' | 'sortText' | 'textEdit'>
+    ): CompletionItem {
+      return {
+        kind: 9,
+        data: {
+          ...(state.completionItemData ?? {}),
+          _type: 'variant',
+        },
+        command:
+          item.insertTextFormat === 2 // Snippet
+            ? undefined
+            : {
+                title: '',
+                command: 'editor.action.triggerSuggest',
+              },
+        sortText: '-' + naturalExpand(variantOrder++),
+        ...item,
+      }
+    }
+
+    for (let variant of state.variants) {
+      if (existingVariants.includes(variant.name)) {
+        continue
+      }
+
+      if (seenVariants.has(variant.name)) {
+        continue
+      }
+
+      seenVariants.add(variant.name)
+
+      if (variant.isArbitrary) {
+        items.push(
+          variantItem({
+            label: `${variant.name}${variant.hasDash ? '-' : ''}[]${sep}`,
+            insertTextFormat: 2,
+            textEditText: `${variant.name}${variant.hasDash ? '-' : ''}[\${1}]${sep}\${0}`,
+            // command: {
+            //   title: '',
+            //   command: 'tailwindCSS.onInsertArbitraryVariantSnippet',
+            //   arguments: [variant.name, replacementRange],
+            // },
+          })
+        )
+      } else {
+        let shouldSortVariants = !semver.gte(state.version, '2.99.0')
+        let resultingVariants = [...existingVariants, variant.name]
+
+        if (shouldSortVariants) {
+          let allVariants = state.variants.map(({ name }) => name)
+          resultingVariants = resultingVariants.sort(
+            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a)
+          )
+        }
+
+        let selectors: string[] = []
+
+        try {
+          selectors = variant.selectors()
+        } catch (err) {
+          // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            "Error while trying to get selectors for variant",
+          )
+          console.log(
+            util.format({
+              variant,
+              err,
+            })
+          )
+        }
+
+        if (selectors.length === 0) {
+          continue
+        }
+
+        items.push(
+          variantItem({
+            label: `${variant.name}${sep}`,
+            detail: selectors
+              .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+              .join(', '),
+            textEditText: resultingVariants[resultingVariants.length - 1] + sep,
+            additionalTextEdits:
+              shouldSortVariants && resultingVariants.length > 1
+                ? [
+                    {
+                      newText:
+                        resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
+                      range: {
+                        start: {
+                          ...classListRange.start,
+                          character: classListRange.end.character - partialClassName.length,
+                        },
+                        end: {
+                          ...replacementRange.start,
+                          character: replacementRange.start.character,
+                        },
+                      },
+                    },
+                  ]
+                : [],
+          })
+        )
+      }
+
+      for (let value of variant.values ?? []) {
+        if (existingVariants.includes(`${variant.name}-${value}`)) {
+          continue
+        }
+
+        if (seenVariants.has(`${variant.name}-${value}`)) {
+          continue
+        }
+
+        seenVariants.add(`${variant.name}-${value}`)
+
+        let selectors: string[] = []
+
+        try {
+          selectors = variant.selectors({ value })
+        } catch (err) {
+          // If the selectors function fails we don't want to crash the whole completion process
+          console.log(
+            "Error while trying to get selectors for variant",
+          )
+          console.log(
+            util.format({
+              variant,
+              err,
+            })
+          )
+        }
+
+        if (selectors.length === 0) {
+          continue
+        }
+
+        items.push(
+          variantItem({
+            label:
+              value === 'DEFAULT'
+                ? `${variant.name}${sep}`
+                : `${variant.name}${variant.hasDash ? '-' : ''}${value}${sep}`,
+            detail: selectors.join(', '),
+          })
+        )
+      }
+    }
+
+    return withDefaults(
+      {
+        isIncomplete: false,
+        items: items.concat(
+          state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
+            if (state.blocklist?.includes([...existingVariants, className].join(state.separator))) {
+              return items
+            }
+
+            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
+            let documentation: string | undefined
+
+            if (color && typeof color !== 'string') {
+              documentation = culori.formatRgb(color)
+            }
+
+            items.push({
+              label: className,
+              kind,
+              ...(documentation ? { documentation } : {}),
+              sortText: naturalExpand(index, state.classList.length),
+            })
+
+            return items
+          }, [] as CompletionItem[])
+        ),
+      },
+      {
+        data: {
+          ...(state.completionItemData ?? {}),
+          ...(important ? { important } : {}),
+          variants: existingVariants,
+        },
+        range: replacementRange,
+      },
+      state.editor.capabilities.itemDefaults
+    )
   }
 
   if (state.jit) {
@@ -101,12 +359,12 @@ export function completionsFromClassList(
             isIncomplete: false,
             items: modifiers.map((modifier, index) => {
               let className = `${beforeSlash}/${modifier}`
-              let kind: CompletionItemKind = 21
+              let kind:CompletionItemKind = CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                kind = 16
+                kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = formatColor(color)
                 }
@@ -265,7 +523,7 @@ export function completionsFromClassList(
                 return items
               }
 
-              let kind: CompletionItemKind = color ? 16 : 21
+            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
               let documentation: string | undefined
 
               if (color && typeof color !== 'string') {
@@ -309,12 +567,12 @@ export function completionsFromClassList(
                 return item.__info && isUtil(item)
               })
               .map((className, index, classNames) => {
-                let kind: CompletionItemKind = 21
+                let kind: CompletionItemKind =CompletionItemKind.Constant
                 let documentation: string | undefined
 
                 const color = getColor(state, className)
                 if (color !== null) {
-                  kind = 16
+                  kind = CompletionItemKind.Color
                   if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                     documentation = formatColor(color)
                   }
@@ -395,12 +653,12 @@ export function completionsFromClassList(
               dlv(state.classNames.classNames, [...subsetKey, className, '__info'])
             )
             .map((className, index, classNames) => {
-              let kind: CompletionItemKind = 21
+                let kind: CompletionItemKind =CompletionItemKind.Constant
               let documentation: string | undefined
 
               const color = getColor(state, className)
               if (color !== null) {
-                kind = 16
+                  kind = CompletionItemKind.Color
                 if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
                   documentation = formatColor(color)
                 }
@@ -531,6 +789,83 @@ async function provideCustomClassNameCompletions(
   }
 
   return null
+}
+
+function provideThemeVariableCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+  _context?: CompletionContext
+): CompletionList {
+  // Make sure we're in a CSS "context'
+  if (!isCssContext(state, document, position)) return null
+  let text = getTextWithoutComments(document, 'css', {
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+
+  // Make sure we're completing a variable name (so start with `-`)
+  // We don't check for `--` because VSCode does not call us again when the user types the second `-`
+  if (!text.endsWith('-')) return null
+  // Make sure we're inside a `@theme` block
+  let themeBlock = text.lastIndexOf('@theme')
+  if (themeBlock === -1) return null
+  if (braceLevel(text.slice(themeBlock)) !== 1) return null
+
+  function themeVar(label: string) {
+    return {
+      label,
+      kind: CompletionItemKind.Variable,
+      // insertTextFormat: InsertTextFormat.Snippet,
+      // textEditText: `${label}-[\${1}]`,
+    }
+  }
+
+  function themeNamespace(label: string) {
+    return {
+      label: `${label}-`,
+      kind: CompletionItemKind.Variable,
+      // insertTextFormat: InsertTextFormat.Snippet,
+      // textEditText: `${label}-[\${1}]`,
+    }
+  }
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: [
+        themeVar('--default-transition-duration'),
+        themeVar('--default-transition-timing-function'),
+        themeVar('--default-font-family'),
+        themeVar('--default-font-feature-settings'),
+        themeVar('--default-font-variation-settings'),
+        themeVar('--default-mono-font-family'),
+        themeVar('--default-mono-font-feature-settings'),
+        themeVar('--default-mono-font-variation-settings'),
+        themeNamespace('--breakpoint'),
+        themeNamespace('--color'),
+        themeNamespace('--animate'),
+        themeNamespace('--blur'),
+        themeNamespace('--radius'),
+        themeNamespace('--shadow'),
+        themeNamespace('--inset-shadow'),
+        themeNamespace('--drop-shadow'),
+        themeNamespace('--spacing'),
+        themeNamespace('--width'),
+        themeNamespace('--font-family'),
+        themeNamespace('--font-size'),
+        themeNamespace('--letter-spacing'),
+        themeNamespace('--line-height'),
+        themeNamespace('--transition-timing-function'),
+      ],
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+      },
+    },
+    state.editor.capabilities.itemDefaults
+  )
 }
 
 async function provideAtApplyCompletions(
@@ -1156,6 +1491,20 @@ function provideCssDirectiveCompletions(
           },
         ]
       : []),
+    ...(semver.gte(state.version, '4.0.0')
+      ? [
+          {
+            label: '@theme',
+            documentation: {
+              kind: 'markdown' as typeof MarkupKind.Markdown,
+              value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
+                state.version,
+                'functions-and-directives/#config'
+              )})`,
+            },
+          },
+        ]
+      : []),
   ]
 
   return withDefaults(
@@ -1329,7 +1678,8 @@ export async function doComplete(
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
     (await provideConfigDirectiveCompletions(state, document, position)) ||
-    (await provideCustomClassNameCompletions(state, document, position, context))
+    (await provideCustomClassNameCompletions(state, document, position, context)) ||
+    provideThemeVariableCompletions(state, document, position, context)
 
   if (result) return result
 
@@ -1360,6 +1710,37 @@ export async function resolveCompletionItem(
     className = `!${className}`
   }
   let variants = item.data?.variants ?? []
+
+  if (state.v4) {
+    if (item.kind === 9) return item
+    if (item.detail && item.documentation) return item
+    let root = state.designSystem.compile([[...variants, className].join(state.separator)])[0]
+    let rules = root.nodes.filter((node) => node.type === 'rule')
+    if (rules.length === 0) return item
+
+    if (!item.detail) {
+      if (rules.length === 1) {
+        let decls: postcss.Declaration[] = []
+
+        root.walkDecls((node) => {
+          decls.push(node)
+        })
+
+        item.detail = state.designSystem.toCss(decls)
+      } else {
+        item.detail = `${rules.length} rules`
+      }
+    }
+
+    if (!item.documentation) {
+      item.documentation = {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: ['```css', state.designSystem.toCss(rules), '```'].join('\n'),
+      }
+    }
+
+    return item
+  }
 
   if (state.jit) {
     if (item.kind === 9) return item

@@ -3,6 +3,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { Postcss } from 'postcss'
 import { KeywordColor } from './color'
 import * as culori from 'culori'
+import type { DesignSystem } from './v4'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -89,6 +90,7 @@ export interface Variant {
 
 export interface State {
   enabled: boolean
+  isCssConfig?: boolean
   configPath?: string
   configId?: string
   config?: any
@@ -113,6 +115,10 @@ export interface State {
       evaluateTailwindFunctions?: { module: any }
     }
   }
+
+  v4?: boolean
+  designSystem?: DesignSystem
+
   browserslist?: string[]
   featureFlags?: FeatureFlags
   classNames?: ClassNames

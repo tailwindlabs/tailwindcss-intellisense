@@ -1,15 +1,51 @@
 import * as path from 'node:path'
-import * as cp from 'node:child_process'
-import * as rpc from 'vscode-jsonrpc/node'
-import { describe, beforeAll } from 'vitest'
+import { beforeAll, describe } from 'vitest'
+import { connect } from './connection'
+import {
+  CompletionRequest,
+  ConfigurationRequest,
+  DidChangeConfigurationNotification,
+  DidChangeTextDocumentNotification,
+  DidOpenTextDocumentNotification,
+  InitializeRequest,
+  InitializedNotification,
+  RegistrationRequest,
+  InitializeParams,
+  DidOpenTextDocumentParams,
+} from 'vscode-languageserver-protocol'
+import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
+import { Feature } from '../src/features'
 
-async function init(fixture) {
+type Settings = any
+
+interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
+  client: ProtocolConnection
+  openDocument: (params: {
+    text: string
+    lang?: string
+    dir?: string
+    settings?: Settings
+  }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
+  updateSettings: (settings: Settings) => Promise<void>
+  updateFile: (file: string, text: string) => Promise<void>
+
+  readonly project: {
+    config: string
+    tailwind: {
+      version: string
+      features: Feature[]
+      isDefaultVersion: boolean
+    }
+  }
+}
+
+async function init(fixture: string): Promise<FixtureContext> {
   let settings = {}
-  let docSettings = new Map()
+  let docSettings = new Map<string, Settings>()
 
-  let childProcess = cp.fork('./bin/tailwindcss-language-server', { silent: true })
+  const { client } = await connect()
 
-  const capabilities = {
+  const capabilities: ClientCapabilities = {
     textDocument: {
       codeAction: { dynamicRegistration: true },
       codeLens: { dynamicRegistration: true },
@@ -82,16 +118,14 @@ async function init(fixture) {
       workspaceEdit: { documentChanges: true },
       workspaceFolders: true,
     },
+    experimental: {
+      tailwind: {
+        projectDetails: true,
+      },
+    },
   }
 
-  let connection = rpc.createMessageConnection(
-    new rpc.StreamMessageReader(childProcess.stdout),
-    new rpc.StreamMessageWriter(childProcess.stdin)
-  )
-
-  connection.listen()
-
-  await connection.sendRequest(new rpc.RequestType('initialize'), {
+  await client.sendRequest(InitializeRequest.type, {
     processId: -1,
     // rootPath: '.',
     rootUri: `file://${path.resolve('./tests/fixtures/', fixture)}`,
@@ -101,72 +135,92 @@ async function init(fixture) {
     initializationOptions: {
       testMode: true,
     },
-  })
+  } as InitializeParams)
 
-  await connection.sendNotification(new rpc.NotificationType('initialized'))
+  await client.sendNotification(InitializedNotification.type)
 
-  connection.onRequest(new rpc.RequestType('workspace/configuration'), (params) => {
+  client.onRequest(ConfigurationRequest.type, (params) => {
     return params.items.map((item) => {
-      if (docSettings.has(item.scopeUri)) {
-        return docSettings.get(item.scopeUri)[item.section] ?? {}
+      if (docSettings.has(item.scopeUri!)) {
+        return docSettings.get(item.scopeUri!)[item.section!] ?? {}
       }
-      return settings[item.section] ?? {}
+      return settings[item.section!] ?? {}
     })
   })
 
-  let initPromise = new Promise((resolve) => {
-    connection.onRequest(new rpc.RequestType('client/registerCapability'), ({ registrations }) => {
-      if (registrations.findIndex((r) => r.method === 'textDocument/completion') > -1) {
+  let initPromise = new Promise<void>((resolve) => {
+    client.onRequest(RegistrationRequest.type, ({ registrations }) => {
+      if (registrations.some((r) => r.method === CompletionRequest.method)) {
         resolve()
       }
+
       return null
     })
+  })
+
+  let projectDetails: any = null
+
+  client.onNotification('tailwind/projectDetails', (params) => {
+    console.log('[TEST] Project detailed changed')
+    projectDetails = params
   })
 
   let counter = 0
 
   return {
-    connection,
-    sendRequest(type, params) {
-      return connection.sendRequest(new rpc.RequestType(type), params)
+    client,
+    get project() {
+      return projectDetails
     },
-    onNotification(type, callback) {
-      return connection.onNotification(new rpc.RequestType(type), callback)
+    sendRequest(type: any, params: any) {
+      return client.sendRequest(type, params)
     },
-    async openDocument({ text, lang = 'html', dir = '', settings = {} }) {
+    onNotification(type: any, callback: any) {
+      return client.onNotification(type, callback)
+    },
+    async openDocument({
+      text,
+      lang = 'html',
+      dir = '',
+      settings = {},
+    }: {
+      text: string
+      lang?: string
+      dir?: string
+      settings?: Settings
+    }) {
       let uri = `file://${path.resolve('./tests/fixtures', fixture, dir, `file-${counter++}`)}`
       docSettings.set(uri, settings)
-      await connection.sendNotification(new rpc.NotificationType('textDocument/didOpen'), {
+
+      await client.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: {
           uri,
           languageId: lang,
           version: 1,
           text,
         },
-      })
+      } as DidOpenTextDocumentParams)
 
       await initPromise
 
       return {
         uri,
-        async updateSettings(settings) {
+        async updateSettings(settings: Settings) {
           docSettings.set(uri, settings)
-          await connection.sendNotification(
-            new rpc.NotificationType('workspace/didChangeConfiguration')
-          )
+          await client.sendNotification(DidChangeConfigurationNotification.type)
         },
       }
     },
-    async updateSettings(newSettings) {
+
+    async updateSettings(newSettings: Settings) {
       settings = newSettings
-      await connection.sendNotification(
-        new rpc.NotificationType('workspace/didChangeConfiguration')
-      )
+      await client.sendNotification(DidChangeConfigurationNotification.type)
     },
-    async updateFile(file, text) {
+
+    async updateFile(file: string, text: string) {
       let uri = `file://${path.resolve('./tests/fixtures', fixture, file)}`
 
-      await connection.sendNotification(new rpc.NotificationType('textDocument/didChange'), {
+      await client.sendNotification(DidChangeTextDocumentNotification.type, {
         textDocument: { uri, version: counter++ },
         contentChanges: [{ text }],
       })
@@ -174,44 +228,19 @@ async function init(fixture) {
   }
 }
 
-let id = 0
-export function withFixture(fixture, callback) {
-  describe(fixture, async () => {
-    let c = {}
+export function withFixture(fixture, callback: (c: FixtureContext) => void) {
+  describe(fixture, () => {
+    let c: FixtureContext = {} as any
 
-    beforeAll(async (t) => {
+    beforeAll(async () => {
       // Using the connection object as the prototype lets us access the connection
       // without defining getters for all the methods and also lets us add helpers
       // to the connection object without having to resort to using a Proxy
       Object.setPrototypeOf(c, await init(fixture))
 
-      return () => c.connection.end()
+      return () => c.client.dispose()
     })
 
-    await callback(c)
+    callback(c)
   })
 }
-
-// let counter = 0
-
-// export async function openDocument(connection, fixture, languageId, text) {
-//   let uri = `file://${path.resolve('./tests/fixtures', fixture, `file-${counter++}`)}`
-
-//   await connection.sendNotification(new rpc.NotificationType('textDocument/didOpen'), {
-//     textDocument: {
-//       uri,
-//       languageId,
-//       version: 1,
-//       text,
-//     },
-//   })
-
-//   await initPromise
-
-//   return uri
-// }
-
-// export async function updateSettings(connection, newSettings) {
-//   settings = newSettings
-//   await connection.sendNotification(new rpc.NotificationType('workspace/didChangeConfiguration'))
-// }

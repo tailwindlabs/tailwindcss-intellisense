@@ -12,6 +12,7 @@ export async function getRecommendedVariantOrderDiagnostics(
   document: TextDocument,
   settings: Settings
 ): Promise<RecommendedVariantOrderDiagnostic[]> {
+  if (state.v4) return []
   if (!state.jit) return []
 
   if (semver.gte(state.version, '2.99.0')) return []

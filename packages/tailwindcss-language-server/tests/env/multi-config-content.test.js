@@ -1,8 +1,8 @@
-import { test, expect } from 'vitest'
+import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('multi-config-content', (c) => {
-  test.concurrent('multi-config with content config - 1', async () => {
+  test.concurrent('multi-config with content config - 1', async ({ expect }) => {
     let textDocument = await c.openDocument({ text: '<div class="bg-foo">', dir: 'one' })
     let res = await c.sendRequest('textDocument/hover', {
       textDocument,
@@ -19,7 +19,7 @@ withFixture('multi-config-content', (c) => {
     })
   })
 
-  test.concurrent('multi-config with content config - 2', async () => {
+  test.concurrent('multi-config with content config - 2', async ({ expect }) => {
     let textDocument = await c.openDocument({ text: '<div class="bg-foo">', dir: 'two' })
     let res = await c.sendRequest('textDocument/hover', {
       textDocument,
