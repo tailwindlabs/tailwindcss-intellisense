@@ -246,7 +246,7 @@ export class ProjectLocator {
         return new FileEntry('css', filepath)
       }
 
-      return new FileEntry('css', filepath, [
+      return new FileEntry('js', filepath, [
         configs.remember(filepath, () => ({
           source: 'js',
           type: 'js',
