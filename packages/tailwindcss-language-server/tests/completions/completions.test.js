@@ -210,7 +210,7 @@ withFixture('basic', (c) => {
 withFixture('basic', (c) => {
   let completion = buildCompletion(c)
 
-  test('Completions have default pixel equivalents (1rem == 16px)', async () => {
+  test('Completions have default pixel equivalents (1rem == 16px)', async ({ expect }) => {
     let result = await completion({
       lang: 'html',
       text: '<div class=""></div>',
@@ -235,7 +235,7 @@ withFixture('basic', (c) => {
 withFixture('basic', (c) => {
   let completion = buildCompletion(c)
 
-  test('Completions have customizable pixel equivalents (1rem == 10px)', async () => {
+  test('Completions have customizable pixel equivalents (1rem == 10px)', async ({ expect }) => {
     await c.updateSettings({
       tailwindCSS: {
         rootFontSize: 10,
@@ -267,7 +267,7 @@ withFixture('basic', (c) => {
 withFixture('basic', (c) => {
   let completion = buildCompletion(c)
 
-  test('Completions have color equivalents presented as hex', async () => {
+  test('Completions have color equivalents presented as hex', async ({ expect }) => {
     let result = await completion({
       lang: 'html',
       text: '<div class=""></div>',
@@ -303,23 +303,7 @@ withFixture('overrides-variants', (c) => {
 })
 
 withFixture('v4/basic', (c) => {
-  async function completion({
-    lang,
-    text,
-    position,
-    context = {
-      triggerKind: 1,
-    },
-    settings,
-  }) {
-    let textDocument = await c.openDocument({ text, lang, settings })
-
-    return c.sendRequest('textDocument/completion', {
-      textDocument,
-      position,
-      context,
-    })
-  }
+  let completion = buildCompletion(c)
 
   async function expectCompletions({ expect, lang, text, position, settings }) {
     let result = await completion({ lang, text, position, settings })
@@ -506,11 +490,65 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'text-transform: uppercase',
+      detail: 'text-transform: uppercase;',
       documentation: {
         kind: 'markdown',
         value: '```css\n.uppercase {\n  text-transform: uppercase;\n}\n```',
       },
+    })
+  })
+})
+
+withFixture('v4/basic', (c) => {
+  let completion = buildCompletion(c)
+
+  test('Completions have customizable pixel equivalents (1rem == 10px)', async ({ expect }) => {
+    await c.updateSettings({
+      tailwindCSS: {
+        rootFontSize: 10,
+      },
+    })
+
+    let result = await completion({
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'text-sm')
+
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: 'font-size: 0.875rem/* 8.75px */; line-height: 1.25rem/* 12.5px */;',
+      documentation: {
+        kind: 'markdown',
+        value:
+          '```css\n.text-sm {\n  font-size: 0.875rem/* 8.75px */;\n  line-height: 1.25rem/* 12.5px */;\n}\n```',
+      },
+    })
+  })
+})
+
+withFixture('v4/basic', (c) => {
+  let completion = buildCompletion(c)
+
+  test('Completions have color equivalents presented as hex', async ({ expect }) => {
+    let result = await completion({
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'bg-red-500')
+
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: 'background-color: #ef4444;',
+      documentation: '#ef4444',
     })
   })
 })
