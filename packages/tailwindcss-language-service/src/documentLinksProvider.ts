@@ -1,5 +1,5 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from './util/state'
+import type { State } from './util/state'
 import type { DocumentLink, Range } from 'vscode-languageserver'
 import { isCssDoc } from './util/css'
 import { getLanguageBoundaries } from './util/getLanguageBoundaries'

@@ -1,4 +1,4 @@
-import { State } from './util/state'
+import type { State } from './util/state'
 import {
   findClassListsInDocument,
   getClassNamesInClassList,
