@@ -79,6 +79,7 @@ import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import type { AstNode } from 'tailwindcss-language-service/src/util/v4'
 import * as postcss8 from 'postcss'
+import { pathToFileURL } from 'url'
 
 const colorNames = Object.keys(namedColors)
 
@@ -419,7 +420,7 @@ export async function createProjectService(
     let applyComplexClasses: any
 
     try {
-      const tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
+      let tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
       const tailwindcssPkgPath = resolveFrom(configDir, 'tailwindcss/package.json')
       const tailwindDir = path.dirname(tailwindcssPkgPath)
       tailwindcssVersion = require(tailwindcssPkgPath).version
@@ -427,6 +428,7 @@ export async function createProjectService(
       let features = supportedFeatures(tailwindcssVersion)
       log(`supported features: ${JSON.stringify(features)}`)
 
+      tailwindcssPath = pathToFileURL(tailwindcssPath).href
       tailwindcss = await import(tailwindcssPath)
       tailwindcss = tailwindcss.default ?? tailwindcss
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)

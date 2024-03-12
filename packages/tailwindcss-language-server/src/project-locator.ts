@@ -15,6 +15,7 @@ import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
 import { Feature, supportedFeatures } from './features'
+import { pathToFileURL } from 'node:url'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -406,6 +407,7 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
 async function* detectContentFiles(base: string): AsyncIterable<string> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
+    oxidePath = pathToFileURL(oxidePath).href
 
     // This isn't a v4 project
     const oxide = await import(oxidePath)
