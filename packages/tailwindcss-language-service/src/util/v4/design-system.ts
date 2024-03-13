@@ -33,5 +33,4 @@ export interface DesignSystem {
 export interface DesignSystem {
   compile(classes: string[]): postcss.Root[]
   toCss(nodes: postcss.Root | postcss.Node[]): string
-  optimizeCss(css: string): string
 }

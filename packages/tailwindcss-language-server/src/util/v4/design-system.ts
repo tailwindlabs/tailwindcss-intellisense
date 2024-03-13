@@ -43,22 +43,8 @@ export async function loadDesignSystem(
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
-    optimizeCss(css: string) {
-      return tailwindcss.optimizeCss(css)
-    },
-
     compile(classes: string[]): (postcss.Root | null)[] {
       let css = design.candidatesToCss(classes)
-
-      // Downlevel syntax
-      // TODO: Either don't downlevel nesting or make `recordClassDetails` more robust
-      // css = css.map((str) => {
-      //   if (!str) return null
-      //   try {
-      //     return tailwindcss.optimizeCss(str)
-      //   } catch {}
-      //   return str
-      // })
 
       let roots = css.map((str) => {
         if (str === null) return postcss.root()
