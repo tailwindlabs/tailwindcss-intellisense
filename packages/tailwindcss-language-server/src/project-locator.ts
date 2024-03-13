@@ -15,7 +15,7 @@ import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
-import { type Feature, supportedFeatures } from './features'
+import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { pathToFileURL } from 'node:url'
 
 export interface ProjectConfig {

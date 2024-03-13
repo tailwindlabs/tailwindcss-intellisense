@@ -74,7 +74,7 @@ import {
 } from './utils'
 import type { DocumentService } from './documents'
 import type { ProjectConfig } from './project-locator'
-import { supportedFeatures } from './features'
+import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import { pathToFileURL } from 'url'

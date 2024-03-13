@@ -14,7 +14,7 @@ import {
   DidOpenTextDocumentParams,
 } from 'vscode-languageserver-protocol'
 import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
-import { Feature } from '../src/features'
+import type { Feature } from '@tailwindcss/language-service/src/features'
 
 type Settings = any
 
