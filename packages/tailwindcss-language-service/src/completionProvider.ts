@@ -37,7 +37,6 @@ import {
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
-import * as util from 'node:util'
 import * as postcss from 'postcss'
 
 let isUtil = (className) =>
@@ -195,12 +194,10 @@ export function completionsFromClassList(
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
           console.log('Error while trying to get selectors for variant')
-          console.log(
-            util.format({
-              variant,
-              err,
-            }),
-          )
+          console.log({
+            variant,
+            err,
+          })
         }
 
         if (selectors.length === 0) {
@@ -255,12 +252,10 @@ export function completionsFromClassList(
         } catch (err) {
           // If the selectors function fails we don't want to crash the whole completion process
           console.log('Error while trying to get selectors for variant')
-          console.log(
-            util.format({
-              variant,
-              err,
-            }),
-          )
+          console.log({
+            variant,
+            err,
+          })
         }
 
         if (selectors.length === 0) {
