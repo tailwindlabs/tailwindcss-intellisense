@@ -2,6 +2,7 @@ import removeMeta from './removeMeta'
 import dlv from 'dlv'
 import escapeClassName from 'css.escape'
 import { ensureArray } from './array'
+// @ts-ignore
 import stringifyObject from 'stringify-object'
 import isObject from './isObject'
 import type { Settings } from './state'
