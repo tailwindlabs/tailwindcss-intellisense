@@ -309,7 +309,7 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12089)
+    expect(result.items.length).toBe(12106)
     expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(215)
     expect(result).toEqual({
       isIncomplete: false,
