@@ -1,23 +1,18 @@
-import { State } from '../util/state'
-import type {
-  CodeActionParams,
-  CodeAction,
-} from 'vscode-languageserver'
-import { CssConflictDiagnostic } from '../diagnostics/types'
+import type { State } from '../util/state'
+import type { CodeActionParams, CodeAction } from 'vscode-languageserver'
+import type { CssConflictDiagnostic } from '../diagnostics/types'
 import { joinWithAnd } from '../util/joinWithAnd'
 import { removeRangesFromString } from '../util/removeRangesFromString'
 
 export async function provideCssConflictCodeActions(
   _state: State,
   params: CodeActionParams,
-  diagnostic: CssConflictDiagnostic
+  diagnostic: CssConflictDiagnostic,
 ): Promise<CodeAction[]> {
   return [
     {
       title: `Delete ${joinWithAnd(
-        diagnostic.otherClassNames.map(
-          (otherClassName) => `'${otherClassName.className}'`
-        )
+        diagnostic.otherClassNames.map((otherClassName) => `'${otherClassName.className}'`),
       )}`,
       kind: 'quickfix', // CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
@@ -28,9 +23,7 @@ export async function provideCssConflictCodeActions(
               range: diagnostic.className.classList.range,
               newText: removeRangesFromString(
                 diagnostic.className.classList.classList,
-                diagnostic.otherClassNames.map(
-                  (otherClassName) => otherClassName.relativeRange
-                )
+                diagnostic.otherClassNames.map((otherClassName) => otherClassName.relativeRange),
               ),
             },
           ],

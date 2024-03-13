@@ -1,11 +1,11 @@
-import { State } from './state'
+import type { State } from './state'
 import { getClassNameParts } from './getClassNameAtPosition'
 import removeMeta from './removeMeta'
 import dlv from 'dlv'
 
 export function getClassNameDecls(
   state: State,
-  className: string
+  className: string,
 ): Record<string, string> | Record<string, string>[] | null {
   const parts = getClassNameParts(state, className)
   if (!parts) return null

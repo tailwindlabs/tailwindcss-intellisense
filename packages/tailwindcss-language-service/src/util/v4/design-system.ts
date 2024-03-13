@@ -1,5 +1,5 @@
 import postcss from 'postcss'
-import type { AstNode, Rule } from './ast'
+import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
 export interface Theme {}
@@ -33,5 +33,4 @@ export interface DesignSystem {
 export interface DesignSystem {
   compile(classes: string[]): postcss.Root[]
   toCss(nodes: postcss.Root | postcss.Node[]): string
-  optimizeCss(css: string): string
 }

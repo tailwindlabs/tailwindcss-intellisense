@@ -1,4 +1,4 @@
-import { State } from './state'
+import type { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
@@ -11,7 +11,7 @@ export function bigSign(bigIntValue) {
 export function generateRules(
   state: State,
   classNames: string[],
-  filter: (rule: Rule) => boolean = () => true
+  filter: (rule: Rule) => boolean = () => true,
 ): { root: Root; rules: Rule[] } {
   let rules: [bigint, Rule][] = state.modules.jit.generateRules
     .module(new Set(classNames), state.jitContext)
@@ -52,7 +52,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   return css
     .replace(/([^;{}\s])(\n\s*})/g, (_match, before, after) => `${before};${after}`)
     .replace(identPattern, (indent: string) =>
-      ' '.repeat((indent.length / identSize) * settings.editor.tabSize)
+      ' '.repeat((indent.length / identSize) * settings.editor.tabSize),
     )
 }
 

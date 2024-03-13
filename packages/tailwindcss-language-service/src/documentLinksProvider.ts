@@ -1,5 +1,5 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from './util/state'
+import type { State } from './util/state'
 import type { DocumentLink, Range } from 'vscode-languageserver'
 import { isCssDoc } from './util/css'
 import { getLanguageBoundaries } from './util/getLanguageBoundaries'
@@ -11,7 +11,7 @@ import * as semver from './util/semver'
 export function getDocumentLinks(
   state: State,
   document: TextDocument,
-  resolveTarget: (linkPath: string) => string
+  resolveTarget: (linkPath: string) => string,
 ): DocumentLink[] {
   return getConfigDirectiveLinks(state, document, resolveTarget)
 }
@@ -19,7 +19,7 @@ export function getDocumentLinks(
 function getConfigDirectiveLinks(
   state: State,
   document: TextDocument,
-  resolveTarget: (linkPath: string) => string
+  resolveTarget: (linkPath: string) => string,
 ): DocumentLink[] {
   if (!semver.gte(state.version, '3.2.0')) {
     return []
@@ -48,7 +48,7 @@ function getConfigDirectiveLinks(
             start: indexToPosition(text, match.index + match[0].length - match.groups.path.length),
             end: indexToPosition(text, match.index + match[0].length),
           },
-          range
+          range,
         ),
       })
     }

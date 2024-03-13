@@ -4,19 +4,17 @@ export interface ClassMatch {
   range: [start: number, end: number]
 }
 
-export function *customClassesIn({
+export function* customClassesIn({
   text,
   filters,
   cursor = null,
-} : {
-  text: string,
-  filters: ClassRegexFilter[],
-  cursor?: number | null,
+}: {
+  text: string
+  filters: ClassRegexFilter[]
+  cursor?: number | null
 }): Iterable<ClassMatch> {
   for (let filter of filters) {
-    let [containerPattern, classPattern] = Array.isArray(filter)
-      ? filter
-      : [filter]
+    let [containerPattern, classPattern] = Array.isArray(filter) ? filter : [filter]
 
     let containerRegex = new RegExp(containerPattern, 'gd')
     let classRegex = classPattern ? new RegExp(classPattern, 'gd') : undefined
@@ -27,7 +25,7 @@ export function *customClassesIn({
   }
 }
 
-function *matchesIn(
+function* matchesIn(
   text: string,
   containerRegex: RegExp,
   classRegex: RegExp | undefined,
@@ -48,11 +46,10 @@ function *matchesIn(
       continue
     }
 
-    if (! classRegex) {
+    if (!classRegex) {
       yield {
-        classList: cursor !== null
-          ? containerMatch[1].slice(0, cursor - matchStart)
-          : containerMatch[1],
+        classList:
+          cursor !== null ? containerMatch[1].slice(0, cursor - matchStart) : containerMatch[1],
         range: [matchStart, matchEnd],
       }
       continue
@@ -75,9 +72,8 @@ function *matchesIn(
       }
 
       yield {
-        classList: cursor !== null
-          ? classMatch[1].slice(0, cursor - classMatchStart)
-          : classMatch[1],
+        classList:
+          cursor !== null ? classMatch[1].slice(0, cursor - classMatchStart) : classMatch[1],
         range: [classMatchStart, classMatchEnd],
       }
     }

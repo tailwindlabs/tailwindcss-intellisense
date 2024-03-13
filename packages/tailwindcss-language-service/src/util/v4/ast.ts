@@ -21,7 +21,7 @@ export type AstNode = Rule | Declaration | Comment
 export function visit(
   nodes: AstNode[],
   cb: (node: AstNode, path: AstNode[]) => void,
-  path: AstNode[] = []
+  path: AstNode[] = [],
 ) {
   for (let child of nodes) {
     path = [...path, child]

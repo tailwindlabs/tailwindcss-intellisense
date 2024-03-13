@@ -1,19 +1,18 @@
-import { State, Settings } from '../util/state'
-import type { Range, DiagnosticSeverity } from 'vscode-languageserver'
+import type { State, Settings } from '../util/state'
+import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { InvalidScreenDiagnostic, DiagnosticKind } from './types'
+import { type InvalidScreenDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { findAll, indexToPosition } from '../util/find'
 import { closest } from '../util/closest'
 import { absoluteRange } from '../util/absoluteRange'
-import dlv from 'dlv'
 import { getTextWithoutComments } from '../util/doc'
 
 export function getInvalidScreenDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): InvalidScreenDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidScreen
   if (severity === 'ignore') return []
@@ -53,11 +52,11 @@ export function getInvalidScreenDiagnostics(
           {
             start: indexToPosition(
               text,
-              match.index + match[0].length - match.groups.screen.length
+              match.index + match[0].length - match.groups.screen.length,
             ),
             end: indexToPosition(text, match.index + match[0].length),
           },
-          range
+          range,
         ),
         severity:
           severity === 'error'

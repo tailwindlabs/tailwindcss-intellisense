@@ -1,6 +1,7 @@
 import './lib/env'
 import { createConnection } from 'vscode-languageserver/node'
 import { formatError } from './util/error'
+// @ts-ignore
 import preflight from 'tailwindcss/lib/css/preflight.css'
 import { TW } from './tw'
 
@@ -18,7 +19,7 @@ new Function(
       }
       return oldReadFileSync(filename, ...args)
     }
-  `
+  `,
 )(require, __dirname)
 
 const connection =

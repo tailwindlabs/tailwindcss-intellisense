@@ -43,7 +43,7 @@ exports.writeSnapshot = (dir, snapshot, opts) => {
   return getBinding().writeSnapshot(
     path.resolve(dir),
     path.resolve(snapshot),
-    normalizeOptions(dir, opts)
+    normalizeOptions(dir, opts),
   )
 }
 
@@ -51,7 +51,7 @@ exports.getEventsSince = (dir, snapshot, opts) => {
   return getBinding().getEventsSince(
     path.resolve(dir),
     path.resolve(snapshot),
-    normalizeOptions(dir, opts)
+    normalizeOptions(dir, opts),
   )
 }
 

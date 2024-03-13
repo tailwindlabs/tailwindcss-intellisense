@@ -1,4 +1,4 @@
-import { State } from './util/state'
+import type { State } from './util/state'
 import {
   findClassListsInDocument,
   getClassNamesInClassList,
@@ -13,7 +13,7 @@ import { dedupeByRange } from './util/array'
 
 export async function getDocumentColors(
   state: State,
-  document: TextDocument
+  document: TextDocument,
 ): Promise<ColorInformation[]> {
   let colors: ColorInformation[] = []
   if (!state.enabled) return colors

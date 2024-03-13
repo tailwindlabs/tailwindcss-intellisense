@@ -1,7 +1,7 @@
 import merge from 'deepmerge'
 import { isObject } from './utils'
-import { Settings } from '@tailwindcss/language-service/src/util/state'
-import { Connection } from 'vscode-languageserver'
+import type { Settings } from '@tailwindcss/language-service/src/util/state'
+import type { Connection } from 'vscode-languageserver'
 
 export interface SettingsCache {
   get(uri?: string): Promise<Settings>
@@ -73,7 +73,7 @@ export function createSettingsCache(connection: Connection): SettingsCache {
     return merge<Settings>(
       getDefaultSettings(),
       { editor, tailwindCSS },
-      { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray }
+      { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray },
     )
   }
 

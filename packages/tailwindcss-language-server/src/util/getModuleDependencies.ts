@@ -43,12 +43,12 @@ function* _getModuleDependencies(
   filename: string,
   base: string,
   seen: Set<string>,
-  ext = path.extname(filename)
+  ext = path.extname(filename),
 ): Generator<string> {
   // Try to find the file
   let absoluteFile = resolveWithExtension(
     path.resolve(base, filename),
-    jsExtensions.includes(ext) ? jsResolutionOrder : tsResolutionOrder
+    jsExtensions.includes(ext) ? jsResolutionOrder : tsResolutionOrder,
   )
   if (absoluteFile === null) return // File doesn't exist
 
@@ -80,7 +80,7 @@ function* _getModuleDependencies(
 
 export function getModuleDependencies(absoluteFilePath: string): string[] {
   return Array.from(
-    _getModuleDependencies(absoluteFilePath, path.dirname(absoluteFilePath), new Set())
+    _getModuleDependencies(absoluteFilePath, path.dirname(absoluteFilePath), new Set()),
   )
     .filter((file) => file !== absoluteFilePath)
     .map((file) => normalizePath(file))

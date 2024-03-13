@@ -1,4 +1,4 @@
-import {
+import type {
   CompletionItem,
   CompletionList,
   CompletionParams,
@@ -12,28 +12,29 @@ import {
   ColorPresentationParams,
   CodeActionParams,
   CodeAction,
+  BulkUnregistration,
+  Disposable,
+  TextDocumentIdentifier,
+  DocumentLinkParams,
+  DocumentLink,
+  InitializeResult,
+} from 'vscode-languageserver/node'
+import {
   CompletionRequest,
   DocumentColorRequest,
   BulkRegistration,
   CodeActionRequest,
-  BulkUnregistration,
   HoverRequest,
   DidChangeWatchedFilesNotification,
   FileChangeType,
-  Disposable,
-  TextDocumentIdentifier,
   DocumentLinkRequest,
-  DocumentLinkParams,
-  DocumentLink,
-  InitializeResult,
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
 import type * as chokidar from 'chokidar'
-import findUp from 'find-up'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { normalizeFileNameToFsPath } from './util/uri'
@@ -41,10 +42,11 @@ import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
 import { DocumentService } from './documents'
-import { createProjectService, ProjectService, DocumentSelectorPriority } from './projects'
-import { SettingsCache, createSettingsCache } from './config'
+import { createProjectService, type ProjectService, DocumentSelectorPriority } from './projects'
+import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
-import { ProjectLocator, ProjectConfig } from './project-locator'
+import { ProjectLocator, type ProjectConfig } from './project-locator'
+import type { TailwindCssSettings } from 'tailwindcss-language-service/src/util/state'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -125,7 +127,6 @@ export class TW {
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
-    let configFileOrFiles = globalSettings.tailwindCSS.experimental.configFile
 
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
@@ -135,79 +136,72 @@ export class TW {
       ? path.dirname(this.initializeParams.initializationOptions.workspaceFile)
       : base
 
-    if (configFileOrFiles) {
-      if (
-        typeof configFileOrFiles !== 'string' &&
-        (!isObject(configFileOrFiles) ||
-          !Object.entries(configFileOrFiles).every(([key, value]) => {
-            if (typeof key !== 'string') return false
-            if (Array.isArray(value)) {
-              return value.every((item) => typeof item === 'string')
-            }
-            return typeof value === 'string'
-          }))
-      ) {
-        console.error('Invalid `experimental.configFile` configuration, not initializing.')
-        return
+    function getExplicitConfigFiles(settings: TailwindCssSettings) {
+      function resolvePathForConfig(filepath: string) {
+        return normalizePath(path.resolve(userDefinedConfigBase, filepath))
       }
 
-      let configFiles =
-        typeof configFileOrFiles === 'string'
-          ? { [configFileOrFiles]: path.resolve(base, '**') }
-          : configFileOrFiles
+      let configFileOrFiles = settings.experimental.configFile
+      let configs: Record<string, string[]> = {}
 
-      workspaceFolders = Object.entries(configFiles).map(
-        ([relativeConfigPath, relativeDocumentSelectorOrSelectors]) => {
-          let configPath = normalizePath(path.resolve(userDefinedConfigBase, relativeConfigPath))
+      if (typeof configFileOrFiles === 'string') {
+        let configFile = resolvePathForConfig(configFileOrFiles)
+        let docSelectors = [resolvePathForConfig(path.resolve(base, '**'))]
 
-          return {
-            folder: base,
-            configPath,
-            config: {
-              path: configPath,
-            } as any,
-            documentSelector: [].concat(relativeDocumentSelectorOrSelectors).map((selector) => ({
-              priority: DocumentSelectorPriority.USER_CONFIGURED,
-              pattern: normalizePath(path.resolve(userDefinedConfigBase, selector)),
-            })),
-            isUserConfigured: true,
-            tailwind: {
-              version: null,
-              features: [],
-              isDefaultVersion: false,
-            },
+        configs[configFile] = docSelectors
+      } else if (isObject(configFileOrFiles)) {
+        for (let [configFile, selectors] of Object.entries(configFileOrFiles)) {
+          if (typeof configFile !== 'string') return null
+          configFile = resolvePathForConfig(configFile)
+
+          let docSelectors: string[]
+
+          if (typeof selectors === 'string') {
+            docSelectors = [resolvePathForConfig(selectors)]
+          } else if (Array.isArray(selectors)) {
+            docSelectors = selectors.map(resolvePathForConfig)
+          } else {
+            return null
           }
+
+          configs[configFile] = docSelectors
         }
-      )
+      } else if (configFileOrFiles) {
+        return null
+      }
+
+      return Object.entries(configs)
+    }
+
+    let configs = getExplicitConfigFiles(globalSettings.tailwindCSS)
+
+    if (configs === null) {
+      console.error('Invalid `experimental.configFile` configuration, not initializing.')
+      return
+    }
+
+    let locator = new ProjectLocator(base, globalSettings)
+
+    if (configs.length > 0) {
+      console.log('Loading Tailwind CSS projects from the workspace settings.')
+
+      workspaceFolders = await locator.loadAllFromWorkspace(configs)
     } else {
       console.log("Searching for Tailwind CSS projects in the workspace's folders.")
 
-      let locator = new ProjectLocator(base, globalSettings)
+      workspaceFolders = await locator.search()
+    }
 
-      let projects = await locator.search()
+    for (let project of workspaceFolders) {
+      // Track the Tailwind version for a given config
+      configTailwindVersionMap.set(project.config.path, project.tailwind.version)
 
-      if (projects.length === 1) {
-        projects[0].documentSelector.push({
-          pattern: normalizePath(path.join(base, '**')),
-          priority: DocumentSelectorPriority.ROOT_DIRECTORY,
-        })
-      }
+      if (project.config.source !== 'css') continue
 
-      for (let project of projects) {
-        // Track the Tailwind version for a given config
-        configTailwindVersionMap.set(project.config.path, project.tailwind.version)
-
-        if (project.config.source !== 'css') continue
-
-        // Track the config file for a given CSS file
-        for (let file of project.config.entries) {
-          if (file.type !== 'css') continue
-          cssFileConfigMap.set(file.path, project.config.path)
-        }
-      }
-
-      if (projects.length > 0) {
-        workspaceFolders = projects
+      // Track the config file for a given CSS file
+      for (let file of project.config.entries) {
+        if (file.type !== 'css') continue
+        cssFileConfigMap.set(file.path, project.config.path)
       }
     }
 
@@ -224,29 +218,37 @@ export class TW {
     console.log(`[Global] Creating projects: ${JSON.stringify(workspaceDescription)}`)
 
     const onDidChangeWatchedFiles = async (
-      changes: Array<{ file: string; type: FileChangeType }>
+      changes: Array<{ file: string; type: FileChangeType }>,
     ): Promise<void> => {
       let needsRestart = false
       let needsSoftRestart = false
+
+      let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+      let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
+      let isConfigMatcher = picomatch(`**/${CONFIG_GLOB}`, { dot: true })
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
 
         for (let ignorePattern of ignore) {
-          if (minimatch(normalizedFilename, ignorePattern, { dot: true })) {
+          let isIgnored = picomatch(ignorePattern, { dot: true })
+
+          if (isIgnored(normalizedFilename)) {
             continue changeLoop
           }
         }
 
-        let isPackageFile = minimatch(normalizedFilename, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+        let isPackageFile = isPackageMatcher(normalizedFilename)
         if (isPackageFile) {
           for (let [, project] of this.projects) {
             let twVersion = require('tailwindcss/package.json').version
             try {
-              let v = require(resolveFrom(
-                path.dirname(project.projectConfig.configPath),
-                'tailwindcss/package.json'
-              )).version
+              let v = require(
+                resolveFrom(
+                  path.dirname(project.projectConfig.configPath),
+                  'tailwindcss/package.json',
+                ),
+              ).version
               if (typeof v === 'string') {
                 twVersion = v
               }
@@ -272,9 +274,7 @@ export class TW {
           break changeLoop
         }
 
-        let isCssFile = minimatch(normalizedFilename, `**/${CSS_GLOB}`, {
-          dot: true,
-        })
+        let isCssFile = isCssMatcher(`**/${CSS_GLOB}`)
         if (isCssFile && change.type !== FileChangeType.Deleted) {
           let configPath = await getConfigFileFromCssFile(change.file)
           if (
@@ -289,9 +289,7 @@ export class TW {
           }
         }
 
-        let isConfigFile = minimatch(normalizedFilename, `**/${CONFIG_GLOB}`, {
-          dot: true,
-        })
+        let isConfigFile = isConfigMatcher(normalizedFilename)
         if (isConfigFile && change.type === FileChangeType.Created) {
           needsRestart = true
           break
@@ -338,11 +336,11 @@ export class TW {
             .filter(
               (change, changeIndex, changes) =>
                 changes.findIndex((c) => c.file === change.file && c.type === change.type) ===
-                changeIndex
+                changeIndex,
             )
 
           await onDidChangeWatchedFiles(normalizedChanges)
-        })
+        }),
       )
 
       let disposable = await this.connection.client.register(
@@ -353,7 +351,7 @@ export class TW {
             { globPattern: `**/${PACKAGE_LOCK_GLOB}` },
             { globPattern: `**/${CSS_GLOB}` },
           ],
-        }
+        },
       )
 
       this.disposables.push(disposable)
@@ -382,14 +380,14 @@ export class TW {
         base,
         (err, events) => {
           onDidChangeWatchedFiles(
-            events.map((event) => ({ file: event.path, type: typeMap[event.type] }))
+            events.map((event) => ({ file: event.path, type: typeMap[event.type] })),
           )
         },
         {
           ignore: ignore.map((ignorePattern) =>
-            path.resolve(base, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, ''))
+            path.resolve(base, ignorePattern.replace(/^[*/]+/, '').replace(/[*/]+$/, '')),
           ),
-        }
+        },
       )
 
       this.disposables.push({
@@ -410,7 +408,7 @@ export class TW {
             stabilityThreshold: 100,
             pollInterval: 20,
           },
-        }
+        },
       )
 
       await new Promise<void>((resolve) => {
@@ -421,17 +419,17 @@ export class TW {
         .on('add', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Created },
-          ])
+          ]),
         )
         .on('change', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Changed },
-          ])
+          ]),
         )
         .on('unlink', (file) =>
           onDidChangeWatchedFiles([
             { file: path.resolve(base, file), type: FileChangeType.Deleted },
-          ])
+          ]),
         )
 
       this.disposables.push({
@@ -455,9 +453,9 @@ export class TW {
           projectConfig,
           this.initializeParams,
           this.watchPatterns,
-          configTailwindVersionMap.get(projectConfig.configPath)
-        )
-      )
+          configTailwindVersionMap.get(projectConfig.configPath),
+        ),
+      ),
     )
 
     // init projects for documents that are _already_ open
@@ -487,19 +485,19 @@ export class TW {
         for (let [, project] of this.projects) {
           project.onUpdateSettings(settings)
         }
-      })
+      }),
     )
 
     this.disposables.push(
       this.connection.onShutdown(() => {
         this.dispose()
-      })
+      }),
     )
 
     this.disposables.push(
       this.documentService.onDidChangeContent((change) => {
         this.getProject(change.document)?.provideDiagnostics(change.document)
-      })
+      }),
     )
 
     this.disposables.push(
@@ -509,7 +507,7 @@ export class TW {
           project.enable()
           project.tryInit()
         }
-      })
+      }),
     )
   }
 
@@ -523,7 +521,7 @@ export class TW {
     projectConfig: ProjectConfig,
     params: InitializeParams,
     watchPatterns: (patterns: string[]) => void,
-    tailwindVersion: string
+    tailwindVersion: string,
   ): Promise<void> {
     let key = String(this.projectCounter++)
     const project = await createProjectService(
@@ -546,7 +544,7 @@ export class TW {
       () => this.refreshDiagnostics(),
       (patterns: string[]) => watchPatterns(patterns),
       tailwindVersion,
-      this.settingsCache.get
+      this.settingsCache.get,
     )
     this.projects.set(key, project)
 
@@ -593,11 +591,11 @@ export class TW {
 
   private onRequest(
     method: '@/tailwindCSS/sortSelection',
-    params: { uri: string; classLists: string[] }
+    params: { uri: string; classLists: string[] },
   ): { error: string } | { classLists: string[] }
   private onRequest(
     method: '@/tailwindCSS/getProject',
-    params: { uri: string }
+    params: { uri: string },
   ): { version: string } | null
   private onRequest(method: string, params: any): any {
     if (method === '@/tailwindCSS/sortSelection') {
@@ -679,10 +677,10 @@ export class TW {
         for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
-          if (pattern.startsWith('!') && minimatch(fsPath, pattern.slice(1), { dot: true })) {
+          if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {
             break
           }
-          if (minimatch(fsPath, pattern, { dot: true }) && selector.priority < matchedPriority) {
+          if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
             matchedProject = project
             matchedPriority = selector.priority
           }

@@ -1,4 +1,4 @@
-import { Connection } from 'vscode-languageserver/node'
+import type { Connection } from 'vscode-languageserver/node'
 
 function toString(err: any, includeStack: boolean = true): string {
   if (err instanceof Error) {
@@ -22,7 +22,7 @@ export function formatError(message: string, err: any, includeStack: boolean = t
 export function showError(
   connection: Connection,
   err: any,
-  message: string = 'Tailwind CSS'
+  message: string = 'Tailwind CSS',
 ): void {
   console.error(formatError(message, err))
   // if (!(err instanceof SilentError)) {

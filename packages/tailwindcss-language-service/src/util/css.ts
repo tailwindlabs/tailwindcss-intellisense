@@ -2,13 +2,13 @@ import type { Position } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
 import { isJsDoc } from './js'
-import { State } from './state'
+import type { State } from './state'
 import { cssLanguages } from './languages'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 export function isCssDoc(state: State, doc: TextDocument): boolean {
   const userCssLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
-    cssLanguages.includes(state.editor.userLanguages[lang])
+    cssLanguages.includes(state.editor.userLanguages[lang]),
   )
 
   return [...cssLanguages, ...userCssLanguages].indexOf(doc.languageId) !== -1

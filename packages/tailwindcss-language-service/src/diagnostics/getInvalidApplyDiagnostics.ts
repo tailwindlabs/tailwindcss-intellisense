@@ -1,14 +1,13 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassNamesInRange } from '../util/find'
-import { InvalidApplyDiagnostic, DiagnosticKind } from './types'
-import { Settings, State } from '../util/state'
-import type { DiagnosticSeverity } from 'vscode-languageserver'
+import { type InvalidApplyDiagnostic, DiagnosticKind } from './types'
+import type { Settings, State } from '../util/state'
 import { validateApply } from '../util/validateApply'
 
 export async function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): Promise<InvalidApplyDiagnostic[]> {
   let severity = settings.tailwindCSS.lint.invalidApply
   if (severity === 'ignore') return []

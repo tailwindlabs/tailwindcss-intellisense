@@ -1,5 +1,5 @@
 import dlv from 'dlv'
-import { State } from './state'
+import type { State } from './state'
 import removeMeta from './removeMeta'
 import { ensureArray, dedupe } from './array'
 import type { Color } from 'vscode-languageserver'
@@ -7,7 +7,6 @@ import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
-import * as v4 from './v4'
 import postcss from 'postcss'
 
 const COLOR_PROPS = [
@@ -45,9 +44,9 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
   `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\(\\s*(-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
-    namedColors
+    namedColors,
   ).join('|')})(?:$|\\s|\\)|,)`,
-  'gi'
+  'gi',
 )
 
 function replaceColorVarsWithTheirDefaults(str: string): string {
@@ -66,7 +65,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
 }
 
 function getColorFromDecls(
-  decls: Record<string, string | string[]>
+  decls: Record<string, string | string[]>,
 ): culori.Color | KeywordColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
@@ -102,8 +101,8 @@ function getColorFromDecls(
   // check that all of the values are the same color, ignoring alpha
   const colorStrings = dedupe(
     colors.map((color) =>
-      typeof color === 'string' ? color : culori.formatRgb({ ...color, alpha: undefined })
-    )
+      typeof color === 'string' ? color : culori.formatRgb({ ...color, alpha: undefined }),
+    ),
   )
   if (colorStrings.length !== 1) {
     return null
@@ -115,7 +114,7 @@ function getColorFromDecls(
   }
 
   const nonKeywordColors = colors.filter(
-    (color): color is culori.Color => typeof color !== 'string'
+    (color): color is culori.Color => typeof color !== 'string',
   )
 
   const alphas = dedupe(nonKeywordColors.map((color) => color.alpha ?? 1))
@@ -142,13 +141,6 @@ function getColorFromRoot(state: State, css: postcss.Root): culori.Color | Keywo
   css.walkDecls((decl) => {
     rule.append(decl.clone())
   })
-
-  // Optimize the CSS if possible
-  // try {
-  //   let str = state.designSystem.toCss(css)
-  //   str = state.designSystem.optimizeCss(str)
-  //   css = postcss.parse(str)
-  // } catch {}
 
   css.walkDecls((decl) => {
     decls[decl.prop] ??= []
@@ -231,9 +223,9 @@ export function culoriColorToVscodeColor(color: culori.Color): Color {
 }
 
 export function formatColor(color: culori.Color): string {
-    if (color.alpha === undefined || color.alpha === 1) {
-      return culori.formatHex(color)
-    }
+  if (color.alpha === undefined || color.alpha === 1) {
+    return culori.formatHex(color)
+  }
 
-    return culori.formatHex8(color)
+  return culori.formatHex8(color)
 }

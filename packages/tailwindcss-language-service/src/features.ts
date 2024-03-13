@@ -1,4 +1,4 @@
-import * as semver from '@tailwindcss/language-service/src/util/semver'
+import * as semver from './util/semver'
 
 export type Feature =
   | 'layer:preflight'

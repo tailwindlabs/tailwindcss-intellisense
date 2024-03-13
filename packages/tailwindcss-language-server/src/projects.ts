@@ -1,4 +1,4 @@
-import {
+import type {
   CompletionItem,
   CompletionList,
   CompletionParams,
@@ -12,21 +12,21 @@ import {
   ColorPresentationParams,
   CodeActionParams,
   CodeAction,
-  FileChangeType,
   Disposable,
   DocumentLinkParams,
   DocumentLink,
 } from 'vscode-languageserver/node'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import { FileChangeType } from 'vscode-languageserver/node'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, SilentError } from './util/error'
 import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as fs from 'fs'
 import findUp from 'find-up'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import resolveFrom, { setPnpApi } from './util/resolveFrom'
-import { AtRule, Container, Node, Result } from 'postcss'
+import type { AtRule, Container, Node, Result } from 'postcss'
 import Hook from './lib/hook'
 import * as semver from '@tailwindcss/language-service/src/util/semver'
 import dlv from 'dlv'
@@ -40,7 +40,7 @@ import {
   doComplete,
   resolveCompletionItem,
 } from '@tailwindcss/language-service/src/completionProvider'
-import {
+import type {
   State,
   FeatureFlags,
   Settings,
@@ -72,13 +72,11 @@ import {
   isObject,
   changeAffectsFile,
 } from './utils'
-import { DocumentService } from './documents'
-import { ProjectConfig } from './project-locator'
-import { supportedFeatures } from './features'
+import type { DocumentService } from './documents'
+import type { ProjectConfig } from './project-locator'
+import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
-import type { AstNode } from 'tailwindcss-language-service/src/util/v4'
-import * as postcss8 from 'postcss'
 import { pathToFileURL } from 'url'
 
 const colorNames = Object.keys(namedColors)
@@ -266,12 +264,14 @@ export async function createProjectService(
     let needsInit = false
     let needsRebuild = false
 
+    let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+
     for (let change of changes) {
       let file = normalizePath(change.file)
 
       let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
       let isDependency = changeAffectsFile(file, state.dependencies ?? [])
-      let isPackageFile = minimatch(file, `**/${PACKAGE_LOCK_GLOB}`, { dot: true })
+      let isPackageFile = isPackageMatcher(file)
 
       if (!isConfigFile && !isDependency && !isPackageFile) continue
 
@@ -1464,6 +1464,7 @@ async function getPlugins(config: any) {
             name: fnName,
           }
         }
+        // @ts-ignore
         const file = trace[0].fileName
         const dir = path.dirname(file)
         let pkgPath = pkgUp.sync({ cwd: dir })

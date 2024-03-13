@@ -1,7 +1,7 @@
 import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
-import { State } from './state'
+import type { State } from './state'
 import { indexToPosition } from './find'
 import { isJsDoc } from './js'
 import moo from 'moo'
@@ -125,7 +125,7 @@ let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000
 export function getLanguageBoundaries(
   state: State,
   doc: TextDocument,
-  text: string = doc.getText()
+  text: string = doc.getText(),
 ): LanguageBoundary[] | null {
   let cacheKey = `${doc.languageId}:${text}`
 
@@ -139,10 +139,10 @@ export function getLanguageBoundaries(
   let defaultType = isVueDoc(doc)
     ? 'none'
     : isHtmlDoc(state, doc) || isSvelteDoc(doc)
-    ? 'html'
-    : isJs
-    ? 'jsx'
-    : null
+      ? 'html'
+      : isJs
+        ? 'jsx'
+        : null
 
   if (defaultType === null) {
     cache.set(cacheKey, null)

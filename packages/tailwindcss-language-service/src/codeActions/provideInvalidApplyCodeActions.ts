@@ -1,6 +1,6 @@
-import type { CodeAction, CodeActionParams, TextEdit, Range } from 'vscode-languageserver'
-import { State } from '../util/state'
-import { InvalidApplyDiagnostic } from '../diagnostics/types'
+import type { CodeAction, TextEdit, Range } from 'vscode-languageserver'
+import type { State } from '../util/state'
+import type { InvalidApplyDiagnostic } from '../diagnostics/types'
 import { isCssDoc } from '../util/css'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { getClassNameMeta } from '../util/getClassNameMeta'
@@ -12,18 +12,17 @@ import type { Root, Source } from 'postcss'
 import { absoluteRange } from '../util/absoluteRange'
 import { removeRangesFromString } from '../util/removeRangesFromString'
 import detectIndent from 'detect-indent'
-import isObject from '../util/isObject'
 import { cssObjToAst } from '../util/cssObjToAst'
 import { dset } from 'dset'
 import selectorParser from 'postcss-selector-parser'
 import { flatten } from '../util/array'
 import { getTextWithoutComments } from '../util/doc'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 export async function provideInvalidApplyCodeActions(
   state: State,
   document: TextDocument,
-  diagnostic: InvalidApplyDiagnostic
+  diagnostic: InvalidApplyDiagnostic,
 ): Promise<CodeAction[]> {
   if (!document) return []
   let documentText = getTextWithoutComments(document, 'css')
@@ -74,7 +73,7 @@ export async function provideInvalidApplyCodeActions(
                   state,
                   classNameParts,
                   rule.selector,
-                  diagnostic.className.classList.important
+                  diagnostic.className.classList.important,
                 )
 
                 if (!ast) return false
@@ -90,7 +89,7 @@ export async function provideInvalidApplyCodeActions(
                     range: diagnostic.className.classList.range,
                     newText: removeRangesFromString(
                       diagnostic.className.classList.classList,
-                      diagnostic.className.relativeRange
+                      diagnostic.className.relativeRange,
                     ),
                   })
                 }
@@ -168,7 +167,7 @@ function classNameToAst(
   state: State,
   classNameParts: string[],
   selector: string,
-  important: boolean = false
+  important: boolean = false,
 ) {
   const baseClassName = classNameParts[classNameParts.length - 1]
   const validatedBaseClassName = validateApply(state, [baseClassName])

@@ -1,11 +1,11 @@
-import { State } from './state'
+import type { State } from './state'
 import { getClassNameMeta } from './getClassNameMeta'
 import { flagEnabled } from './flagEnabled'
 import * as semver from './semver'
 
 export function validateApply(
   state: State,
-  classNameOrParts: string | string[]
+  classNameOrParts: string | string[],
 ): { isApplyable: true } | { isApplyable: false; reason: string } | null {
   if (state.jit) {
     return { isApplyable: true }

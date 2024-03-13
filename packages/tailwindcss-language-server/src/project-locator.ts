@@ -2,19 +2,20 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import glob from 'fast-glob'
-import minimatch from 'minimatch'
+import picomatch from 'picomatch'
 import normalizePath from 'normalize-path'
-import type { Settings } from 'tailwindcss-language-service/src/util/state'
+import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import postcss, { Message } from 'postcss'
+import type { Message } from 'postcss'
+import postcss from 'postcss'
 import postcssImport from 'postcss-import'
-import { DocumentSelector, DocumentSelectorPriority } from './projects'
+import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
-import { Feature, supportedFeatures } from './features'
+import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { pathToFileURL } from 'node:url'
 
 export interface ProjectConfig {
@@ -63,7 +64,51 @@ export class ProjectLocator {
       }
     }
 
+    if (projects.length === 1) {
+      projects[0].documentSelector.push({
+        pattern: normalizePath(path.join(this.base, '**')),
+        priority: DocumentSelectorPriority.ROOT_DIRECTORY,
+      })
+    }
+
     return projects
+  }
+
+  async loadAllFromWorkspace(
+    configs: [config: string, selectors: string[]][],
+  ): Promise<ProjectConfig[]> {
+    return Promise.all(configs.map((config) => this.loadFromWorkspace(config[0], config[1])))
+  }
+
+  private async loadFromWorkspace(
+    configPath: string,
+    selectors: string[],
+  ): Promise<ProjectConfig | null> {
+    let config: ConfigEntry = {
+      type: 'js',
+      path: configPath,
+      source: 'js',
+      entries: [],
+      content: [],
+      packageRoot: '',
+    }
+
+    let tailwind = await this.detectTailwindVersion(config)
+
+    // Look for the package root for the config
+    config.packageRoot = await getPackageRoot(path.dirname(config.path), this.base)
+
+    return {
+      config,
+      folder: this.base,
+      isUserConfigured: true,
+      configPath: config.path,
+      documentSelector: selectors.map((selector) => ({
+        priority: DocumentSelectorPriority.USER_CONFIGURED,
+        pattern: selector,
+      })),
+      tailwind,
+    }
   }
 
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
@@ -193,15 +238,15 @@ export class ProjectLocator {
     // Create a map of config paths to metadata
     let configs = new CacheMap<string, ConfigEntry>()
 
+    let isCss = picomatch(`**/${CSS_GLOB}`, { dot: true })
+
     // Create a list of entries for each file
     let entries = files.map((filepath: string): FileEntry => {
-      let isCss = minimatch(filepath, `**/${CSS_GLOB}`, { dot: true })
-
-      if (isCss) {
+      if (isCss(filepath)) {
         return new FileEntry('css', filepath)
       }
 
-      return new FileEntry('css', filepath, [
+      return new FileEntry('js', filepath, [
         configs.remember(filepath, () => ({
           source: 'js',
           type: 'js',

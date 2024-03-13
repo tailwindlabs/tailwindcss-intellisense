@@ -1,12 +1,12 @@
 import type { CodeAction, CodeActionParams } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { State } from '../util/state'
+import type { State } from '../util/state'
 import { doValidate } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'
 import {
-  DiagnosticKind,
+  type DiagnosticKind,
   isInvalidApplyDiagnostic,
-  AugmentedDiagnostic,
+  type AugmentedDiagnostic,
   isCssConflictDiagnostic,
   isInvalidConfigPathDiagnostic,
   isInvalidTailwindDirectiveDiagnostic,
@@ -23,7 +23,7 @@ async function getDiagnosticsFromCodeActionParams(
   state: State,
   params: CodeActionParams,
   document: TextDocument,
-  only?: DiagnosticKind[]
+  only?: DiagnosticKind[],
 ): Promise<AugmentedDiagnostic[]> {
   if (!document) return []
   let diagnostics = await doValidate(state, document, only)
@@ -41,7 +41,11 @@ async function getDiagnosticsFromCodeActionParams(
     .filter(Boolean)
 }
 
-export async function doCodeActions(state: State, params: CodeActionParams, document: TextDocument): Promise<CodeAction[]> {
+export async function doCodeActions(
+  state: State,
+  params: CodeActionParams,
+  document: TextDocument,
+): Promise<CodeAction[]> {
   if (!state.enabled) {
     return []
   }
@@ -52,7 +56,7 @@ export async function doCodeActions(state: State, params: CodeActionParams, docu
     document,
     params.context.diagnostics
       .map((diagnostic) => diagnostic.code)
-      .filter(Boolean) as DiagnosticKind[]
+      .filter(Boolean) as DiagnosticKind[],
   )
 
   return Promise.all(
@@ -76,7 +80,7 @@ export async function doCodeActions(state: State, params: CodeActionParams, docu
       }
 
       return []
-    })
+    }),
   )
     .then(flatten)
     .then((x) => dedupeBy(x, (item) => JSON.stringify(item.edit)))

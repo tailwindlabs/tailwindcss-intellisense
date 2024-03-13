@@ -1,12 +1,11 @@
 import { joinWithAnd } from '../util/joinWithAnd'
-import { State, Settings, DocumentClassName } from '../util/state'
-import { CssConflictDiagnostic, DiagnosticKind } from './types'
+import type { State, Settings, DocumentClassName } from '../util/state'
+import { type CssConflictDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { getClassNameDecls } from '../util/getClassNameDecls'
 import { getClassNameMeta } from '../util/getClassNameMeta'
 import { equal } from '../util/array'
 import * as jit from '../util/jit'
-import * as v4 from '../util/v4'
 import * as postcss from 'postcss'
 import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -44,7 +43,7 @@ function getRuleProperties(rule: Rule): string[] {
 export async function getCssConflictDiagnostics(
   state: State,
   document: TextDocument,
-  settings: Settings
+  settings: Settings,
 ): Promise<CssConflictDiagnostic[]> {
   let severity = settings.tailwindCSS.lint.cssConflict
   if (severity === 'ignore') return []
@@ -70,8 +69,8 @@ export async function getCssConflictDiagnostics(
               : 2 /* DiagnosticSeverity.Warning */,
           message: `'${className.className}' applies the same CSS properties as ${joinWithAnd(
             conflictingClassNames.map(
-              (conflictingClassName) => `'${conflictingClassName.className}'`
-            )
+              (conflictingClassName) => `'${conflictingClassName.className}'`,
+            ),
           )}.`,
           relatedInformation: conflictingClassNames.map((conflictingClassName) => {
             return {
@@ -93,7 +92,7 @@ export async function getCssConflictDiagnostics(
         let { rules } = jit.generateRules(
           state,
           [className.className],
-          (rule) => !isKeyframes(rule)
+          (rule) => !isKeyframes(rule),
         )
         if (rules.length === 0) {
           return
@@ -111,7 +110,7 @@ export async function getCssConflictDiagnostics(
           let { rules: otherRules } = jit.generateRules(
             state,
             [otherClassName.className],
-            (rule) => !isKeyframes(rule)
+            (rule) => !isKeyframes(rule),
           )
           if (otherRules.length !== rules.length) {
             return false
@@ -154,8 +153,8 @@ export async function getCssConflictDiagnostics(
               : 2 /* DiagnosticSeverity.Warning */,
           message: `'${className.className}' applies the same CSS properties as ${joinWithAnd(
             conflictingClassNames.map(
-              (conflictingClassName) => `'${conflictingClassName.className}'`
-            )
+              (conflictingClassName) => `'${conflictingClassName.className}'`,
+            ),
           )}.`,
           relatedInformation: conflictingClassNames.map((conflictingClassName) => {
             return {
@@ -209,7 +208,9 @@ export async function getCssConflictDiagnostics(
         message: `'${className.className}' applies the same CSS ${
           properties.length === 1 ? 'property' : 'properties'
         } as ${joinWithAnd(
-          conflictingClassNames.map((conflictingClassName) => `'${conflictingClassName.className}'`)
+          conflictingClassNames.map(
+            (conflictingClassName) => `'${conflictingClassName.className}'`,
+          ),
         )}.`,
         relatedInformation: conflictingClassNames.map((conflictingClassName) => {
           return {
@@ -237,7 +238,7 @@ type ClassDetails = Record<string, RuleEntry[]>
 export function visit(
   nodes: postcss.AnyNode[],
   cb: (node: postcss.AnyNode, path: postcss.AnyNode[]) => void,
-  path: postcss.AnyNode[] = []
+  path: postcss.AnyNode[] = [],
 ) {
   for (let child of nodes) {
     path = [...path, child]
@@ -293,7 +294,7 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
 
 function* findConflicts(
   classes: DocumentClassName[],
-  groups: ClassDetails
+  groups: ClassDetails,
 ): Iterable<[DocumentClassName, DocumentClassName[]]> {
   // Compare each class to each other
   // If they have the same properties and context, they are conflicting and we should report it

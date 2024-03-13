@@ -1,8 +1,8 @@
-import type { TextDocuments, Connection, Range, SymbolInformation } from 'vscode-languageserver'
+import type { Connection, Range, SymbolInformation } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { Postcss } from 'postcss'
-import { KeywordColor } from './color'
-import * as culori from 'culori'
+import type { KeywordColor } from './color'
+import type * as culori from 'culori'
 import type { DesignSystem } from './v4'
 
 export type ClassNamesTree = {
@@ -31,7 +31,7 @@ export type EditorState = {
   getDocumentSymbols: (uri: string) => Promise<SymbolInformation[]>
   readDirectory: (
     document: TextDocument,
-    directory: string
+    directory: string,
   ) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 

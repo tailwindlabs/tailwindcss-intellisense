@@ -1,4 +1,4 @@
-import { State } from './util/state'
+import type { State } from './util/state'
 import type { Hover, Position } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
@@ -10,12 +10,11 @@ import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import postcss from 'postcss'
 
 export async function doHover(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<Hover> {
   return (
     (await provideClassNameHover(state, document, position)) ||
@@ -38,7 +37,7 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
       let validated = validateConfigPath(
         state,
         helperFn.path,
-        helperFn.helper === 'theme' ? ['theme'] : []
+        helperFn.helper === 'theme' ? ['theme'] : [],
       )
       let value = validated.isValid ? stringifyConfigValue(validated.value) : null
       if (value === null) {
@@ -57,7 +56,7 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
 async function provideClassNameHover(
   state: State,
   document: TextDocument,
-  position: Position
+  position: Position,
 ): Promise<Hover> {
   let className = await findClassNameAtPosition(state, document, position)
   if (className === null) return null
@@ -109,7 +108,7 @@ async function provideClassNameHover(
   const css = stringifyCss(
     className.className,
     dlv(state.classNames.classNames, [...parts, '__info']),
-    settings
+    settings,
   )
 
   if (!css) return null

@@ -2,7 +2,7 @@ import { test } from 'vitest'
 import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
-import { Settings } from 'tailwindcss-language-service/src/util/state'
+import { Settings } from '@tailwindcss/language-service/src/util/state'
 
 let settings: Settings = {
   tailwindCSS: {
@@ -57,7 +57,6 @@ testFixture('multi-config-content', [
   { config: 'tailwind.config.two.js' },
 ])
 
-
 testFixture('v3/esm-config', [
   //
   { config: 'tailwind.config.mjs' },
@@ -67,7 +66,6 @@ testFixture('v3/ts-config', [
   //
   { config: 'tailwind.config.ts' },
 ])
-
 
 testFixture('v4/basic', [
   //

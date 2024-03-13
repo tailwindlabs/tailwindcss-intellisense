@@ -1,14 +1,14 @@
-import { State } from './state'
+import type { State } from './state'
 import * as jit from './jit'
 
 export function getVariantsFromClassName(
   state: State,
-  className: string
+  className: string,
 ): { variants: string[]; offset: number } {
   let allVariants = state.variants.flatMap((variant) => {
     if (variant.values.length) {
       return variant.values.map((value) =>
-        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`,
       )
     }
     return [variant.name]

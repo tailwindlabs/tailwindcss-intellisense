@@ -25,7 +25,7 @@ export default class Hook {
     if (typeof Module._resolveFilename !== 'function') {
       throw new Error(
         // @ts-ignore
-        `Error: Expected Module._resolveFilename to be a function (was: ${typeof Module._resolveFilename}) - aborting!`
+        `Error: Expected Module._resolveFilename to be a function (was: ${typeof Module._resolveFilename}) - aborting!`,
       )
     }
 

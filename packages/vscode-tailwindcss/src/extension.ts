@@ -3,47 +3,46 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as path from 'path'
+import type {
+  ExtensionContext,
+  TextDocument,
+  WorkspaceFolder,
+  TextEditorDecorationType,
+  ConfigurationScope,
+  WorkspaceConfiguration,
+  CompletionList,
+  ProviderResult,
+  Selection,
+} from 'vscode'
 import {
   workspace as Workspace,
   window as Window,
   languages as Languages,
-  ExtensionContext,
-  TextDocument,
-  OutputChannel,
-  WorkspaceFolder,
   Uri,
   commands,
   SymbolInformation,
   Position,
   Range,
-  TextEditorDecorationType,
   RelativePattern,
-  ConfigurationScope,
-  WorkspaceConfiguration,
   CompletionItem,
   CompletionItemKind,
-  CompletionList,
-  ProviderResult,
   SnippetString,
   TextEdit,
-  Selection,
 } from 'vscode'
+import type { LanguageClientOptions, ServerOptions, Disposable } from 'vscode-languageclient/node'
 import {
   LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
   TransportKind,
   State as LanguageClientState,
   RevealOutputChannelOn,
-  Disposable,
 } from 'vscode-languageclient/node'
-import { languages as defaultLanguages } from 'tailwindcss-language-service/src/util/languages'
-import * as semver from 'tailwindcss-language-service/src/util/semver'
-import isObject from 'tailwindcss-language-service/src/util/isObject'
-import { dedupe, equal } from 'tailwindcss-language-service/src/util/array'
+import { languages as defaultLanguages } from '@tailwindcss/language-service/src/util/languages'
+import * as semver from '@tailwindcss/language-service/src/util/semver'
+import isObject from '@tailwindcss/language-service/src/util/isObject'
+import { dedupe, equal } from '@tailwindcss/language-service/src/util/array'
 import namedColors from 'color-name'
-import minimatch from 'minimatch'
-import { CONFIG_GLOB, CSS_GLOB } from 'tailwindcss-language-server/src/lib/constants'
+import picomatch from 'picomatch'
+import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
 import braces from 'braces'
 import normalizePath from 'normalize-path'
 
@@ -72,16 +71,16 @@ function getExcludePatterns(scope: ConfigurationScope): string[] {
   return [
     ...getGlobalExcludePatterns(scope),
     ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')).filter(
-      Boolean
+      Boolean,
     ),
   ]
 }
 
 function isExcluded(file: string, folder: WorkspaceFolder): boolean {
-  let exclude = getExcludePatterns(folder)
+  for (let pattern of getExcludePatterns(folder)) {
+    let matcher = picomatch(path.join(folder.uri.fsPath, pattern))
 
-  for (let pattern of exclude) {
-    if (minimatch(file, path.join(folder.uri.fsPath, pattern))) {
+    if (matcher(file)) {
       return true
     }
   }
@@ -117,7 +116,7 @@ async function fileMayBeTailwindRelated(uri: Uri) {
 
 function selectionsAreEqual(
   aSelections: readonly Selection[],
-  bSelections: readonly Selection[]
+  bSelections: readonly Selection[],
 ): boolean {
   if (aSelections.length !== bSelections.length) {
     return false
@@ -172,7 +171,7 @@ async function updateActiveTextEditorContext(): Promise<void> {
   commands.executeCommand(
     'setContext',
     'tailwindCSS.activeTextEditorSupportsClassSorting',
-    await activeTextEditorSupportsClassSorting()
+    await activeTextEditorSupportsClassSorting(),
   )
 }
 
@@ -188,7 +187,7 @@ export async function activate(context: ExtensionContext) {
       if (outputChannel) {
         outputChannel.show()
       }
-    })
+    }),
   )
 
   await commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
@@ -227,7 +226,7 @@ export async function activate(context: ExtensionContext) {
       {
         uri: document.uri.toString(),
         classLists: selections.map((selection) => document.getText(selection)),
-      }
+      },
     )
 
     if (
@@ -241,7 +240,7 @@ export async function activate(context: ExtensionContext) {
       throw Error(
         {
           'no-project': `No active Tailwind project found for file ${document.uri.fsPath}`,
-        }[result.error] ?? 'An unknown error occurred.'
+        }[result.error] ?? 'An unknown error occurred.',
       )
     }
 
@@ -260,13 +259,13 @@ export async function activate(context: ExtensionContext) {
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${error.message}`)
       }
-    })
+    }),
   )
 
   context.subscriptions.push(
     Window.onDidChangeActiveTextEditor(async () => {
       await updateActiveTextEditorContext()
-    })
+    }),
   )
 
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
@@ -342,7 +341,7 @@ export async function activate(context: ExtensionContext) {
         clients.delete(folder.uri.toString())
         bootClientForFolderIfNeeded(folder)
       }
-    })
+    }),
   )
 
   let cssServerBooted = false
@@ -399,7 +398,7 @@ export async function activate(context: ExtensionContext) {
               }
             }
             function updateProposals(
-              r: CompletionItem[] | CompletionList | null | undefined
+              r: CompletionItem[] | CompletionList | null | undefined,
             ): CompletionItem[] | CompletionList | null | undefined {
               if (r) {
                 ;(Array.isArray(r) ? r : r.items).forEach(updateRanges)
@@ -417,7 +416,7 @@ export async function activate(context: ExtensionContext) {
             return updateProposals(r)
           },
         },
-      }
+      },
     )
 
     await client.start()
@@ -481,7 +480,7 @@ export async function activate(context: ExtensionContext) {
     if (!languages.has(folder.uri.toString())) {
       languages.set(
         folder.uri.toString(),
-        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
+        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))]),
       )
     }
 
@@ -565,8 +564,8 @@ export async function activate(context: ExtensionContext) {
                 new Position(selection.start.line, selection.start.character - length),
                 new Position(
                   selection.start.line,
-                  selection.start.character - length + prefixLength
-                )
+                  selection.start.character - length + prefixLength,
+                ),
               )
             })
             if (
@@ -597,7 +596,7 @@ export async function activate(context: ExtensionContext) {
             let text =
               Workspace.textDocuments.find((doc) => doc === document)?.getText(color.range) ?? ''
             return new RegExp(
-              `-\\[(${colorNames.join('|')}|((?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`
+              `-\\[(${colorNames.join('|')}|((?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`,
             ).test(text)
           })
           let nonEditableColors = colors.filter((color) => !editableColors.includes(color))
@@ -640,7 +639,7 @@ export async function activate(context: ExtensionContext) {
                     }, ${color.alpha})`,
                   },
                 },
-              }))
+              })),
             )
           })
 
@@ -704,7 +703,7 @@ export async function activate(context: ExtensionContext) {
     client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
       return commands.executeCommand<SymbolInformation[]>(
         'vscode.executeDocumentSymbolProvider',
-        Uri.parse(uri)
+        Uri.parse(uri),
       )
     })
 
@@ -734,7 +733,7 @@ export async function activate(context: ExtensionContext) {
     let [configFile] = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       exclude,
-      1
+      1,
     )
 
     if (configFile) {
@@ -793,7 +792,7 @@ export async function activate(context: ExtensionContext) {
           client.stop()
         }
       }
-    })
+    }),
   )
 }
 
