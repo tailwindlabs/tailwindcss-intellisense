@@ -1,0 +1,116 @@
+{
+  "code": "<style lang=\"sass\">\n.foo\n  @apply uppercase lowercase\n</style>",
+  "language": "vue",
+  "expected": [
+    {
+      "code": "cssConflict",
+      "className": {
+        "className": "uppercase",
+        "classList": {
+          "classList": "uppercase lowercase",
+          "range": {
+            "start": { "line": 2, "character": 9 },
+            "end": { "line": 2, "character": 28 }
+          },
+          "important": false
+        },
+        "relativeRange": {
+          "start": { "line": 0, "character": 0 },
+          "end": { "line": 0, "character": 9 }
+        },
+        "range": { "start": { "line": 2, "character": 9 }, "end": { "line": 2, "character": 18 } }
+      },
+      "otherClassNames": [
+        {
+          "className": "lowercase",
+          "classList": {
+            "classList": "uppercase lowercase",
+            "range": {
+              "start": { "line": 2, "character": 9 },
+              "end": { "line": 2, "character": 28 }
+            },
+            "important": false
+          },
+          "relativeRange": {
+            "start": { "line": 0, "character": 10 },
+            "end": { "line": 0, "character": 19 }
+          },
+          "range": {
+            "start": { "line": 2, "character": 19 },
+            "end": { "line": 2, "character": 28 }
+          }
+        }
+      ],
+      "range": { "start": { "line": 2, "character": 9 }, "end": { "line": 2, "character": 18 } },
+      "severity": 2,
+      "message": "'uppercase' applies the same CSS properties as 'lowercase'.",
+      "relatedInformation": [
+        {
+          "message": "lowercase",
+          "location": {
+            "uri": "{{URI}}",
+            "range": {
+              "start": { "line": 2, "character": 19 },
+              "end": { "line": 2, "character": 28 }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "code": "cssConflict",
+      "className": {
+        "className": "lowercase",
+        "classList": {
+          "classList": "uppercase lowercase",
+          "range": {
+            "start": { "line": 2, "character": 9 },
+            "end": { "line": 2, "character": 28 }
+          },
+          "important": false
+        },
+        "relativeRange": {
+          "start": { "line": 0, "character": 10 },
+          "end": { "line": 0, "character": 19 }
+        },
+        "range": { "start": { "line": 2, "character": 19 }, "end": { "line": 2, "character": 28 } }
+      },
+      "otherClassNames": [
+        {
+          "className": "uppercase",
+          "classList": {
+            "classList": "uppercase lowercase",
+            "range": {
+              "start": { "line": 2, "character": 9 },
+              "end": { "line": 2, "character": 28 }
+            },
+            "important": false
+          },
+          "relativeRange": {
+            "start": { "line": 0, "character": 0 },
+            "end": { "line": 0, "character": 9 }
+          },
+          "range": {
+            "start": { "line": 2, "character": 9 },
+            "end": { "line": 2, "character": 18 }
+          }
+        }
+      ],
+      "range": { "start": { "line": 2, "character": 19 }, "end": { "line": 2, "character": 28 } },
+      "severity": 2,
+      "message": "'lowercase' applies the same CSS properties as 'uppercase'.",
+      "relatedInformation": [
+        {
+          "message": "uppercase",
+          "location": {
+            "uri": "{{URI}}",
+            "range": {
+              "start": { "line": 2, "character": 9 },
+              "end": { "line": 2, "character": 18 }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

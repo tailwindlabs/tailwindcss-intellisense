@@ -75,6 +75,20 @@ withFixture('basic', (c) => {
       end: { line: 0, character: 31 },
     },
   })
+
+  testHover('vue <style lang=sass>', {
+    lang: 'vue',
+    text: `<style lang="sass">
+.foo
+  @apply underline
+</style>`,
+    position: { line: 2, character: 13 },
+    expected: '.underline {\n' + '  text-decoration-line: underline;\n' + '}',
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
@@ -146,6 +160,20 @@ withFixture('v4/basic', (c) => {
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 31 },
+    },
+  })
+
+  testHover('vue <style lang=sass>', {
+    lang: 'vue',
+    text: `<style lang="sass">
+.foo
+  @apply underline
+</style>`,
+    position: { line: 2, character: 13 },
+    expected: '.underline {\n' + '  text-decoration-line: underline;\n' + '}',
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
     },
   })
 })
