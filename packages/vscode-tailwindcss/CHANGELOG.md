@@ -3,6 +3,7 @@
 ## 0.11.x (Pre-Release)
 
 - Fix crash when class regex matches an empty string (#897)
+- Support Astro's `class:list` attribute by default (#890)
 
 ## 0.10.5
 
