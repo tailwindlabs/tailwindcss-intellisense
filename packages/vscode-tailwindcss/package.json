@@ -179,7 +179,8 @@
           "default": [
             "class",
             "className",
-            "ngClass"
+            "ngClass",
+            "class:list"
           ],
           "markdownDescription": "The HTML attributes for which to provide class completions, hover previews, linting etc."
         },
