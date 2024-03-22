@@ -5,6 +5,7 @@
 - Fix crash when class regex matches an empty string (#897)
 - Support Astro's `class:list` attribute by default (#890)
 - Fix hovers and CSS conflict detection in Vue `<style lang="sass">` blocks (#930)
+- Add support for `<script type="text/babel">` (#932)
 
 ## 0.10.5
 
