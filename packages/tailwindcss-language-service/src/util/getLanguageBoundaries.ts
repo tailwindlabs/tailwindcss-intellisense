@@ -10,7 +10,7 @@ import { getTextWithoutComments } from './doc'
 import { isCssLanguage } from './css'
 
 export type LanguageBoundary = {
-  type: 'html' | 'js' | 'css' | (string & {});
+  type: 'html' | 'js' | 'jsx' | 'css' | (string & {});
   range: Range
   lang?: string
 }
@@ -22,6 +22,11 @@ let htmlScriptTypes = [
   'text/x-template',
   // https://github.com/tailwindlabs/tailwindcss-intellisense/issues/722
   'text/x-handlebars-template',
+]
+
+let jsxScriptTypes = [
+  // https://github.com/tailwindlabs/tailwindcss-intellisense/issues/906
+  'text/babel',
 ]
 
 let text = { text: { match: /[^]/, lineBreaks: true } }
@@ -190,6 +195,8 @@ export function getLanguageBoundaries(
           boundaries[boundaries.length - 1].type = token.text
         } else if (token.type === 'type' && htmlScriptTypes.includes(token.text)) {
           boundaries[boundaries.length - 1].type = 'html'
+        } else if (token.type === 'type' && jsxScriptTypes.includes(token.text)) {
+          boundaries[boundaries.length - 1].type = 'jsx'
         }
       }
       offset += token.text.length
