@@ -7,8 +7,13 @@ import { isJsDoc } from './js'
 import moo from 'moo'
 import Cache from 'tmp-cache'
 import { getTextWithoutComments } from './doc'
+import { isCssLanguage } from './css'
 
-export type LanguageBoundary = { type: 'html' | 'js' | 'css' | (string & {}); range: Range }
+export type LanguageBoundary = {
+  type: 'html' | 'js' | 'css' | (string & {});
+  range: Range
+  lang?: string
+}
 
 let htmlScriptTypes = [
   // https://v3-migration.vuejs.org/breaking-changes/inline-template-attribute.html#option-1-use-script-tag
@@ -92,6 +97,13 @@ let vueStates = {
     htmlBlockStart: { match: '<template', push: 'htmlBlock' },
     ...states.main,
   },
+
+  cssBlock: {
+    langAttrStartDouble: { match: 'lang="', push: 'langAttrDouble' },
+    langAttrStartSingle: { match: "lang='", push: 'langAttrSingle' },
+    ...states.cssBlock,
+  },
+
   htmlBlock: {
     htmlStart: { match: '>', next: 'html' },
     htmlBlockEnd: { match: '/>', pop: 1 },
@@ -192,6 +204,14 @@ export function getLanguageBoundaries(
   }
 
   cache.set(cacheKey, boundaries)
+
+  for (let boundary of boundaries) {
+    if (boundary.type === 'css') continue
+    if (!isCssLanguage(state, boundary.type)) continue
+
+    boundary.lang = boundary.type
+    boundary.type = 'css'
+  }
 
   return boundaries
 }

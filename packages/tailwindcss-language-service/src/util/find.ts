@@ -3,7 +3,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DocumentClassName, DocumentClassList, State, DocumentHelperFunction } from './state'
 import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
-import { isHtmlContext } from './html'
+import { isHtmlContext, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
 import { isJsxContext } from './js'
 import { dedupeByRange, flatten } from './array'
@@ -97,9 +97,10 @@ export function findClassListsInCssRange(
   state: State,
   doc: TextDocument,
   range?: Range,
+  lang?: string,
 ): DocumentClassList[] {
   const text = getTextWithoutComments(doc, 'css', range)
-  let regex = isSemicolonlessCssLanguage(doc.languageId, state.editor?.userLanguages)
+  let regex = isSemicolonlessCssLanguage(lang ?? doc.languageId, state.editor?.userLanguages)
     ? /(@apply\s+)(?<classList>[^}\r\n]+?)(?<important>\s*!important)?(?:\r|\n|}|$)/g
     : /(@apply\s+)(?<classList>[^;}]+?)(?<important>\s*!important)?\s*[;}]/g
   const matches = findAll(regex, text)
@@ -302,7 +303,7 @@ export async function findClassListsInDocument(
       )),
       ...boundaries
         .filter((b) => b.type === 'css')
-        .map(({ range }) => findClassListsInCssRange(state, doc, range)),
+        .map(({ range, lang }) => findClassListsInCssRange(state, doc, range, lang)),
       await findCustomClassLists(state, doc),
     ]),
   )
@@ -408,14 +409,36 @@ export async function findClassNameAtPosition(
   doc: TextDocument,
   position: Position,
 ): Promise<DocumentClassName> {
-  let classNames = []
+  let classNames: DocumentClassName[] = []
   const positionOffset = doc.offsetAt(position)
   const searchRange: Range = {
     start: doc.positionAt(Math.max(0, positionOffset - 2000)),
     end: doc.positionAt(positionOffset + 2000),
   }
 
-  if (isCssContext(state, doc, position)) {
+  if (isVueDoc(doc)) {
+    let boundaries = getLanguageBoundaries(state, doc)
+
+    let groups = await Promise.all(boundaries.map(async ({ type, range, lang }) => {
+      if (type === 'css') {
+        return findClassListsInCssRange(state, doc, range, lang)
+      }
+
+      if (type === 'html') {
+        return await findClassListsInHtmlRange(state, doc, 'html', range)
+      }
+
+      if (type === 'jsx') {
+        return await findClassListsInHtmlRange(state, doc, 'jsx', range)
+      }
+
+      return []
+    }))
+
+    classNames = dedupeByRange(flatten(groups)).flatMap(
+      (classList) => getClassNamesInClassList(classList, state.blocklist)
+    )
+  } else if (isCssContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')
   } else if (isHtmlContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
