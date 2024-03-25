@@ -201,6 +201,8 @@ async function init(fixture: string): Promise<FixtureContext> {
         },
       } as DidOpenTextDocumentParams)
 
+      // If opening a document stalls then it's probably because this promise is not being resolved
+      // This can happen if a document is not covered by one of the selectors because of it's URI
       await initPromise
 
       return {
