@@ -1,9 +1,7 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
-import postcssImport from 'postcss-import'
-
-const resolveImports = postcss([postcssImport()])
+import { resolveCssImports } from '../../resolve-css-imports'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -36,7 +34,7 @@ export async function loadDesignSystem(
   // Step 2: Use postcss to resolve `@import` rules in the CSS file
   // TODO: What if someone is actively editing their config and introduces a syntax error?
   // We don't want to necessarily throw away the knowledge that we have a v4 project.
-  let resolved = await resolveImports.process(css, { from: filepath })
+  let resolved = await resolveCssImports().process(css, { from: filepath })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
   let design = tailwindcss.__unstable__loadDesignSystem(resolved.css) as DesignSystem
