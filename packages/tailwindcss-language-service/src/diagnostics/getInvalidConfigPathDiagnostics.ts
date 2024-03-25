@@ -27,6 +27,13 @@ export function validateConfigPath(
   let value = dlv(state.config, fullPath)
   let suggestions: string[] = []
 
+  // This property may not exist in the state object because of compatability with Tailwind Play
+  let transformThemeValue = state.modules?.transformThemeValue?.module ?? ((_: any) => (value: any) => value)
+
+  if (fullPath[0] === 'theme' && fullPath[1]) {
+    value = transformThemeValue(fullPath[1])(value)
+  }
+
   function findAlternativePath(): string[] {
     let points = combinations('123456789'.substr(0, keys.length - 1)).map((x) =>
       x.split('').map((x) => parseInt(x, 10)),
