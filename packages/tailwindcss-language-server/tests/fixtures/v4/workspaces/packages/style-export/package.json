@@ -1,0 +1,8 @@
+{
+  "name": "@private/style-export",
+  "exports": {
+    ".": {
+      "style": "./lib.css"
+    }
+  }
+}

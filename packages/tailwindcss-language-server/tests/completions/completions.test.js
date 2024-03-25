@@ -553,3 +553,26 @@ withFixture('v4/basic', (c) => {
     })
   })
 })
+
+withFixture('v4/workspaces', (c) => {
+  let completion = buildCompletion(c)
+
+  test('@import resolution supports exports.style', async ({ expect }) => {
+    let result = await completion({
+      dir: 'packages/web',
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let item = result.items.find((item) => item.label === 'bg-beet')
+
+    let resolved = await c.sendRequest('completionItem/resolve', item)
+
+    expect(resolved).toEqual({
+      ...item,
+      detail: 'background-color: #8e3b46;',
+      documentation: '#8e3b46',
+    })
+  })
+})
