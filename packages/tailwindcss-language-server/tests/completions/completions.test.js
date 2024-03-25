@@ -10,8 +10,9 @@ function buildCompletion(c) {
       triggerKind: 1,
     },
     settings,
+    dir = '',
   }) {
-    let textDocument = await c.openDocument({ text, lang, settings })
+    let textDocument = await c.openDocument({ text, lang, settings, dir })
 
     return c.sendRequest('textDocument/completion', {
       textDocument,
