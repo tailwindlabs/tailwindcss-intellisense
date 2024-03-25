@@ -2,7 +2,7 @@ import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
-  async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
+  async function testHover(name, { text, lang, position, exact = false, expected, expectedRange, settings }) {
     test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
@@ -10,17 +10,17 @@ withFixture('basic', (c) => {
         position,
       })
 
-      expect(res).toEqual(
-        expected
-          ? {
-              contents: {
-                language: 'css',
-                value: expected,
-              },
-              range: expectedRange,
-            }
-          : expected,
-      )
+      if (!exact && expected) {
+        expected = {
+          contents: {
+            language: 'css',
+            value: expected,
+          },
+          range: expectedRange,
+        }
+      }
+
+      expect(res).toEqual(expected)
     })
   }
 

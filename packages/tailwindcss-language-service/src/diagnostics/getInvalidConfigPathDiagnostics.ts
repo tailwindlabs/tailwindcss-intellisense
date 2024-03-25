@@ -23,7 +23,8 @@ export function validateConfigPath(
   base: string[] = [],
 ): { isValid: true; value: any } | { isValid: false; reason: string; suggestions: string[] } {
   let keys = Array.isArray(path) ? path : stringToPath(path)
-  let value = dlv(state.config, [...base, ...keys])
+  let fullPath = [...base, ...keys]
+  let value = dlv(state.config, fullPath)
   let suggestions: string[] = []
 
   function findAlternativePath(): string[] {
