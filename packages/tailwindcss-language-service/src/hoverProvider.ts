@@ -10,6 +10,7 @@ import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
 
 export async function doHover(
   state: State,
@@ -26,6 +27,8 @@ async function provideCssHelperHover(state: State, document: TextDocument, posit
   if (!isCssContext(state, document, position)) {
     return null
   }
+
+  const settings = await state.editor.getConfiguration(document.uri)
 
   let helperFns = findHelperFunctionsInRange(document, {
     start: { line: position.line, character: 0 },
@@ -44,6 +47,10 @@ async function provideCssHelperHover(state: State, document: TextDocument, posit
     // This property may not exist in the state object because of compatability with Tailwind Play
     let value = validated.isValid ? stringifyConfigValue(validated.value) : null
     if (value === null) return null
+
+    if (settings.tailwindCSS.showPixelEquivalents) {
+      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+    }
 
     return {
       contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },

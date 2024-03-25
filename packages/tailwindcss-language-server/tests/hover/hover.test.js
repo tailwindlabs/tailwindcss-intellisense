@@ -89,6 +89,28 @@ withFixture('basic', (c) => {
       end: { line: 2, character: 18 },
     },
   })
+
+  testHover('showPixelEquivalents works with theme()', {
+    lang: 'tailwindcss',
+    text: `.foo { font-size: theme(fontSize.xl) }`,
+    position: { line: 0, character: 32 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '```plaintext',
+          '1.25rem/* 20px */',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 24 },
+        end: { line: 0, character: 35 },
+      }
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
