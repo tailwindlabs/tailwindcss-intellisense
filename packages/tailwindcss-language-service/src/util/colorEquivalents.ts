@@ -1,9 +1,10 @@
 import type { Plugin } from 'postcss'
 import parseValue from 'postcss-value-parser'
+import { inGamut } from 'culori'
 import { formatColor, getColorFromValue } from './color'
 import type { Comment } from './comments'
 
-let allowedFunctions = ['rgb', 'rgba', 'hsl', 'hsla']
+let allowedFunctions = ['rgb', 'rgba', 'hsl', 'hsla', 'lch', 'lab', 'oklch', 'oklab']
 
 export function equivalentColorValues({ comments }: { comments: Comment[] }): Plugin {
   return {
@@ -28,6 +29,10 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
         }
 
         const color = getColorFromValue(`${node.value}(${values.join(' ')})`)
+        if (!inGamut('rgb')(color)) {
+          return false
+        }
+
         if (!color || typeof color === 'string') {
           return false
         }

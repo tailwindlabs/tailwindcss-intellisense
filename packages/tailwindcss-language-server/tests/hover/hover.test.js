@@ -110,6 +110,50 @@ withFixture('basic', (c) => {
       },
     },
   })
+
+  testHover('color equivalents supports in-gamut oklch/oklab', {
+    lang: 'html',
+    text: '<div class="text-[oklch(44.05%_0.16_303)]">',
+    position: { line: 0, character: 32 },
+
+    exact: true,
+    expected: {
+      contents: {
+        language: 'css',
+        value: [
+          '.text-\\[oklch\\(44\\.05\\%_0\\.16_303\\)\\] {',
+          '  color: oklch(44.05% 0.16 303) /* #663399 */;',
+          '}',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 41 },
+      },
+    },
+  })
+
+  testHover('color equivalents ignores wide-gamut oklch/oklab', {
+    lang: 'html',
+    text: '<div class="text-[oklch(60%_0.26_20)]">',
+    position: { line: 0, character: 32 },
+
+    exact: true,
+    expected: {
+      contents: {
+        language: 'css',
+        value: [
+          '.text-\\[oklch\\(60\\%_0\\.26_20\\)\\] {',
+          '  color: oklch(60% 0.26 20);',
+          '}',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 37 },
+      },
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
