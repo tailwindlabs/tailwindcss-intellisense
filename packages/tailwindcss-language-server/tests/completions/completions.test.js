@@ -568,6 +568,7 @@ withFixture('v4/workspaces', (c) => {
     let items = [
       result.items.find((item) => item.label === 'bg-beet'),
       result.items.find((item) => item.label === 'bg-orangepeel'),
+      result.items.find((item) => item.label === 'bg-style-main'),
     ]
 
     let resolved = await Promise.all(items.map((item) => c.sendRequest('completionItem/resolve', item)))
@@ -582,6 +583,12 @@ withFixture('v4/workspaces', (c) => {
       ...items[1],
       detail: 'background-color: #ff9f00;',
       documentation: '#ff9f00',
+    })
+
+    expect(resolved[2]).toEqual({
+      ...items[2],
+      detail: 'background-color: #8e3b46;',
+      documentation: '#8e3b46',
     })
   })
 })

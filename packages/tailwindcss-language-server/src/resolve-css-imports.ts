@@ -4,6 +4,7 @@ import { createResolver } from './util/resolve'
 
 const resolver = createResolver({
   extensions: ['.css'],
+  mainFields: ['style'],
   conditionNames: ['style'],
 })
 
