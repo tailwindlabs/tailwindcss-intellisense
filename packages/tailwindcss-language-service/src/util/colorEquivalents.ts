@@ -3,11 +3,13 @@ import parseValue from 'postcss-value-parser'
 import { formatColor, getColorFromValue } from './color'
 import type { Comment } from './comments'
 
+let allowedFunctions = ['rgb', 'rgba', 'hsl', 'hsla']
+
 export function equivalentColorValues({ comments }: { comments: Comment[] }): Plugin {
   return {
     postcssPlugin: 'plugin',
     Declaration(decl) {
-      if (!decl.value.includes('rgb') && !decl.value.includes('hsl')) {
+      if (!allowedFunctions.some((fn) => decl.value.includes(fn))) {
         return
       }
 
@@ -16,12 +18,7 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
           return true
         }
 
-        if (
-          node.value !== 'rgb' &&
-          node.value !== 'rgba' &&
-          node.value !== 'hsl' &&
-          node.value !== 'hsla'
-        ) {
+        if (!allowedFunctions.includes(node.value)) {
           return false
         }
 
@@ -30,7 +27,7 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
           return false
         }
 
-        const color = getColorFromValue(`rgb(${values.join(', ')})`)
+        const color = getColorFromValue(`${node.value}(${values.join(' ')})`)
         if (!color || typeof color === 'string') {
           return false
         }
