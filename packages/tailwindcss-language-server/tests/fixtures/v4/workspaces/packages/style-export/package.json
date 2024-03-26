@@ -3,6 +3,7 @@
   "exports": {
     ".": {
       "style": "./lib.css"
-    }
+    },
+    "./theme": "./theme.css"
   }
 }
