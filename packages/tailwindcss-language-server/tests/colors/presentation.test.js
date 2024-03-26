@@ -105,6 +105,20 @@ withFixture('basic', (c) => {
       { label: 'bg-[hsl(0,100%,50%)]' },
     ])
   })
+
+  test.concurrent('arbitrary oklch color', async ({ expect }) => {
+    let textDocument = await c.openDocument({ text: '<div class="bg-[oklch(44.05%_0.16_303)]">' })
+    let res = await c.sendRequest('textDocument/colorPresentation', {
+      color: { red: 1, green: 0, blue: 0, alpha: 1 },
+      textDocument,
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 39 },
+      },
+    })
+
+    expect(res).toEqual([])
+  })
 })
 
 withFixture('v4/basic', (c) => {
@@ -210,5 +224,19 @@ withFixture('v4/basic', (c) => {
       { label: 'bg-[rgb(255,0,0)]' },
       { label: 'bg-[hsl(0,100%,50%)]' },
     ])
+  })
+
+  test.concurrent('arbitrary oklch color', async ({ expect }) => {
+    let textDocument = await c.openDocument({ text: '<div class="bg-[oklch(44.05%_0.16_303)]">' })
+    let res = await c.sendRequest('textDocument/colorPresentation', {
+      color: { red: 1, green: 0, blue: 0, alpha: 1 },
+      textDocument,
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 39 },
+      },
+    })
+
+    expect(res).toEqual([])
   })
 })
