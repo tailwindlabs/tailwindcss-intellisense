@@ -43,16 +43,22 @@ export async function loadDesignSystem(
   Object.assign(design, {
     compile(classes: string[]): (postcss.Root | null)[] {
       let css = design.candidatesToCss(classes)
+      let errors: any[] = []
 
       let roots = css.map((str) => {
         if (str === null) return postcss.root()
 
         try {
           return postcss.parse(str.trimEnd())
-        } catch {
-          return null
+        } catch (err) {
+          errors.push(err)
+          return postcss.root()
         }
       })
+
+      if (errors.length > 0) {
+        console.error(errors)
+      }
 
       return roots
     },
