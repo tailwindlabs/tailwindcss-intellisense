@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 @import '@private/shared/ui.css';
+@import '@private/style-export';
+@import '@private/style-export/theme';
+@import '@private/style-main-field';
+
 @theme {
   --color-potato: #907a70;
 }

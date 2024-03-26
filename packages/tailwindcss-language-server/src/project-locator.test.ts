@@ -81,5 +81,6 @@ testFixture('v4/multi-config', [
 testFixture('v4/workspaces', [
   { config: 'packages/admin/app.css' },
   // { config: 'packages/shared/ui.css' }, // Should this be included?
+  // { config: 'packages/style-export/lib.css' }, // Should this be included?
   { config: 'packages/web/app.css' },
 ])

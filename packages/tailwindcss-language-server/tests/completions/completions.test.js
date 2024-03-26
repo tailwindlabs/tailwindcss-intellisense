@@ -10,8 +10,9 @@ function buildCompletion(c) {
       triggerKind: 1,
     },
     settings,
+    dir = '',
   }) {
-    let textDocument = await c.openDocument({ text, lang, settings })
+    let textDocument = await c.openDocument({ text, lang, settings, dir })
 
     return c.sendRequest('textDocument/completion', {
       textDocument,
@@ -549,6 +550,45 @@ withFixture('v4/basic', (c) => {
       ...item,
       detail: 'background-color: #ef4444;',
       documentation: '#ef4444',
+    })
+  })
+})
+
+withFixture('v4/workspaces', (c) => {
+  let completion = buildCompletion(c)
+
+  test('@import resolution supports exports.style', async ({ expect }) => {
+    let result = await completion({
+      dir: 'packages/web',
+      lang: 'html',
+      text: '<div class=""></div>',
+      position: { line: 0, character: 12 },
+    })
+
+    let items = [
+      result.items.find((item) => item.label === 'bg-beet'),
+      result.items.find((item) => item.label === 'bg-orangepeel'),
+      result.items.find((item) => item.label === 'bg-style-main'),
+    ]
+
+    let resolved = await Promise.all(items.map((item) => c.sendRequest('completionItem/resolve', item)))
+
+    expect(resolved[0]).toEqual({
+      ...items[0],
+      detail: 'background-color: #8e3b46;',
+      documentation: '#8e3b46',
+    })
+
+    expect(resolved[1]).toEqual({
+      ...items[1],
+      detail: 'background-color: #ff9f00;',
+      documentation: '#ff9f00',
+    })
+
+    expect(resolved[2]).toEqual({
+      ...items[2],
+      detail: 'background-color: #8e3b46;',
+      documentation: '#8e3b46',
     })
   })
 })

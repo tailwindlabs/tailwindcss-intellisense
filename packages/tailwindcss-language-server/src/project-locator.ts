@@ -9,14 +9,13 @@ import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
 import type { Message } from 'postcss'
-import postcss from 'postcss'
-import postcssImport from 'postcss-import'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { pathToFileURL } from 'node:url'
+import { resolveCssImports } from './resolve-css-imports'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -483,7 +482,6 @@ type ConfigEntry = {
   content: ContentItem[]
 }
 
-let resolveImports = postcss([postcssImport()])
 class FileEntry {
   content: string | null
   deps: Message[] = []
@@ -504,7 +502,7 @@ class FileEntry {
 
   async resolveImports() {
     try {
-      let result = await resolveImports.process(this.content, { from: this.path })
+      let result = await resolveCssImports().process(this.content, { from: this.path })
       this.deps = result.messages.filter((msg) => msg.type === 'dependency')
 
       // Replace the file content with the processed CSS

@@ -1,32 +1,18 @@
-import * as fs from 'fs'
-import {
-  CachedInputFileSystem,
-  ResolverFactory,
-  Resolver,
-  ResolveOptions,
-} from 'enhanced-resolve-301'
 import { equal } from '@tailwindcss/language-service/src/util/array'
+import { createResolver } from './resolve'
 
 let pnpApi: any
 let extensions = Object.keys(require.extensions)
 
-function createResolver(options: Partial<ResolveOptions> = {}): Resolver {
-  return ResolverFactory.createResolver({
-    fileSystem: new CachedInputFileSystem(fs, 4000),
-    useSyncFileSystemCalls: true,
-    // cachePredicate: () => false,
-    conditionNames: ['node', 'require'],
-    extensions,
-    pnpApi,
-    ...options,
-  })
+function recreateResolver() {
+  return createResolver({ extensions, pnpApi })
 }
 
-let resolver = createResolver()
+let resolver = recreateResolver()
 
 export function setPnpApi(newPnpApi: any): void {
   pnpApi = newPnpApi
-  resolver = createResolver()
+  resolver = recreateResolver()
 }
 
 export default function resolveFrom(from?: string, id?: string): string {
@@ -35,7 +21,7 @@ export default function resolveFrom(from?: string, id?: string): string {
   let newExtensions = Object.keys(require.extensions)
   if (!equal(newExtensions, extensions)) {
     extensions = newExtensions
-    resolver = createResolver()
+    resolver = recreateResolver()
   }
 
   let result = resolver.resolveSync({}, from, id)

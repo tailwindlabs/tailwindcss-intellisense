@@ -755,6 +755,7 @@ export async function createProjectService(
         originalConfig = { theme: {} }
       } catch {
         // TODO: Fall back to built-in v4 stuff
+        // TODO: Log errors? It might get noisy as people are editing their CSS though
         enabled = false
         state.enabled = false
         return
