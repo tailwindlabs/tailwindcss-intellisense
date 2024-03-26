@@ -125,6 +125,23 @@
       ]
     },
     {
+      "begin": "(?i)((@)theme)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.theme.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=}|;)(?!\\G)",
+      "patterns": [
+        {
+          "include": "source.css#rule-list"
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)variants)(?=[\\s{]|/\\*|$)",
       "beginCaptures": {
         "1": {

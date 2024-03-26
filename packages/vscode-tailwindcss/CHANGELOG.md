@@ -8,6 +8,7 @@
 - Add support for `<script type="text/babel">` (#932)
 - Show pixel equivalents in completions and hovers of the theme() helper (#935)
 - Handle `style` exports condition when processing `@import`s (#934)
+- Highlight `@theme` contents as a rule list (#937)
 
 ## 0.10.5
 
