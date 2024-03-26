@@ -5,7 +5,7 @@ export function applyComments(str: string, comments: Comment[]): string {
 
   for (let comment of comments) {
     let index = comment.index + offset
-    let commentStr = `/* ${comment.value} */`
+    let commentStr = ` /* ${comment.value} */`
     str = str.slice(0, index) + commentStr + str.slice(index)
     offset += commentStr.length
   }

@@ -222,11 +222,11 @@ withFixture('basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'font-size: 0.875rem/* 14px */; line-height: 1.25rem/* 20px */;',
+      detail: 'font-size: 0.875rem /* 14px */; line-height: 1.25rem /* 20px */;',
       documentation: {
         kind: 'markdown',
         value:
-          '```css\n.text-sm {\n  font-size: 0.875rem/* 14px */;\n  line-height: 1.25rem/* 20px */;\n}\n```',
+          '```css\n.text-sm {\n  font-size: 0.875rem /* 14px */;\n  line-height: 1.25rem /* 20px */;\n}\n```',
       },
     })
   })
@@ -254,11 +254,11 @@ withFixture('basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'font-size: 0.875rem/* 8.75px */; line-height: 1.25rem/* 12.5px */;',
+      detail: 'font-size: 0.875rem /* 8.75px */; line-height: 1.25rem /* 12.5px */;',
       documentation: {
         kind: 'markdown',
         value:
-          '```css\n.text-sm {\n  font-size: 0.875rem/* 8.75px */;\n  line-height: 1.25rem/* 12.5px */;\n}\n```',
+          '```css\n.text-sm {\n  font-size: 0.875rem /* 8.75px */;\n  line-height: 1.25rem /* 12.5px */;\n}\n```',
       },
     })
   })
@@ -521,11 +521,11 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'font-size: 0.875rem/* 8.75px */; line-height: 1.25rem/* 12.5px */;',
+      detail: 'font-size: 0.875rem /* 8.75px */; line-height: 1.25rem /* 12.5px */;',
       documentation: {
         kind: 'markdown',
         value:
-          '```css\n.text-sm {\n  font-size: 0.875rem/* 8.75px */;\n  line-height: 1.25rem/* 12.5px */;\n}\n```',
+          '```css\n.text-sm {\n  font-size: 0.875rem /* 8.75px */;\n  line-height: 1.25rem /* 12.5px */;\n}\n```',
       },
     })
   })

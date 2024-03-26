@@ -38,7 +38,7 @@ withFixture('basic', (c) => {
     expected:
       '.bg-red-500 {\n' +
       '  --tw-bg-opacity: 1;\n' +
-      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity))/* #ef4444 */;\n' +
+      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity)) /* #ef4444 */;\n' +
       '}',
     expectedRange: {
       start: { line: 0, character: 12 },
@@ -59,7 +59,7 @@ withFixture('basic', (c) => {
   testHover('arbitrary value with theme function', {
     text: '<div class="p-[theme(spacing.4)]">',
     position: { line: 0, character: 13 },
-    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem/* 16px */;\n' + '}',
+    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 32 },
@@ -101,7 +101,7 @@ withFixture('basic', (c) => {
         kind: 'markdown',
         value: [
           '```plaintext',
-          '1.25rem/* 20px */',
+          '1.25rem /* 20px */',
           '```',
         ].join('\n'),
       },
@@ -168,7 +168,7 @@ withFixture('v4/basic', (c) => {
   // testHover('arbitrary value with theme function', {
   //   text: '<div class="p-[theme(spacing.4)]">',
   //   position: { line: 0, character: 13 },
-  //   expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem/* 16px */;\n' + '}',
+  //   expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
   //   expectedRange: {
   //     start: { line: 0, character: 12 },
   //     end: { line: 0, character: 32 },

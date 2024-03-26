@@ -20,7 +20,7 @@ export function addPixelEquivalentsToValue(value: string, rootFontSize: number):
       return false
     }
 
-    let commentStr = `/* ${parseFloat(unit.number) * rootFontSize}px */`
+    let commentStr = ` /* ${parseFloat(unit.number) * rootFontSize}px */`
     value = value.slice(0, node.sourceEndIndex) + commentStr + value.slice(node.sourceEndIndex)
 
     return false
