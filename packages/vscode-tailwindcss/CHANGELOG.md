@@ -6,6 +6,7 @@
 - Support Astro's `class:list` attribute by default (#890)
 - Fix hovers and CSS conflict detection in Vue `<style lang="sass">` blocks (#930)
 - Add support for `<script type="text/babel">` (#932)
+- Show pixel equivalents in completions and hovers of the theme() helper (#935)
 
 ## 0.10.5
 

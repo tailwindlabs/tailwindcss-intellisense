@@ -11,6 +11,7 @@ import { addEquivalents } from './equivalents'
 export function stringifyConfigValue(x: any): string {
   if (isObject(x)) return `${Object.keys(x).length} values`
   if (typeof x === 'function') return 'ƒ'
+  if (typeof x === 'string') return x
   return stringifyObject(x, {
     inlineCharacterLimit: Infinity,
     singleQuotes: false,

@@ -415,6 +415,7 @@ export async function createProjectService(
     let pluginVersions: string | undefined
     let browserslist: string[] | undefined
     let resolveConfigFn: (config: any) => any
+    let transformThemeValueFn: (section: any) => (value: any) => any
     let loadConfigFn: (path: string) => any
     let featureFlags: FeatureFlags = { future: [], experimental: [] }
     let applyComplexClasses: any
@@ -511,6 +512,13 @@ export async function createProjectService(
             throw Error('Failed to load resolveConfig function.')
           }
         }
+      }
+
+      try {
+        let fn = require(resolveFrom(tailwindDir, './lib/util/transformThemeValue.js'))
+        transformThemeValueFn = fn.default ?? fn
+      } catch {
+        //
       }
 
       try {
@@ -633,6 +641,7 @@ export async function createProjectService(
       console.error(util.format(error))
       tailwindcss = require('tailwindcss')
       resolveConfigFn = require('tailwindcss/resolveConfig')
+      transformThemeValueFn = require('tailwindcss/lib/util/transformThemeValue').default
       loadConfigFn = require('tailwindcss/loadConfig')
       postcss = require('postcss')
       tailwindcssVersion = require('tailwindcss/package.json').version
@@ -660,6 +669,7 @@ export async function createProjectService(
       postcssSelectorParser: { module: postcssSelectorParser },
       resolveConfig: { module: resolveConfigFn },
       loadConfig: { module: loadConfigFn },
+      transformThemeValue: { module: transformThemeValueFn },
       jit: jitModules,
     }
     state.browserslist = browserslist

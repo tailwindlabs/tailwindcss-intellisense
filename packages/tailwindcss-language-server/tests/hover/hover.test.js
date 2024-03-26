@@ -2,7 +2,7 @@ import { test } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
-  async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
+  async function testHover(name, { text, lang, position, exact = false, expected, expectedRange, settings }) {
     test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
@@ -10,17 +10,17 @@ withFixture('basic', (c) => {
         position,
       })
 
-      expect(res).toEqual(
-        expected
-          ? {
-              contents: {
-                language: 'css',
-                value: expected,
-              },
-              range: expectedRange,
-            }
-          : expected,
-      )
+      if (!exact && expected) {
+        expected = {
+          contents: {
+            language: 'css',
+            value: expected,
+          },
+          range: expectedRange,
+        }
+      }
+
+      expect(res).toEqual(expected)
     })
   }
 
@@ -38,7 +38,7 @@ withFixture('basic', (c) => {
     expected:
       '.bg-red-500 {\n' +
       '  --tw-bg-opacity: 1;\n' +
-      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity))/* #ef4444 */;\n' +
+      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity)) /* #ef4444 */;\n' +
       '}',
     expectedRange: {
       start: { line: 0, character: 12 },
@@ -59,7 +59,7 @@ withFixture('basic', (c) => {
   testHover('arbitrary value with theme function', {
     text: '<div class="p-[theme(spacing.4)]">',
     position: { line: 0, character: 13 },
-    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem/* 16px */;\n' + '}',
+    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 32 },
@@ -87,6 +87,28 @@ withFixture('basic', (c) => {
     expectedRange: {
       start: { line: 2, character: 9 },
       end: { line: 2, character: 18 },
+    },
+  })
+
+  testHover('showPixelEquivalents works with theme()', {
+    lang: 'tailwindcss',
+    text: `.foo { font-size: theme(fontSize.xl) }`,
+    position: { line: 0, character: 32 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '```plaintext',
+          '1.25rem /* 20px */',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 24 },
+        end: { line: 0, character: 35 },
+      }
     },
   })
 })
@@ -146,7 +168,7 @@ withFixture('v4/basic', (c) => {
   // testHover('arbitrary value with theme function', {
   //   text: '<div class="p-[theme(spacing.4)]">',
   //   position: { line: 0, character: 13 },
-  //   expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem/* 16px */;\n' + '}',
+  //   expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
   //   expectedRange: {
   //     start: { line: 0, character: 12 },
   //     end: { line: 0, character: 32 },

@@ -10,6 +10,7 @@ import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
 
 export async function doHover(
   state: State,
@@ -18,14 +19,16 @@ export async function doHover(
 ): Promise<Hover> {
   return (
     (await provideClassNameHover(state, document, position)) ||
-    provideCssHelperHover(state, document, position)
+    (await provideCssHelperHover(state, document, position))
   )
 }
 
-function provideCssHelperHover(state: State, document: TextDocument, position: Position): Hover {
+async function provideCssHelperHover(state: State, document: TextDocument, position: Position): Promise<Hover> {
   if (!isCssContext(state, document, position)) {
     return null
   }
+
+  const settings = await state.editor.getConfiguration(document.uri)
 
   let helperFns = findHelperFunctionsInRange(document, {
     start: { line: position.line, character: 0 },
@@ -33,20 +36,25 @@ function provideCssHelperHover(state: State, document: TextDocument, position: P
   })
 
   for (let helperFn of helperFns) {
-    if (isWithinRange(position, helperFn.ranges.path)) {
-      let validated = validateConfigPath(
-        state,
-        helperFn.path,
-        helperFn.helper === 'theme' ? ['theme'] : [],
-      )
-      let value = validated.isValid ? stringifyConfigValue(validated.value) : null
-      if (value === null) {
-        return null
-      }
-      return {
-        contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
-        range: helperFn.ranges.path,
-      }
+    if (!isWithinRange(position, helperFn.ranges.path)) continue
+
+    let validated = validateConfigPath(
+      state,
+      helperFn.path,
+      helperFn.helper === 'theme' ? ['theme'] : [],
+    )
+
+    // This property may not exist in the state object because of compatability with Tailwind Play
+    let value = validated.isValid ? stringifyConfigValue(validated.value) : null
+    if (value === null) return null
+
+    if (settings.tailwindCSS.showPixelEquivalents) {
+      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+    }
+
+    return {
+      contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
+      range: helperFn.ranges.path,
     }
   }
 
