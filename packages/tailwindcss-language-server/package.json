@@ -25,10 +25,7 @@
   "bin": {
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
   },
-  "files": [
-    "bin",
-    "ThirdPartyNotices.txt"
-  ],
+  "files": ["bin", "ThirdPartyNotices.txt"],
   "publishConfig": {
     "access": "public"
   },
@@ -78,7 +75,7 @@
     "resolve": "1.20.0",
     "rimraf": "3.0.2",
     "stack-trace": "0.0.10",
-    "tailwindcss": "3.4.1",
+    "tailwindcss": "3.4.2",
     "typescript": "5.3.3",
     "vite-tsconfig-paths": "^4.3.1",
     "vitest": "^1.1.2",
