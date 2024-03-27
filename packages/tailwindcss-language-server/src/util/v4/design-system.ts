@@ -57,7 +57,7 @@ export async function loadDesignSystem(
       })
 
       if (errors.length > 0) {
-        console.error(errors)
+        console.error(JSON.stringify(errors))
       }
 
       return roots
