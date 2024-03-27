@@ -59,15 +59,30 @@ withFixture('basic', (c) => {
   })
 
   testColors('arbitrary value and opacity modifier', {
-    text: '<div class="bg-[red]/[0.33]">',
+    text: '<div class="bg-[red]/[0.5]">',
     expected: [
       {
-        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 27 } },
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 26 } },
         color: {
           red: 1,
           green: 0,
           blue: 0,
-          alpha: 0.33,
+          alpha: 0.5,
+        },
+      },
+    ],
+  })
+
+  testColors('oklch colors are parsed', {
+    text: '<div class="bg-[oklch(60%_0.25_25)]">',
+    expected: [
+      {
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 35 } },
+        color: {
+          alpha: 1,
+          red: 0.9475942429386454,
+          green: 0,
+          blue: 0.14005415620741646,
         },
       },
     ],
@@ -135,19 +150,33 @@ withFixture('v4/basic', (c) => {
 
   /*
   testColors('arbitrary value and opacity modifier', {
-    text: '<div class="bg-[red]/[0.33]">',
+    text: '<div class="bg-[red]/[0.5]">',
     expected: [
       {
-        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 27 } },
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 26 } },
         color: {
           red: 1,
           green: 0,
           blue: 0,
-          // TODO: This is strange, it should be 0.33
-          alpha: 0.32941176470588235,
+          alpha: 0.5,
         },
       },
     ],
   })
   */
+
+  testColors('oklch colors are parsed', {
+    text: '<div class="bg-[oklch(60%_0.25_25)]">',
+    expected: [
+      {
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 35 } },
+        color: {
+          alpha: 1,
+          red: 0.9475942429386454,
+          green: 0,
+          blue: 0.14005415620741646,
+        },
+      },
+    ],
+  })
 })

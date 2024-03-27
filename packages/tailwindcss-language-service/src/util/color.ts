@@ -43,7 +43,7 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgb|hsl)a?\\(\\s*(-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgba?|hsla?|(?:ok)?(?:lab|lch))\\(\\s*(-?[\\d.]+%?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
     namedColors,
   ).join('|')})(?:$|\\s|\\)|,)`,
   'gi',
@@ -52,7 +52,7 @@ const colorRegex = new RegExp(
 function replaceColorVarsWithTheirDefaults(str: string): string {
   // rgb(var(--primary, 66 66 66))
   // -> rgb(66 66 66)
-  return str.replace(/((?:rgb|hsl)a?\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
+  return str.replace(/((?:rgba?|hsla?|(?:ok)?(?:lab|lch))\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
 }
 
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
@@ -205,7 +205,7 @@ export function getColorFromValue(value: unknown): culori.Color | KeywordColor |
     return 'currentColor'
   }
   if (
-    !/^\s*(?:rgba?|hsla?)\s*\([^)]+\)\s*$/.test(trimmedValue) &&
+    !/^\s*(?:rgba?|hsla?|(?:ok)?(?:lab|lch))\s*\([^)]+\)\s*$/.test(trimmedValue) &&
     !/^\s*#[0-9a-f]+\s*$/i.test(trimmedValue) &&
     !Object.keys(namedColors).includes(trimmedValue)
   ) {
@@ -218,7 +218,7 @@ export function getColorFromValue(value: unknown): culori.Color | KeywordColor |
 let toRgb = culori.converter('rgb')
 
 export function culoriColorToVscodeColor(color: culori.Color): Color {
-  let rgb = toRgb(color)
+  let rgb = culori.clampRgb(toRgb(color))
   return { red: rgb.r, green: rgb.g, blue: rgb.b, alpha: rgb.alpha ?? 1 }
 }
 
