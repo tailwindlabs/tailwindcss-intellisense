@@ -12,9 +12,7 @@ const resolveImports = postcss([
   postcssImport({
     resolve(id, basedir) {
       let paths = resolver.resolveSync({}, basedir, id)
-      return paths
-        ? paths
-        : id
+      return paths ? paths : id
     },
   }),
 ])

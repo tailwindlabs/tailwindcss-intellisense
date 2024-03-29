@@ -28,7 +28,8 @@ export function validateConfigPath(
   let suggestions: string[] = []
 
   // This property may not exist in the state object because of compatability with Tailwind Play
-  let transformThemeValue = state.modules?.transformThemeValue?.module ?? ((_: any) => (value: any) => value)
+  let transformThemeValue =
+    state.modules?.transformThemeValue?.module ?? ((_: any) => (value: any) => value)
 
   if (fullPath[0] === 'theme' && fullPath[1]) {
     value = transformThemeValue(fullPath[1])(value)

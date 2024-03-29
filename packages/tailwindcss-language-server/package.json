@@ -25,7 +25,10 @@
   "bin": {
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
   },
-  "files": ["bin", "ThirdPartyNotices.txt"],
+  "files": [
+    "bin",
+    "ThirdPartyNotices.txt"
+  ],
   "publishConfig": {
     "access": "public"
   },

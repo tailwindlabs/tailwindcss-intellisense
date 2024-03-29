@@ -571,7 +571,9 @@ withFixture('v4/workspaces', (c) => {
       result.items.find((item) => item.label === 'bg-style-main'),
     ]
 
-    let resolved = await Promise.all(items.map((item) => c.sendRequest('completionItem/resolve', item)))
+    let resolved = await Promise.all(
+      items.map((item) => c.sendRequest('completionItem/resolve', item)),
+    )
 
     expect(resolved[0]).toEqual({
       ...items[0],

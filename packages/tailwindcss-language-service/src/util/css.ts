@@ -7,9 +7,9 @@ import { cssLanguages } from './languages'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 
 function getCssLanguages(state: State) {
-  const userCssLanguages = Object
-    .keys(state.editor.userLanguages)
-    .filter((lang) => cssLanguages.includes(state.editor.userLanguages[lang]))
+  const userCssLanguages = Object.keys(state.editor.userLanguages).filter((lang) =>
+    cssLanguages.includes(state.editor.userLanguages[lang]),
+  )
 
   return [...cssLanguages, ...userCssLanguages]
 }
@@ -17,7 +17,6 @@ function getCssLanguages(state: State) {
 export function isCssLanguage(state: State, lang: string) {
   return getCssLanguages(state).indexOf(lang) !== -1
 }
-
 
 export function isCssDoc(state: State, doc: TextDocument): boolean {
   return isCssLanguage(state, doc.languageId)

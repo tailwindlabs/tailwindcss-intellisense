@@ -23,7 +23,11 @@ export async function doHover(
   )
 }
 
-async function provideCssHelperHover(state: State, document: TextDocument, position: Position): Promise<Hover> {
+async function provideCssHelperHover(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): Promise<Hover> {
   if (!isCssContext(state, document, position)) {
     return null
   }

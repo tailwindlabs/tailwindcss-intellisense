@@ -419,24 +419,26 @@ export async function findClassNameAtPosition(
   if (isVueDoc(doc)) {
     let boundaries = getLanguageBoundaries(state, doc)
 
-    let groups = await Promise.all(boundaries.map(async ({ type, range, lang }) => {
-      if (type === 'css') {
-        return findClassListsInCssRange(state, doc, range, lang)
-      }
+    let groups = await Promise.all(
+      boundaries.map(async ({ type, range, lang }) => {
+        if (type === 'css') {
+          return findClassListsInCssRange(state, doc, range, lang)
+        }
 
-      if (type === 'html') {
-        return await findClassListsInHtmlRange(state, doc, 'html', range)
-      }
+        if (type === 'html') {
+          return await findClassListsInHtmlRange(state, doc, 'html', range)
+        }
 
-      if (type === 'jsx') {
-        return await findClassListsInHtmlRange(state, doc, 'jsx', range)
-      }
+        if (type === 'jsx') {
+          return await findClassListsInHtmlRange(state, doc, 'jsx', range)
+        }
 
-      return []
-    }))
+        return []
+      }),
+    )
 
-    classNames = dedupeByRange(flatten(groups)).flatMap(
-      (classList) => getClassNamesInClassList(classList, state.blocklist)
+    classNames = dedupeByRange(flatten(groups)).flatMap((classList) =>
+      getClassNamesInClassList(classList, state.blocklist),
     )
   } else if (isCssContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')

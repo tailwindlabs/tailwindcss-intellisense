@@ -10,7 +10,7 @@ import { getTextWithoutComments } from './doc'
 import { isCssLanguage } from './css'
 
 export type LanguageBoundary = {
-  type: 'html' | 'js' | 'jsx' | 'css' | (string & {});
+  type: 'html' | 'js' | 'jsx' | 'css' | (string & {})
   range: Range
   lang?: string
 }
