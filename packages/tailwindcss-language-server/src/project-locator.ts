@@ -16,6 +16,7 @@ import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { pathToFileURL } from 'node:url'
 import { resolveCssImports } from './resolve-css-imports'
+import type { GlobEntry } from '@tailwindcss/oxide'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -439,27 +440,34 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
     } else if (item.kind === 'auto' && !auto) {
       auto = true
       for await (let file of detectContentFiles(entry.packageRoot)) {
-        yield {
-          pattern: normalizePath(file),
-          priority: DocumentSelectorPriority.CONTENT_FILE,
+        if (typeof file === 'string') {
+          yield {
+            pattern: normalizePath(file),
+            priority: DocumentSelectorPriority.CONTENT_FILE,
+          }
         }
       }
     }
   }
 }
 
-async function* detectContentFiles(base: string): AsyncIterable<string> {
+async function* detectContentFiles(base: string): AsyncIterable<string | GlobEntry> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
 
     // This isn't a v4 project
     const oxide = await import(oxidePath)
-    if (!oxide.scanDir) {
+
+    function validateOxide(input: any): input is typeof import('@tailwindcss/oxide') {
+      return !!oxide.scanDir
+    }
+
+    if (!validateOxide(oxide)) {
       return
     }
 
-    let { files, globs } = await oxide.scanDir({ base, globs: true })
+    let { files, globs } = oxide.scanDir({ base, globs: true })
 
     yield* files
     yield* globs
