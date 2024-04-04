@@ -31,11 +31,12 @@ function testFixture(fixture: string, details: any[]) {
       expect(configPath).toEqual(detail?.config)
 
       if (detail?.content) {
-        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath))
+        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath)).sort()
 
         let actual = project.documentSelector
           .filter((selector) => selector.priority === 1 /** content */)
           .map((selector) => selector.pattern)
+          .sort()
 
         expect(actual).toEqual(expected)
       }
