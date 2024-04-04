@@ -303,6 +303,10 @@ export class ProjectLocator {
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
+    let indexPath: string | null = null
+    let themePath: string | null = null
+    let utilitiesPath: string | null = null
+
     for (let file of imports) {
       graph.add(file.path, file)
 
@@ -314,7 +318,27 @@ export class ProjectLocator {
 
         graph.connect(file.path, importedPath)
       }
+
+      // Collect the index, theme, and utilities files for manual connection
+      if (file.path.includes('node_modules/tailwindcss/index.css')) {
+        indexPath = file.path
+      } else if (file.path.includes('node_modules/tailwindcss/theme.css')) {
+        themePath = file.path
+      } else if (file.path.includes('node_modules/tailwindcss/utilities.css')) {
+        utilitiesPath = file.path
+      }
     }
+
+    // We flatten the index file on publish so there are no imports that
+    // need to be resolved. But this messes with our graph traversal, so
+    // we need to manually connect the index file to the theme and utilities
+    // files so we do not get extra roots in the graph.
+    // - node_modules/tailwindcss/index.css
+    // -> node_modules/tailwindcss/theme.css
+    // -> node_modules/tailwindcss/utilities.css
+
+    if (indexPath && themePath) graph.connect(indexPath, themePath)
+    if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
     for (let root of graph.roots()) {
       let config: ConfigEntry = configs.remember(root.path, () => ({
@@ -438,9 +462,9 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      for await (let file of detectContentFiles(entry.packageRoot)) {
+      for await (let pattern of detectContentFiles(entry.packageRoot)) {
         yield {
-          pattern: normalizePath(file),
+          pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
         }
       }
@@ -453,16 +477,21 @@ async function* detectContentFiles(base: string): AsyncIterable<string> {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
 
+    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath)
+
     // This isn't a v4 project
-    const oxide = await import(oxidePath)
-    if (!oxide.scanDir) {
-      return
+    if (!oxide.scanDir) return
+
+    let { files, globs } = oxide.scanDir({ base, globs: true })
+
+    for (let file of files) {
+      yield normalizePath(file)
     }
 
-    let { files, globs } = await oxide.scanDir({ base, globs: true })
-
-    yield* files
-    yield* globs
+    for (let { base, glob } of globs) {
+      // Do not normalize the glob itself as it may contain escape sequences
+      yield normalizePath(base) + '/' + glob
+    }
   } catch {
     //
   }
