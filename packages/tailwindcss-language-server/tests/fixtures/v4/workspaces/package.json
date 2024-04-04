@@ -1,8 +1,6 @@
 {
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "dependencies": {
-    "tailwindcss": "^4.0.0-alpha.9"
+    "tailwindcss": "^4.0.0-alpha.12"
   }
 }
