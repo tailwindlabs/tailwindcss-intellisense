@@ -303,6 +303,18 @@ export class ProjectLocator {
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
+    // We flatten the index file on publish so there are no imports that
+    // need to be resolved. But this messes with our graph traversal, so
+    // we need to manually connect the index file to the theme and utilities
+    // files so we do not get extra roots in the graph.
+    // - node_modules/tailwindcss/index.css
+    // -> node_modules/tailwindcss/theme.css
+    // -> node_modules/tailwindcss/utilities.css
+
+    let indexPath: string | null = null
+    let themePath: string | null = null
+    let utilitiesPath: string | null = null
+
     for (let file of imports) {
       graph.add(file.path, file)
 
@@ -314,7 +326,19 @@ export class ProjectLocator {
 
         graph.connect(file.path, importedPath)
       }
+
+      // Collect the index, theme, and utilities files for manual connection
+      if (file.path.includes('node_modules/tailwindcss/index.css')) {
+        indexPath = file.path
+      } else if (file.path.includes('node_modules/tailwindcss/theme.css')) {
+        themePath = file.path
+      } else if (file.path.includes('node_modules/tailwindcss/utilities.css')) {
+        utilitiesPath = file.path
+      }
     }
+
+    if (indexPath && themePath) graph.connect(indexPath, themePath)
+    if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
     for (let root of graph.roots()) {
       let config: ConfigEntry = configs.remember(root.path, () => ({
