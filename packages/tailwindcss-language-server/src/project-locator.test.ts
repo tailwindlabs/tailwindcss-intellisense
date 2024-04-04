@@ -29,6 +29,16 @@ function testFixture(fixture: string, details: any[]) {
       let configPath = path.relative(fixturePath, project.config.path)
 
       expect(configPath).toEqual(detail?.config)
+
+      if (detail?.content) {
+        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath))
+
+        let actual = project.documentSelector
+          .filter((selector) => selector.priority === 1 /** content */)
+          .map((selector) => selector.pattern)
+
+        expect(actual).toEqual(expected)
+      }
     }
 
     expect(projects).toHaveLength(details.length)
@@ -83,4 +93,17 @@ testFixture('v4/workspaces', [
   // { config: 'packages/shared/ui.css' }, // Should this be included?
   // { config: 'packages/style-export/lib.css' }, // Should this be included?
   { config: 'packages/web/app.css' },
+])
+
+testFixture('v4/auto-content', [
+  //
+  {
+    config: 'src/app.css',
+    content: [
+      '{URL}/package.json',
+      '{URL}/src/index.html',
+      '{URL}/src/components/example.html',
+      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+    ],
+  },
 ])
