@@ -323,6 +323,14 @@
           "markdownDescription": "Enable the Node.js inspector agent for the language server and listen on the specified port."
         }
       }
+    },
+    "configurationDefaults": {
+      "files.associations": {
+        "*.css": "tailwindcss"
+      },
+      "editor.quickSuggestions": {
+        "strings": "on"
+      }
     }
   },
   "scripts": {
