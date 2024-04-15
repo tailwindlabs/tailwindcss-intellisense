@@ -167,7 +167,16 @@ export function getColor(state: State, className: string): culori.Color | Keywor
       }
     }
 
-    let { root, rules } = jit.generateRules(state, [className])
+    let result!: ReturnType<typeof jit.generateRules>
+    try {
+      result = jit.generateRules(state, [className])
+    } catch (err) {
+      console.error(`Error generating rules for className: ${className}`)
+      console.error(err)
+      return null
+    }
+
+    let { root, rules } = result
     if (rules.length === 0) return null
 
     let decls: Record<string, string | string[]> = {}
