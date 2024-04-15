@@ -1,9 +1,9 @@
 import './lib/env'
 import { createConnection } from 'vscode-languageserver/node'
-import { formatError } from './util/error'
 // @ts-ignore
 import preflight from 'tailwindcss/lib/css/preflight.css'
 import { TW } from './tw'
+import { interceptLogs } from './util/logs'
 
 // @ts-ignore
 // new Function(…) is used to work around issues with esbuild
@@ -25,11 +25,10 @@ new Function(
 const connection =
   process.argv.length <= 2 ? createConnection(process.stdin, process.stdout) : createConnection()
 
-console.log = connection.console.log.bind(connection.console)
-console.error = connection.console.error.bind(connection.console)
+interceptLogs(console, connection)
 
 process.on('unhandledRejection', (e: any) => {
-  connection.console.error(formatError(`Unhandled exception`, e))
+  console.error(`Unhandled rejection`, e)
 })
 
 const tw = new TW(connection)
