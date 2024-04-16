@@ -154,20 +154,7 @@ export class TW {
     // configs, etc… per folder. Some of this work should be sharable.
     await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
 
-    if (!this.initializeParams.capabilities.workspace.workspaceFolders) return
-
-    this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
-      // Initialize any new folders that have appeared
-      let added = evt.added
-        .map((folder) => ({
-          uri: URI.parse(folder.uri).fsPath,
-          name: folder.name,
-        }))
-        .map((folder) => normalizePath(folder.uri))
-      await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
-
-      // TODO: If folders get removed we should cleanup any associated state and resources
-    })
+    await this.listenForEvents()
   }
 
   private async _initFolder(base: string): Promise<void> {
@@ -505,8 +492,6 @@ export class TW {
       ),
     )
 
-    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
-
     // init projects for documents that are _already_ open
     let readyDocuments: string[] = []
     for (let document of this.documentService.getAllDocuments()) {
@@ -540,6 +525,22 @@ export class TW {
       }),
     )
 
+    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
+    if (!isTestMode) return
+
+    await Promise.all(
+      readyDocuments.map((uri) =>
+        this.connection.sendNotification('@/tailwindCSS/documentReady', {
+          uri,
+        }),
+      ),
+    )
+  }
+
+  private async listenForEvents() {
+    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     this.disposables.push(
       this.connection.onShutdown(() => {
         this.dispose()
@@ -572,14 +573,20 @@ export class TW {
       }),
     )
 
-    if (!isTestMode) return
+    this.disposables.push(
+      this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
+        // Initialize any new folders that have appeared
+        let added = evt.added
+          .map((folder) => ({
+            uri: URI.parse(folder.uri).fsPath,
+            name: folder.name,
+          }))
+          .map((folder) => normalizePath(folder.uri))
 
-    await Promise.all(
-      readyDocuments.map((uri) =>
-        this.connection.sendNotification('@/tailwindCSS/documentReady', {
-          uri,
-        }),
-      ),
+        await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+
+        // TODO: If folders get removed we should cleanup any associated state and resources
+      }),
     )
   }
 
