@@ -18,6 +18,7 @@ import type {
   DocumentLinkParams,
   DocumentLink,
   InitializeResult,
+  WorkspaceFolder,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -37,7 +38,6 @@ import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
-import { normalizeFileNameToFsPath } from './util/uri'
 import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
@@ -107,23 +107,57 @@ export class TW {
     await this.initPromise
   }
 
+  private getWorkspaceFolders(): WorkspaceFolder[] {
+    if (this.initializeParams.workspaceFolders?.length) {
+      return this.initializeParams.workspaceFolders.map((folder) => ({
+        uri: URI.parse(folder.uri).fsPath,
+        name: folder.name,
+      }))
+    }
+
+    if (this.initializeParams.rootUri) {
+      return [
+        {
+          uri: URI.parse(this.initializeParams.rootUri).fsPath,
+          name: 'Root',
+        },
+      ]
+    }
+
+    if (this.initializeParams.rootPath) {
+      return [
+        {
+          uri: URI.file(this.initializeParams.rootPath).fsPath,
+          name: 'Root',
+        },
+      ]
+    }
+
+    return []
+  }
+
   private async _init(): Promise<void> {
     clearRequireCache()
 
-    let base: string
-    if (this.initializeParams.rootUri) {
-      base = URI.parse(this.initializeParams.rootUri).fsPath
-    } else if (this.initializeParams.rootPath) {
-      base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
-    }
+    let folders = this.getWorkspaceFolders().map((folder) => normalizePath(folder.uri))
 
-    if (!base) {
+    if (folders.length === 0) {
       console.error('No workspace folders found, not initializing.')
       return
     }
 
-    base = normalizePath(base)
+    // Initialize each workspace separately
+    // We use `allSettled` here because failures in one folder should not prevent initialization of others
+    //
+    // NOTE: We should eventually be smart about avoiding duplicate work. We do
+    // not necessarily need to set up file watchers, search for projects, read
+    // configs, etc… per folder. Some of this work should be sharable.
+    await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
 
+    await this.listenForEvents()
+  }
+
+  private async _initFolder(base: string): Promise<void> {
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
@@ -459,12 +493,15 @@ export class TW {
     )
 
     // init projects for documents that are _already_ open
+    let readyDocuments: string[] = []
     for (let document of this.documentService.getAllDocuments()) {
       let project = this.getProject(document)
       if (project && !project.enabled()) {
         project.enable()
         await project.tryInit()
       }
+
+      readyDocuments.push(document.uri)
     }
 
     this.setupLSPHandlers()
@@ -488,6 +525,22 @@ export class TW {
       }),
     )
 
+    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
+    if (!isTestMode) return
+
+    await Promise.all(
+      readyDocuments.map((uri) =>
+        this.connection.sendNotification('@/tailwindCSS/documentReady', {
+          uri,
+        }),
+      ),
+    )
+  }
+
+  private async listenForEvents() {
+    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     this.disposables.push(
       this.connection.onShutdown(() => {
         this.dispose()
@@ -501,14 +554,42 @@ export class TW {
     )
 
     this.disposables.push(
-      this.documentService.onDidOpen((event) => {
+      this.documentService.onDidOpen(async (event) => {
         let project = this.getProject(event.document)
-        if (project && !project.enabled()) {
+        if (!project) return
+
+        if (!project.enabled()) {
           project.enable()
-          project.tryInit()
+          await project.tryInit()
         }
+
+        if (!isTestMode) return
+
+        // TODO: This is a hack and shouldn't be necessary
+        // await new Promise((resolve) => setTimeout(resolve, 100))
+        await this.connection.sendNotification('@/tailwindCSS/documentReady', {
+          uri: event.document.uri,
+        })
       }),
     )
+
+    if (this.initializeParams.capabilities.workspace.workspaceFolders) {
+      this.disposables.push(
+        this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
+          // Initialize any new folders that have appeared
+          let added = evt.added
+            .map((folder) => ({
+              uri: URI.parse(folder.uri).fsPath,
+              name: folder.name,
+            }))
+            .map((folder) => normalizePath(folder.uri))
+
+          await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+
+          // TODO: If folders get removed we should cleanup any associated state and resources
+        }),
+      )
+    }
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
@@ -552,7 +633,7 @@ export class TW {
       return
     }
 
-    this.connection.sendNotification('tailwind/projectDetails', {
+    this.connection.sendNotification('@/tailwindCSS/projectDetails', {
       config: projectConfig.configPath,
       tailwind: projectConfig.tailwind,
     })

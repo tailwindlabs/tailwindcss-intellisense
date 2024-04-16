@@ -15,10 +15,12 @@ import {
 } from 'vscode-languageserver-protocol'
 import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
 import type { Feature } from '@tailwindcss/language-service/src/features'
+import { CacheMap } from '../src/cache-map'
 
 type Settings = any
 
-interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
+interface FixtureContext
+  extends Pick<ProtocolConnection, 'sendRequest' | 'sendNotification' | 'onNotification'> {
   client: ProtocolConnection
   openDocument: (params: {
     text: string
@@ -28,6 +30,7 @@ interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNot
   }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
   updateSettings: (settings: Settings) => Promise<void>
   updateFile: (file: string, text: string) => Promise<void>
+  fixtureUri(fixture: string): string
 
   readonly project: {
     config: string
@@ -39,7 +42,7 @@ interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNot
   }
 }
 
-async function init(fixture: string): Promise<FixtureContext> {
+async function init(fixture: string | string[]): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
@@ -125,13 +128,34 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
   }
 
+  const fixtures = Array.isArray(fixture) ? fixture : [fixture]
+
+  function fixtureUri(fixture: string) {
+    return `file://${path.resolve('./tests/fixtures', fixture)}`
+  }
+
+  function resolveUri(...parts: string[]) {
+    const filepath =
+      fixtures.length > 1
+        ? path.resolve('./tests/fixtures', ...parts)
+        : path.resolve('./tests/fixtures', fixtures[0], ...parts)
+
+    return `file://${filepath}`
+  }
+
+  const workspaceFolders = fixtures.map((fixture) => ({
+    name: `Fixture ${fixture}`,
+    uri: fixtureUri(fixture),
+  }))
+
+  const rootUri = fixtures.length > 1 ? null : workspaceFolders[0].uri
+
   await client.sendRequest(InitializeRequest.type, {
     processId: -1,
-    // rootPath: '.',
-    rootUri: `file://${path.resolve('./tests/fixtures/', fixture)}`,
+    rootUri,
     capabilities,
     trace: 'off',
-    workspaceFolders: [],
+    workspaceFolders,
     initializationOptions: {
       testMode: true,
     },
@@ -158,22 +182,37 @@ async function init(fixture: string): Promise<FixtureContext> {
     })
   })
 
+  interface PromiseWithResolvers<T> extends Promise<T> {
+    resolve: (value?: T | PromiseLike<T>) => void
+    reject: (reason?: any) => void
+  }
+
+  let openingDocuments = new CacheMap<string, PromiseWithResolvers<void>>()
   let projectDetails: any = null
 
-  client.onNotification('tailwind/projectDetails', (params) => {
+  client.onNotification('@/tailwindCSS/projectDetails', (params) => {
     console.log('[TEST] Project detailed changed')
     projectDetails = params
+  })
+
+  client.onNotification('@/tailwindCSS/documentReady', (params) => {
+    console.log('[TEST] Document ready', params.uri)
+    openingDocuments.get(params.uri)?.resolve()
   })
 
   let counter = 0
 
   return {
     client,
+    fixtureUri,
     get project() {
       return projectDetails
     },
     sendRequest(type: any, params: any) {
       return client.sendRequest(type, params)
+    },
+    sendNotification(type: any, params?: any) {
+      return client.sendNotification(type, params)
     },
     onNotification(type: any, callback: any) {
       return client.onNotification(type, callback)
@@ -189,8 +228,23 @@ async function init(fixture: string): Promise<FixtureContext> {
       dir?: string
       settings?: Settings
     }) {
-      let uri = `file://${path.resolve('./tests/fixtures', fixture, dir, `file-${counter++}`)}`
+      let uri = resolveUri(dir, `file-${counter++}`)
       docSettings.set(uri, settings)
+
+      let openPromise = openingDocuments.remember(uri, () => {
+        let resolve = () => {}
+        let reject = () => {}
+
+        let p = new Promise<void>((_resolve, _reject) => {
+          resolve = _resolve
+          reject = _reject
+        })
+
+        return Object.assign(p, {
+          resolve,
+          reject,
+        })
+      })
 
       await client.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: {
@@ -204,6 +258,7 @@ async function init(fixture: string): Promise<FixtureContext> {
       // If opening a document stalls then it's probably because this promise is not being resolved
       // This can happen if a document is not covered by one of the selectors because of it's URI
       await initPromise
+      await openPromise
 
       return {
         uri,
@@ -220,7 +275,7 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
 
     async updateFile(file: string, text: string) {
-      let uri = `file://${path.resolve('./tests/fixtures', fixture, file)}`
+      let uri = resolveUri(file)
 
       await client.sendNotification(DidChangeTextDocumentNotification.type, {
         textDocument: { uri, version: counter++ },
@@ -230,7 +285,7 @@ async function init(fixture: string): Promise<FixtureContext> {
   }
 }
 
-export function withFixture(fixture, callback: (c: FixtureContext) => void) {
+export function withFixture(fixture: string, callback: (c: FixtureContext) => void) {
   describe(fixture, () => {
     let c: FixtureContext = {} as any
 
@@ -244,5 +299,28 @@ export function withFixture(fixture, callback: (c: FixtureContext) => void) {
     })
 
     callback(c)
+  })
+}
+
+export function withWorkspace({
+  fixtures,
+  run,
+}: {
+  fixtures: string[]
+  run: (c: FixtureContext) => void
+}) {
+  describe(`workspace: ${fixtures.join(', ')}`, () => {
+    let c: FixtureContext = {} as any
+
+    beforeAll(async () => {
+      // Using the connection object as the prototype lets us access the connection
+      // without defining getters for all the methods and also lets us add helpers
+      // to the connection object without having to resort to using a Proxy
+      Object.setPrototypeOf(c, await init(fixtures))
+
+      return () => c.client.dispose()
+    })
+
+    run(c)
   })
 }
