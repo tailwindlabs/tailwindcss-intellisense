@@ -573,21 +573,23 @@ export class TW {
       }),
     )
 
-    this.disposables.push(
-      this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
-        // Initialize any new folders that have appeared
-        let added = evt.added
-          .map((folder) => ({
-            uri: URI.parse(folder.uri).fsPath,
-            name: folder.name,
-          }))
-          .map((folder) => normalizePath(folder.uri))
+    if (this.initializeParams.capabilities.workspace.workspaceFolders) {
+      this.disposables.push(
+        this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
+          // Initialize any new folders that have appeared
+          let added = evt.added
+            .map((folder) => ({
+              uri: URI.parse(folder.uri).fsPath,
+              name: folder.name,
+            }))
+            .map((folder) => normalizePath(folder.uri))
 
-        await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+          await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
 
-        // TODO: If folders get removed we should cleanup any associated state and resources
-      }),
-    )
+          // TODO: If folders get removed we should cleanup any associated state and resources
+        }),
+      )
+    }
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
