@@ -18,6 +18,7 @@ import type {
   DocumentLinkParams,
   DocumentLink,
   InitializeResult,
+  WorkspaceFolder,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -37,7 +38,6 @@ import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
-import { normalizeFileNameToFsPath } from './util/uri'
 import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
@@ -107,23 +107,48 @@ export class TW {
     await this.initPromise
   }
 
+  private getWorkspaceFolders(): WorkspaceFolder[] {
+    if (this.initializeParams.rootUri) {
+      return [
+        {
+          uri: URI.parse(this.initializeParams.rootUri).fsPath,
+          name: 'Root',
+        },
+      ]
+    }
+
+    if (this.initializeParams.rootPath) {
+      return [
+        {
+          uri: URI.file(this.initializeParams.rootPath).fsPath,
+          name: 'Root',
+        },
+      ]
+    }
+
+    return []
+  }
+
   private async _init(): Promise<void> {
     clearRequireCache()
 
-    let base: string
-    if (this.initializeParams.rootUri) {
-      base = URI.parse(this.initializeParams.rootUri).fsPath
-    } else if (this.initializeParams.rootPath) {
-      base = normalizeFileNameToFsPath(this.initializeParams.rootPath)
-    }
+    let folders = this.getWorkspaceFolders().map((folder) => normalizePath(folder.uri))
 
-    if (!base) {
+    if (folders.length === 0) {
       console.error('No workspace folders found, not initializing.')
       return
     }
 
-    base = normalizePath(base)
+    // Initialize each workspace separately
+    // We use `allSettled` here because failures in one folder should not prevent initialization of others
+    //
+    // NOTE: We should eventually be smart about avoiding duplicate work. We do
+    // not necessarily need to set up file watchers, search for projects, read
+    // configs, etc… per folder. Some of this work should be sharable.
+    await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
+  }
 
+  private async _initFolder(base: string): Promise<void> {
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude

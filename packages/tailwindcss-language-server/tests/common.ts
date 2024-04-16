@@ -29,6 +29,7 @@ interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNot
   }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
   updateSettings: (settings: Settings) => Promise<void>
   updateFile: (file: string, text: string) => Promise<void>
+  fixtureUri(fixture: string): string
 
   readonly project: {
     config: string
@@ -126,13 +127,34 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
   }
 
+  const fixtures = [fixture]
+
+  function fixtureUri(fixture: string) {
+    return `file://${path.resolve('./tests/fixtures', fixture)}`
+  }
+
+  function resolveUri(...parts: string[]) {
+    const filepath =
+      fixtures.length > 1
+        ? path.resolve('./tests/fixtures', ...parts)
+        : path.resolve('./tests/fixtures', fixtures[0], ...parts)
+
+    return `file://${filepath}`
+  }
+
+  const workspaceFolders = fixtures.map((fixture) => ({
+    name: `Fixture ${fixture}`,
+    uri: fixtureUri(fixture),
+  }))
+
+  const rootUri = fixtures.length > 1 ? null : workspaceFolders[0].uri
+
   await client.sendRequest(InitializeRequest.type, {
     processId: -1,
-    // rootPath: '.',
-    rootUri: `file://${path.resolve('./tests/fixtures/', fixture)}`,
+    rootUri,
     capabilities,
     trace: 'off',
-    workspaceFolders: [],
+    workspaceFolders,
     initializationOptions: {
       testMode: true,
     },
@@ -181,6 +203,7 @@ async function init(fixture: string): Promise<FixtureContext> {
 
   return {
     client,
+    fixtureUri,
     get project() {
       return projectDetails
     },
@@ -201,7 +224,7 @@ async function init(fixture: string): Promise<FixtureContext> {
       dir?: string
       settings?: Settings
     }) {
-      let uri = `file://${path.resolve('./tests/fixtures', fixture, dir, `file-${counter++}`)}`
+      let uri = resolveUri(dir, `file-${counter++}`)
       docSettings.set(uri, settings)
 
       let openPromise = openingDocuments.remember(uri, () => {
@@ -248,7 +271,7 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
 
     async updateFile(file: string, text: string) {
-      let uri = `file://${path.resolve('./tests/fixtures', fixture, file)}`
+      let uri = resolveUri(file)
 
       await client.sendNotification(DidChangeTextDocumentNotification.type, {
         textDocument: { uri, version: counter++ },
@@ -258,7 +281,7 @@ async function init(fixture: string): Promise<FixtureContext> {
   }
 }
 
-export function withFixture(fixture, callback: (c: FixtureContext) => void) {
+export function withFixture(fixture: string, callback: (c: FixtureContext) => void) {
   describe(fixture, () => {
     let c: FixtureContext = {} as any
 
