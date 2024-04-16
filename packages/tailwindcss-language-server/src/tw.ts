@@ -458,13 +458,18 @@ export class TW {
       ),
     )
 
+    const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     // init projects for documents that are _already_ open
+    let readyDocuments: string[] = []
     for (let document of this.documentService.getAllDocuments()) {
       let project = this.getProject(document)
       if (project && !project.enabled()) {
         project.enable()
         await project.tryInit()
       }
+
+      readyDocuments.push(document.uri)
     }
 
     this.setupLSPHandlers()
@@ -501,13 +506,33 @@ export class TW {
     )
 
     this.disposables.push(
-      this.documentService.onDidOpen((event) => {
+      this.documentService.onDidOpen(async (event) => {
         let project = this.getProject(event.document)
-        if (project && !project.enabled()) {
+        if (!project) return
+
+        if (!project.enabled()) {
           project.enable()
-          project.tryInit()
+          await project.tryInit()
         }
+
+        if (!isTestMode) return
+
+        // TODO: This is a hack and shouldn't be necessary
+        // await new Promise((resolve) => setTimeout(resolve, 100))
+        await this.connection.sendNotification('@/tailwindCSS/documentReady', {
+          uri: event.document.uri,
+        })
       }),
+    )
+
+    if (!isTestMode) return
+
+    await Promise.all(
+      readyDocuments.map((uri) =>
+        this.connection.sendNotification('@/tailwindCSS/documentReady', {
+          uri,
+        }),
+      ),
     )
   }
 

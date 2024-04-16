@@ -15,6 +15,7 @@ import {
 } from 'vscode-languageserver-protocol'
 import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
 import type { Feature } from '@tailwindcss/language-service/src/features'
+import { CacheMap } from '../src/cache-map'
 
 type Settings = any
 
@@ -158,11 +159,22 @@ async function init(fixture: string): Promise<FixtureContext> {
     })
   })
 
+  interface PromiseWithResolvers<T> extends Promise<T> {
+    resolve: (value?: T | PromiseLike<T>) => void
+    reject: (reason?: any) => void
+  }
+
+  let openingDocuments = new CacheMap<string, PromiseWithResolvers<void>>()
   let projectDetails: any = null
 
   client.onNotification('@/tailwindCSS/projectDetails', (params) => {
     console.log('[TEST] Project detailed changed')
     projectDetails = params
+  })
+
+  client.onNotification('@/tailwindCSS/documentReady', (params) => {
+    console.log('[TEST] Document ready', params.uri)
+    openingDocuments.get(params.uri)?.resolve()
   })
 
   let counter = 0
@@ -192,6 +204,21 @@ async function init(fixture: string): Promise<FixtureContext> {
       let uri = `file://${path.resolve('./tests/fixtures', fixture, dir, `file-${counter++}`)}`
       docSettings.set(uri, settings)
 
+      let openPromise = openingDocuments.remember(uri, () => {
+        let resolve = () => {}
+        let reject = () => {}
+
+        let p = new Promise<void>((_resolve, _reject) => {
+          resolve = _resolve
+          reject = _reject
+        })
+
+        return Object.assign(p, {
+          resolve,
+          reject,
+        })
+      })
+
       await client.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: {
           uri,
@@ -204,6 +231,7 @@ async function init(fixture: string): Promise<FixtureContext> {
       // If opening a document stalls then it's probably because this promise is not being resolved
       // This can happen if a document is not covered by one of the selectors because of it's URI
       await initPromise
+      await openPromise
 
       return {
         uri,
