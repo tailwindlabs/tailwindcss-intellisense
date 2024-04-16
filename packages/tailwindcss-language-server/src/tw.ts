@@ -108,6 +108,13 @@ export class TW {
   }
 
   private getWorkspaceFolders(): WorkspaceFolder[] {
+    if (this.initializeParams.workspaceFolders?.length) {
+      return this.initializeParams.workspaceFolders.map((folder) => ({
+        uri: URI.parse(folder.uri).fsPath,
+        name: folder.name,
+      }))
+    }
+
     if (this.initializeParams.rootUri) {
       return [
         {
@@ -146,6 +153,21 @@ export class TW {
     // not necessarily need to set up file watchers, search for projects, read
     // configs, etc… per folder. Some of this work should be sharable.
     await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
+
+    if (!this.initializeParams.capabilities.workspace.workspaceFolders) return
+
+    this.connection.workspace.onDidChangeWorkspaceFolders(async (evt) => {
+      // Initialize any new folders that have appeared
+      let added = evt.added
+        .map((folder) => ({
+          uri: URI.parse(folder.uri).fsPath,
+          name: folder.name,
+        }))
+        .map((folder) => normalizePath(folder.uri))
+      await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+
+      // TODO: If folders get removed we should cleanup any associated state and resources
+    })
   }
 
   private async _initFolder(base: string): Promise<void> {

@@ -19,7 +19,8 @@ import { CacheMap } from '../src/cache-map'
 
 type Settings = any
 
-interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNotification'> {
+interface FixtureContext
+  extends Pick<ProtocolConnection, 'sendRequest' | 'sendNotification' | 'onNotification'> {
   client: ProtocolConnection
   openDocument: (params: {
     text: string
@@ -41,7 +42,7 @@ interface FixtureContext extends Pick<ProtocolConnection, 'sendRequest' | 'onNot
   }
 }
 
-async function init(fixture: string): Promise<FixtureContext> {
+async function init(fixture: string | string[]): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
@@ -127,7 +128,7 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
   }
 
-  const fixtures = [fixture]
+  const fixtures = Array.isArray(fixture) ? fixture : [fixture]
 
   function fixtureUri(fixture: string) {
     return `file://${path.resolve('./tests/fixtures', fixture)}`
@@ -209,6 +210,9 @@ async function init(fixture: string): Promise<FixtureContext> {
     },
     sendRequest(type: any, params: any) {
       return client.sendRequest(type, params)
+    },
+    sendNotification(type: any, params?: any) {
+      return client.sendNotification(type, params)
     },
     onNotification(type: any, callback: any) {
       return client.onNotification(type, callback)
@@ -295,5 +299,28 @@ export function withFixture(fixture: string, callback: (c: FixtureContext) => vo
     })
 
     callback(c)
+  })
+}
+
+export function withWorkspace({
+  fixtures,
+  run,
+}: {
+  fixtures: string[]
+  run: (c: FixtureContext) => void
+}) {
+  describe(`workspace: ${fixtures.join(', ')}`, () => {
+    let c: FixtureContext = {} as any
+
+    beforeAll(async () => {
+      // Using the connection object as the prototype lets us access the connection
+      // without defining getters for all the methods and also lets us add helpers
+      // to the connection object without having to resort to using a Proxy
+      Object.setPrototypeOf(c, await init(fixtures))
+
+      return () => c.client.dispose()
+    })
+
+    run(c)
   })
 }
