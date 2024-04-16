@@ -160,7 +160,7 @@ async function init(fixture: string): Promise<FixtureContext> {
 
   let projectDetails: any = null
 
-  client.onNotification('tailwind/projectDetails', (params) => {
+  client.onNotification('@/tailwindCSS/projectDetails', (params) => {
     console.log('[TEST] Project detailed changed')
     projectDetails = params
   })

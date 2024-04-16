@@ -552,7 +552,7 @@ export class TW {
       return
     }
 
-    this.connection.sendNotification('tailwind/projectDetails', {
+    this.connection.sendNotification('@/tailwindCSS/projectDetails', {
       config: projectConfig.configPath,
       tailwind: projectConfig.tailwind,
     })
