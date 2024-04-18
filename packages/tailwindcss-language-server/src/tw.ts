@@ -72,6 +72,7 @@ const TRIGGER_CHARACTERS = [
 
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
   let css = await readCssFile(cssFile)
+  if (!css) return null
   let match = css.match(/@config\s*(?<config>'[^']+'|"[^"]+")/)
   if (!match) {
     return null
