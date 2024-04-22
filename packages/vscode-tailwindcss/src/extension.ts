@@ -51,7 +51,7 @@ const colorNames = Object.keys(namedColors)
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
-let clients: Map<string, LanguageClient> = new Map()
+let clients: Map<string, LanguageClient | null> = new Map()
 let languages: Map<string, string[]> = new Map()
 let searchedFolders: Set<string> = new Set()
 
@@ -61,7 +61,7 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
 }
 
 function getGlobalExcludePatterns(scope: ConfigurationScope): string[] {
-  return Object.entries(Workspace.getConfiguration('files', scope).get('exclude'))
+  return Object.entries(Workspace.getConfiguration('files', scope)?.get('exclude') ?? [])
     .filter(([, value]) => value === true)
     .map(([key]) => key)
     .filter(Boolean)
@@ -203,6 +203,8 @@ export async function activate(context: ExtensionContext) {
   } catch (_) {}
 
   async function sortSelection(): Promise<void> {
+    if (!Window.activeTextEditor) return
+
     let { document, selections } = Window.activeTextEditor
 
     if (selections.length === 0) {
@@ -257,7 +259,7 @@ export async function activate(context: ExtensionContext) {
       try {
         await sortSelection()
       } catch (error) {
-        Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${error.message}`)
+        Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${(error as any)?.message}`)
       }
     }),
   )
@@ -313,6 +315,8 @@ export async function activate(context: ExtensionContext) {
       })
       ;[...clients].forEach(([key, client]) => {
         const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
+        if (!folder) return
+
         let reboot = false
 
         if (event.affectsConfiguration('tailwindCSS.includeLanguages', folder)) {
@@ -320,7 +324,7 @@ export async function activate(context: ExtensionContext) {
           if (userLanguages) {
             const userLanguageIds = Object.keys(userLanguages)
             const newLanguages = dedupe([...defaultLanguages, ...userLanguageIds])
-            if (!equal(newLanguages, languages.get(folder.uri.toString()))) {
+            if (!equal(newLanguages, languages.get(folder.uri.toString()) ?? [])) {
               languages.set(folder.uri.toString(), newLanguages)
               reboot = true
             }
@@ -457,7 +461,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    let colorDecorationType: TextEditorDecorationType
+    let colorDecorationType: TextEditorDecorationType | undefined
     function clearColors(): void {
       if (colorDecorationType) {
         colorDecorationType.dispose()
@@ -531,6 +535,7 @@ export async function activate(context: ExtensionContext) {
           }
           return next(document, position, token)
         },
+
         handleDiagnostics(uri, diagnostics, next) {
           let workspaceFolder = Workspace.getWorkspaceFolder(uri)
           if (workspaceFolder !== folder) {
@@ -538,6 +543,7 @@ export async function activate(context: ExtensionContext) {
           }
           next(uri, diagnostics)
         },
+
         provideCodeActions(document, range, context, token, next) {
           let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
           if (workspaceFolder !== folder) {
@@ -545,44 +551,49 @@ export async function activate(context: ExtensionContext) {
           }
           return next(document, range, context, token)
         },
+
         async resolveCompletionItem(item, token, next) {
+          let editor = Window.activeTextEditor
+          if (!editor) return null
+
           let result = await next(item, token)
-          let selections = Window.activeTextEditor.selections
+          if (!result) return result
+
+          let selections = editor.selections
+          let edits = result.additionalTextEdits || []
+
           if (
-            result['data'] === 'variant' &&
-            selections.length > 1 &&
-            result.additionalTextEdits?.length > 0
+            selections.length <= 1 ||
+            edits.length === 0 ||
+            // @ts-expect-error: use of private API / implementation details of our language server
+            result['data'] !== 'variant'
           ) {
-            let length =
-              selections[0].start.character - result.additionalTextEdits[0].range.start.character
-            let prefixLength =
-              result.additionalTextEdits[0].range.end.character -
-              result.additionalTextEdits[0].range.start.character
+            return result
+          }
+
+          let length = selections[0].start.character - edits[0].range.start.character
+          let prefixLength = edits[0].range.end.character - edits[0].range.start.character
 
             let ranges = selections.map((selection) => {
               return new Range(
                 new Position(selection.start.line, selection.start.character - length),
-                new Position(
-                  selection.start.line,
-                  selection.start.character - length + prefixLength,
-                ),
+              new Position(selection.start.line, selection.start.character - length + prefixLength),
               )
             })
             if (
               ranges
-                .map((range) => Window.activeTextEditor.document.getText(range))
+              .map((range) => editor!.document.getText(range))
                 .every((text, _index, arr) => arr.indexOf(text) === 0)
             ) {
               // all the same
               result.additionalTextEdits = ranges.map((range) => {
-                return { range, newText: result.additionalTextEdits[0].newText }
+              return { range, newText: edits[0].newText }
               })
             } else {
-              result.insertText =
-                typeof result.label === 'string' ? result.label : result.label.label
+            result.insertText = typeof result.label === 'string' ? result.label : result.label.label
               result.additionalTextEdits = []
             }
-          }
+
           return result
         },
         async provideDocumentColors(document, token, next) {
@@ -592,6 +603,10 @@ export async function activate(context: ExtensionContext) {
           }
 
           let colors = await next(document, token)
+          if (!colors) {
+            return colors
+          }
+
           let editableColors = colors.filter((color) => {
             let text =
               Workspace.textDocuments.find((doc) => doc === document)?.getText(color.range) ?? ''
@@ -629,7 +644,7 @@ export async function activate(context: ExtensionContext) {
           // Not just the first one for a given document
           editors.forEach((editor) => {
             editor.setDecorations(
-              colorDecorationType,
+              colorDecorationType!,
               nonEditableColors.map(({ range, color }) => ({
                 range,
                 renderOptions: {
@@ -799,6 +814,7 @@ export async function activate(context: ExtensionContext) {
 export function deactivate(): Thenable<void> {
   let promises: Thenable<void>[] = []
   for (let client of clients.values()) {
+    if (!client) continue
     promises.push(client.stop())
   }
   return Promise.all(promises).then(() => undefined)
