@@ -1,13 +1,8 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
 import * as path from 'path'
 import type {
   ExtensionContext,
   TextDocument,
   WorkspaceFolder,
-  TextEditorDecorationType,
   ConfigurationScope,
   WorkspaceConfiguration,
   Selection,
@@ -22,7 +17,7 @@ import {
   Range,
   RelativePattern,
 } from 'vscode'
-import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node'
+import type { DocumentFilter, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node'
 import {
   LanguageClient,
   TransportKind,
@@ -32,7 +27,6 @@ import {
 import { languages as defaultLanguages } from '@tailwindcss/language-service/src/util/languages'
 import * as semver from '@tailwindcss/language-service/src/util/semver'
 import isObject from '@tailwindcss/language-service/src/util/isObject'
-import { dedupe, equal } from '@tailwindcss/language-service/src/util/array'
 import namedColors from 'color-name'
 import picomatch from 'picomatch'
 import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
@@ -45,8 +39,7 @@ const colorNames = Object.keys(namedColors)
 const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
-let clients: Map<string, LanguageClient | null> = new Map()
-let languages: Map<string, string[]> = new Map()
+let currentClient: Promise<LanguageClient> | null = null
 let searchedFolders: Set<string> = new Set()
 
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
@@ -54,14 +47,14 @@ function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   return isObject(langs) ? langs : {}
 }
 
-function getGlobalExcludePatterns(scope: ConfigurationScope): string[] {
+function getGlobalExcludePatterns(scope: ConfigurationScope | null): string[] {
   return Object.entries(Workspace.getConfiguration('files', scope)?.get('exclude') ?? [])
     .filter(([, value]) => value === true)
     .map(([key]) => key)
     .filter(Boolean)
 }
 
-function getExcludePatterns(scope: ConfigurationScope): string[] {
+function getExcludePatterns(scope: ConfigurationScope | null): string[] {
   return [
     ...getGlobalExcludePatterns(scope),
     ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')).filter(
@@ -82,7 +75,7 @@ function isExcluded(file: string, folder: WorkspaceFolder): boolean {
   return false
 }
 
-function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope): any {
+function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope | null): any {
   return {
     ...settings,
     files: {
@@ -124,29 +117,32 @@ function selectionsAreEqual(
 }
 
 async function getActiveTextEditorProject(): Promise<{ version: string } | null> {
-  if (clients.size === 0) {
-    return null
-  }
+  // No editor, no project
   let editor = Window.activeTextEditor
-  if (!editor) {
-    return null
-  }
+  if (!editor) return null
+
+  // No server yet, no project
+  if (!currentClient) return null
+
+  // No workspace folder, no project
   let uri = editor.document.uri
   let folder = Workspace.getWorkspaceFolder(uri)
-  if (!folder) {
-    return null
+  if (!folder) return null
+
+  // Excluded file, no project
+  if (isExcluded(uri.fsPath, folder)) return null
+
+  interface ProjectData {
+    version: string
   }
-  let client = clients.get(folder.uri.toString())
-  if (!client) {
-    return null
-  }
-  if (isExcluded(uri.fsPath, folder)) {
-    return null
-  }
+
+  // Ask the server for the project
   try {
-    let project = await client.sendRequest<{ version: string } | null>('@/tailwindCSS/getProject', {
+    let client = await currentClient
+    let project = await client.sendRequest<ProjectData>('@/tailwindCSS/getProject', {
       uri: uri.toString(),
     })
+
     return project
   } catch {
     return null
@@ -208,14 +204,11 @@ export async function activate(context: ExtensionContext) {
     let initialSelections = selections
     let folder = Workspace.getWorkspaceFolder(document.uri)
 
-    if (clients.size === 0 || !folder || isExcluded(document.uri.fsPath, folder)) {
+    if (!currentClient || !folder || isExcluded(document.uri.fsPath, folder)) {
       throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
     }
 
-    let client = clients.get(folder.uri.toString())
-    if (!client) {
-      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
-    }
+    let client = await currentClient
 
     let result = await client.sendRequest<{ error: string } | { classLists: string[] }>(
       '@/tailwindCSS/sortSelection',
@@ -271,7 +264,7 @@ export async function activate(context: ExtensionContext) {
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    bootWorkspaceClient(folder)
+    bootWorkspaceClient()
   })
 
   context.subscriptions.push(configWatcher)
@@ -284,7 +277,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
     if (await fileMayBeTailwindRelated(uri)) {
-      bootWorkspaceClient(folder)
+      bootWorkspaceClient()
     }
   }
 
@@ -297,147 +290,129 @@ export async function activate(context: ExtensionContext) {
   // not just the language IDs
   // e.g. "plaintext" already exists but you change it from "html" to "css"
   context.subscriptions.push(
-    Workspace.onDidChangeConfiguration((event) => {
-      let toReboot = new Set<WorkspaceFolder>()
+    Workspace.onDidChangeConfiguration(async (event) => {
+      let folders = Workspace.workspaceFolders ?? []
 
-      Workspace.textDocuments.forEach((document) => {
-        let folder = Workspace.getWorkspaceFolder(document.uri)
-        if (!folder) return
-        if (event.affectsConfiguration('tailwindCSS.experimental.configFile', folder)) {
-          toReboot.add(folder)
-        }
-      })
-      ;[...clients].forEach(([key, client]) => {
-        const folder = Workspace.getWorkspaceFolder(Uri.parse(key))
-        if (!folder) return
+      let needsReboot = folders.some((folder) => {
+        return (
+          event.affectsConfiguration('tailwindCSS.experimental.configFile', folder) ||
 
-        let reboot = false
-
-        if (event.affectsConfiguration('tailwindCSS.includeLanguages', folder)) {
-          const userLanguages = getUserLanguages(folder)
-          if (userLanguages) {
-            const userLanguageIds = Object.keys(userLanguages)
-            const newLanguages = dedupe([...defaultLanguages, ...userLanguageIds])
-            if (!equal(newLanguages, languages.get(folder.uri.toString()) ?? [])) {
-              languages.set(folder.uri.toString(), newLanguages)
-              reboot = true
-            }
-          }
-        }
-
-        if (event.affectsConfiguration('tailwindCSS.experimental.configFile', folder)) {
-          reboot = true
-        }
-
-        if (reboot && client) {
-          toReboot.add(folder)
-        }
+          // TODO: Only reboot if the MAPPING changed instead of just the languages
+          // e.g. "plaintext" already exists but you change it from "html" to "css"
+          // TODO: This should not cause a reboot of the server but should instead
+          // have the server update its internal state
+          event.affectsConfiguration('tailwindCSS.includeLanguages', folder)
+        )
       })
 
-      for (let folder of toReboot) {
-        clients.get(folder.uri.toString())?.stop()
-        clients.delete(folder.uri.toString())
-        bootClientForFolderIfNeeded(folder)
+      if (!needsReboot) {
+        return
       }
+
+      // IDEA: We might be able to service requests during a reboot by booting the
+      // new server, swapping it out, then stopping the old one
+
+      // Stop the current server (if any)
+      if (currentClient) {
+        let client = await currentClient
+        await client.stop()
+      }
+
+      currentClient = null
+
+      // Start the server again with the new configuration
+      await bootWorkspaceClient()
     }),
   )
 
-  function bootWorkspaceClient(folder: WorkspaceFolder) {
-    if (clients.has(folder.uri.toString())) {
-      return
-    }
+  function bootWorkspaceClient() {
+    currentClient ??= bootIfNeeded()
 
-    let colorDecorationType: TextEditorDecorationType | undefined
-    function clearColors(): void {
-      if (colorDecorationType) {
-        colorDecorationType.dispose()
-        colorDecorationType = undefined
-      }
-    }
-    context.subscriptions.push({
-      dispose() {
-        if (colorDecorationType) {
-          colorDecorationType.dispose()
-        }
+    return currentClient
+  }
+
+  async function bootIfNeeded() {
+    outputChannel.appendLine(`Booting server...`)
+
+    let colorDecorationType = Window.createTextEditorDecorationType({
+      before: {
+        width: '0.8em',
+        height: '0.8em',
+        contentText: ' ',
+        border: '0.1em solid',
+        margin: '0.1em 0.2em 0',
+      },
+      dark: {
+        before: {
+          borderColor: '#eeeeee',
+        },
+      },
+      light: {
+        before: {
+          borderColor: '#000000',
+        },
       },
     })
 
-    outputChannel.appendLine(`Booting server for ${folder.uri.toString()}...`)
+    context.subscriptions.push(colorDecorationType)
 
-    // placeholder so we don't boot another server before this one is ready
-    clients.set(folder.uri.toString(), null)
-
-    if (!languages.has(folder.uri.toString())) {
-      languages.set(
-        folder.uri.toString(),
-        dedupe([...defaultLanguages, ...Object.keys(getUserLanguages(folder))]),
-      )
+    /**
+     * Clear all decorated colors from all visible text editors
+     */
+    function clearColors(): void {
+      for (let editor of Window.visibleTextEditors) {
+        editor.setDecorations(colorDecorationType!, [])
+      }
     }
 
-    let configuration = {
-      editor: Workspace.getConfiguration('editor', folder),
-      tailwindCSS: mergeExcludes(Workspace.getConfiguration('tailwindCSS', folder), folder),
+    let documentFilters: DocumentFilter[] = []
+
+    for (let folder of Workspace.workspaceFolders ?? []) {
+      let langs = new Set([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
+
+      for (let language of langs) {
+        documentFilters.push({
+          scheme: 'file',
+          language,
+          pattern: normalizePath(`${folder.uri.fsPath.replace(/[\[\]\{\}]/g, '?')}/**/*`),
+        })
+      }
     }
 
-    let inspectPort = configuration.tailwindCSS.get('inspectPort')
+    let module = context.asAbsolutePath(path.join('dist', 'server.js'))
+    let prod = path.join('dist', 'tailwindServer.js')
+
+    try {
+      await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
+      module = context.asAbsolutePath(prod)
+    } catch (_) {}
+
+    let workspaceFile = Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile : undefined
+    let inspectPort = Workspace.getConfiguration('tailwindCSS', workspaceFile).get<number | null>('inspectPort') ?? null
 
     let serverOptions: ServerOptions = {
       run: {
         module,
         transport: TransportKind.ipc,
-        options: { execArgv: inspectPort === null ? [] : [`--inspect=${inspectPort}`] },
+        options: {
+          execArgv: inspectPort === null ? [] : [`--inspect=${inspectPort}`],
+        },
       },
       debug: {
         module,
         transport: TransportKind.ipc,
         options: {
-          execArgv: ['--nolazy', `--inspect=${6011 + clients.size}`],
+          execArgv: ['--nolazy', `--inspect=6011`],
         },
       },
     }
 
     let clientOptions: LanguageClientOptions = {
-      documentSelector: languages.get(folder.uri.toString())!.map((language) => ({
-        scheme: 'file',
-        language,
-        pattern: normalizePath(`${folder.uri.fsPath.replace(/[\[\]\{\}]/g, '?')}/**/*`),
-      })),
+      documentSelector: documentFilters,
       diagnosticCollectionName: CLIENT_ID,
-      workspaceFolder: folder,
       outputChannel: outputChannel,
       revealOutputChannelOn: RevealOutputChannelOn.Never,
       middleware: {
-        provideCompletionItem(document, position, context, token, next) {
-          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
-          if (workspaceFolder !== folder) {
-            return null
-          }
-          return next(document, position, context, token)
-        },
-        provideHover(document, position, token, next) {
-          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
-          if (workspaceFolder !== folder) {
-            return null
-          }
-          return next(document, position, token)
-        },
-
-        handleDiagnostics(uri, diagnostics, next) {
-          let workspaceFolder = Workspace.getWorkspaceFolder(uri)
-          if (workspaceFolder !== folder) {
-            return
-          }
-          next(uri, diagnostics)
-        },
-
-        provideCodeActions(document, range, context, token, next) {
-          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
-          if (workspaceFolder !== folder) {
-            return null
-          }
-          return next(document, range, context, token)
-        },
-
         async resolveCompletionItem(item, token, next) {
           let editor = Window.activeTextEditor
           if (!editor) return null
@@ -460,38 +435,32 @@ export async function activate(context: ExtensionContext) {
           let length = selections[0].start.character - edits[0].range.start.character
           let prefixLength = edits[0].range.end.character - edits[0].range.start.character
 
-            let ranges = selections.map((selection) => {
-              return new Range(
-                new Position(selection.start.line, selection.start.character - length),
+          let ranges = selections.map((selection) => {
+            return new Range(
+              new Position(selection.start.line, selection.start.character - length),
               new Position(selection.start.line, selection.start.character - length + prefixLength),
-              )
-            })
-            if (
-              ranges
+            )
+          })
+          if (
+            ranges
               .map((range) => editor!.document.getText(range))
-                .every((text, _index, arr) => arr.indexOf(text) === 0)
-            ) {
-              // all the same
-              result.additionalTextEdits = ranges.map((range) => {
+              .every((text, _index, arr) => arr.indexOf(text) === 0)
+          ) {
+            // all the same
+            result.additionalTextEdits = ranges.map((range) => {
               return { range, newText: edits[0].newText }
-              })
-            } else {
+            })
+          } else {
             result.insertText = typeof result.label === 'string' ? result.label : result.label.label
-              result.additionalTextEdits = []
-            }
+            result.additionalTextEdits = []
+          }
 
           return result
         },
-        async provideDocumentColors(document, token, next) {
-          let workspaceFolder = Workspace.getWorkspaceFolder(document.uri)
-          if (workspaceFolder !== folder) {
-            return null
-          }
 
+        async provideDocumentColors(document, token, next) {
           let colors = await next(document, token)
-          if (!colors) {
-            return colors
-          }
+          if (!colors) return colors
 
           let editableColors = colors.filter((color) => {
             let text =
@@ -500,65 +469,37 @@ export async function activate(context: ExtensionContext) {
               `-\\[(${colorNames.join('|')}|((?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`,
             ).test(text)
           })
-          let nonEditableColors = colors.filter((color) => !editableColors.includes(color))
 
-          if (!colorDecorationType) {
-            colorDecorationType = Window.createTextEditorDecorationType({
-              before: {
-                width: '0.8em',
-                height: '0.8em',
-                contentText: ' ',
-                border: '0.1em solid',
-                margin: '0.1em 0.2em 0',
-              },
-              dark: {
-                before: {
-                  borderColor: '#eeeeee',
-                },
-              },
-              light: {
-                before: {
-                  borderColor: '#000000',
-                },
-              },
-            })
-          }
+          let nonEditableColors = colors.filter((color) => !editableColors.includes(color))
 
           let editors = Window.visibleTextEditors.filter((editor) => editor.document === document)
 
           // Make sure we show document colors for all visible editors
           // Not just the first one for a given document
-          editors.forEach((editor) => {
+          for (let editor of editors) {
             editor.setDecorations(
-              colorDecorationType!,
+              colorDecorationType,
               nonEditableColors.map(({ range, color }) => ({
                 range,
                 renderOptions: {
                   before: {
-                    backgroundColor: `rgba(${color.red * 255}, ${color.green * 255}, ${
-                      color.blue * 255
-                    }, ${color.alpha})`,
+                    backgroundColor: `rgba(${color.red * 255}, ${color.green * 255}, ${color.blue * 255}, ${color.alpha})`,
                   },
                 },
               })),
             )
-          })
+          }
 
           return editableColors
         },
+
         workspace: {
           configuration: (params) => {
             return params.items.map(({ section, scopeUri }) => {
-              let scope: ConfigurationScope = folder
-              if (scopeUri) {
-                let doc = Workspace.textDocuments.find((doc) => doc.uri.toString() === scopeUri)
-                if (doc) {
-                  scope = {
-                    uri: Uri.parse(scopeUri),
-                    languageId: doc.languageId,
-                  }
-                }
-              }
+              let scope: ConfigurationScope | null = scopeUri
+                ? Uri.parse(scopeUri)
+                : null
+
               let settings = Workspace.getConfiguration(section, scope)
 
               if (section === 'tailwindCSS') {
@@ -570,58 +511,56 @@ export async function activate(context: ExtensionContext) {
           },
         },
       },
+
       initializationOptions: {
-        userLanguages: getUserLanguages(folder),
-        workspaceFile:
-          Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile.fsPath : undefined,
-      },
-      synchronize: {
-        configurationSection: ['files', 'editor', 'tailwindCSS'],
+        workspaceFile: workspaceFile?.fsPath ?? undefined,
       },
     }
 
     let client = new LanguageClient(CLIENT_ID, CLIENT_NAME, serverOptions, clientOptions)
 
-    client.onNotification('@/tailwindCSS/error', async ({ message }) => {
+    client.onNotification('@/tailwindCSS/error', showError)
+    client.onNotification('@/tailwindCSS/clearColors', clearColors)
+    client.onNotification('@/tailwindCSS/projectInitialized', updateActiveTextEditorContext)
+    client.onNotification('@/tailwindCSS/projectReset', updateActiveTextEditorContext)
+    client.onNotification('@/tailwindCSS/projectsDestroyed', resetActiveTextEditorContext)
+    client.onRequest('@/tailwindCSS/getDocumentSymbols', showSymbols)
+
+    interface ErrorNotification {
+      message: string
+    }
+
+    async function showError({ message }: ErrorNotification) {
       let action = await Window.showErrorMessage(message, 'Go to output')
-      if (action === 'Go to output') {
-        commands.executeCommand('tailwindCSS.showOutput')
-      }
-    })
+      if (action !== 'Go to output') return
+      commands.executeCommand('tailwindCSS.showOutput')
+    }
 
-    client.onNotification('@/tailwindCSS/clearColors', () => clearColors())
+    interface DocumentSymbolsRequest {
+      uri: string
+    }
 
-    client.onNotification('@/tailwindCSS/projectInitialized', async () => {
-      await updateActiveTextEditorContext()
-    })
-    client.onNotification('@/tailwindCSS/projectReset', async () => {
-      await updateActiveTextEditorContext()
-    })
-    client.onNotification('@/tailwindCSS/projectsDestroyed', () => {
-      resetActiveTextEditorContext()
-    })
-
-    client.onRequest('@/tailwindCSS/getDocumentSymbols', async ({ uri }) => {
+    function showSymbols({ uri }: DocumentSymbolsRequest) {
       return commands.executeCommand<SymbolInformation[]>(
         'vscode.executeDocumentSymbolProvider',
         Uri.parse(uri),
       )
-    })
+    }
 
     client.onDidChangeState(({ newState }) => {
-      if (newState === LanguageClientState.Stopped) {
-        clearColors()
-      }
+      if (newState !== LanguageClientState.Stopped) return
+      clearColors()
     })
 
-    client.start()
-    clients.set(folder.uri.toString(), client)
+    await client.start()
+
+    return client
   }
 
   async function bootClientForFolderIfNeeded(folder: WorkspaceFolder): Promise<void> {
     let settings = Workspace.getConfiguration('tailwindCSS', folder)
     if (settings.get('experimental.configFile') !== null) {
-      bootWorkspaceClient(folder)
+      bootWorkspaceClient()
       return
     }
 
@@ -638,7 +577,7 @@ export async function activate(context: ExtensionContext) {
     )
 
     if (configFile) {
-      bootWorkspaceClient(folder)
+      bootWorkspaceClient()
       return
     }
 
@@ -648,7 +587,7 @@ export async function activate(context: ExtensionContext) {
       outputChannel.appendLine(`Checking if ${cssFile.fsPath} may be Tailwind-related…`)
 
       if (await fileMayBeTailwindRelated(cssFile)) {
-        bootWorkspaceClient(folder)
+        bootWorkspaceClient()
         return
       }
     }
@@ -684,24 +623,20 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
   Workspace.textDocuments.forEach(didOpenTextDocument)
   context.subscriptions.push(
-    Workspace.onDidChangeWorkspaceFolders((event) => {
-      for (let folder of event.removed) {
-        let client = clients.get(folder.uri.toString())
-        if (client) {
-          searchedFolders.delete(folder.uri.toString())
-          clients.delete(folder.uri.toString())
-          client.stop()
-        }
-      }
+    Workspace.onDidChangeWorkspaceFolders(async () => {
+      if (Workspace.workspaceFolders?.length ?? 0 > 0) return
+      if (!currentClient) return
+
+      let client = await currentClient
+      client.stop()
+      currentClient = null
     }),
   )
 }
 
-export function deactivate(): Thenable<void> {
-  let promises: Thenable<void>[] = []
-  for (let client of clients.values()) {
-    if (!client) continue
-    promises.push(client.stop())
-  }
-  return Promise.all(promises).then(() => undefined)
+export async function deactivate(): Promise<void> {
+  if (!currentClient) return
+
+  let client = await currentClient
+  await client.stop()
 }
