@@ -182,6 +182,7 @@ export async function createProjectService(
   watchPatterns: (patterns: string[]) => void,
   initialTailwindVersion: string,
   getConfiguration: (uri?: string) => Promise<Settings>,
+  userLanguages: Record<string, string>,
 ): Promise<ProjectService> {
   let enabled = false
   const folder = projectConfig.folder
@@ -206,9 +207,7 @@ export async function createProjectService(
     editor: {
       connection,
       folder,
-      userLanguages: params.initializationOptions?.userLanguages
-        ? params.initializationOptions.userLanguages
-        : {},
+      userLanguages,
       // TODO
       capabilities: {
         configuration: true,

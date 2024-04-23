@@ -42,7 +42,7 @@ import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile } from './utils'
 import { DocumentService } from './documents'
-import { createProjectService, type ProjectService, DocumentSelectorPriority } from './projects'
+import { createProjectService, type ProjectService } from './projects'
 import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
@@ -162,6 +162,15 @@ export class TW {
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
+
+    // Get user languages for the given workspace folder
+    let folderSettings = await this.settingsCache.get(base)
+    let userLanguages = folderSettings.tailwindCSS.includeLanguages
+
+    // Fall back to settings defined in `initializationOptions` if invalid
+    if (!isObject(userLanguages)) {
+      userLanguages = this.initializeParams.initializationOptions?.userLanguages ?? {}
+    }
 
     let cssFileConfigMap: Map<string, string> = new Map()
     let configTailwindVersionMap: Map<string, string> = new Map()
@@ -489,6 +498,7 @@ export class TW {
           this.initializeParams,
           this.watchPatterns,
           configTailwindVersionMap.get(projectConfig.configPath),
+          userLanguages,
         ),
       ),
     )
@@ -604,6 +614,7 @@ export class TW {
     params: InitializeParams,
     watchPatterns: (patterns: string[]) => void,
     tailwindVersion: string,
+    userLanguages: Record<string, string>,
   ): Promise<void> {
     let key = String(this.projectCounter++)
     const project = await createProjectService(
@@ -627,6 +638,7 @@ export class TW {
       (patterns: string[]) => watchPatterns(patterns),
       tailwindVersion,
       this.settingsCache.get,
+      userLanguages
     )
     this.projects.set(key, project)
 
