@@ -40,7 +40,6 @@ const CLIENT_ID = 'tailwindcss-intellisense'
 const CLIENT_NAME = 'Tailwind CSS IntelliSense'
 
 let currentClient: Promise<LanguageClient> | null = null
-let searchedFolders: Set<string> = new Set()
 
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   const langs = Workspace.getConfiguration('tailwindCSS', folder).includeLanguages
@@ -259,12 +258,12 @@ export async function activate(context: ExtensionContext) {
 
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
 
-  configWatcher.onDidCreate((uri) => {
+  configWatcher.onDidCreate(async (uri) => {
     let folder = Workspace.getWorkspaceFolder(uri)
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    bootWorkspaceClient()
+    await bootWorkspaceClient()
   })
 
   context.subscriptions.push(configWatcher)
@@ -277,7 +276,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
     if (await fileMayBeTailwindRelated(uri)) {
-      bootWorkspaceClient()
+      await bootWorkspaceClient()
     }
   }
 
@@ -557,11 +556,32 @@ export async function activate(context: ExtensionContext) {
     return client
   }
 
-  async function bootClientForFolderIfNeeded(folder: WorkspaceFolder): Promise<void> {
+  async function bootClientIfNeeded(): Promise<void> {
+    if (currentClient) {
+      return
+    }
+
+    if (!anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [])) {
+      return
+    }
+
+    await bootWorkspaceClient()
+  }
+
+  async function anyFolderNeedsLanguageServer(folders: readonly WorkspaceFolder[]): Promise<boolean> {
+    for (let folder of folders) {
+      if (await folderNeedsLanguageServer(folder)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  async function folderNeedsLanguageServer(folder: WorkspaceFolder): Promise<boolean> {
     let settings = Workspace.getConfiguration('tailwindCSS', folder)
     if (settings.get('experimental.configFile') !== null) {
-      bootWorkspaceClient()
-      return
+      return true
     }
 
     let exclude = `{${getExcludePatterns(folder)
@@ -570,27 +590,27 @@ export async function activate(context: ExtensionContext) {
       .replace(/{/g, '%7B')
       .replace(/}/g, '%7D')}}`
 
-    let [configFile] = await Workspace.findFiles(
+    let configFiles = await Workspace.findFiles(
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       exclude,
       1,
     )
 
-    if (configFile) {
-      bootWorkspaceClient()
-      return
+    for (let file of configFiles) {
+      return true
     }
 
     let cssFiles = await Workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude)
 
-    for (let cssFile of cssFiles) {
-      outputChannel.appendLine(`Checking if ${cssFile.fsPath} may be Tailwind-related…`)
+    for (let file of cssFiles) {
+      outputChannel.appendLine(`Checking if ${file.fsPath} may be Tailwind-related…`)
 
-      if (await fileMayBeTailwindRelated(cssFile)) {
-        bootWorkspaceClient()
-        return
+      if (await fileMayBeTailwindRelated(file)) {
+        return true
       }
     }
+
+    return false
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
@@ -605,19 +625,12 @@ export async function activate(context: ExtensionContext) {
 
     let uri = document.uri
     let folder = Workspace.getWorkspaceFolder(uri)
+
     // Files outside a folder can't be handled. This might depend on the language.
     // Single file languages like JSON might handle files outside the workspace folders.
-    if (!folder) {
-      return
-    }
+    if (!folder) return
 
-    if (searchedFolders.has(folder.uri.toString())) {
-      return
-    }
-
-    searchedFolders.add(folder.uri.toString())
-
-    await bootClientForFolderIfNeeded(folder)
+    await bootClientIfNeeded()
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
