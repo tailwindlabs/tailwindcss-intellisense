@@ -308,9 +308,6 @@ export async function activate(context: ExtensionContext) {
         return
       }
 
-      // IDEA: We might be able to service requests during a reboot by booting the
-      // new server, swapping it out, then stopping the old one
-
       // Stop the current server (if any)
       if (currentClient) {
         let client = await currentClient
