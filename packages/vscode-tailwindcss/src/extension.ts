@@ -633,7 +633,8 @@ export async function activate(context: ExtensionContext) {
   Workspace.textDocuments.forEach(didOpenTextDocument)
   context.subscriptions.push(
     Workspace.onDidChangeWorkspaceFolders(async () => {
-      if (Workspace.workspaceFolders?.length ?? 0 > 0) return
+      let folderCount = Workspace.workspaceFolders?.length ?? 0
+      if (folderCount > 0) return
       if (!currentClient) return
 
       let client = await currentClient
