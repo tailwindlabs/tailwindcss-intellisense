@@ -422,7 +422,6 @@ export async function activate(context: ExtensionContext) {
           if (
             selections.length <= 1 ||
             edits.length === 0 ||
-            // @ts-expect-error: use of private API / implementation details of our language server
             result['data'] !== 'variant'
           ) {
             return result
