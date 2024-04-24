@@ -26,7 +26,7 @@ let connection = createConnection(ProposedFeatures.all)
 interceptLogs(console, connection)
 
 process.on('unhandledRejection', (e: any) => {
-  console.error("Unhandled exception", e)
+  console.error('Unhandled exception', e)
 })
 
 let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument)

@@ -17,7 +17,11 @@ import {
   Range,
   RelativePattern,
 } from 'vscode'
-import type { DocumentFilter, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node'
+import type {
+  DocumentFilter,
+  LanguageClientOptions,
+  ServerOptions,
+} from 'vscode-languageclient/node'
 import {
   LanguageClient,
   TransportKind,
@@ -295,7 +299,6 @@ export async function activate(context: ExtensionContext) {
       let needsReboot = folders.some((folder) => {
         return (
           event.affectsConfiguration('tailwindCSS.experimental.configFile', folder) ||
-
           // TODO: Only reboot if the MAPPING changed instead of just the languages
           // e.g. "plaintext" already exists but you change it from "html" to "css"
           // TODO: This should not cause a reboot of the server but should instead
@@ -383,8 +386,11 @@ export async function activate(context: ExtensionContext) {
       module = context.asAbsolutePath(prod)
     } catch (_) {}
 
-    let workspaceFile = Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile : undefined
-    let inspectPort = Workspace.getConfiguration('tailwindCSS', workspaceFile).get<number | null>('inspectPort') ?? null
+    let workspaceFile =
+      Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile : undefined
+    let inspectPort =
+      Workspace.getConfiguration('tailwindCSS', workspaceFile).get<number | null>('inspectPort') ??
+      null
 
     let serverOptions: ServerOptions = {
       run: {
@@ -419,11 +425,7 @@ export async function activate(context: ExtensionContext) {
           let selections = editor.selections
           let edits = result.additionalTextEdits || []
 
-          if (
-            selections.length <= 1 ||
-            edits.length === 0 ||
-            result['data'] !== 'variant'
-          ) {
+          if (selections.length <= 1 || edits.length === 0 || result['data'] !== 'variant') {
             return result
           }
 
@@ -491,9 +493,7 @@ export async function activate(context: ExtensionContext) {
         workspace: {
           configuration: (params) => {
             return params.items.map(({ section, scopeUri }) => {
-              let scope: ConfigurationScope | null = scopeUri
-                ? Uri.parse(scopeUri)
-                : null
+              let scope: ConfigurationScope | null = scopeUri ? Uri.parse(scopeUri) : null
 
               let settings = Workspace.getConfiguration(section, scope)
 
@@ -564,7 +564,9 @@ export async function activate(context: ExtensionContext) {
     await bootWorkspaceClient()
   }
 
-  async function anyFolderNeedsLanguageServer(folders: readonly WorkspaceFolder[]): Promise<boolean> {
+  async function anyFolderNeedsLanguageServer(
+    folders: readonly WorkspaceFolder[],
+  ): Promise<boolean> {
     for (let folder of folders) {
       if (await folderNeedsLanguageServer(folder)) {
         return true

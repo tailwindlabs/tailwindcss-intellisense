@@ -638,7 +638,7 @@ export class TW {
       (patterns: string[]) => watchPatterns(patterns),
       tailwindVersion,
       this.settingsCache.get,
-      userLanguages
+      userLanguages,
     )
     this.projects.set(key, project)
 
