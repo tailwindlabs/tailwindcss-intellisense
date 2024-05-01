@@ -40,7 +40,7 @@ import resolveFrom from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
-import { clearRequireCache, isObject, changeAffectsFile } from './utils'
+import { clearRequireCache, isObject, changeAffectsFile, normalizeDriveLetter } from './utils'
 import { DocumentService } from './documents'
 import { createProjectService, type ProjectService } from './projects'
 import { type SettingsCache, createSettingsCache } from './config'
@@ -273,6 +273,7 @@ export class TW {
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
+        normalizedFilename = normalizeDriveLetter(normalizedFilename)
 
         for (let ignorePattern of ignore) {
           let isIgnored = picomatch(ignorePattern, { dot: true })
@@ -311,6 +312,8 @@ export class TW {
             project.projectConfig.configPath,
             ...project.projectConfig.config.entries.map((entry) => entry.path),
           ]
+
+          reloadableFiles = reloadableFiles.map(normalizeDriveLetter)
 
           if (!changeAffectsFile(normalizedFilename, reloadableFiles)) continue
 
