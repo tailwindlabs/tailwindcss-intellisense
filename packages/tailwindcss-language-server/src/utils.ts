@@ -70,6 +70,17 @@ export function dirContains(dir: string, file: string): boolean {
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
+const WIN_DRIVE_LETTER = /^([a-zA-Z]):/
+
+/**
+ * Windows drive letters are case-insensitive and we may get them as either
+ * lower or upper case. This function normalizes the drive letter to uppercase
+ * to be consistent with the rest of the codebase.
+ */
+export function normalizeDriveLetter(filepath: string) {
+  return filepath.replace(WIN_DRIVE_LETTER, (_, letter) => letter.toUpperCase() + ':')
+}
+
 export function changeAffectsFile(change: string, files: string[]): boolean {
   for (let file of files) {
     if (change === file || dirContains(change, file)) {
