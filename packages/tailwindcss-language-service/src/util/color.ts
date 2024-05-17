@@ -71,6 +71,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
 
   str = replaceHexColorVarsWithTheirDefaults(str)
   str = replaceColorVarsWithTheirDefaults(str)
+  str = removeColorMixWherePossible(str)
 
   let possibleColors = str.matchAll(colorRegex)
 
@@ -250,4 +251,20 @@ export function formatColor(color: culori.Color): string {
   }
 
   return culori.formatHex8(color)
+}
+
+const COLOR_MIX_REGEX = /color-mix\(in srgb, (.*?) (\d+|\.\d+|\d+\.\d+)%, transparent\)/g
+
+function removeColorMixWherePossible(str: string) {
+  return str.replace(COLOR_MIX_REGEX, (match, color, percentage) => {
+    if (color.startsWith('var(')) return match
+
+    let parsed = culori.parse(color)
+    if (!parsed) return match
+
+    let alpha = Number(percentage) / 100
+    if (Number.isNaN(alpha)) return match
+
+    return culori.formatRgb({ ...parsed, alpha })
+  })
 }
