@@ -58,10 +58,16 @@ function replaceColorVarsWithTheirDefaults(str: string): string {
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
-  return Array.from(replaceColorVarsWithTheirDefaults(str).matchAll(colorRegex), (match) => {
+  function toColor(match: RegExpMatchArray) {
     let color = match[1].replace(/var\([^)]+\)/, '1')
     return getKeywordColor(color) ?? culori.parse(color)
-  }).filter(Boolean)
+  }
+
+  str = replaceColorVarsWithTheirDefaults(str)
+
+  let possibleColors = str.matchAll(colorRegex)
+
+  return Array.from(possibleColors, toColor).filter(Boolean)
 }
 
 function getColorFromDecls(
