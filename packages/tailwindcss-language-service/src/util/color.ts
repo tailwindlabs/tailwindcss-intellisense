@@ -55,6 +55,12 @@ function replaceColorVarsWithTheirDefaults(str: string): string {
   return str.replace(/((?:rgba?|hsla?|(?:ok)?(?:lab|lch))\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
 }
 
+function replaceHexColorVarsWithTheirDefaults(str: string): string {
+  // var(--color-red-500, #ef4444)
+  // -> #ef4444
+  return str.replace(/var\([^,]+,\s*(#[^)]+)\)/gi, '$1')
+}
+
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
@@ -63,6 +69,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
     return getKeywordColor(color) ?? culori.parse(color)
   }
 
+  str = replaceHexColorVarsWithTheirDefaults(str)
   str = replaceColorVarsWithTheirDefaults(str)
 
   let possibleColors = str.matchAll(colorRegex)
