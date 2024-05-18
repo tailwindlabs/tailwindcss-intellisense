@@ -145,6 +145,21 @@ function getColorFromDecls(
 }
 
 function getColorFromRoot(state: State, css: postcss.Root): culori.Color | KeywordColor | null {
+  // Remove any `@property` rules
+  css = css.clone()
+  css.walkAtRules((rule) => {
+    // Ignore declarations inside `@property` rules
+    if (rule.name === 'property') {
+      rule.remove()
+    }
+
+    // Ignore declarations @supports (-moz-orient: inline)
+    // this is a hack used for `@property` fallbacks in Firefox
+    if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
+      rule.remove()
+    }
+  })
+
   let decls: Record<string, string[]> = {}
 
   let rule = postcss.rule({
