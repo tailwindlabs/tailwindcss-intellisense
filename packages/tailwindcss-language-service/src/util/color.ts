@@ -55,13 +55,27 @@ function replaceColorVarsWithTheirDefaults(str: string): string {
   return str.replace(/((?:rgba?|hsla?|(?:ok)?(?:lab|lch))\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
 }
 
+function replaceHexColorVarsWithTheirDefaults(str: string): string {
+  // var(--color-red-500, #ef4444)
+  // -> #ef4444
+  return str.replace(/var\([^,]+,\s*(#[^)]+)\)/gi, '$1')
+}
+
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
-  return Array.from(replaceColorVarsWithTheirDefaults(str).matchAll(colorRegex), (match) => {
+  function toColor(match: RegExpMatchArray) {
     let color = match[1].replace(/var\([^)]+\)/, '1')
     return getKeywordColor(color) ?? culori.parse(color)
-  }).filter(Boolean)
+  }
+
+  str = replaceHexColorVarsWithTheirDefaults(str)
+  str = replaceColorVarsWithTheirDefaults(str)
+  str = removeColorMixWherePossible(str)
+
+  let possibleColors = str.matchAll(colorRegex)
+
+  return Array.from(possibleColors, toColor).filter(Boolean)
 }
 
 function getColorFromDecls(
@@ -131,6 +145,21 @@ function getColorFromDecls(
 }
 
 function getColorFromRoot(state: State, css: postcss.Root): culori.Color | KeywordColor | null {
+  // Remove any `@property` rules
+  css = css.clone()
+  css.walkAtRules((rule) => {
+    // Ignore declarations inside `@property` rules
+    if (rule.name === 'property') {
+      rule.remove()
+    }
+
+    // Ignore declarations @supports (-moz-orient: inline)
+    // this is a hack used for `@property` fallbacks in Firefox
+    if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
+      rule.remove()
+    }
+  })
+
   let decls: Record<string, string[]> = {}
 
   let rule = postcss.rule({
@@ -237,4 +266,20 @@ export function formatColor(color: culori.Color): string {
   }
 
   return culori.formatHex8(color)
+}
+
+const COLOR_MIX_REGEX = /color-mix\(in srgb, (.*?) (\d+|\.\d+|\d+\.\d+)%, transparent\)/g
+
+function removeColorMixWherePossible(str: string) {
+  return str.replace(COLOR_MIX_REGEX, (match, color, percentage) => {
+    if (color.startsWith('var(')) return match
+
+    let parsed = culori.parse(color)
+    if (!parsed) return match
+
+    let alpha = Number(percentage) / 100
+    if (Number.isNaN(alpha)) return match
+
+    return culori.formatRgb({ ...parsed, alpha })
+  })
 }

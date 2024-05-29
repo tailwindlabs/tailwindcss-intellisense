@@ -87,6 +87,68 @@ withFixture('basic', (c) => {
       },
     ],
   })
+
+  testColors('gradient utilities show colors', {
+    text: '<div class="from-black from-black/50 via-black via-black/50 to-black to-black/50">',
+    expected: [
+      {
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 22 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 23 }, end: { line: 0, character: 36 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+
+      {
+        range: { start: { line: 0, character: 37 }, end: { line: 0, character: 46 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 47 }, end: { line: 0, character: 59 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+
+      {
+        range: { start: { line: 0, character: 60 }, end: { line: 0, character: 68 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 69 }, end: { line: 0, character: 80 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+    ],
+  })
 })
 
 withFixture('v4/basic', (c) => {
@@ -116,7 +178,6 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
-  /*
   testColors('opacity modifier', {
     text: '<div class="bg-red-500/20">',
     expected: [
@@ -131,7 +192,6 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
-   */
 
   testColors('arbitrary value', {
     text: '<div class="bg-[red]">',
@@ -148,7 +208,6 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
-  /*
   testColors('arbitrary value and opacity modifier', {
     text: '<div class="bg-[red]/[0.5]">',
     expected: [
@@ -163,7 +222,6 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
-  */
 
   testColors('oklch colors are parsed', {
     text: '<div class="bg-[oklch(60%_0.25_25)]">',
@@ -175,6 +233,68 @@ withFixture('v4/basic', (c) => {
           red: 0.9475942429386454,
           green: 0,
           blue: 0.14005415620741646,
+        },
+      },
+    ],
+  })
+
+  testColors('gradient utilities show colors', {
+    text: '<div class="from-black from-black/50 via-black via-black/50 to-black to-black/50">',
+    expected: [
+      {
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 22 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 23 }, end: { line: 0, character: 36 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+
+      {
+        range: { start: { line: 0, character: 37 }, end: { line: 0, character: 46 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 47 }, end: { line: 0, character: 59 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+
+      {
+        range: { start: { line: 0, character: 60 }, end: { line: 0, character: 68 } },
+        color: {
+          alpha: 1,
+          red: 0,
+          green: 0,
+          blue: 0,
+        },
+      },
+      {
+        range: { start: { line: 0, character: 69 }, end: { line: 0, character: 80 } },
+        color: {
+          alpha: 0.5,
+          red: 0,
+          green: 0,
+          blue: 0,
         },
       },
     ],
