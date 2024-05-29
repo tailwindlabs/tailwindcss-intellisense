@@ -26,6 +26,5 @@ export default function resolveFrom(from?: string, id?: string): string {
 
   let result = resolver.resolveSync({}, from, id)
   if (result === false) throw Error()
-  // https://github.com/webpack/enhanced-resolve/issues/282
-  return result.replace(/\0#/g, '#')
+  return result
 }

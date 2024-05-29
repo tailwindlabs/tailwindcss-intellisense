@@ -614,7 +614,7 @@ THE SOFTWARE.
 
 ================================================================================
 
-enhanced-resolve-301@0.0.1
+enhanced-resolve@5.15.0
 
 Copyright JS Foundation and other contributors
 
