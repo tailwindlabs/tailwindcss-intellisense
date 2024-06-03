@@ -1,16 +1,15 @@
-import Module from 'module'
-import * as path from 'path'
+import Module from 'node:module'
+import { isBuiltin } from 'node:module'
+import * as path from 'node:path'
 import resolveFrom from '../util/resolveFrom'
-import {builtinModules} from 'module'
 
 process.env.TAILWIND_MODE = 'build'
 process.env.TAILWIND_DISABLE_TOUCH = 'true'
 
 let oldResolveFilename = (Module as any)._resolveFilename
-const nodeModulePrefix = /^node:/i;
 
 ;(Module as any)._resolveFilename = (id: any, parent: any) => {
-  if (typeof id === 'string' && builtinModules.includes(id.replace(nodeModulePrefix, ''))) {
+  if (typeof id === 'string' && isBuiltin(id)) {
     return oldResolveFilename(id, parent)
   }
 
