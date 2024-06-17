@@ -774,6 +774,9 @@ export class TW {
         for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
+
+          fsPath = normalizeDriveLetter(fsPath)
+
           if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {
             break
           }
