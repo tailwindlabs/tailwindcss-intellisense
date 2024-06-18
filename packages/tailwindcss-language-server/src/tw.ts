@@ -607,7 +607,7 @@ export class TW {
             }))
             .map((folder) => normalizePath(folder.uri))
 
-          await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+          await Promise.allSettled(added.map((basePath) => this._initFolder(URI.file(basePath))))
 
           // TODO: If folders get removed we should cleanup any associated state and resources
         }),
