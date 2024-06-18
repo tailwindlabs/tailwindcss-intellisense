@@ -153,7 +153,9 @@ export class TW {
     // NOTE: We should eventually be smart about avoiding duplicate work. We do
     // not necessarily need to set up file watchers, search for projects, read
     // configs, etc… per folder. Some of this work should be sharable.
-    let results = await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
+    let results = await Promise.allSettled(
+      folders.map((basePath) => this._initFolder(URI.file(basePath))),
+    )
 
     for (let [idx, result] of results.entries()) {
       if (result.status === 'rejected') {
@@ -164,24 +166,15 @@ export class TW {
     await this.listenForEvents()
   }
 
-  private async _initFolder(base: string): Promise<void> {
+  private async _initFolder(baseUri: URI): Promise<void> {
+    let base = baseUri.fsPath
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
 
     // Get user languages for the given workspace folder
-    let userLanguages = globalSettings.tailwindCSS.includeLanguages
-
-    try {
-      let folderSettings = await this.settingsCache.get(base)
-      userLanguages = folderSettings.tailwindCSS.includeLanguages
-    } catch (error) {
-      console.error(
-        'Unable to get the settings for workspace folder. Using global settings instead.',
-        error,
-      )
-    }
-
+    let folderSettings = await this.settingsCache.get(baseUri.toString())
+    let userLanguages = folderSettings.tailwindCSS.includeLanguages
 
     // Fall back to settings defined in `initializationOptions` if invalid
     if (!isObject(userLanguages)) {
