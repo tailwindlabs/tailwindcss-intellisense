@@ -177,7 +177,7 @@ export class TW {
       userLanguages = folderSettings.tailwindCSS.includeLanguages
     } catch (error) {
       console.error(
-        'Unable to get get settings for workspace folder. Using global settings instead.',
+        'Unable to get the settings for workspace folder. Using global settings instead.',
         error,
       )
     }
