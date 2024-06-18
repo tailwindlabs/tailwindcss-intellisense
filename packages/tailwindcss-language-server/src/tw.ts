@@ -170,8 +170,18 @@ export class TW {
     let ignore = globalSettings.tailwindCSS.files.exclude
 
     // Get user languages for the given workspace folder
-    let folderSettings = await this.settingsCache.get(base)
-    let userLanguages = folderSettings.tailwindCSS.includeLanguages
+    let userLanguages = globalSettings.tailwindCSS.includeLanguages
+
+    try {
+      let folderSettings = await this.settingsCache.get(base)
+      userLanguages = folderSettings.tailwindCSS.includeLanguages
+    } catch (error) {
+      console.error(
+        'Unable to get get settings for workspace folder. Using global settings instead.',
+        error,
+      )
+    }
+
 
     // Fall back to settings defined in `initializationOptions` if invalid
     if (!isObject(userLanguages)) {
