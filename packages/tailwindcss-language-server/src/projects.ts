@@ -1040,7 +1040,7 @@ export async function createProjectService(
       if (state.enabled) {
         refreshDiagnostics()
       }
-      if (settings.editor.colorDecorators) {
+      if (settings.editor?.colorDecorators) {
         updateCapabilities()
       } else {
         connection.sendNotification('@/tailwindCSS/clearColors')
