@@ -3,6 +3,12 @@
 ## 0.11.x (Pre-Release)
 
 - Fix crash when class regex matches an empty string (#897)
+- Add support for Tailwind CSS v4 Alpha (#917)
+- Soft-reload v4 theme when editing CSS files (#918)
+- Fix loading of ESM and TypeScript configs (c3bbd2f)
+- Show equivalent hex colors (#831)
+- Fix v4 project loading on Windows (8285ebc)
+- Internal code cleanup (#922)
 - Support Astro's `class:list` attribute by default (#890)
 - Fix hovers and CSS conflict detection in Vue `<style lang="sass">` blocks (#930)
 - Add support for `<script type="text/babel">` (#932)
@@ -10,6 +16,19 @@
 - Handle `style` exports condition when processing `@import`s (#934)
 - Highlight `@theme` contents as a rule list (#937)
 - Show color decorators for `oklab` and `oklch` colors (#936)
+- Update fallback version of Tailwind to v3.4.2 (#938)
+- Fix errors thrown by detecting content files with oxide (#945)
+- Don't break when generating rules produces an error (#954)
+- Add support for initializing when using `workspaceFolders` (#955)
+- Don’t throw when reading CSS file that might not exist (#956)
+- Use one server to handle all folders in a workspace (#957)
+- Fix v4 theme reloading on Windows (#960)
+- Show color decorators when utility has an opacity modifier in v4 (#969)
+- Bump `enhanced-resolve` dependency (#971)
+- Remove `is-builtin-module` dependency (#970)
+- Bump minimum supported Node version to v18 (#978)
+- Pass URI to configuration call not a file path (#981, #982)
+- Fix handling of added workspaces (b39c8e0)
 
 ## 0.10.5
 
