@@ -782,6 +782,9 @@ export class TW {
           let fsPath = URI.parse(document.uri).fsPath
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
 
+          // This filename comes from VSCode rather than from the filesystem
+          // which means the drive letter *might* be lowercased and we need
+          // to normalize it so that we can compare it properly.
           fsPath = normalizeDriveLetter(fsPath)
 
           if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {

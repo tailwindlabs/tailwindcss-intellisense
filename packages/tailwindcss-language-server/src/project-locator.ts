@@ -81,6 +81,10 @@ export class ProjectLocator {
       for (let entry of project.config.entries) {
         entry.path = normalizeDriveLetter(entry.path)
       }
+
+      for (let selector of project.documentSelector) {
+        selector.pattern = normalizeDriveLetter(selector.pattern)
+      }
     }
 
     return projects
