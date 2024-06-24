@@ -1,13 +1,17 @@
 # Changelog
 
-## 0.11.x (Pre-Release)
+## Prerelease
+
+- Nothing yet!
+
+## 0.12.0
 
 - Fix crash when class regex matches an empty string ([#897](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/897))
 - Add support for Tailwind CSS v4 Alpha ([#917](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/917))
-- Soft-reload v4 theme when editing CSS files ([#918](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/918))
+- Soft-reload Tailwind CSS v4 theme when editing CSS files ([#918](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/918))
 - Fix loading of ESM and TypeScript configs ([c3bbd2f](https://github.com/tailwindlabs/tailwindcss-intellisense/commit/c3bbd2f))
 - Show equivalent hex colors ([#831](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/831))
-- Fix v4 project loading on Windows ([8285ebc](https://github.com/tailwindlabs/tailwindcss-intellisense/commit/8285ebc))
+- Fix Tailwind CSS v4 project loading on Windows ([8285ebc](https://github.com/tailwindlabs/tailwindcss-intellisense/commit/8285ebc))
 - Internal code cleanup ([#922](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/922))
 - Support Astro's `class:list` attribute by default ([#890](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/890))
 - Fix hovers and CSS conflict detection in Vue `<style lang="sass">` blocks ([#930](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/930))
@@ -22,8 +26,8 @@
 - Add support for initializing when using `workspaceFolders` ([#955](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/955))
 - Fix crash when reading CSS files that don't exist ([#956](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/956))
 - Use one server to handle all folders in a workspace ([#957](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/957))
-- Fix v4 theme reloading on Windows ([#960](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/960))
-- Show color decorators when utility has an opacity modifier in v4 ([#969](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/969))
+- Fix Tailwind CSS v4 theme reloading on Windows ([#960](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/960))
+- Show color decorators when utility has an opacity modifier in Tailwind CSS v4 ([#969](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/969))
 - Bump `enhanced-resolve` dependency ([#971](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/971))
 - Remove `is-builtin-module` dependency ([#970](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/970))
 - Bump minimum supported Node version to v18 ([#978](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/978))
