@@ -29,6 +29,7 @@
 - Bump minimum supported Node version to v18 ([#978](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/978))
 - Pass URI to configuration call not a file path ([#981](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/981), [#982](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/982))
 - Fix handling of added workspaces ([b39c8e0](https://github.com/tailwindlabs/tailwindcss-intellisense/commit/b39c8e0))
+- Bump bundled version of `tailwindcss` to `v3.4.4` ([#987](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/987))
 
 ## 0.10.5
 
