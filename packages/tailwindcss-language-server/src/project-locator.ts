@@ -16,6 +16,7 @@ import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { pathToFileURL } from 'node:url'
 import { resolveCssImports } from './resolve-css-imports'
+import { normalizeDriveLetter } from './utils'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -68,6 +69,18 @@ export class ProjectLocator {
         pattern: normalizePath(path.join(this.base, '**')),
         priority: DocumentSelectorPriority.ROOT_DIRECTORY,
       })
+    }
+
+    // Normalize drive letters in filepaths on Windows so paths
+    // are consistent across the filesystem and the language client
+    for (let project of projects) {
+      project.folder = normalizeDriveLetter(project.folder)
+      project.configPath = normalizeDriveLetter(project.configPath)
+      project.config.path = normalizeDriveLetter(project.config.path)
+
+      for (let entry of project.config.entries) {
+        entry.path = normalizeDriveLetter(entry.path)
+      }
     }
 
     return projects

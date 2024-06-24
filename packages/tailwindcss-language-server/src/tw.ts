@@ -322,8 +322,6 @@ export class TW {
             ...project.projectConfig.config.entries.map((entry) => entry.path),
           ]
 
-          reloadableFiles = reloadableFiles.map(normalizeDriveLetter)
-
           if (!changeAffectsFile(normalizedFilename, reloadableFiles)) continue
 
           needsSoftRestart = true
