@@ -282,6 +282,10 @@ export class TW {
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
+
+        // This filename comes from VSCode rather than from the filesystem
+        // which means the drive letter *might* be lowercased and we need
+        // to normalize it so that we can compare it properly.
         normalizedFilename = normalizeDriveLetter(normalizedFilename)
 
         for (let ignorePattern of ignore) {
