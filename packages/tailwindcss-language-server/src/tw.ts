@@ -153,18 +153,27 @@ export class TW {
     // NOTE: We should eventually be smart about avoiding duplicate work. We do
     // not necessarily need to set up file watchers, search for projects, read
     // configs, etc… per folder. Some of this work should be sharable.
-    await Promise.allSettled(folders.map((basePath) => this._initFolder(basePath)))
+    let results = await Promise.allSettled(
+      folders.map((basePath) => this._initFolder(URI.file(basePath))),
+    )
+
+    for (let [idx, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        console.error('Failed to initialize workspace folder', folders[idx], result.reason)
+      }
+    }
 
     await this.listenForEvents()
   }
 
-  private async _initFolder(base: string): Promise<void> {
+  private async _initFolder(baseUri: URI): Promise<void> {
+    let base = baseUri.fsPath
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
 
     // Get user languages for the given workspace folder
-    let folderSettings = await this.settingsCache.get(base)
+    let folderSettings = await this.settingsCache.get(baseUri.toString())
     let userLanguages = folderSettings.tailwindCSS.includeLanguages
 
     // Fall back to settings defined in `initializationOptions` if invalid
@@ -598,7 +607,7 @@ export class TW {
             }))
             .map((folder) => normalizePath(folder.uri))
 
-          await Promise.allSettled(added.map((basePath) => this._initFolder(basePath)))
+          await Promise.allSettled(added.map((basePath) => this._initFolder(URI.file(basePath))))
 
           // TODO: If folders get removed we should cleanup any associated state and resources
         }),
