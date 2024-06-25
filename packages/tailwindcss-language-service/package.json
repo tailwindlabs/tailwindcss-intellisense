@@ -1,6 +1,6 @@
 {
   "name": "@tailwindcss/language-service",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
