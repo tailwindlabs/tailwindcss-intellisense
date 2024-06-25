@@ -282,6 +282,10 @@ export class TW {
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
+
+        // This filename comes from VSCode rather than from the filesystem
+        // which means the drive letter *might* be lowercased and we need
+        // to normalize it so that we can compare it properly.
         normalizedFilename = normalizeDriveLetter(normalizedFilename)
 
         for (let ignorePattern of ignore) {
@@ -321,8 +325,6 @@ export class TW {
             project.projectConfig.configPath,
             ...project.projectConfig.config.entries.map((entry) => entry.path),
           ]
-
-          reloadableFiles = reloadableFiles.map(normalizeDriveLetter)
 
           if (!changeAffectsFile(normalizedFilename, reloadableFiles)) continue
 
@@ -783,6 +785,12 @@ export class TW {
         for (let selector of documentSelector) {
           let fsPath = URI.parse(document.uri).fsPath
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
+
+          // This filename comes from VSCode rather than from the filesystem
+          // which means the drive letter *might* be lowercased and we need
+          // to normalize it so that we can compare it properly.
+          fsPath = normalizeDriveLetter(fsPath)
+
           if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {
             break
           }
