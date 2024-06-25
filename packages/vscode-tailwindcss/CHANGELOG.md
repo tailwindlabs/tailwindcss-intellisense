@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.1
+
 - Normalize Windows drive letters in document URIs ([#980](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/980))
 
 ## 0.12.0
