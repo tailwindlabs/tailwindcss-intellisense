@@ -242,8 +242,20 @@ export class ProjectLocator {
       concurrency: Math.max(os.cpus().length, 1),
     })
 
-    // Resolve symlinks for all found files
-    files = await Promise.all(files.map(async (file) => normalizePath(await fs.realpath(file))))
+    files = await Promise.all(
+      files.map(async (file) => {
+        // Resolve symlinks for all found files
+        let actualPath = await fs.realpath(file)
+
+        // Ignore network paths on Windows. Resolving relative paths on a
+        // netshare throws in `enhanced-resolve` :/
+        if (actualPath.startsWith('\\') && process.platform === 'win32') {
+          return normalizePath(file)
+        }
+
+        return normalizePath(actualPath)
+      }),
+    )
 
     // Deduplicate the list of files and sort them for deterministic results
     // across environments
