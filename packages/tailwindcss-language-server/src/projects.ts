@@ -20,7 +20,6 @@ import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, SilentError } from './util/error'
-import normalizePath from 'normalize-path'
 import * as path from 'path'
 import * as fs from 'fs'
 import findUp from 'find-up'
@@ -70,14 +69,15 @@ import {
   clearRequireCache,
   withFallback,
   isObject,
+  pathToFileURL,
   changeAffectsFile,
+  normalizePath,
 } from './utils'
 import type { DocumentService } from './documents'
 import type { ProjectConfig } from './project-locator'
 import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
-import { pathToFileURL } from 'url'
 
 const colorNames = Object.keys(namedColors)
 

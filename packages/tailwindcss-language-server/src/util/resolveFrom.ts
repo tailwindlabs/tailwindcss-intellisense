@@ -1,4 +1,5 @@
 import { equal } from '@tailwindcss/language-service/src/util/array'
+import * as path from 'node:path'
 import { createResolver } from './resolve'
 
 let pnpApi: any
@@ -16,7 +17,16 @@ export function setPnpApi(newPnpApi: any): void {
 }
 
 export default function resolveFrom(from?: string, id?: string): string {
+  // Network share path on Windows
   if (id.startsWith('\\\\')) return id
+
+  // Normalized network share path on Windows
+  if (id.startsWith('//') && path.sep === '\\') return id
+
+  // Normalized network share path on Windows
+  if (from.startsWith('//') && path.sep === '\\') {
+    from = '\\\\' + from.slice(2)
+  }
 
   let newExtensions = Object.keys(require.extensions)
   if (!equal(newExtensions, extensions)) {

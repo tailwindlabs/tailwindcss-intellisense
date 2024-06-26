@@ -1,5 +1,8 @@
 import Module from 'node:module'
 import path from 'node:path'
+import { URI } from 'vscode-uri'
+import normalizePathBase from 'normalize-path'
+import { pathToFileURL as pathToFileURLBase } from 'node:url'
 
 export function withoutLogs<T>(getter: () => T): T {
   let fns = {
@@ -88,4 +91,35 @@ export function changeAffectsFile(change: string, files: string[]): boolean {
     }
   }
   return false
+}
+
+export function normalizePath(originalPath: string) {
+  let normalized = normalizePathBase(originalPath)
+
+  // This is Windows network share but the normalize path had one of the leading
+  // slashes stripped so we need to add it back
+  if (
+    originalPath.startsWith('\\\\') &&
+    normalized.startsWith('/') &&
+    !normalized.startsWith('//')
+  ) {
+    return `/${normalized}`
+  }
+
+  return normalized
+}
+
+export function pathToFileURL(filepath: string) {
+  try {
+    return pathToFileURLBase(filepath)
+  } catch (err) {
+    if (process.platform !== 'win32') throw err
+
+    // If `pathToFileURL` failsed on windows it's probably because the path was
+    // a windows network share path and there were mixed slashes.
+    // Fix the path and try again.
+    filepath = URI.file(filepath).fsPath
+
+    return pathToFileURLBase(filepath)
+  }
 }

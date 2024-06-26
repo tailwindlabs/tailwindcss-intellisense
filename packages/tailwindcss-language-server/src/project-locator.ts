@@ -3,7 +3,6 @@ import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import glob from 'fast-glob'
 import picomatch from 'picomatch'
-import normalizePath from 'normalize-path'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
@@ -14,9 +13,8 @@ import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
-import { pathToFileURL } from 'node:url'
 import { resolveCssImports } from './resolve-css-imports'
-import { normalizeDriveLetter } from './utils'
+import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -244,8 +242,20 @@ export class ProjectLocator {
       concurrency: Math.max(os.cpus().length, 1),
     })
 
-    // Resolve symlinks for all found files
-    files = await Promise.all(files.map(async (file) => normalizePath(await fs.realpath(file))))
+    files = await Promise.all(
+      files.map(async (file) => {
+        // Resolve symlinks for all found files
+        let actualPath = await fs.realpath(file)
+
+        // Ignore network paths on Windows. Resolving relative paths on a
+        // netshare throws in `enhanced-resolve` :/
+        if (actualPath.startsWith('\\') && process.platform === 'win32') {
+          return normalizePath(file)
+        }
+
+        return normalizePath(actualPath)
+      }),
+    )
 
     // Deduplicate the list of files and sort them for deterministic results
     // across environments

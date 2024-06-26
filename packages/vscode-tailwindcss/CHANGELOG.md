@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix loading projects on Windows network drives ([#996](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/996))
 
 ## 0.12.1
 
