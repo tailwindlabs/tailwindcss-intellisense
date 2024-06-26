@@ -3,7 +3,6 @@ import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import glob from 'fast-glob'
 import picomatch from 'picomatch'
-import normalizePath from 'normalize-path'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
@@ -14,9 +13,8 @@ import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
-import { pathToFileURL } from 'node:url'
 import { resolveCssImports } from './resolve-css-imports'
-import { normalizeDriveLetter } from './utils'
+import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
