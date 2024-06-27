@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.2
+
 - Fix loading projects on Windows network drives ([#996](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/996))
 - Fix server not launching on older versions of VSCode ([#998](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/998))
 
