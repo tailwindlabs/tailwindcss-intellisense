@@ -505,6 +505,8 @@ export class TW {
       }
     }
 
+    console.log(`[Global] Preparing projects...`)
+
     await Promise.all(
       workspaceFolders.map((projectConfig) =>
         this.addProject(
@@ -517,17 +519,23 @@ export class TW {
       ),
     )
 
+    console.log(`[Global] Initializing projects...`)
+
     // init projects for documents that are _already_ open
     let readyDocuments: string[] = []
+    let enabledProjectCount = 0
     for (let document of this.documentService.getAllDocuments()) {
       let project = this.getProject(document)
       if (project && !project.enabled()) {
         project.enable()
         await project.tryInit()
+        enabledProjectCount++
       }
 
       readyDocuments.push(document.uri)
     }
+
+    console.log(`[Global] Initialized ${enabledProjectCount} projects`)
 
     this.setupLSPHandlers()
 
@@ -553,6 +561,8 @@ export class TW {
     const isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
 
     if (!isTestMode) return
+
+    console.log(`[Global][Test] Sending document notifications...`)
 
     await Promise.all(
       readyDocuments.map((uri) =>
@@ -783,20 +793,55 @@ export class TW {
             return 0
           })
         for (let selector of documentSelector) {
-          let fsPath = URI.parse(document.uri).fsPath
+          let uri = URI.parse(document.uri)
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
+
+          let fsPath = uri.fsPath
+          let normalPath = uri.path
 
           // This filename comes from VSCode rather than from the filesystem
           // which means the drive letter *might* be lowercased and we need
           // to normalize it so that we can compare it properly.
           fsPath = normalizeDriveLetter(fsPath)
 
-          if (pattern.startsWith('!') && picomatch(pattern.slice(1), { dot: true })(fsPath)) {
-            break
+          console.log('[GLOBAL] Checking document', {
+            fsPath,
+            normalPath,
+          })
+
+          if (pattern.startsWith('!')) {
+            if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
+              break
+            }
+
+            if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
+              console.log('[GLOBAL] Matched ignored non-FS path', {
+                pattern,
+              })
+
+              break
+            }
           }
+
           if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
             matchedProject = project
             matchedPriority = selector.priority
+
+            continue
+          }
+
+          if (
+            picomatch(pattern, { dot: true })(normalPath) &&
+            selector.priority < matchedPriority
+          ) {
+            console.log('[GLOBAL] Matched non-FS path', {
+              pattern,
+            })
+
+            matchedProject = project
+            matchedPriority = selector.priority
+
+            continue
           }
         }
       } else {
