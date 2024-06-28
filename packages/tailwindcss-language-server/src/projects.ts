@@ -72,6 +72,7 @@ import {
   pathToFileURL,
   changeAffectsFile,
   normalizePath,
+  normalizeDriveLetter,
 } from './utils'
 import type { DocumentService } from './documents'
 import type { ProjectConfig } from './project-locator'
@@ -266,7 +267,7 @@ export async function createProjectService(
     let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
 
     for (let change of changes) {
-      let file = normalizePath(change.file)
+      let file = normalizeDriveLetter(normalizePath(change.file))
 
       let isConfigFile = changeAffectsFile(file, [projectConfig.configPath])
       let isDependency = changeAffectsFile(file, state.dependencies ?? [])
