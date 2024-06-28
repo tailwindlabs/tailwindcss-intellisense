@@ -193,7 +193,7 @@ export class TW {
 
     function getExplicitConfigFiles(settings: TailwindCssSettings) {
       function resolvePathForConfig(filepath: string) {
-        return normalizePath(path.resolve(userDefinedConfigBase, filepath))
+        return normalizeDriveLetter(normalizePath(path.resolve(userDefinedConfigBase, filepath)))
       }
 
       let configFileOrFiles = settings.experimental.configFile
