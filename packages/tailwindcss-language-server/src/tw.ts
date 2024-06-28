@@ -792,6 +792,9 @@ export class TW {
             }
             return 0
           })
+
+        console.log('[GLOBAL] Checking selectors', documentSelector)
+
         for (let selector of documentSelector) {
           let uri = URI.parse(document.uri)
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
