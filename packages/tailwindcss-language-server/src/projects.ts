@@ -1552,7 +1552,7 @@ function getContentDocumentSelectorFromConfigFile(
         : path.resolve(contentBase, item),
     )
     .map((item) => ({
-      pattern: normalizePath(item),
+      pattern: normalizeDriveLetter(normalizePath(item)),
       priority: DocumentSelectorPriority.CONTENT_FILE,
     }))
 }
