@@ -77,7 +77,9 @@ async function getConfigFileFromCssFile(cssFile: string): Promise<string | null>
   if (!match) {
     return null
   }
-  return normalizePath(path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1)))
+  return normalizeDriveLetter(
+    normalizePath(path.resolve(path.dirname(cssFile), match.groups.config.slice(1, -1))),
+  )
 }
 
 export class TW {
@@ -191,7 +193,7 @@ export class TW {
 
     function getExplicitConfigFiles(settings: TailwindCssSettings) {
       function resolvePathForConfig(filepath: string) {
-        return normalizePath(path.resolve(userDefinedConfigBase, filepath))
+        return normalizeDriveLetter(normalizePath(path.resolve(userDefinedConfigBase, filepath)))
       }
 
       let configFileOrFiles = settings.experimental.configFile
@@ -334,7 +336,11 @@ export class TW {
 
         let isCssFile = isCssMatcher(`**/${CSS_GLOB}`)
         if (isCssFile && change.type !== FileChangeType.Deleted) {
-          let configPath = await getConfigFileFromCssFile(change.file)
+          // TODO: Determine if we can only use `normalizedFilename`
+          let configPath =
+            (await getConfigFileFromCssFile(normalizedFilename)) ||
+            (await getConfigFileFromCssFile(change.file))
+
           if (
             cssFileConfigMap.has(normalizedFilename) &&
             cssFileConfigMap.get(normalizedFilename) !== configPath

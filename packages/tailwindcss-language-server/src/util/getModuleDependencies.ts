@@ -1,7 +1,7 @@
 // https://github.com/tailwindlabs/tailwindcss/blob/bac5ecf0040aa9a788d1b22d706506146ee831ff/src/lib/getModuleDependencies.js
 import fs from 'fs'
 import path from 'path'
-import { normalizePath } from '../utils'
+import { normalizeDriveLetter, normalizePath } from '../utils'
 
 let jsExtensions = ['.js', '.cjs', '.mjs']
 
@@ -83,5 +83,5 @@ export function getModuleDependencies(absoluteFilePath: string): string[] {
     _getModuleDependencies(absoluteFilePath, path.dirname(absoluteFilePath), new Set()),
   )
     .filter((file) => file !== absoluteFilePath)
-    .map((file) => normalizePath(file))
+    .map((file) => normalizeDriveLetter(normalizePath(file)))
 }
