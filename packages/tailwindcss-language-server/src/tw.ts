@@ -813,11 +813,35 @@ export class TW {
             if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
               break
             }
+
+            if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
+              console.log('[GLOBAL] Matched ignored non-FS path', {
+                pattern,
+              })
+
+              break
+            }
           }
 
           if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
             matchedProject = project
             matchedPriority = selector.priority
+
+            continue
+          }
+
+          if (
+            picomatch(pattern, { dot: true })(normalPath) &&
+            selector.priority < matchedPriority
+          ) {
+            console.log('[GLOBAL] Matched non-FS path', {
+              pattern,
+            })
+
+            matchedProject = project
+            matchedPriority = selector.priority
+
+            continue
           }
         }
       } else {
