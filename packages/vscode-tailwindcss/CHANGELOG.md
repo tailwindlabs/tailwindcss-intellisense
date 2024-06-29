@@ -2,7 +2,8 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Normalize Windows drive letters in more places ([#1001](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1001))
+- Attempt matches on non-normalized path for a project ([#999](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/999))
 
 ## 0.12.2
 
