@@ -799,8 +799,6 @@ export class TW {
             return 0
           })
 
-        console.log('[GLOBAL] Checking selectors', documentSelector)
-
         for (let selector of documentSelector) {
           let uri = URI.parse(document.uri)
           let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
@@ -813,21 +811,12 @@ export class TW {
           // to normalize it so that we can compare it properly.
           fsPath = normalizeDriveLetter(fsPath)
 
-          console.log('[GLOBAL] Checking document', {
-            fsPath,
-            normalPath,
-          })
-
           if (pattern.startsWith('!')) {
             if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
               break
             }
 
             if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
-              console.log('[GLOBAL] Matched ignored non-FS path', {
-                pattern,
-              })
-
               break
             }
           }
@@ -843,10 +832,6 @@ export class TW {
             picomatch(pattern, { dot: true })(normalPath) &&
             selector.priority < matchedPriority
           ) {
-            console.log('[GLOBAL] Matched non-FS path', {
-              pattern,
-            })
-
             matchedProject = project
             matchedPriority = selector.priority
 
