@@ -149,7 +149,8 @@ async function findCustomClassLists(
       })
     }
   } catch (err) {
-    console.log(JSON.stringify({ text, filters: regexes }))
+    console.error(err)
+    console.log({ text, filters: regexes })
     throw new Error('Failed to parse custom class regex')
   }
 
