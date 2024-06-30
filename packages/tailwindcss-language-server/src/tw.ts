@@ -783,73 +783,65 @@ export class TW {
     let matchedProject: ProjectService
     let matchedPriority: number = Infinity
 
-    for (let [, project] of this.projects) {
-      if (project.projectConfig.configPath) {
-        let documentSelector = project
-          .documentSelector()
-          .concat()
-          // move all the negated patterns to the front
-          .sort((a, z) => {
-            if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
-              return -1
-            }
-            if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
-              return 1
-            }
-            return 0
-          })
+    let uri = URI.parse(document.uri)
+    let fsPath = uri.fsPath
+    let normalPath = uri.path
 
-        for (let selector of documentSelector) {
-          let uri = URI.parse(document.uri)
-          let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
+    // This filename comes from VSCode rather than from the filesystem
+    // which means the drive letter *might* be lowercased and we need
+    // to normalize it so that we can compare it properly.
+    fsPath = normalizeDriveLetter(fsPath)
 
-          let fsPath = uri.fsPath
-          let normalPath = uri.path
+    for (let project of this.projects.values()) {
+      if (!project.projectConfig.configPath) {
+        fallbackProject = fallbackProject ?? project
+        continue
+      }
 
-          // This filename comes from VSCode rather than from the filesystem
-          // which means the drive letter *might* be lowercased and we need
-          // to normalize it so that we can compare it properly.
-          fsPath = normalizeDriveLetter(fsPath)
+      let documentSelector = project
+        .documentSelector()
+        .concat()
+        // move all the negated patterns to the front
+        .sort((a, z) => {
+          if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
+            return -1
+          }
+          if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
+            return 1
+          }
+          return 0
+        })
 
-          if (pattern.startsWith('!')) {
-            if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
-              break
-            }
+      for (let selector of documentSelector) {
+        let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
 
-            if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
-              break
-            }
+        if (pattern.startsWith('!')) {
+          if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
+            break
           }
 
-          if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
-            matchedProject = project
-            matchedPriority = selector.priority
-
-            continue
-          }
-
-          if (
-            picomatch(pattern, { dot: true })(normalPath) &&
-            selector.priority < matchedPriority
-          ) {
-            matchedProject = project
-            matchedPriority = selector.priority
-
-            continue
+          if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
+            break
           }
         }
-      } else {
-        if (!fallbackProject) {
-          fallbackProject = project
+
+        if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
+          matchedProject = project
+          matchedPriority = selector.priority
+
+          continue
+        }
+
+        if (picomatch(pattern, { dot: true })(normalPath) && selector.priority < matchedPriority) {
+          matchedProject = project
+          matchedPriority = selector.priority
+
+          continue
         }
       }
     }
 
-    if (matchedProject) {
-      return matchedProject
-    }
-
-    return fallbackProject
+    return matchedProject ?? fallbackProject
   }
 
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
