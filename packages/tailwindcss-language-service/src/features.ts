@@ -22,11 +22,13 @@ export type Feature =
 export function supportedFeatures(version: string): Feature[] {
   let features: Feature[] = []
 
-  if (semver.gte(version, '4.0.0-alpha.1')) {
+  let isInsidersV3 = version.startsWith('0.0.0-insiders')
+
+  if (!isInsidersV3 && semver.gte(version, '4.0.0-alpha.1')) {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
-  if (version.startsWith('0.0.0-oxide')) {
+  if (!isInsidersV3 && version.startsWith('0.0.0-oxide')) {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
