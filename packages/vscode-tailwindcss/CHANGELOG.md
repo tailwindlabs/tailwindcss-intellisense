@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix detection of v3 insiders builds  ([#1007](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1007))
 
 ## 0.12.3
 
