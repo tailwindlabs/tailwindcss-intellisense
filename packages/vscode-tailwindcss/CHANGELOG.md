@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Make sure language-specific settings are passed to our language server ([#1006](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1006))
 
 ## 0.12.3
 
