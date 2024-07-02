@@ -493,7 +493,23 @@ export async function activate(context: ExtensionContext) {
         workspace: {
           configuration: (params) => {
             return params.items.map(({ section, scopeUri }) => {
-              let scope: ConfigurationScope | null = scopeUri ? Uri.parse(scopeUri) : null
+              let scope: ConfigurationScope | null = null
+
+              if (scopeUri) {
+                let uri = Uri.parse(scopeUri)
+                let doc = Workspace.textDocuments.find((doc) => doc.uri.toString() === scopeUri)
+
+                // Make sure we ask VSCode for language specific settings for
+                // the document as it does not do this automatically
+                if (doc) {
+                  scope = {
+                    uri,
+                    languageId: doc.languageId,
+                  }
+                } else {
+                  scope = uri
+                }
+              }
 
               let settings = Workspace.getConfiguration(section, scope)
 
