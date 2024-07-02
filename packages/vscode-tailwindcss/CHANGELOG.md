@@ -2,7 +2,8 @@
 
 ## Prerelease
 
-- Fix detection of v3 insiders builds  ([#1007](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1007))
+- Fix detection of v3 insiders builds ([#1007](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1007))
+- Make sure language-specific settings are passed to our language server ([#1006](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1006))
 
 ## 0.12.3
 
