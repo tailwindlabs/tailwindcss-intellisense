@@ -820,7 +820,7 @@ export class TW {
       console.debug('[GLOBAL] Checking selectors', documentSelector)
 
       for (let selector of documentSelector) {
-        let pattern = selector.pattern.replace(/[\[\]{}]/g, (m) => `\\${m}`)
+        let pattern = selector.pattern.replace(/[\[\]{}()]/g, (m) => `\\${m}`)
 
         if (pattern.startsWith('!')) {
           if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
