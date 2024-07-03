@@ -817,8 +817,6 @@ export class TW {
           return 0
         })
 
-      console.debug('[GLOBAL] Checking selectors', documentSelector)
-
       for (let selector of documentSelector) {
         let pattern = selector.pattern.replace(/[\[\]{}()]/g, (m) => `\\${m}`)
 
