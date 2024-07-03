@@ -33,6 +33,7 @@ export const htmlLanguages = [
   'razor',
   'slim',
   'surface',
+  'svx',
   'twig',
 ]
 
