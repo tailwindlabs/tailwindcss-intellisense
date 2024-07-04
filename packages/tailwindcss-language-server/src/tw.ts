@@ -798,11 +798,6 @@ export class TW {
     // to normalize it so that we can compare it properly.
     fsPath = normalizeDriveLetter(fsPath)
 
-    console.debug('[GLOBAL] Matching project to document', {
-      fsPath,
-      normalPath,
-    })
-
     for (let project of this.projects.values()) {
       if (!project.projectConfig.configPath) {
         fallbackProject = fallbackProject ?? project
@@ -852,7 +847,16 @@ export class TW {
       }
     }
 
-    return matchedProject ?? fallbackProject
+    let project = matchedProject ?? fallbackProject
+
+    if (!project) {
+      console.debug('[GLOBAL] No matching project for document', {
+        fsPath,
+        normalPath,
+      })
+    }
+
+    return project
   }
 
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
