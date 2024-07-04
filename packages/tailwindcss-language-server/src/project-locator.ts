@@ -315,6 +315,9 @@ export class ProjectLocator {
     // Resolve imports in all the CSS files
     await Promise.all(imports.map((file) => file.resolveImports()))
 
+    // Resolve real paths for all the files in the CSS import graph
+    await Promise.all(imports.map((file) => file.resolveRealpaths()))
+
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
@@ -323,21 +326,21 @@ export class ProjectLocator {
     let utilitiesPath: string | null = null
 
     for (let file of imports) {
-      graph.add(file.path, file)
+      graph.add(file.realpath, file)
 
       // Record that `file.path` imports `msg.file`
       for (let entry of file.deps) {
-        graph.add(entry.path, entry)
-        graph.connect(file.path, entry.path)
+        graph.add(entry.realpath, entry)
+        graph.connect(file.realpath, entry.realpath)
       }
 
       // Collect the index, theme, and utilities files for manual connection
-      if (file.path.includes('node_modules/tailwindcss/index.css')) {
-        indexPath = file.path
-      } else if (file.path.includes('node_modules/tailwindcss/theme.css')) {
-        themePath = file.path
-      } else if (file.path.includes('node_modules/tailwindcss/utilities.css')) {
-        utilitiesPath = file.path
+      if (file.realpath.includes('node_modules/tailwindcss/index.css')) {
+        indexPath = file.realpath
+      } else if (file.realpath.includes('node_modules/tailwindcss/theme.css')) {
+        themePath = file.realpath
+      } else if (file.realpath.includes('node_modules/tailwindcss/utilities.css')) {
+        utilitiesPath = file.realpath
       }
     }
 
@@ -368,7 +371,7 @@ export class ProjectLocator {
 
       // And add the config to all their descendants as we need to track updates
       // that might affect the config / project
-      for (let child of graph.descendants(root.path)) {
+      for (let child of graph.descendants(root.realpath)) {
         child.configs.push(config)
       }
     }
@@ -526,6 +529,7 @@ type ConfigEntry = {
 class FileEntry {
   content: string | null
   deps: FileEntry[] = []
+  realpath: string | null
 
   constructor(
     public type: 'js' | 'css',
@@ -554,6 +558,12 @@ class FileEntry {
     } catch {
       //
     }
+  }
+
+  async resolveRealpaths() {
+    this.realpath = normalizePath(await fs.realpath(this.path))
+
+    await Promise.all(this.deps.map((entry) => entry.resolveRealpaths()))
   }
 
   /**
