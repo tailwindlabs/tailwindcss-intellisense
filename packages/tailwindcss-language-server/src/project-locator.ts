@@ -337,13 +337,10 @@ export class ProjectLocator {
     for (let file of imports) {
       graph.add(file.path, file)
 
-      for (let msg of file.deps) {
-        let importedPath: string = normalizePath(msg.file)
-
-        // Record that `file.path` imports `msg.file`
-        graph.add(importedPath, new FileEntry('css', importedPath))
-
-        graph.connect(file.path, importedPath)
+      // Record that `file.path` imports `msg.file`
+      for (let entry of file.deps) {
+        graph.add(entry.path, entry)
+        graph.connect(file.path, entry.path)
       }
 
       // Collect the index, theme, and utilities files for manual connection
@@ -540,7 +537,7 @@ type ConfigEntry = {
 
 class FileEntry {
   content: string | null
-  deps: Message[] = []
+  deps: FileEntry[] = []
 
   constructor(
     public type: 'js' | 'css',
@@ -559,7 +556,10 @@ class FileEntry {
   async resolveImports() {
     try {
       let result = await resolveCssImports().process(this.content, { from: this.path })
-      this.deps = result.messages.filter((msg) => msg.type === 'dependency')
+      let deps = result.messages.filter((msg) => msg.type === 'dependency')
+
+      // Record entries for each of the dependencies
+      this.deps = deps.map((msg) => new FileEntry('css', normalizePath(msg.file)))
 
       // Replace the file content with the processed CSS
       this.content = result.css
