@@ -634,9 +634,15 @@ export class TW {
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
-    let newWatchPatterns = patterns.filter((pattern) => !this.watched.includes(pattern))
-    this.watched.push(...newWatchPatterns)
-    return newWatchPatterns
+    // Make sure the list of patterns is unique
+    patterns = Array.from(new Set(patterns))
+
+    // Filter out any patterns that are already being watched
+    patterns = patterns.filter((pattern) => !this.watched.includes(pattern))
+
+    this.watched.push(...patterns)
+
+    return patterns
   }
 
   private async addProject(
