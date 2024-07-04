@@ -158,7 +158,13 @@ async function findCustomClassLists(
 }
 
 export function matchClassAttributes(text: string, attributes: string[]): RegExpMatchArray[] {
-  const attrs = attributes.filter((x) => typeof x === 'string').flatMap((a) => [a, `\\[${a}\\]`])
+  const attrs = attributes.filter((x) => typeof x === 'string')
+    .map(a => {
+      // escape $, since it is the only character that is both a special RegExp character and a valid JSX + XML attribute
+      if (a.includes('\\$')) return a; // they already escaped this, so escaping again would produce a useless RegExp (with $)
+      return a.replaceAll('$', '\\$')
+    })
+    .flatMap((a) => [a, `\\[${a}\\]`])
   const re = /(?:\s|:|\()(ATTRS)\s*=\s*['"`{]/
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
@@ -212,7 +218,7 @@ export async function findClassListsInHtmlRange(
           currentClassList = undefined
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     if (currentClassList) {
       classLists.push({
