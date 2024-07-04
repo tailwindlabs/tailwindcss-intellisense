@@ -242,6 +242,29 @@ export class ProjectLocator {
       concurrency: Math.max(os.cpus().length, 1),
     })
 
+    let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
+
+    // Remove files that are symlinked yet have an existing file in the list
+    files = files.filter((normalPath, idx) => {
+      let realPath = realpaths[idx]
+
+      if (normalPath === realPath) {
+        return true
+      }
+
+      // If the file is a symlink, aliased path, network share, etc…; AND
+      // the realpath is not already in the list of files, then we can add
+      // the file to the list of files
+      //
+      // For example, node_modules in a monorepo setup would be symlinked
+      // and list both unless you opened one of the directories directly
+      else if (!files.includes(realPath)) {
+        return true
+      }
+
+      return false
+    })
+
     // Make sure Windows-style paths are normalized
     files = files.map((file) => normalizePath(file))
 
