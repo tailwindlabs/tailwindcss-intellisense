@@ -634,9 +634,15 @@ export class TW {
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
-    let newWatchPatterns = patterns.filter((pattern) => !this.watched.includes(pattern))
-    this.watched.push(...newWatchPatterns)
-    return newWatchPatterns
+    // Make sure the list of patterns is unique
+    patterns = Array.from(new Set(patterns))
+
+    // Filter out any patterns that are already being watched
+    patterns = patterns.filter((pattern) => !this.watched.includes(pattern))
+
+    this.watched.push(...patterns)
+
+    return patterns
   }
 
   private async addProject(
@@ -792,11 +798,6 @@ export class TW {
     // to normalize it so that we can compare it properly.
     fsPath = normalizeDriveLetter(fsPath)
 
-    console.debug('[GLOBAL] Matching project to document', {
-      fsPath,
-      normalPath,
-    })
-
     for (let project of this.projects.values()) {
       if (!project.projectConfig.configPath) {
         fallbackProject = fallbackProject ?? project
@@ -846,7 +847,16 @@ export class TW {
       }
     }
 
-    return matchedProject ?? fallbackProject
+    let project = matchedProject ?? fallbackProject
+
+    if (!project) {
+      console.debug('[GLOBAL] No matching project for document', {
+        fsPath,
+        normalPath,
+      })
+    }
+
+    return project
   }
 
   async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {

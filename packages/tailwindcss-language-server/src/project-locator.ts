@@ -242,20 +242,31 @@ export class ProjectLocator {
       concurrency: Math.max(os.cpus().length, 1),
     })
 
-    files = await Promise.all(
-      files.map(async (file) => {
-        // Resolve symlinks for all found files
-        let actualPath = await fs.realpath(file)
+    let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
 
-        // Ignore network paths on Windows. Resolving relative paths on a
-        // netshare throws in `enhanced-resolve` :/
-        if (actualPath.startsWith('\\') && process.platform === 'win32') {
-          return normalizePath(file)
-        }
+    // Remove files that are symlinked yet have an existing file in the list
+    files = files.filter((normalPath, idx) => {
+      let realPath = realpaths[idx]
 
-        return normalizePath(actualPath)
-      }),
-    )
+      if (normalPath === realPath) {
+        return true
+      }
+
+      // If the file is a symlink, aliased path, network share, etc…; AND
+      // the realpath is not already in the list of files, then we can add
+      // the file to the list of files
+      //
+      // For example, node_modules in a monorepo setup would be symlinked
+      // and list both unless you opened one of the directories directly
+      else if (!files.includes(realPath)) {
+        return true
+      }
+
+      return false
+    })
+
+    // Make sure Windows-style paths are normalized
+    files = files.map((file) => normalizePath(file))
 
     // Deduplicate the list of files and sort them for deterministic results
     // across environments
@@ -327,6 +338,9 @@ export class ProjectLocator {
     // Resolve imports in all the CSS files
     await Promise.all(imports.map((file) => file.resolveImports()))
 
+    // Resolve real paths for all the files in the CSS import graph
+    await Promise.all(imports.map((file) => file.resolveRealpaths()))
+
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
@@ -335,24 +349,21 @@ export class ProjectLocator {
     let utilitiesPath: string | null = null
 
     for (let file of imports) {
-      graph.add(file.path, file)
+      graph.add(file.realpath, file)
 
-      for (let msg of file.deps) {
-        let importedPath: string = normalizePath(msg.file)
-
-        // Record that `file.path` imports `msg.file`
-        graph.add(importedPath, new FileEntry('css', importedPath))
-
-        graph.connect(file.path, importedPath)
+      // Record that `file.path` imports `msg.file`
+      for (let entry of file.deps) {
+        graph.add(entry.realpath, entry)
+        graph.connect(file.realpath, entry.realpath)
       }
 
       // Collect the index, theme, and utilities files for manual connection
-      if (file.path.includes('node_modules/tailwindcss/index.css')) {
-        indexPath = file.path
-      } else if (file.path.includes('node_modules/tailwindcss/theme.css')) {
-        themePath = file.path
-      } else if (file.path.includes('node_modules/tailwindcss/utilities.css')) {
-        utilitiesPath = file.path
+      if (file.realpath.includes('node_modules/tailwindcss/index.css')) {
+        indexPath = file.realpath
+      } else if (file.realpath.includes('node_modules/tailwindcss/theme.css')) {
+        themePath = file.realpath
+      } else if (file.realpath.includes('node_modules/tailwindcss/utilities.css')) {
+        utilitiesPath = file.realpath
       }
     }
 
@@ -383,7 +394,7 @@ export class ProjectLocator {
 
       // And add the config to all their descendants as we need to track updates
       // that might affect the config / project
-      for (let child of graph.descendants(root.path)) {
+      for (let child of graph.descendants(root.realpath)) {
         child.configs.push(config)
       }
     }
@@ -540,7 +551,8 @@ type ConfigEntry = {
 
 class FileEntry {
   content: string | null
-  deps: Message[] = []
+  deps: FileEntry[] = []
+  realpath: string | null
 
   constructor(
     public type: 'js' | 'css',
@@ -559,13 +571,22 @@ class FileEntry {
   async resolveImports() {
     try {
       let result = await resolveCssImports().process(this.content, { from: this.path })
-      this.deps = result.messages.filter((msg) => msg.type === 'dependency')
+      let deps = result.messages.filter((msg) => msg.type === 'dependency')
+
+      // Record entries for each of the dependencies
+      this.deps = deps.map((msg) => new FileEntry('css', normalizePath(msg.file)))
 
       // Replace the file content with the processed CSS
       this.content = result.css
     } catch {
       //
     }
+  }
+
+  async resolveRealpaths() {
+    this.realpath = normalizePath(await fs.realpath(this.path))
+
+    await Promise.all(this.deps.map((entry) => entry.resolveRealpaths()))
   }
 
   /**

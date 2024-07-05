@@ -40,6 +40,14 @@ function testFixture(fixture: string, details: any[]) {
 
         expect(actual).toEqual(expected)
       }
+
+      if (detail?.selectors) {
+        let expected = detail?.selectors.map((path) => path.replace('{URL}', fixturePath)).sort()
+
+        let actual = project.documentSelector.map((selector) => selector.pattern).sort()
+
+        expect(actual).toEqual(expected)
+      }
     }
 
     expect(projects).toHaveLength(details.length)
@@ -90,10 +98,35 @@ testFixture('v4/multi-config', [
 ])
 
 testFixture('v4/workspaces', [
-  { config: 'packages/admin/app.css' },
-  // { config: 'packages/shared/ui.css' }, // Should this be included?
-  // { config: 'packages/style-export/lib.css' }, // Should this be included?
-  { config: 'packages/web/app.css' },
+  {
+    config: 'packages/admin/app.css',
+    selectors: [
+      '{URL}/node_modules/tailwindcss/**',
+      '{URL}/node_modules/tailwindcss/index.css',
+      '{URL}/node_modules/tailwindcss/theme.css',
+      '{URL}/node_modules/tailwindcss/utilities.css',
+      '{URL}/packages/admin/**',
+      '{URL}/packages/admin/app.css',
+      '{URL}/packages/admin/package.json',
+    ],
+  },
+  {
+    config: 'packages/web/app.css',
+    selectors: [
+      '{URL}/node_modules/tailwindcss/**',
+      '{URL}/node_modules/tailwindcss/index.css',
+      '{URL}/node_modules/tailwindcss/theme.css',
+      '{URL}/node_modules/tailwindcss/utilities.css',
+      '{URL}/packages/style-export/**',
+      '{URL}/packages/style-export/lib.css',
+      '{URL}/packages/style-export/theme.css',
+      '{URL}/packages/style-main-field/**',
+      '{URL}/packages/style-main-field/lib.css',
+      '{URL}/packages/web/**',
+      '{URL}/packages/web/app.css',
+      '{URL}/packages/web/package.json',
+    ],
+  },
 ])
 
 testFixture('v4/auto-content', [
