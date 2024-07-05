@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.5
+
 - Use paths relative to opened folder when searching for projects ([#1013](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1013))
 
 ## 0.12.4
