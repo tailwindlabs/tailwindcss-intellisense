@@ -139,6 +139,10 @@ let vueLexer = moo.states(vueStates)
 
 let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000 })
 
+export function clearLanguageBoundariesCache() {
+  cache.clear()
+}
+
 export function getLanguageBoundaries(
   state: State,
   doc: TextDocument,

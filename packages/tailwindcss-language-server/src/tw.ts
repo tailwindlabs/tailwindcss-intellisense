@@ -169,6 +169,14 @@ export class TW {
   }
 
   private async _initFolder(baseUri: URI): Promise<void> {
+    let initUserLanguages = this.initializeParams.initializationOptions?.userLanguages ?? {}
+
+    if (Object.keys(initUserLanguages).length > 0) {
+      console.warn(
+        'Language mappings are currently set via initialization options (`userLanguages`). This is deprecated and will be removed in a future release. Please use the `tailwindCSS.includeLanguages` setting instead.',
+      )
+    }
+
     let base = baseUri.fsPath
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
@@ -176,11 +184,11 @@ export class TW {
 
     // Get user languages for the given workspace folder
     let folderSettings = await this.settingsCache.get(baseUri.toString())
-    let userLanguages = folderSettings.tailwindCSS.includeLanguages
 
-    // Fall back to settings defined in `initializationOptions` if invalid
-    if (!isObject(userLanguages)) {
-      userLanguages = this.initializeParams.initializationOptions?.userLanguages ?? {}
+    // Merge the languages from the global settings with the languages from the workspace folder
+    let userLanguages = {
+      ...initUserLanguages,
+      ...(folderSettings.tailwindCSS.includeLanguages ?? {}),
     }
 
     let cssFileConfigMap: Map<string, string> = new Map()

@@ -5,16 +5,16 @@ import type { ProtocolConnection } from 'vscode-languageclient/node'
 import { Duplex } from 'node:stream'
 import { TW } from '../src/tw'
 
-export async function connect() {
-  class TestStream extends Duplex {
-    _write(chunk: string, _encoding: string, done: () => void) {
-      this.emit('data', chunk)
-      done()
-    }
-
-    _read(_size: number) {}
+class TestStream extends Duplex {
+  _write(chunk: string, _encoding: string, done: () => void) {
+    this.emit('data', chunk)
+    done()
   }
 
+  _read(_size: number) {}
+}
+
+export async function connect() {
   let input = new TestStream()
   let output = new TestStream()
 

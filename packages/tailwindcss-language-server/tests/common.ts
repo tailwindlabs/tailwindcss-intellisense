@@ -15,6 +15,7 @@ import {
 } from 'vscode-languageserver-protocol'
 import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
 import type { Feature } from '@tailwindcss/language-service/src/features'
+import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/util/getLanguageBoundaries'
 import { CacheMap } from '../src/cache-map'
 
 type Settings = any
@@ -42,7 +43,10 @@ interface FixtureContext
   }
 }
 
-async function init(fixture: string | string[]): Promise<FixtureContext> {
+export async function init(
+  fixture: string | string[],
+  options: Record<string, any> = {},
+): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
@@ -158,6 +162,7 @@ async function init(fixture: string | string[]): Promise<FixtureContext> {
     workspaceFolders,
     initializationOptions: {
       testMode: true,
+      ...options,
     },
   } as InitializeParams)
 
@@ -199,6 +204,9 @@ async function init(fixture: string | string[]): Promise<FixtureContext> {
     console.log('[TEST] Document ready', params.uri)
     openingDocuments.get(params.uri)?.resolve()
   })
+
+  // This is a global cache that must be reset between tests for accurate results
+  clearLanguageBoundariesCache()
 
   let counter = 0
 
