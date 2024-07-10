@@ -43,7 +43,10 @@ interface FixtureContext
   }
 }
 
-async function init(fixture: string | string[]): Promise<FixtureContext> {
+export async function init(
+  fixture: string | string[],
+  options: Record<string, any> = {},
+): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
@@ -159,6 +162,7 @@ async function init(fixture: string | string[]): Promise<FixtureContext> {
     workspaceFolders,
     initializationOptions: {
       testMode: true,
+      ...options,
     },
   } as InitializeParams)
 
