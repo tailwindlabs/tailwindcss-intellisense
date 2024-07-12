@@ -10,12 +10,12 @@ test('Unknown languages do not provide completions', async ({ expect }) => {
     text: '<div class="bg-[#000]">',
   })
 
-  let res = await c.sendRequest(HoverRequest.type, {
+  let hover = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
 
-  expect(res).toEqual(null)
+  expect(hover).toEqual(null)
 })
 
 test('Custom languages may be specified via init options (deprecated)', async ({ expect }) => {
@@ -30,12 +30,12 @@ test('Custom languages may be specified via init options (deprecated)', async ({
     text: '<div class="bg-[#000]">',
   })
 
-  let res = await c.sendRequest(HoverRequest.type, {
+  let hover = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
 
-  expect(res).toEqual({
+  expect(hover).toEqual({
     contents: {
       language: 'css',
       value:
@@ -61,12 +61,12 @@ test('Custom languages may be specified via settings', async ({ expect }) => {
     text: '<div class="bg-[#000]">',
   })
 
-  let res = await c.sendRequest(HoverRequest.type, {
+  let hover = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
 
-  expect(res).toEqual({
+  expect(hover).toEqual({
     contents: {
       language: 'css',
       value:
@@ -96,7 +96,7 @@ test('Custom languages are merged from init options and settings', async ({ expe
     text: '<div class="bg-[#000]">',
   })
 
-  let res = await c.sendRequest(HoverRequest.type, {
+  let hover = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
@@ -106,12 +106,12 @@ test('Custom languages are merged from init options and settings', async ({ expe
     text: '<div class="bg-[#000]">',
   })
 
-  let res2 = await c.sendRequest(HoverRequest.type, {
+  let hover2 = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
 
-  expect(res).toEqual({
+  expect(hover).toEqual({
     contents: {
       language: 'css',
       value:
@@ -120,7 +120,7 @@ test('Custom languages are merged from init options and settings', async ({ expe
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })
 
-  expect(res2).toEqual({
+  expect(hover2).toEqual({
     contents: {
       language: 'css',
       value:
@@ -150,12 +150,12 @@ test('Language mappings from settings take precedence', async ({ expect }) => {
     text: '<div class="bg-[#000]">',
   })
 
-  let res = await c.sendRequest(HoverRequest.type, {
+  let hover = await c.sendRequest(HoverRequest.type, {
     textDocument,
     position: { line: 0, character: 13 },
   })
 
-  expect(res).toEqual({
+  expect(hover).toEqual({
     contents: {
       language: 'css',
       value:
