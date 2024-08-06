@@ -34,7 +34,7 @@
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/container-queries": "0.1.0",
     "@tailwindcss/forms": "0.5.3",
-    "@tailwindcss/language-service": "*",
+    "@tailwindcss/language-service": "workspace:*",
     "@tailwindcss/line-clamp": "0.4.2",
     "@tailwindcss/oxide": "^4.0.0-alpha.16",
     "@tailwindcss/typography": "0.5.7",
