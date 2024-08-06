@@ -10,8 +10,8 @@
       "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/vscode-tailwindcss"],
       "stopOnEntry": false,
       "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"]
-      // "preLaunchTask": "npm: dev"
+      "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"],
+      "preLaunchTask": "npm: dev"
     },
     {
       "type": "node",

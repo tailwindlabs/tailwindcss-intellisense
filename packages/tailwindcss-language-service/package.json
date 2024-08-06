@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node ./scripts/build.mjs --watch",
     "build": "node ./scripts/build.mjs",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest"
   },
   "dependencies": {

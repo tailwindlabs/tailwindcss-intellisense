@@ -338,13 +338,13 @@
   },
   "scripts": {
     "_esbuild": "node ../../esbuild.mjs src/extension.ts src/server.ts src/cssServer.ts --outdir=dist",
-    "dev": "concurrently --raw --kill-others \"npm run watch\" \"npm run check -- --watch\"",
-    "watch": "npm run clean && npm run _esbuild -- --watch",
-    "build": "npm run check && npm run clean && npm run _esbuild -- --minify && move-file dist/server.js dist/tailwindServer.js && move-file dist/cssServer.js dist/tailwindModeServer.js",
+    "dev": "concurrently --raw --kill-others \"pnpm run watch\" \"pnpm run check --watch\"",
+    "watch": "pnpm run clean && pnpm run _esbuild --watch",
+    "build": "pnpm run check && pnpm run clean && pnpm run _esbuild --minify && move-file dist/server.js dist/tailwindServer.js && move-file dist/cssServer.js dist/tailwindModeServer.js",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies",
     "copy:notices": "cp ../tailwindcss-language-server/ThirdPartyNotices.txt ./dist/ThirdPartyNotices.txt",
-    "vscode:prepublish": "npm run build && npm run copy:notices",
+    "vscode:prepublish": "pnpm run build && pnpm run copy:notices",
     "clean": "rimraf dist",
     "check": "tsc --noEmit"
   },
