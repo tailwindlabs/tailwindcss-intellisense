@@ -8,26 +8,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ^9.6.0
       - uses: actions/setup-node@v3
         with:
           node-version: 18
           registry-url: 'https://registry.npmjs.org'
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ env.NODE_VERSION }}-node_modules-${{ hashFiles('**/package-lock.json') }}
+          cache: 'pnpm'
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
       - name: Run tests
         run: >
           cd packages/tailwindcss-language-server &&
-          npm run build &&
-          npm run test:prepare &&
-          npm test
+          pnpm run build &&
+          pnpm run test:prepare &&
+          pnpm test
       - name: Publish IntelliSense
         env:
           VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
         run: >
           cd packages/vscode-tailwindcss &&
-          npm run publish -- -p $VSCODE_TOKEN
+          pnpm run publish -p $VSCODE_TOKEN
