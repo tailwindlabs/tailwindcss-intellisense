@@ -349,7 +349,8 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@tailwindcss/language-server": "*",
+    "@tailwindcss/language-server": "workspace:*",
+    "@tailwindcss/language-service": "workspace:*",
     "@types/braces": "3.0.1",
     "@types/picomatch": "^2.3.3",
     "@types/vscode": "1.65.0",
