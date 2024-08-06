@@ -46,7 +46,7 @@ import { createProjectService, type ProjectService } from './projects'
 import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
-import type { TailwindCssSettings } from 'tailwindcss-language-service/src/util/state'
+import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
