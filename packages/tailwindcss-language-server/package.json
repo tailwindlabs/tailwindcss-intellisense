@@ -52,7 +52,7 @@
     "@types/vscode": "1.65.0",
     "browserslist": "^4.23.0",
     "bun-types": "^1.1.1",
-    "chokidar": "3.5.1",
+    "chokidar": "3.6.0",
     "color-name": "1.1.4",
     "culori": "^4.0.1",
     "debounce": "1.2.0",
