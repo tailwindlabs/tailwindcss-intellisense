@@ -18,24 +18,14 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Build everything
+        run: pnpm -r run build
       - name: Run tests
-        run: >
-          cd packages/tailwindcss-language-server &&
-          pnpm run build &&
-          pnpm run test:prepare &&
-          pnpm test
+        run: pnpm --filter ./packages/tailwindcss-language-server run test
       - name: Bump IntelliSense version
         run: >
           node .github/workflows/bump-version.mjs &&
           cat packages/vscode-tailwindcss/package.json
-      - name: Publish IntelliSense
-        env:
-          VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
-        run: >
-          cd packages/vscode-tailwindcss &&
-          pnpm run publish --pre-release -p $VSCODE_TOKEN
-      - name: Build LSP
-        run: pnpm run build --workspace=packages/tailwindcss-language-server
       - name: Resolve LSP version
         run: |
           echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
@@ -43,6 +33,12 @@ jobs:
         run: >
           cd packages/tailwindcss-language-server &&
           pnpm version 0.0.0-insiders.${{ env.SHA_SHORT }} --force --no-git-tag-version
+      - name: Publish IntelliSense
+        env:
+          VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
+        run: >
+          cd packages/vscode-tailwindcss &&
+          pnpm run publish --pre-release -p $VSCODE_TOKEN
       - name: Publish LSP
         run: >
           cd packages/tailwindcss-language-server &&
