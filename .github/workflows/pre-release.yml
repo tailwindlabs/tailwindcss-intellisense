@@ -2,7 +2,7 @@ name: Publish pre-release
 concurrency: publish
 on:
   push:
-    branches: [master]
+    branches: [main]
 jobs:
   publish:
     runs-on: ubuntu-latest
