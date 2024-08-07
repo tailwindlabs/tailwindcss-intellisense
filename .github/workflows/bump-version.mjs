@@ -1,12 +1,16 @@
 import PackageJson from '@npmcli/package-json'
 import assert from 'node:assert'
+import * as path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import semver from 'semver'
-import { spawnSync } from 'child_process'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 // Let `vsce` get the metadata for the extension
 // Querying the marketplace API directly is not supported or recommended
 let result = spawnSync(
-  './node_modules/.bin/vsce',
+  path.resolve(__dirname, '../../node_modules/.bin/vsce'),
   ['show', 'bradlc.vscode-tailwindcss', '--json'],
   { encoding: 'utf8' },
 )
@@ -16,6 +20,7 @@ let metadata = JSON.parse(result.stdout)
 if (!metadata) {
   console.error(result.stdout)
   console.error(result.stderr)
+  console.error(result.error)
   throw new Error('Failed to get extension metadata')
 }
 
