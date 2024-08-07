@@ -10,7 +10,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 // Let `vsce` get the metadata for the extension
 // Querying the marketplace API directly is not supported or recommended
 let result = spawnSync(
-  path.resolve(__dirname, '../../node_modules/.bin/vsce'),
+  path.resolve(__dirname, '../../packages/vscode-tailwindcss/node_modules/.bin/vsce'),
   ['show', 'bradlc.vscode-tailwindcss', '--json'],
   { encoding: 'utf8' },
 )
@@ -18,8 +18,6 @@ let result = spawnSync(
 let metadata = JSON.parse(result.stdout)
 
 if (!metadata) {
-  console.error(result.stdout)
-  console.error(result.stderr)
   console.error(result.error)
   throw new Error('Failed to get extension metadata')
 }
