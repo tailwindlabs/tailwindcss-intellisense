@@ -5,15 +5,17 @@ import { spawnSync } from 'child_process'
 
 // Let `vsce` get the metadata for the extension
 // Querying the marketplace API directly is not supported or recommended
-let stdout = spawnSync('node_modules/.bin/vsce', [
-  'show',
-  'bradlc.vscode-tailwindcss',
-  '--json',
-]).stdout.toString('utf8')
+let result = spawnSync(
+  './node_modules/.bin/vsce',
+  ['show', 'bradlc.vscode-tailwindcss', '--json'],
+  { encoding: 'utf8' },
+)
 
-let metadata = JSON.parse(stdout)
+let metadata = JSON.parse(result.stdout)
 
 if (!metadata) {
+  console.error(result.stdout)
+  console.error(result.stderr)
   throw new Error('Failed to get extension metadata')
 }
 
