@@ -86,6 +86,16 @@ testFixture('v3/ts-config', [
   { config: 'tailwind.config.ts' },
 ])
 
+testFixture('v3/cts-config', [
+  //
+  { config: 'tailwind.config.cts' },
+])
+
+testFixture('v3/mts-config', [
+  //
+  { config: 'tailwind.config.mts' },
+])
+
 testFixture('v4/basic', [
   //
   { config: 'app.css' },
