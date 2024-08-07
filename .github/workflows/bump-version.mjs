@@ -1,34 +1,24 @@
 import PackageJson from '@npmcli/package-json'
 import assert from 'node:assert'
 import semver from 'semver'
+import { spawnSync } from 'child_process'
 
-let res = await fetch('https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery', {
-  method: 'POST',
-  headers: {
-    accept: 'application/json;api-version=7.2-preview.1;excludeUrls=true',
-    'content-type': 'application/json',
-  },
-  body: JSON.stringify({
-    assetTypes: null,
-    flags: 2151,
-    filters: [
-      {
-        criteria: [{ filterType: 7, value: 'bradlc.vscode-tailwindcss' }],
-        direction: 2,
-        pageSize: 100,
-        pageNumber: 1,
-        sortBy: 0,
-        sortOrder: 0,
-        pagingToken: null,
-      },
-    ],
-  }),
-})
+// Let `vsce` get the metadata for the extension
+// Querying the marketplace API directly is not supported or recommended
+let stdout = spawnSync('node_modules/.bin/vsce', [
+  'show',
+  'bradlc.vscode-tailwindcss',
+  '--json',
+]).stdout.toString('utf8')
 
-let { results } = await res.json()
+let metadata = JSON.parse(stdout)
+
+if (!metadata) {
+  throw new Error('Failed to get extension metadata')
+}
 
 /** @type {string[]} */
-let versions = results[0].extensions[0].versions.map(({ version }) => version)
+let versions = metadata.versions.map(({ version }) => version)
 
 // Determine the latest version of the extension
 let latest = versions
