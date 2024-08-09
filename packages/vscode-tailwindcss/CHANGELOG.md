@@ -4,6 +4,10 @@
 
 - Nothing yet!
 
+## 0.12.6
+
+- Add support for Tailwind CSS v4.0.0-alpha.19 ([#1031](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1031))
+
 ## 0.12.5
 
 - Use paths relative to opened folder when searching for projects ([#1013](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1013))
