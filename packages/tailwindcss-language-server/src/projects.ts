@@ -750,6 +750,8 @@ export async function createProjectService(
           css,
         )
 
+        console.log({ designSystem })
+
         state.designSystem = designSystem
 
         originalConfig = { theme: {} }
