@@ -37,7 +37,11 @@ export async function loadDesignSystem(
   let resolved = await resolveCssImports().process(css, { from: filepath })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
-  let design = tailwindcss.__unstable__loadDesignSystem(resolved.css) as DesignSystem
+  let design: DesignSystem = await tailwindcss.__unstable__loadDesignSystem(resolved.css, {
+    loadPlugin() {
+      return () => {}
+    },
+  })
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
