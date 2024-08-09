@@ -15,6 +15,7 @@ import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { resolveCssImports } from './resolve-css-imports'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
+import { loadConfig } from './util/v4/design-system'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -105,6 +106,7 @@ export class ProjectLocator {
       entries: [],
       content: [],
       packageRoot: '',
+      globs: [],
     }
 
     let tailwind = await this.detectTailwindVersion(config)
@@ -291,6 +293,7 @@ export class ProjectLocator {
           entries: [],
           packageRoot: null,
           content: [],
+          globs: [],
         })),
       ])
     })
@@ -323,6 +326,7 @@ export class ProjectLocator {
             entries: [],
             packageRoot: null,
             content: [],
+            globs: [],
           })),
         )
         continue
@@ -378,7 +382,11 @@ export class ProjectLocator {
     if (indexPath && themePath) graph.connect(indexPath, themePath)
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
+    // QUESTION: Is this code path only for v4? I don't understand the gating
+    // here but adding a content kind auto indicates that this is the case.
     for (let root of graph.roots()) {
+      let globs = await loadConfig(root.path, root.content)
+
       let config: ConfigEntry = configs.remember(root.path, () => ({
         source: 'css',
         type: 'css',
@@ -386,6 +394,7 @@ export class ProjectLocator {
         entries: [],
         packageRoot: null,
         content: [{ kind: 'auto' }],
+        globs,
       }))
 
       // The root is a CSS entrypoint so lets use it as the "config" file
@@ -500,7 +509,7 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      for await (let pattern of detectContentFiles(entry.packageRoot)) {
+      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, entry.globs)) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -510,17 +519,35 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
   }
 }
 
-async function* detectContentFiles(base: string): AsyncIterable<string> {
+async function* detectContentFiles(
+  base: string,
+  inputFile,
+  inputGlobs: string[],
+): AsyncIterable<string> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
+    console.log({ oxidePath })
 
-    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath)
+    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath).then(
+      (o) => o.default,
+    )
 
     // This isn't a v4 project
     if (!oxide.scanDir) return
 
-    let { files, globs } = oxide.scanDir({ base, globs: true })
+    console.log(oxide.scanDir.toString())
+
+    console.log({
+      inputFile,
+      s: inputGlobs.map((pattern) => ({ base: path.dirname(inputFile), pattern })),
+    })
+
+    let { files, globs } = oxide.scanDir({
+      base,
+      sources: inputGlobs.map((pattern) => ({ base, pattern })),
+    })
+    console.log({ files, globs })
 
     for (let file of files) {
       yield normalizePath(file)
@@ -547,6 +574,7 @@ type ConfigEntry = {
   entries: FileEntry[]
   packageRoot: string
   content: ContentItem[]
+  globs: string[]
 }
 
 class FileEntry {

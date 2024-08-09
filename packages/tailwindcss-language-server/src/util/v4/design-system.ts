@@ -1,6 +1,6 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
-import postcss from 'postcss'
+import postcss, { AtRule } from 'postcss'
 import { resolveCssImports } from '../../resolve-css-imports'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
@@ -75,4 +75,25 @@ export async function loadDesignSystem(
   })
 
   return design
+}
+
+export async function loadConfig(filepath: string, css: string): Promise<string[]> {
+  let resolved = await resolveCssImports().process(css, { from: filepath })
+
+  let contentRules: string[] = []
+  await postcss([
+    {
+      postcssPlugin: 'extract-at-rules',
+      AtRule: {
+        content({ params }: AtRule) {
+          if (params[0] !== '"' && params[0] !== "'") {
+            return
+          }
+          contentRules.push(params.slice(1, -1))
+        },
+      },
+    },
+  ]).process(resolved, { from: filepath })
+
+  return contentRules
 }
