@@ -22,8 +22,7 @@ jobs:
         run: >
           cd packages/tailwindcss-language-server &&
           pnpm run build &&
-          pnpm run test:prepare &&
-          pnpm test
+          pnpm run test
       - name: Publish IntelliSense
         env:
           VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
