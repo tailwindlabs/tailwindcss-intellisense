@@ -130,8 +130,6 @@ export class ProjectLocator {
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
-    console.log(JSON.stringify({ tailwind }))
-
     // A JS/TS config file was loaded from an `@config`` directive in a CSS file
     if (config.type === 'js' && config.source === 'css') {
       // We only allow local versions of Tailwind to use `@config` directives
@@ -540,16 +538,6 @@ async function* detectContentFiles(
         pattern,
       })),
     })
-    console.log(
-      {
-        base,
-        sources: inputGlobs.map((pattern) => ({
-          base: path.dirname(inputFile),
-          pattern,
-        })),
-      },
-      { files, globs, candidates },
-    )
 
     for (let file of files) {
       yield normalizePath(file)
