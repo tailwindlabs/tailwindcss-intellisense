@@ -142,7 +142,7 @@ testFixture('v4/auto-content', [
   },
 ])
 
-testFixture('v4/custom-content', [
+testFixture('v4/custom-source', [
   //
   {
     config: 'admin/app.css',
