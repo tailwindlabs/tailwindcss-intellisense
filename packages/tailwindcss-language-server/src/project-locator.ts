@@ -382,8 +382,6 @@ export class ProjectLocator {
     if (indexPath && themePath) graph.connect(indexPath, themePath)
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
-    // QUESTION: Is this code path only for v4? I don't understand the gating
-    // here but adding a content kind auto indicates that this is the case.
     for (let root of graph.roots()) {
       let globs = await loadConfig(root.path, root.content)
 
@@ -527,7 +525,6 @@ async function* detectContentFiles(
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
-    console.log({ oxidePath })
 
     const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath).then(
       (o) => o.default,
@@ -536,26 +533,31 @@ async function* detectContentFiles(
     // This isn't a v4 project
     if (!oxide.scanDir) return
 
-    console.log(oxide.scanDir.toString())
-
-    console.log({
-      inputFile,
-      s: inputGlobs.map((pattern) => ({ base: path.dirname(inputFile), pattern })),
-    })
-
-    let { files, globs } = oxide.scanDir({
+    let { files, globs, candidates } = oxide.scanDir({
       base,
-      sources: inputGlobs.map((pattern) => ({ base, pattern })),
+      sources: inputGlobs.map((pattern) => ({
+        base: path.dirname(inputFile),
+        pattern,
+      })),
     })
-    console.log({ files, globs })
+    console.log(
+      {
+        base,
+        sources: inputGlobs.map((pattern) => ({
+          base: path.dirname(inputFile),
+          pattern,
+        })),
+      },
+      { files, globs, candidates },
+    )
 
     for (let file of files) {
       yield normalizePath(file)
     }
 
-    for (let { base, glob } of globs) {
+    for (let { base, pattern } of globs) {
       // Do not normalize the glob itself as it may contain escape sequences
-      yield normalizePath(base) + '/' + glob
+      yield normalizePath(base) + '/' + pattern
     }
   } catch {
     //

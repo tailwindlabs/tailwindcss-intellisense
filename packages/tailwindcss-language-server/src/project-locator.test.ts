@@ -54,93 +54,93 @@ function testFixture(fixture: string, details: any[]) {
   })
 }
 
-// testFixture('basic', [
-//   //
-//   { config: 'tailwind.config.js' },
-// ])
+testFixture('basic', [
+  //
+  { config: 'tailwind.config.js' },
+])
 
-// testFixture('dependencies', [
-//   //
-//   { config: 'tailwind.config.js' },
-// ])
+testFixture('dependencies', [
+  //
+  { config: 'tailwind.config.js' },
+])
 
-// testFixture('multi-config', [
-//   //
-//   { config: 'one/tailwind.config.js' },
-//   { config: 'two/tailwind.config.js' },
-// ])
+testFixture('multi-config', [
+  //
+  { config: 'one/tailwind.config.js' },
+  { config: 'two/tailwind.config.js' },
+])
 
-// testFixture('multi-config-content', [
-//   //
-//   { config: 'tailwind.config.one.js' },
-//   { config: 'tailwind.config.two.js' },
-// ])
+testFixture('multi-config-content', [
+  //
+  { config: 'tailwind.config.one.js' },
+  { config: 'tailwind.config.two.js' },
+])
 
-// testFixture('v3/esm-config', [
-//   //
-//   { config: 'tailwind.config.mjs' },
-// ])
+testFixture('v3/esm-config', [
+  //
+  { config: 'tailwind.config.mjs' },
+])
 
-// testFixture('v3/ts-config', [
-//   //
-//   { config: 'tailwind.config.ts' },
-// ])
+testFixture('v3/ts-config', [
+  //
+  { config: 'tailwind.config.ts' },
+])
 
-// testFixture('v4/basic', [
-//   //
-//   { config: 'app.css' },
-// ])
+testFixture('v4/basic', [
+  //
+  { config: 'app.css' },
+])
 
-// testFixture('v4/multi-config', [
-//   //
-//   { config: 'admin/app.css' },
-//   { config: 'web/app.css' },
-// ])
+testFixture('v4/multi-config', [
+  //
+  { config: 'admin/app.css' },
+  { config: 'web/app.css' },
+])
 
-// testFixture('v4/workspaces', [
-//   {
-//     config: 'packages/admin/app.css',
-//     selectors: [
-//       '{URL}/node_modules/tailwindcss/**',
-//       '{URL}/node_modules/tailwindcss/index.css',
-//       '{URL}/node_modules/tailwindcss/theme.css',
-//       '{URL}/node_modules/tailwindcss/utilities.css',
-//       '{URL}/packages/admin/**',
-//       '{URL}/packages/admin/app.css',
-//       '{URL}/packages/admin/package.json',
-//     ],
-//   },
-//   {
-//     config: 'packages/web/app.css',
-//     selectors: [
-//       '{URL}/node_modules/tailwindcss/**',
-//       '{URL}/node_modules/tailwindcss/index.css',
-//       '{URL}/node_modules/tailwindcss/theme.css',
-//       '{URL}/node_modules/tailwindcss/utilities.css',
-//       '{URL}/packages/style-export/**',
-//       '{URL}/packages/style-export/lib.css',
-//       '{URL}/packages/style-export/theme.css',
-//       '{URL}/packages/style-main-field/**',
-//       '{URL}/packages/style-main-field/lib.css',
-//       '{URL}/packages/web/**',
-//       '{URL}/packages/web/app.css',
-//       '{URL}/packages/web/package.json',
-//     ],
-//   },
-// ])
+testFixture('v4/workspaces', [
+  {
+    config: 'packages/admin/app.css',
+    selectors: [
+      '{URL}/node_modules/tailwindcss/**',
+      '{URL}/node_modules/tailwindcss/index.css',
+      '{URL}/node_modules/tailwindcss/theme.css',
+      '{URL}/node_modules/tailwindcss/utilities.css',
+      '{URL}/packages/admin/**',
+      '{URL}/packages/admin/app.css',
+      '{URL}/packages/admin/package.json',
+    ],
+  },
+  {
+    config: 'packages/web/app.css',
+    selectors: [
+      '{URL}/node_modules/tailwindcss/**',
+      '{URL}/node_modules/tailwindcss/index.css',
+      '{URL}/node_modules/tailwindcss/theme.css',
+      '{URL}/node_modules/tailwindcss/utilities.css',
+      '{URL}/packages/style-export/**',
+      '{URL}/packages/style-export/lib.css',
+      '{URL}/packages/style-export/theme.css',
+      '{URL}/packages/style-main-field/**',
+      '{URL}/packages/style-main-field/lib.css',
+      '{URL}/packages/web/**',
+      '{URL}/packages/web/app.css',
+      '{URL}/packages/web/package.json',
+    ],
+  },
+])
 
-// testFixture('v4/auto-content', [
-//   //
-//   {
-//     config: 'src/app.css',
-//     content: [
-//       '{URL}/package.json',
-//       '{URL}/src/index.html',
-//       '{URL}/src/components/example.html',
-//       '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
-//     ],
-//   },
-// ])
+testFixture('v4/auto-content', [
+  //
+  {
+    config: 'src/app.css',
+    content: [
+      '{URL}/package.json',
+      '{URL}/src/index.html',
+      '{URL}/src/components/example.html',
+      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+    ],
+  },
+])
 
 testFixture('v4/custom-content', [
   //
@@ -158,12 +158,12 @@ testFixture('v4/custom-content', [
   {
     config: 'web/app.css',
     content: [
-      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
       '{URL}/web/*.bin',
       '{URL}/web/bar.bin',
       '{URL}/package.json',
       '{URL}/shared.html',
-      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
     ],
   },
 ])

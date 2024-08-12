@@ -78,8 +78,6 @@ export async function loadDesignSystem(
 }
 
 export async function loadConfig(filepath: string, css: string): Promise<string[]> {
-  let resolved = await resolveCssImports().process(css, { from: filepath })
-
   let contentRules: string[] = []
   await postcss([
     {
@@ -93,7 +91,7 @@ export async function loadConfig(filepath: string, css: string): Promise<string[
         },
       },
     },
-  ]).process(resolved, { from: filepath })
+  ]).process(css, { from: filepath })
 
   return contentRules
 }
