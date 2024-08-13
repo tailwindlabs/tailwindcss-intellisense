@@ -7,7 +7,7 @@ import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import type { Message } from 'postcss'
+import type { AtRule, Message } from 'postcss'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
@@ -15,7 +15,7 @@ import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { resolveCssImports } from './resolve-css-imports'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
-import { loadConfig } from './util/v4/design-system'
+import postcss from 'postcss'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -106,7 +106,6 @@ export class ProjectLocator {
       entries: [],
       content: [],
       packageRoot: '',
-      globs: [],
     }
 
     let tailwind = await this.detectTailwindVersion(config)
@@ -129,6 +128,8 @@ export class ProjectLocator {
 
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
+
+    console.log(JSON.stringify({ tailwind }))
 
     // A JS/TS config file was loaded from an `@config`` directive in a CSS file
     if (config.type === 'js' && config.source === 'css') {
@@ -291,7 +292,6 @@ export class ProjectLocator {
           entries: [],
           packageRoot: null,
           content: [],
-          globs: [],
         })),
       ])
     })
@@ -324,7 +324,6 @@ export class ProjectLocator {
             entries: [],
             packageRoot: null,
             content: [],
-            globs: [],
           })),
         )
         continue
@@ -342,6 +341,9 @@ export class ProjectLocator {
 
     // Resolve real paths for all the files in the CSS import graph
     await Promise.all(imports.map((file) => file.resolveRealpaths()))
+
+    // Resolve all @source directives
+    await Promise.all(imports.map((file) => file.resolveSourceDirectives()))
 
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
@@ -381,8 +383,6 @@ export class ProjectLocator {
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
     for (let root of graph.roots()) {
-      let globs = await loadConfig(root.path, root.content)
-
       let config: ConfigEntry = configs.remember(root.path, () => ({
         source: 'css',
         type: 'css',
@@ -390,7 +390,6 @@ export class ProjectLocator {
         entries: [],
         packageRoot: null,
         content: [{ kind: 'auto' }],
-        globs,
       }))
 
       // The root is a CSS entrypoint so lets use it as the "config" file
@@ -505,7 +504,12 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, entry.globs)) {
+      let root = entry.entries[0]
+      for await (let pattern of detectContentFiles(
+        entry.packageRoot,
+        entry.path,
+        root?.sources ?? [],
+      )) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -518,7 +522,7 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
 async function* detectContentFiles(
   base: string,
   inputFile,
-  inputGlobs: string[],
+  sources: string[],
 ): AsyncIterable<string> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
@@ -533,7 +537,7 @@ async function* detectContentFiles(
 
     let { files, globs, candidates } = oxide.scanDir({
       base,
-      sources: inputGlobs.map((pattern) => ({
+      sources: sources.map((pattern) => ({
         base: path.dirname(inputFile),
         pattern,
       })),
@@ -564,13 +568,13 @@ type ConfigEntry = {
   entries: FileEntry[]
   packageRoot: string
   content: ContentItem[]
-  globs: string[]
 }
 
 class FileEntry {
   content: string | null
   deps: FileEntry[] = []
   realpath: string | null
+  sources: string[] = []
 
   constructor(
     public type: 'js' | 'css',
@@ -605,6 +609,29 @@ class FileEntry {
     this.realpath = normalizePath(await fs.realpath(this.path))
 
     await Promise.all(this.deps.map((entry) => entry.resolveRealpaths()))
+  }
+
+  async resolveSourceDirectives() {
+    if (this.sources.length > 0) {
+      return
+    }
+    // Note: This should eventually use the DesignSystem to extract the same
+    // sources also discovered by tailwind. Since we don't have everything yet
+    // to initialize the design system though, we set up a simple postcss at
+    // rule exporter instead for now.
+    await postcss([
+      {
+        postcssPlugin: 'extract-at-rules',
+        AtRule: {
+          source: ({ params }: AtRule) => {
+            if (params[0] !== '"' && params[0] !== "'") {
+              return
+            }
+            this.sources.push(params.slice(1, -1))
+          },
+        },
+      },
+    ]).process(this.content, { from: this.realpath })
   }
 
   /**

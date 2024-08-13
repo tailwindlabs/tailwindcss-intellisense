@@ -76,22 +76,3 @@ export async function loadDesignSystem(
 
   return design
 }
-
-export async function loadConfig(filepath: string, css: string): Promise<string[]> {
-  let sourceRules: string[] = []
-  await postcss([
-    {
-      postcssPlugin: 'extract-at-rules',
-      AtRule: {
-        source({ params }: AtRule) {
-          if (params[0] !== '"' && params[0] !== "'") {
-            return
-          }
-          sourceRules.push(params.slice(1, -1))
-        },
-      },
-    },
-  ]).process(css, { from: filepath })
-
-  return sourceRules
-}
