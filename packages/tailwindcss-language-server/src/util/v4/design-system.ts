@@ -1,6 +1,6 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
-import postcss, { AtRule } from 'postcss'
+import postcss from 'postcss'
 import { resolveCssImports } from '../../resolve-css-imports'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
