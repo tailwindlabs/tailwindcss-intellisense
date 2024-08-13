@@ -529,7 +529,7 @@ async function* detectContentFiles(
     oxidePath = pathToFileURL(oxidePath).href
 
     const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath).then(
-      (o) => o.default,
+      (o) => o.default || o,
     )
 
     // This isn't a v4 project
