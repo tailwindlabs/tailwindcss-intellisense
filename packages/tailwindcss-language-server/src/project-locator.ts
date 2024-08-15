@@ -16,6 +16,7 @@ import { type Feature, supportedFeatures } from '@tailwindcss/language-service/s
 import { resolveCssImports } from './resolve-css-imports'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
+import * as oxide from './oxide'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -519,6 +520,8 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
   }
 }
 
+function scan() {}
+
 async function* detectContentFiles(
   base: string,
   inputFile,
@@ -528,26 +531,23 @@ async function* detectContentFiles(
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
 
-    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath).then(
-      (o) => o.default || o,
-    )
-
-    // This isn't a v4 project
-    if (!oxide.scanDir) return
-
-    let { files, globs, candidates } = oxide.scanDir({
-      base,
+    let result = await oxide.scan({
+      oxidePath,
+      basePath: base,
       sources: sources.map((pattern) => ({
         base: path.dirname(inputFile),
         pattern,
       })),
     })
 
-    for (let file of files) {
+    // This isn't a v4 project
+    if (!result) return
+
+    for (let file of result.files) {
       yield normalizePath(file)
     }
 
-    for (let { base, pattern } of globs) {
+    for (let { base, pattern } of result.globs) {
       // Do not normalize the glob itself as it may contain escape sequences
       yield normalizePath(base) + '/' + pattern
     }
