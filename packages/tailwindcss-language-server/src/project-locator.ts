@@ -505,12 +505,13 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      let root = entry.entries[0]
-      for await (let pattern of detectContentFiles(
-        entry.packageRoot,
-        entry.path,
-        root?.sources ?? [],
-      )) {
+
+      // Note: the file representing `entry` is not guaranteed to be the first
+      // file so we use `flatMap`` here to simplify the logic but none of the
+      // other entries should have sources.
+      let sources = entry.entries.flatMap((entry) => entry.sources)
+
+      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, sources)) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
