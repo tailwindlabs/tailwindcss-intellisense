@@ -84,8 +84,6 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   let resultV1: OxideV1.ScanResult | null = null
   let resultV2: OxideV2.ScanResult | null = null
 
-  console.log(options)
-
   try {
     resultV2 = oxide.scanDir({
       base: options.basePath,
