@@ -520,11 +520,9 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
   }
 }
 
-function scan() {}
-
 async function* detectContentFiles(
   base: string,
-  inputFile,
+  inputFile: string,
   sources: string[],
 ): AsyncIterable<string> {
   try {
