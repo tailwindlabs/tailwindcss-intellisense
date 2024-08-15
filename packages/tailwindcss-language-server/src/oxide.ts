@@ -42,7 +42,7 @@ interface Oxide {
 }
 
 async function loadOxideAtPath(id: string): Promise<Oxide | null> {
-  let oxide = await import(id).then((o) => o.default || o)
+  let oxide = await import(id)
 
   // This is a much older, unsupport version of Oxide before v4.0.0-alpha.1
   if (!oxide.scanDir) return null
