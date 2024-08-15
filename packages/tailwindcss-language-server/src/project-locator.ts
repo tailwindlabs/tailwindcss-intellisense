@@ -599,7 +599,8 @@ class FileEntry {
       // Replace the file content with the processed CSS
       this.content = result.css
     } catch {
-      //
+      // TODO: Errors here should be surfaced in tests and possibly the user in
+      // `trace` logs or something like that
     }
   }
 
