@@ -1,7 +1,7 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
-import { resolveCssImports } from '../../resolve-css-imports'
+import { resolveCssImports } from '../../css'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/

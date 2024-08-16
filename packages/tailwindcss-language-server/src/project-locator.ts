@@ -7,14 +7,16 @@ import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import type { Message } from 'postcss'
+import type { AtRule, Message } from 'postcss'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
 import resolveFrom from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
-import { resolveCssImports } from './resolve-css-imports'
+import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
+import postcss from 'postcss'
+import * as oxide from './oxide'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -341,6 +343,9 @@ export class ProjectLocator {
     // Resolve real paths for all the files in the CSS import graph
     await Promise.all(imports.map((file) => file.resolveRealpaths()))
 
+    // Resolve all @source directives
+    await Promise.all(imports.map((file) => file.resolveSourceDirectives()))
+
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
@@ -500,7 +505,13 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      for await (let pattern of detectContentFiles(entry.packageRoot)) {
+
+      // Note: the file representing `entry` is not guaranteed to be the first
+      // file so we use `flatMap`` here to simplify the logic but none of the
+      // other entries should have sources.
+      let sources = entry.entries.flatMap((entry) => entry.sources)
+
+      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, sources)) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -510,25 +521,37 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
   }
 }
 
-async function* detectContentFiles(base: string): AsyncIterable<string> {
+async function* detectContentFiles(
+  base: string,
+  inputFile: string,
+  sources: string[],
+): AsyncIterable<string> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
+    let oxidePackageJsonPath = resolveFrom(path.dirname(base), '@tailwindcss/oxide/package.json')
+    let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
-    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath)
+    let result = await oxide.scan({
+      oxidePath,
+      oxideVersion: oxidePackageJson.version,
+      basePath: base,
+      sources: sources.map((pattern) => ({
+        base: path.dirname(inputFile),
+        pattern,
+      })),
+    })
 
     // This isn't a v4 project
-    if (!oxide.scanDir) return
+    if (!result) return
 
-    let { files, globs } = oxide.scanDir({ base, globs: true })
-
-    for (let file of files) {
+    for (let file of result.files) {
       yield normalizePath(file)
     }
 
-    for (let { base, glob } of globs) {
+    for (let { base, pattern } of result.globs) {
       // Do not normalize the glob itself as it may contain escape sequences
-      yield normalizePath(base) + '/' + glob
+      yield normalizePath(base) + '/' + pattern
     }
   } catch {
     //
@@ -553,6 +576,7 @@ class FileEntry {
   content: string | null
   deps: FileEntry[] = []
   realpath: string | null
+  sources: string[] = []
 
   constructor(
     public type: 'js' | 'css',
@@ -579,7 +603,8 @@ class FileEntry {
       // Replace the file content with the processed CSS
       this.content = result.css
     } catch {
-      //
+      // TODO: Errors here should be surfaced in tests and possibly the user in
+      // `trace` logs or something like that
     }
   }
 
@@ -587,6 +612,20 @@ class FileEntry {
     this.realpath = normalizePath(await fs.realpath(this.path))
 
     await Promise.all(this.deps.map((entry) => entry.resolveRealpaths()))
+  }
+
+  async resolveSourceDirectives() {
+    if (this.sources.length > 0) {
+      return
+    }
+
+    // Note: This should eventually use the DesignSystem to extract the same
+    // sources also discovered by tailwind. Since we don't have everything yet
+    // to initialize the design system though, we set up a simple postcss at
+    // rule exporter instead for now.
+    await postcss([extractSourceDirectives(this.sources)]).process(this.content, {
+      from: this.realpath,
+    })
   }
 
   /**

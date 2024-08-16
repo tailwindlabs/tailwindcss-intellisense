@@ -141,3 +141,29 @@ testFixture('v4/auto-content', [
     ],
   },
 ])
+
+testFixture('v4/custom-source', [
+  //
+  {
+    config: 'admin/app.css',
+    content: [
+      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/admin/**/*.bin',
+      '{URL}/admin/foo.bin',
+      '{URL}/package.json',
+      '{URL}/shared.html',
+      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+    ],
+  },
+  {
+    config: 'web/app.css',
+    content: [
+      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/web/*.bin',
+      '{URL}/web/bar.bin',
+      '{URL}/package.json',
+      '{URL}/shared.html',
+      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+    ],
+  },
+])
