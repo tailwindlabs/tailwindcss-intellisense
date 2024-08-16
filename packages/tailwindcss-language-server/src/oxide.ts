@@ -1,3 +1,5 @@
+import { lte } from 'tailwindcss-language-service/src/util/semver'
+
 // This covers the Oxide API from v4.0.0-alpha.1 to v4.0.0-alpha.18
 declare namespace OxideV1 {
   interface GlobEntry {
@@ -13,7 +15,6 @@ declare namespace OxideV1 {
   interface ScanResult {
     files: Array<string>
     globs: Array<GlobEntry>
-    candidates: Array<string>
   }
 }
 
@@ -32,19 +33,41 @@ declare namespace OxideV2 {
   interface ScanResult {
     files: Array<string>
     globs: Array<GlobEntry>
-    candidates: Array<string>
+  }
+}
+
+// This covers the Oxide API from v4.0.0-alpha.20+
+declare namespace OxideV3 {
+  interface GlobEntry {
+    base: string
+    pattern: string
+  }
+
+  interface ScannerOptions {
+    detectSources?: { base: string }
+    sources: Array<GlobEntry>
+  }
+
+  interface ScannerConstructor {
+    new (options: ScannerOptions): Scanner
+  }
+
+  interface Scanner {
+    files: Array<string>
+    globs: Array<GlobEntry>
   }
 }
 
 interface Oxide {
   scanDir?(options: OxideV1.ScanOptions): OxideV1.ScanResult
   scanDir?(options: OxideV2.ScanOptions): OxideV2.ScanResult
+  Scanner?: OxideV3.ScannerConstructor
 }
 
 async function loadOxideAtPath(id: string): Promise<Oxide | null> {
   let oxide = await import(id)
 
-  // This is a much older, unsupport version of Oxide before v4.0.0-alpha.1
+  // This is a much older, unsupported version of Oxide before v4.0.0-alpha.1
   if (!oxide.scanDir) return null
 
   return oxide
@@ -57,6 +80,7 @@ interface GlobEntry {
 
 interface ScanOptions {
   oxidePath: string
+  oxideVersion: string
   basePath: string
   sources: Array<GlobEntry>
 }
@@ -64,7 +88,6 @@ interface ScanOptions {
 interface ScanResult {
   files: Array<string>
   globs: Array<GlobEntry>
-  candidates: Array<string>
 }
 
 /**
@@ -81,32 +104,40 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   const oxide = await loadOxideAtPath(options.oxidePath)
   if (!oxide) return null
 
-  let resultV1: OxideV1.ScanResult | null = null
-  let resultV2: OxideV2.ScanResult | null = null
-
-  try {
-    resultV2 = oxide.scanDir({
-      base: options.basePath,
-      sources: options.sources,
-    })
-  } catch {
-    resultV1 = oxide.scanDir({
+  // V1
+  if (lte(options.oxideVersion, '4.0.0-alpha.18')) {
+    let result = oxide.scanDir?.({
       base: options.basePath,
       globs: true,
     })
-  }
 
-  if (resultV2) {
     return {
-      files: resultV2.files,
-      globs: resultV2.globs,
-      candidates: resultV2.candidates,
+      files: result.files,
+      globs: result.globs.map((g) => ({ base: g.base, pattern: g.glob })),
     }
   }
 
+  // V2
+  if (lte(options.oxideVersion, '4.0.0-alpha.19')) {
+    let result = oxide.scanDir({
+      base: options.basePath,
+      sources: options.sources,
+    })
+
+    return {
+      files: result.files,
+      globs: result.globs,
+    }
+  }
+
+  // V3
+  let scanner = new oxide.Scanner({
+    detectSources: { base: options.basePath },
+    sources: options.sources,
+  })
+
   return {
-    files: resultV1.files,
-    globs: resultV1.globs.map((g) => ({ base: g.base, pattern: g.glob })),
-    candidates: resultV1.candidates,
+    files: scanner.files,
+    globs: scanner.globs,
   }
 }

@@ -529,9 +529,12 @@ async function* detectContentFiles(
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
+    let oxidePackageJsonPath = resolveFrom(path.dirname(base), '@tailwindcss/oxide/package.json')
+    let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
     let result = await oxide.scan({
       oxidePath,
+      oxideVersion: oxidePackageJson.version,
       basePath: base,
       sources: sources.map((pattern) => ({
         base: path.dirname(inputFile),
