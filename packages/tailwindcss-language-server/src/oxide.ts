@@ -18,7 +18,7 @@ declare namespace OxideV1 {
   }
 }
 
-// This covers the Oxide API from v4.0.0-alpha.19+
+// This covers the Oxide API from v4.0.0-alpha.19
 declare namespace OxideV2 {
   interface GlobEntry {
     base: string
