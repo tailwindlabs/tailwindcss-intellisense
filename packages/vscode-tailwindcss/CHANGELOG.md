@@ -4,6 +4,10 @@
 
 - Nothing yet!
 
+## 0.12.7
+
+- Add support for `@source` ([#1030](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1030))
+
 ## 0.12.6
 
 - Add support for Tailwind CSS v4.0.0-alpha.19 ([#1031](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1031))
