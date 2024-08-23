@@ -2,7 +2,7 @@
   "name": "@tailwindcss/language-server",
   "description": "Tailwind CSS Language Server",
   "license": "MIT",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tailwindlabs/tailwindcss-intellisense.git",
@@ -25,7 +25,10 @@
   "bin": {
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
   },
-  "files": ["bin", "ThirdPartyNotices.txt"],
+  "files": [
+    "bin",
+    "ThirdPartyNotices.txt"
+  ],
   "publishConfig": {
     "access": "public"
   },
