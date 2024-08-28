@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix an issue that caused the language server for any project with a non-standard CSS file to crash ([#1030](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1030))
 
 ## 0.12.7
 
