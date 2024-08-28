@@ -615,17 +615,21 @@ class FileEntry {
   }
 
   async resolveSourceDirectives() {
-    if (this.sources.length > 0) {
-      return
-    }
+    try {
+      if (this.sources.length > 0) {
+        return
+      }
 
-    // Note: This should eventually use the DesignSystem to extract the same
-    // sources also discovered by tailwind. Since we don't have everything yet
-    // to initialize the design system though, we set up a simple postcss at
-    // rule exporter instead for now.
-    await postcss([extractSourceDirectives(this.sources)]).process(this.content, {
-      from: this.realpath,
-    })
+      // Note: This should eventually use the DesignSystem to extract the same
+      // sources also discovered by tailwind. Since we don't have everything yet
+      // to initialize the design system though, we set up a simple postcss at
+      // rule exporter instead for now.
+      await postcss([extractSourceDirectives(this.sources)]).process(this.content, {
+        from: this.realpath,
+      })
+    } catch (err) {
+      //
+    }
   }
 
   /**
