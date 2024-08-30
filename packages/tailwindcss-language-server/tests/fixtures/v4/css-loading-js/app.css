@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+
+/* Load ESM versions */
+@plugin './esm/my-plugin.mjs';
+
+/* Load Common JS versions */
+@plugin './cjs/my-plugin.cjs';
+
+/* Load TypeScript versions */
+@plugin './ts/my-plugin.ts';
+
+/* Attempt to load files that do not exist */
+@plugin './missing-plugin.mjs';

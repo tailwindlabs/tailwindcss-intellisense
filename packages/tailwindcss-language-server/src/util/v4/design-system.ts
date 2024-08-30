@@ -1,7 +1,10 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
+import * as path from 'node:path'
 import { resolveCssImports } from '../../css'
+import { resolveFrom } from '../resolveFrom'
+import { pathToFileURL } from 'tailwindcss-language-server/src/utils'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -16,6 +19,37 @@ export async function isMaybeV4(css: string): Promise<boolean> {
   // - @theme { … }
 
   return HAS_V4_THEME.test(css) || HAS_V4_IMPORT.test(css)
+}
+
+/**
+ * Create a loader function that can load plugins and config files relative to
+ * the CSS file that uses them. However, we don't want missing files to prevent
+ * everything from working so we'll let the error handler decide how to proceed.
+ *
+ * @param {object} param0
+ * @returns
+ */
+function createLoader<T>({
+  filepath,
+  onError,
+}: {
+  filepath: string
+  onError: (id: string, error: unknown) => T
+}) {
+  let baseDir = path.dirname(filepath)
+  let cacheKey = `${+Date.now()}`
+
+  return async function loadFile(id: string) {
+    try {
+      let resolved = resolveFrom(baseDir, id)
+      let url = pathToFileURL(resolved)
+      url.searchParams.append('t', cacheKey)
+
+      return await import(url.href).then((m) => m.default ?? m)
+    } catch (err) {
+      return onError(id, err)
+    }
+  }
 }
 
 export async function loadDesignSystem(
@@ -38,9 +72,14 @@ export async function loadDesignSystem(
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
   let design: DesignSystem = await tailwindcss.__unstable__loadDesignSystem(resolved.css, {
-    loadPlugin() {
-      return () => {}
-    },
+    loadPlugin: createLoader({
+      filepath,
+      onError(id, err) {
+        console.error(`Unable to load plugin: ${id}`, err)
+
+        return () => {}
+      },
+    }),
   })
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
