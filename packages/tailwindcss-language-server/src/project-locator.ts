@@ -132,14 +132,17 @@ export class ProjectLocator {
 
     console.log(JSON.stringify({ tailwind }))
 
-    // A JS/TS config file was loaded from an `@config`` directive in a CSS file
+    // A JS/TS config file was loaded from an `@config` directive in a CSS file
+    // This is only relevant for v3 projects so we'll do some feature detection
+    // to verify if this is supported in the current version of Tailwind.
     if (config.type === 'js' && config.source === 'css') {
       // We only allow local versions of Tailwind to use `@config` directives
       if (tailwind.isDefaultVersion) {
         return null
       }
 
-      // This version of Tailwind doesn't support `@config` directives
+      // This version of Tailwind doesn't support considering `@config` directives
+      // as a project on their own.
       if (!tailwind.features.includes('css-at-config-as-project')) {
         return null
       }
@@ -310,8 +313,12 @@ export class ProjectLocator {
       // If the CSS file couldn't be read for some reason, skip it
       if (!file.content) continue
 
+      // Look for `@import`, `@tailwind`, `@theme`, `@config`, etc…
+      if (!file.isMaybeTailwindRelated()) continue
+
       // Find `@config` directives in CSS files and resolve them to the actual
-      // config file that they point to.
+      // config file that they point to. This is only relevant for v3 which
+      // we'll verify after config resolution.
       let configPath = file.configPathInCss()
       if (configPath) {
         // We don't need the content for this file anymore
@@ -327,14 +334,9 @@ export class ProjectLocator {
             content: [],
           })),
         )
-        continue
       }
 
-      // Look for `@import` or `@tailwind` directives
-      if (file.isMaybeTailwindRelated()) {
-        imports.push(file)
-        continue
-      }
+      imports.push(file)
     }
 
     // Resolve imports in all the CSS files
@@ -636,6 +638,9 @@ class FileEntry {
    * Look for `@config` directives in a CSS file and return the path to the config
    * file that it points to. This path is (possibly) relative to the CSS file so
    * it must be resolved to an absolute path before returning.
+   *
+   * This is only useful for v3 projects. While v4 can use `@config` directives
+   * the CSS file is still considered the "config" rather than the JS file.
    */
   configPathInCss(): string | null {
     if (!this.content) return null
