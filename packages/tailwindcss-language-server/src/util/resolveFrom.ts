@@ -16,7 +16,7 @@ export function setPnpApi(newPnpApi: any): void {
   resolver = recreateResolver()
 }
 
-export default function resolveFrom(from?: string, id?: string): string {
+export function resolveFrom(from?: string, id?: string): string {
   // Network share path on Windows
   if (id.startsWith('\\\\')) return id
 
