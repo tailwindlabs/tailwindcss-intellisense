@@ -80,6 +80,15 @@ export async function loadDesignSystem(
         return () => {}
       },
     }),
+
+    loadConfig: createLoader({
+      filepath,
+      onError(id, err) {
+        console.error(`Unable to load config: ${id}`, err)
+
+        return {}
+      },
+    }),
   })
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs

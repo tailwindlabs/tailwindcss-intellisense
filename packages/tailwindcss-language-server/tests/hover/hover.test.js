@@ -295,4 +295,34 @@ withFixture('v4/css-loading-js', (c) => {
       end: { line: 0, character: 29 },
     },
   })
+
+  testHover('Configs: ESM', {
+    text: '<div class="bg-esm-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-esm-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Configs: CJS', {
+    text: '<div class="bg-cjs-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-cjs-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Configs: TypeScript', {
+    text: '<div class="bg-ts-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-ts-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 29 },
+    },
+  })
 })
