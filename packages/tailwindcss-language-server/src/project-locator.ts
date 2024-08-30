@@ -649,21 +649,21 @@ class FileEntry {
   }
 
   /**
-   * Look for `@import` or `@tailwind` directives in a CSS file. This means that
+   * Look for tailwind-specific directives in a CSS file. This means that it
    * participates in the CSS "graph" for the project and we need to traverse
    * the graph to find all the CSS files that are considered entrypoints.
    */
   isMaybeTailwindRelated(): boolean {
     if (!this.content) return false
 
-    let HAS_IMPORT = /@import\s*(?<config>'[^']+'|"[^"]+");/
+    let HAS_IMPORT = /@import\s*('[^']+'|"[^"]+");/
     let HAS_TAILWIND = /@tailwind\s*[^;]+;/
-    let HAS_THEME = /@theme\s*\{/
+    let HAS_DIRECTIVE = /@(theme|plugin|config|utility|variant|apply)\s*[^;{]+[;{]/
 
     return (
       HAS_IMPORT.test(this.content) ||
       HAS_TAILWIND.test(this.content) ||
-      HAS_THEME.test(this.content)
+      HAS_DIRECTIVE.test(this.content)
     )
   }
 }
