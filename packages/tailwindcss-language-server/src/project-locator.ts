@@ -140,7 +140,7 @@ export class ProjectLocator {
       }
 
       // This version of Tailwind doesn't support `@config` directives
-      if (!tailwind.features.includes('css-at-config')) {
+      if (!tailwind.features.includes('css-at-config-as-project')) {
         return null
       }
     }

@@ -4,7 +4,7 @@ export type Feature =
   | 'layer:preflight'
   | 'layer:base'
   | 'css-at-theme'
-  | 'css-at-config'
+  | 'css-at-config-as-project'
   | 'transpiled-configs'
   | 'relative-content-paths'
   | 'browserslist-in-plugins'
@@ -77,7 +77,7 @@ export function supportedFeatures(version: string): Feature[] {
 
   if (semver.gte(version, '3.2.0')) {
     // Support for the `@config` directive in CSS to customize the located config file
-    features.push('css-at-config')
+    features.push('css-at-config-as-project')
 
     // Support for relative content paths
     features.push('relative-content-paths')
