@@ -142,6 +142,28 @@
       ]
     },
     {
+      "begin": "(?i)((@)plugin)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.plugin.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.tailwind"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)config)(?:\\s+|$|(?=['\"]|/\\*))",
       "beginCaptures": {
         "1": {
