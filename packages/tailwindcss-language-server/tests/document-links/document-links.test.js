@@ -104,4 +104,30 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testDocumentLinks('source: file exists', {
+    text: '@source "index.html";',
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path
+          .resolve('./tests/fixtures/v4/basic/index.html')
+          .replace(/@/g, '%40')}`,
+        range: { start: { line: 0, character: 8 }, end: { line: 0, character: 20 } },
+      },
+    ],
+  })
+
+  testDocumentLinks('source: file does not exist', {
+    text: '@source "does-not-exist.html";',
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path
+          .resolve('./tests/fixtures/v4/basic/does-not-exist.html')
+          .replace(/@/g, '%40')}`,
+        range: { start: { line: 0, character: 8 }, end: { line: 0, character: 29 } },
+      },
+    ],
+  })
 })
