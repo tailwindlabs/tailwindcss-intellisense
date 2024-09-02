@@ -1485,7 +1485,7 @@ function provideCssDirectiveCompletions(
     })
   }
 
-  if (semver.gte(state.version, '4.0.0')) {
+  if (state.v4) {
     items.push({
       label: '@theme',
       documentation: {
@@ -1493,6 +1493,50 @@ function provideCssDirectiveCompletions(
         value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
           'functions-and-directives/#config',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@utility',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@utility\` directive to define a custom utility.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#utility',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@variant',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@variant\` directive to define a custom variant or override an existing one.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#variant',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@source',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@source\` directive to scan additional files for classes.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#source',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@plugin',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@plugin\` directive to include a JS plugin in your Tailwind CSS build.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#source',
         )})`,
       },
     })
