@@ -242,3 +242,87 @@ withFixture('v4/basic', (c) => {
     },
   })
 })
+
+withFixture('v4/css-loading-js', (c) => {
+  async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
+    test.concurrent(name, async ({ expect }) => {
+      let textDocument = await c.openDocument({ text, lang, settings })
+      let res = await c.sendRequest('textDocument/hover', {
+        textDocument,
+        position,
+      })
+
+      expect(res).toEqual(
+        expected
+          ? {
+              contents: {
+                language: 'css',
+                value: expected,
+              },
+              range: expectedRange,
+            }
+          : expected,
+      )
+    })
+  }
+
+  testHover('Plugins: ESM', {
+    text: '<div class="bg-esm-from-plugin">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-esm-from-plugin {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Plugins: CJS', {
+    text: '<div class="bg-cjs-from-plugin">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-cjs-from-plugin {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Plugins: TypeScript', {
+    text: '<div class="bg-ts-from-plugin">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-ts-from-plugin {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 29 },
+    },
+  })
+
+  testHover('Configs: ESM', {
+    text: '<div class="bg-esm-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-esm-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Configs: CJS', {
+    text: '<div class="bg-cjs-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-cjs-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 30 },
+    },
+  })
+
+  testHover('Configs: TypeScript', {
+    text: '<div class="bg-ts-from-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-ts-from-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 29 },
+    },
+  })
+})
