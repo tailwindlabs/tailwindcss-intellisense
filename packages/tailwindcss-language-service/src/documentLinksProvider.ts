@@ -20,6 +20,7 @@ export function getDocumentLinks(
   if (state.v4) {
     patterns.push(
       /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
+      /@source\s*(?<path>'[^']+'|"[^"]+")/g,
     )
   }
 
