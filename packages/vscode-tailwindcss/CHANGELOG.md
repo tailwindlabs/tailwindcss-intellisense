@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.9
+
 - Support plugins loaded via `@plugin` in v4 ([#1044](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1044))
 - Support configs loaded via `@config` in v4 ([#1044](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1044))
 
