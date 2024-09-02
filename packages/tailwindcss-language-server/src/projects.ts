@@ -223,18 +223,22 @@ export async function createProjectService(
         try {
           directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
           let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+
           let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
             dirents.map(async (dirent) => {
               let isDirectory = dirent.isDirectory()
-              return (await isExcluded(
+              let shouldRemove = await isExcluded(
                 state,
                 document,
                 path.join(directory, dirent.name, isDirectory ? '/' : ''),
-              ))
-                ? null
-                : [dirent.name, { isDirectory }]
+              )
+
+              if (shouldRemove) return null
+
+              return [dirent.name, { isDirectory }]
             }),
           )
+
           return result.filter((item) => item !== null)
         } catch {
           return []
