@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "tailwindcss": "^4.0.0-alpha.19",
-    "@tailwindcss/oxide": "^4.0.0-alpha.19"
+    "tailwindcss": "^4.0.0-alpha.21",
+    "@tailwindcss/oxide": "^4.0.0-alpha.21"
   }
 }
