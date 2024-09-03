@@ -290,6 +290,44 @@
       ]
     },
     {
+      "begin": "(?i)((@)variant)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.variant.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "match": "[^\\s{,]+?",
+          "name": "variable.parameter.variant.tailwind"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.variant.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)responsive)(?=[\\s{]|/\\*|$)",
       "beginCaptures": {
         "1": {
