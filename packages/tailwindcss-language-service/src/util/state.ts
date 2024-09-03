@@ -33,6 +33,10 @@ export type EditorState = {
     document: TextDocument,
     directory: string,
   ) => Promise<Array<[string, { isDirectory: boolean }]>>
+  readDirectoryRelative: (options: {
+    directory: string,
+    relativeTo: TextDocument,
+  }) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 
 type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'

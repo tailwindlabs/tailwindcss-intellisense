@@ -1629,6 +1629,20 @@ async function provideFileDirectiveCompletions(
 
   let entries = await state.editor.readDirectory(document, valueBeforeLastSlash || '.')
 
+  // Also suggest tailwind.config.(js|mjs|cjs|ts|mts|cts) from the root of the workspace
+  if (directive === 'config') {
+    let rootEntries = await state.editor.readDirectoryRelative({
+      directory: state.editor.folder,
+      relativeTo: document,
+    })
+
+    // Only show JavaScript/TypeScript files
+    const IS_TAILWIND_CONFIG = /tailwind\.config\.(js|mjs|cjs|ts|mts|cts)$/
+    rootEntries = rootEntries.filter(([name]) => IS_TAILWIND_CONFIG.test(name))
+
+    entries = [...entries, ...rootEntries]
+  }
+
   let isAllowedFile = directive === 'source' ? IS_TEMPLATE_SOURCE : IS_SCRIPT_SOURCE
 
   // Only show directories and JavaScript/TypeScript files

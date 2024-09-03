@@ -200,6 +200,35 @@ export async function createProjectService(
     itemDefaults.push('data')
   }
 
+  async function readDirectory(document: TextDocument, fsPath: string) {
+    try {
+      let dirents = await fs.promises.readdir(fsPath, { withFileTypes: true })
+
+      let result = await Promise.all(dirents.map(async (dirent) => {
+        let isDirectory = dirent.isDirectory()
+        let filepath = path.join(fsPath, dirent.name, isDirectory ? '/' : '')
+
+        let shouldRemove = await isExcluded(
+          state,
+          document,
+          filepath,
+        )
+
+        if (shouldRemove) return null
+
+        return {
+          name: dirent.name,
+          filepath,
+          isDirectory,
+        }
+      }))
+
+      return result.filter((item) => item !== null)
+    } catch {
+      return []
+    }
+  }
+
   let state: State = {
     enabled: false,
     completionItemData: {
@@ -219,30 +248,26 @@ export async function createProjectService(
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
+
       async readDirectory(document, directory) {
-        try {
-          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
-          let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+        let dir = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+        let results = await readDirectory(document, dir)
 
-          let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
-            dirents.map(async (dirent) => {
-              let isDirectory = dirent.isDirectory()
-              let shouldRemove = await isExcluded(
-                state,
-                document,
-                path.join(directory, dirent.name, isDirectory ? '/' : ''),
-              )
+        return results.map(result => {
+          return [result.name, { isDirectory: result.isDirectory }]
+        })
+      },
 
-              if (shouldRemove) return null
+      // Reads a directory and returns results with paths relative to the given document
+      async readDirectoryRelative(opts) {
+        let documentDir = path.resolve(path.dirname(getFileFsPath(opts.relativeTo.uri)))
+        let results = await readDirectory(opts.relativeTo, opts.directory)
 
-              return [dirent.name, { isDirectory }]
-            }),
-          )
+        return results.map(result => {
+          let name = path.relative(documentDir, result.filepath)
 
-          return result.filter((item) => item !== null)
-        } catch {
-          return []
-        }
+          return [name, { isDirectory: result.isDirectory }]
+        })
       },
     },
   }
