@@ -1540,6 +1540,23 @@ function provideCssDirectiveCompletions(
         )})`,
       },
     })
+
+    // If we're inside an @variant directive, also add `@slot`
+    if (isInsideAtRule('variant', document, position)) {
+      items.push({
+        label: '@slot',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use the \`@slot\` directive to define where rules go in a custom variant.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#slot',
+          )})`,
+        },
+
+        // Make sure this appears as the first at-rule
+        sortText: '-0000000',
+      })
+    }
   }
 
   return withDefaults(
@@ -1565,6 +1582,21 @@ function provideCssDirectiveCompletions(
     },
     state.editor.capabilities.itemDefaults,
   )
+}
+
+function isInsideAtRule(name: string, document: TextDocument, position: Position) {
+  // 1. Get all text up to the current position
+  let text = document.getText({
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+
+  // 2. Find the last instance of the at-rule
+  let block = text.lastIndexOf(`@${name}`)
+  if (block === -1) return false
+
+  // 4. Count the number of open and close braces following the rule to determine if we're inside it
+  return braceLevel(text.slice(block)) > 0
 }
 
 // Provide completions for directives that take file paths
