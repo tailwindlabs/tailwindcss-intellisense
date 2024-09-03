@@ -160,6 +160,26 @@
       "patterns": [
         {
           "include": "source.css#string"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.plugin.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.plugin.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.plugin.body.tailwind",
+          "patterns": [
+            {
+              "include": "#property-list"
+            }
+          ]
         }
       ]
     },
@@ -384,5 +404,48 @@
         }
       ]
     }
-  ]
+  ],
+  "repository": {
+    "property-list": {
+      "patterns": [
+        {
+          "begin": "(?<![-a-zA-Z])(?=[-a-zA-Z])",
+          "end": "$|(?![-a-zA-Z])",
+          "name": "meta.property-name.css",
+          "patterns": [
+            {
+              "include": "source.css#property-names"
+            }
+          ]
+        },
+        {
+          "begin": "(:)\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.separator.key-value.css"
+            }
+          },
+          "end": "\\s*(;)|\\s*(?=}|\\))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.css"
+            }
+          },
+          "contentName": "meta.property-value.css",
+          "patterns": [
+            {
+              "include": "source.css#comment-block"
+            },
+            {
+              "include": "source.css#property-values"
+            }
+          ]
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.rule.css"
+        }
+      ]
+    }
+  }
 }
