@@ -290,7 +290,7 @@
       ]
     },
     {
-      "begin": "(?i)((@)variant)(?=[\\s{]|/\\*|$)",
+      "begin": "(?i)((@)variant)(?=[\\s{(]|$)",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.at-rule.variant.tailwind"
@@ -299,11 +299,31 @@
           "name": "punctuation.definition.keyword.css"
         }
       },
-      "end": "(?<=})(?!\\G)",
+      "end": "(?<=[};])(?!\\G)",
       "patterns": [
         {
-          "match": "[^\\s{,]+?",
+          "match": "[^\\s({;,]+?",
           "name": "variable.parameter.variant.tailwind"
+        },
+        {
+          "begin": "[(]",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.begin.bracket.paren.tailwind"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.end.bracket.paren.tailwind"
+            }
+          },
+          "name": "meta.selector.tailwind",
+          "patterns": [
+            {
+              "include": "source.css#selector-innards"
+            }
+          ]
         },
         {
           "begin": "{",
