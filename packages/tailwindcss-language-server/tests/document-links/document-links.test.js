@@ -78,4 +78,30 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testDocumentLinks('plugin: file exists', {
+    text: '@plugin "plugin.js";',
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path
+          .resolve('./tests/fixtures/v4/basic/plugin.js')
+          .replace(/@/g, '%40')}`,
+        range: { start: { line: 0, character: 8 }, end: { line: 0, character: 19 } },
+      },
+    ],
+  })
+
+  testDocumentLinks('plugin: file does not exist', {
+    text: '@plugin "does-not-exist.js";',
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path
+          .resolve('./tests/fixtures/v4/basic/does-not-exist.js')
+          .replace(/@/g, '%40')}`,
+        range: { start: { line: 0, character: 8 }, end: { line: 0, character: 27 } },
+      },
+    ],
+  })
 })

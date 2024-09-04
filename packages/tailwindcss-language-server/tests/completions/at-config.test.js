@@ -163,4 +163,66 @@ withFixture('v4/dependencies', (c) => {
       ],
     })
   })
+
+  test.concurrent('@plugin', async ({ expect }) => {
+    let result = await completion({
+      text: '@plugin "',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 9,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'sub-dir/',
+          kind: 19,
+          command: { command: 'editor.action.triggerSuggest', title: '' },
+          data: expect.anything(),
+          textEdit: {
+            newText: 'sub-dir/',
+            range: { start: { line: 0, character: 9 }, end: { line: 0, character: 9 } },
+          },
+        },
+        {
+          label: 'tailwind.config.js',
+          kind: 17,
+          data: expect.anything(),
+          textEdit: {
+            newText: 'tailwind.config.js',
+            range: { start: { line: 0, character: 9 }, end: { line: 0, character: 9 } },
+          },
+        },
+      ],
+    })
+  })
+
+  test.concurrent('@plugin directory', async ({ expect }) => {
+    let result = await completion({
+      text: '@plugin "./sub-dir/',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 19,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'colors.js',
+          kind: 17,
+          data: expect.anything(),
+          textEdit: {
+            newText: 'colors.js',
+            range: { start: { line: 0, character: 19 }, end: { line: 0, character: 19 } },
+          },
+        },
+      ],
+    })
+  })
 })

@@ -1536,7 +1536,9 @@ async function provideFileDirectiveCompletions(
     return null
   }
 
-  let pattern = /@config\s*(?<partial>'[^']*|"[^"]*)$/
+  let pattern = state.v4
+    ? /@(config|plugin)\s*(?<partial>'[^']*|"[^"]*)$/
+    : /@config\s*(?<partial>'[^']*|"[^"]*)$/
 
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
   let match = text.match(pattern)

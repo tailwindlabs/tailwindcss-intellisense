@@ -17,6 +17,12 @@ export function getDocumentLinks(
     /@config\s*(?<path>'[^']+'|"[^"]+")/g,
   ]
 
+  if (state.v4) {
+    patterns.push(
+      /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
+    )
+  }
+
   return getDirectiveLinks(state, document, patterns, resolveTarget)
 }
 
