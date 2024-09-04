@@ -13,6 +13,6 @@ It's never a fun experience to have your pull request declined after investing a
 You can build the VSIX package by running these commands in the project root.
 
 ```bash
-npm install
-npx run package --workspace=packages/vscode-tailwindcss
+pnpm install
+pnpx run package --workspace=packages/vscode-tailwindcss
 ```

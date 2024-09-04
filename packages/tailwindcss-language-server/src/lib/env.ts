@@ -1,6 +1,6 @@
 import Module from 'node:module'
 import * as path from 'node:path'
-import resolveFrom from '../util/resolveFrom'
+import { resolveFrom } from '../util/resolveFrom'
 
 process.env.TAILWIND_MODE = 'build'
 process.env.TAILWIND_DISABLE_TOUCH = 'true'

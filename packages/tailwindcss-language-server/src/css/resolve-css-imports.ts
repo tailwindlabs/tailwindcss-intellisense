@@ -1,6 +1,7 @@
 import postcss from 'postcss'
 import postcssImport from 'postcss-import'
-import { createResolver } from './util/resolve'
+import { createResolver } from '../util/resolve'
+import { fixRelativePaths } from './fix-relative-paths'
 
 const resolver = createResolver({
   extensions: ['.css'],
@@ -15,6 +16,7 @@ const resolveImports = postcss([
       return paths ? paths : id
     },
   }),
+  fixRelativePaths(),
 ])
 
 export function resolveCssImports() {

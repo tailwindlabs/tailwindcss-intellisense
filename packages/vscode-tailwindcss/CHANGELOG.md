@@ -2,7 +2,28 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Nothing yer!
+
+## 0.12.10
+
+- Improve support for new v4 at rules ([#1045](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1045))
+
+## 0.12.9
+
+- Support plugins loaded via `@plugin` in v4 ([#1044](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1044))
+- Support configs loaded via `@config` in v4 ([#1044](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1044))
+
+## 0.12.8
+
+- Fix an issue that caused the language server for any project with a non-standard CSS file to crash ([#1030](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1030))
+
+## 0.12.7
+
+- Add support for `@source` ([#1030](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1030))
+
+## 0.12.6
+
+- Add support for Tailwind CSS v4.0.0-alpha.19 ([#1031](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1031))
 
 ## 0.12.5
 

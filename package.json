@@ -1,11 +1,12 @@
 {
   "name": "tailwindcss-intellisense",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
+    "@types/culori": "^2.1.0",
+    "culori": "^4.0.1",
+    "esbuild": "^0.20.2",
+    "minimist": "^1.2.8",
     "prettier": "^3.2.5",
     "semver": "^7.5.4"
   },
@@ -13,5 +14,6 @@
     "semi": false,
     "singleQuote": true,
     "printWidth": 100
-  }
+  },
+  "packageManager": "pnpm@9.6.0"
 }

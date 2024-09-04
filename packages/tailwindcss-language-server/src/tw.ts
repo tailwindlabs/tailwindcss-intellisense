@@ -36,7 +36,7 @@ import normalizePath from 'normalize-path'
 import * as path from 'path'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
-import resolveFrom from './util/resolveFrom'
+import { resolveFrom } from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
@@ -46,7 +46,7 @@ import { createProjectService, type ProjectService } from './projects'
 import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
-import type { TailwindCssSettings } from 'tailwindcss-language-service/src/util/state'
+import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 
 const TRIGGER_CHARACTERS = [
   // class attributes

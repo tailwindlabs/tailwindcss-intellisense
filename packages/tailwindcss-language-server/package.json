@@ -2,7 +2,7 @@
   "name": "@tailwindcss/language-server",
   "description": "Tailwind CSS Language Server",
   "license": "MIT",
-  "version": "0.0.21",
+  "version": "0.0.24",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tailwindlabs/tailwindcss-intellisense.git",
@@ -13,19 +13,22 @@
   },
   "homepage": "https://github.com/tailwindlabs/tailwindcss-intellisense/tree/HEAD/packages/tailwindcss-language-server#readme",
   "scripts": {
-    "build": "npm run clean && npm run _esbuild && npm run hashbang",
+    "build": "pnpm run clean && pnpm run _esbuild && pnpm run hashbang",
     "_esbuild": "node ../../esbuild.mjs src/server.ts --outfile=bin/tailwindcss-language-server --minify",
     "clean": "rimraf bin",
     "hashbang": "node scripts/hashbang.mjs",
     "create-notices-file": "node scripts/createNoticesFile.mjs",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest",
-    "test:prepare": "node tests/prepare.js"
+    "pretest": "node tests/prepare.js"
   },
   "bin": {
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
   },
-  "files": ["bin", "ThirdPartyNotices.txt"],
+  "files": [
+    "bin",
+    "ThirdPartyNotices.txt"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -34,9 +37,9 @@
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/container-queries": "0.1.0",
     "@tailwindcss/forms": "0.5.3",
-    "@tailwindcss/language-service": "*",
+    "@tailwindcss/language-service": "workspace:*",
     "@tailwindcss/line-clamp": "0.4.2",
-    "@tailwindcss/oxide": "^4.0.0-alpha.16",
+    "@tailwindcss/oxide": "^4.0.0-alpha.19",
     "@tailwindcss/typography": "0.5.7",
     "@types/color-name": "^1.1.3",
     "@types/culori": "^2.1.0",
@@ -52,15 +55,15 @@
     "@types/vscode": "1.65.0",
     "browserslist": "^4.23.0",
     "bun-types": "^1.1.1",
-    "chokidar": "3.5.1",
+    "chokidar": "3.6.0",
     "color-name": "1.1.4",
     "culori": "^4.0.1",
     "debounce": "1.2.0",
     "deepmerge": "4.2.2",
     "dlv": "1.1.3",
     "dset": "3.1.2",
-    "esbuild": "^0.20.2",
     "enhanced-resolve": "^5.16.1",
+    "esbuild": "^0.20.2",
     "fast-glob": "3.2.4",
     "find-up": "5.0.0",
     "klona": "2.0.4",
@@ -70,6 +73,7 @@
     "picomatch": "^4.0.1",
     "pkg-up": "3.1.0",
     "postcss": "8.4.31",
+    "postcss-import": "^16.1.0",
     "postcss-load-config": "3.0.1",
     "postcss-selector-parser": "6.0.2",
     "resolve": "1.20.0",
@@ -83,6 +87,7 @@
     "vscode-jsonrpc": "8.2.0",
     "vscode-languageclient": "8.1.0",
     "vscode-languageserver": "8.1.0",
+    "vscode-languageserver-protocol": "^3.17.5",
     "vscode-languageserver-textdocument": "1.0.11",
     "vscode-uri": "3.0.2"
   },

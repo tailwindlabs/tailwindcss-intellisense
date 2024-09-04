@@ -7,14 +7,16 @@ import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import type { Message } from 'postcss'
+import type { AtRule, Message } from 'postcss'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
-import resolveFrom from './util/resolveFrom'
+import { resolveFrom } from './util/resolveFrom'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
-import { resolveCssImports } from './resolve-css-imports'
+import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
+import postcss from 'postcss'
+import * as oxide from './oxide'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -130,15 +132,18 @@ export class ProjectLocator {
 
     console.log(JSON.stringify({ tailwind }))
 
-    // A JS/TS config file was loaded from an `@config`` directive in a CSS file
+    // A JS/TS config file was loaded from an `@config` directive in a CSS file
+    // This is only relevant for v3 projects so we'll do some feature detection
+    // to verify if this is supported in the current version of Tailwind.
     if (config.type === 'js' && config.source === 'css') {
       // We only allow local versions of Tailwind to use `@config` directives
       if (tailwind.isDefaultVersion) {
         return null
       }
 
-      // This version of Tailwind doesn't support `@config` directives
-      if (!tailwind.features.includes('css-at-config')) {
+      // This version of Tailwind doesn't support considering `@config` directives
+      // as a project on their own.
+      if (!tailwind.features.includes('css-at-config-as-project')) {
         return null
       }
     }
@@ -308,8 +313,12 @@ export class ProjectLocator {
       // If the CSS file couldn't be read for some reason, skip it
       if (!file.content) continue
 
+      // Look for `@import`, `@tailwind`, `@theme`, `@config`, etc…
+      if (!file.isMaybeTailwindRelated()) continue
+
       // Find `@config` directives in CSS files and resolve them to the actual
-      // config file that they point to.
+      // config file that they point to. This is only relevant for v3 which
+      // we'll verify after config resolution.
       let configPath = file.configPathInCss()
       if (configPath) {
         // We don't need the content for this file anymore
@@ -325,14 +334,9 @@ export class ProjectLocator {
             content: [],
           })),
         )
-        continue
       }
 
-      // Look for `@import` or `@tailwind` directives
-      if (file.isMaybeTailwindRelated()) {
-        imports.push(file)
-        continue
-      }
+      imports.push(file)
     }
 
     // Resolve imports in all the CSS files
@@ -340,6 +344,9 @@ export class ProjectLocator {
 
     // Resolve real paths for all the files in the CSS import graph
     await Promise.all(imports.map((file) => file.resolveRealpaths()))
+
+    // Resolve all @source directives
+    await Promise.all(imports.map((file) => file.resolveSourceDirectives()))
 
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
@@ -500,7 +507,13 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       }
     } else if (item.kind === 'auto' && !auto) {
       auto = true
-      for await (let pattern of detectContentFiles(entry.packageRoot)) {
+
+      // Note: the file representing `entry` is not guaranteed to be the first
+      // file so we use `flatMap`` here to simplify the logic but none of the
+      // other entries should have sources.
+      let sources = entry.entries.flatMap((entry) => entry.sources)
+
+      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, sources)) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -510,25 +523,37 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
   }
 }
 
-async function* detectContentFiles(base: string): AsyncIterable<string> {
+async function* detectContentFiles(
+  base: string,
+  inputFile: string,
+  sources: string[],
+): AsyncIterable<string> {
   try {
     let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
     oxidePath = pathToFileURL(oxidePath).href
+    let oxidePackageJsonPath = resolveFrom(path.dirname(base), '@tailwindcss/oxide/package.json')
+    let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
-    const oxide: typeof import('@tailwindcss/oxide') = await import(oxidePath)
+    let result = await oxide.scan({
+      oxidePath,
+      oxideVersion: oxidePackageJson.version,
+      basePath: base,
+      sources: sources.map((pattern) => ({
+        base: path.dirname(inputFile),
+        pattern,
+      })),
+    })
 
     // This isn't a v4 project
-    if (!oxide.scanDir) return
+    if (!result) return
 
-    let { files, globs } = oxide.scanDir({ base, globs: true })
-
-    for (let file of files) {
+    for (let file of result.files) {
       yield normalizePath(file)
     }
 
-    for (let { base, glob } of globs) {
+    for (let { base, pattern } of result.globs) {
       // Do not normalize the glob itself as it may contain escape sequences
-      yield normalizePath(base) + '/' + glob
+      yield normalizePath(base) + '/' + pattern
     }
   } catch {
     //
@@ -553,6 +578,7 @@ class FileEntry {
   content: string | null
   deps: FileEntry[] = []
   realpath: string | null
+  sources: string[] = []
 
   constructor(
     public type: 'js' | 'css',
@@ -579,7 +605,8 @@ class FileEntry {
       // Replace the file content with the processed CSS
       this.content = result.css
     } catch {
-      //
+      // TODO: Errors here should be surfaced in tests and possibly the user in
+      // `trace` logs or something like that
     }
   }
 
@@ -589,10 +616,31 @@ class FileEntry {
     await Promise.all(this.deps.map((entry) => entry.resolveRealpaths()))
   }
 
+  async resolveSourceDirectives() {
+    try {
+      if (this.sources.length > 0) {
+        return
+      }
+
+      // Note: This should eventually use the DesignSystem to extract the same
+      // sources also discovered by tailwind. Since we don't have everything yet
+      // to initialize the design system though, we set up a simple postcss at
+      // rule exporter instead for now.
+      await postcss([extractSourceDirectives(this.sources)]).process(this.content, {
+        from: this.realpath,
+      })
+    } catch (err) {
+      //
+    }
+  }
+
   /**
    * Look for `@config` directives in a CSS file and return the path to the config
    * file that it points to. This path is (possibly) relative to the CSS file so
    * it must be resolved to an absolute path before returning.
+   *
+   * This is only useful for v3 projects. While v4 can use `@config` directives
+   * the CSS file is still considered the "config" rather than the JS file.
    */
   configPathInCss(): string | null {
     if (!this.content) return null
@@ -606,21 +654,21 @@ class FileEntry {
   }
 
   /**
-   * Look for `@import` or `@tailwind` directives in a CSS file. This means that
+   * Look for tailwind-specific directives in a CSS file. This means that it
    * participates in the CSS "graph" for the project and we need to traverse
    * the graph to find all the CSS files that are considered entrypoints.
    */
   isMaybeTailwindRelated(): boolean {
     if (!this.content) return false
 
-    let HAS_IMPORT = /@import\s*(?<config>'[^']+'|"[^"]+");/
+    let HAS_IMPORT = /@import\s*('[^']+'|"[^"]+");/
     let HAS_TAILWIND = /@tailwind\s*[^;]+;/
-    let HAS_THEME = /@theme\s*\{/
+    let HAS_DIRECTIVE = /@(theme|plugin|config|utility|variant|apply)\s*[^;{]+[;{]/
 
     return (
       HAS_IMPORT.test(this.content) ||
       HAS_TAILWIND.test(this.content) ||
-      HAS_THEME.test(this.content)
+      HAS_DIRECTIVE.test(this.content)
     )
   }
 }

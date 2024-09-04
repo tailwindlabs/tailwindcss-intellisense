@@ -37,6 +37,7 @@ import {
   addPixelEquivalentsToValue,
 } from './util/pixelEquivalents'
 import { customClassesIn } from './util/classes'
+import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
 
 let isUtil = (className) =>
@@ -1396,106 +1397,167 @@ function provideCssDirectiveCompletions(
 
   if (match === null) return null
 
-  const items: CompletionItem[] = [
-    {
-      label: '@tailwind',
+  let items: CompletionItem[] = []
+
+  items.push({
+    label: '@tailwind',
+    documentation: {
+      kind: 'markdown' as typeof MarkupKind.Markdown,
+      value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
+        state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
+      }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        state.version,
+        'functions-and-directives/#tailwind',
+      )})`,
+    },
+  })
+
+  items.push({
+    label: '@screen',
+    documentation: {
+      kind: 'markdown' as typeof MarkupKind.Markdown,
+      value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        state.version,
+        'functions-and-directives/#screen',
+      )})`,
+    },
+  })
+
+  items.push({
+    label: '@apply',
+    documentation: {
+      kind: 'markdown' as typeof MarkupKind.Markdown,
+      value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        state.version,
+        'functions-and-directives/#apply',
+      )})`,
+    },
+  })
+
+  if (semver.gte(state.version, '1.8.0')) {
+    items.push({
+      label: '@layer',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
-          state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
-        }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#tailwind',
+          'functions-and-directives/#layer',
         )})`,
       },
-    },
-    {
-      label: '@screen',
+    })
+  }
+
+  if (semver.gte(state.version, '2.99.0')) {
+    //
+  } else {
+    items.push({
+      label: '@variants',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#screen',
+          'functions-and-directives/#variants',
         )})`,
       },
-    },
-    {
-      label: '@apply',
+    })
+    items.push({
+      label: '@responsive',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#apply',
+          'functions-and-directives/#responsive',
         )})`,
       },
-    },
-    ...(semver.gte(state.version, '1.8.0')
-      ? [
-          {
-            label: '@layer',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use the \`@layer\` directive to tell Tailwind which "bucket" a set of custom styles belong to. Valid layers are \`base\`, \`components\`, and \`utilities\`.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#layer',
-              )})`,
-            },
-          },
-        ]
-      : []),
-    ...(semver.gte(state.version, '2.99.0')
-      ? []
-      : [
-          {
-            label: '@variants',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `You can generate \`responsive\`, \`hover\`, \`focus\`, \`active\`, and other variants of your own utilities by wrapping their definitions in the \`@variants\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#variants',
-              )})`,
-            },
-          },
-          {
-            label: '@responsive',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `You can generate responsive variants of your own classes by wrapping their definitions in the \`@responsive\` directive.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#responsive',
-              )})`,
-            },
-          },
-        ]),
-    ...(semver.gte(state.version, '3.2.0')
-      ? [
-          {
-            label: '@config',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#config',
-              )})`,
-            },
-          },
-        ]
-      : []),
-    ...(semver.gte(state.version, '4.0.0')
-      ? [
-          {
-            label: '@theme',
-            documentation: {
-              kind: 'markdown' as typeof MarkupKind.Markdown,
-              value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
-                state.version,
-                'functions-and-directives/#config',
-              )})`,
-            },
-          },
-        ]
-      : []),
-  ]
+    })
+  }
+
+  if (semver.gte(state.version, '3.2.0')) {
+    items.push({
+      label: '@config',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@config\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#config',
+        )})`,
+      },
+    })
+  }
+
+  if (state.v4) {
+    items.push({
+      label: '@theme',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@theme\` directive to specify which config file Tailwind should use when compiling that CSS file.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#config',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@utility',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@utility\` directive to define a custom utility.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#utility',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@variant',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@variant\` directive to define a custom variant or override an existing one.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#variant',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@source',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@source\` directive to scan additional files for classes.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#source',
+        )})`,
+      },
+    })
+
+    items.push({
+      label: '@plugin',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@plugin\` directive to include a JS plugin in your Tailwind CSS build.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#source',
+        )})`,
+      },
+    })
+
+    // If we're inside an @variant directive, also add `@slot`
+    if (isInsideAtRule('variant', document, position)) {
+      items.push({
+        label: '@slot',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use the \`@slot\` directive to define where rules go in a custom variant.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#slot',
+          )})`,
+        },
+
+        // Make sure this appears as the first at-rule
+        sortText: '-0000000',
+      })
+    }
+  }
 
   return withDefaults(
     {
@@ -1522,7 +1584,23 @@ function provideCssDirectiveCompletions(
   )
 }
 
-async function provideConfigDirectiveCompletions(
+function isInsideAtRule(name: string, document: TextDocument, position: Position) {
+  // 1. Get all text up to the current position
+  let text = document.getText({
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+
+  // 2. Find the last instance of the at-rule
+  let block = text.lastIndexOf(`@${name}`)
+  if (block === -1) return false
+
+  // 4. Count the number of open and close braces following the rule to determine if we're inside it
+  return braceLevel(text.slice(block)) > 0
+}
+
+// Provide completions for directives that take file paths
+async function provideFileDirectiveCompletions(
   state: State,
   document: TextDocument,
   position: Position,
@@ -1535,27 +1613,39 @@ async function provideConfigDirectiveCompletions(
     return null
   }
 
+  let pattern = state.v4
+    ? /@(?<directive>config|plugin|source)\s*(?<partial>'[^']*|"[^"]*)$/
+    : /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
+
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
-  let match = text.match(/@config\s*(?<partial>'[^']*|"[^"]*)$/)
+  let match = text.match(pattern)
   if (!match) {
     return null
   }
+  let directive = match.groups.directive
   let partial = match.groups.partial.slice(1) // remove quote
   let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
   let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
 
+  let entries = await state.editor.readDirectory(document, valueBeforeLastSlash || '.')
+
+  let isAllowedFile = directive === 'source' ? IS_TEMPLATE_SOURCE : IS_SCRIPT_SOURCE
+
+  // Only show directories and JavaScript/TypeScript files
+  entries = entries.filter(([name, type]) => {
+    return type.isDirectory || isAllowedFile.test(name)
+  })
+
   return withDefaults(
     {
       isIncomplete: false,
-      items: (await state.editor.readDirectory(document, valueBeforeLastSlash || '.'))
-        .filter(([name, type]) => type.isDirectory || /\.c?js$/.test(name))
-        .map(([name, type]) => ({
-          label: type.isDirectory ? name + '/' : name,
-          kind: type.isDirectory ? 19 : 17,
-          command: type.isDirectory
-            ? { command: 'editor.action.triggerSuggest', title: '' }
-            : undefined,
-        })),
+      items: entries.map(([name, type]) => ({
+        label: type.isDirectory ? name + '/' : name,
+        kind: type.isDirectory ? 19 : 17,
+        command: type.isDirectory
+          ? { command: 'editor.action.triggerSuggest', title: '' }
+          : undefined,
+      })),
     },
     {
       data: {
@@ -1667,7 +1757,7 @@ export async function doComplete(
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
-    (await provideConfigDirectiveCompletions(state, document, position)) ||
+    (await provideFileDirectiveCompletions(state, document, position)) ||
     (await provideCustomClassNameCompletions(state, document, position, context)) ||
     provideThemeVariableCompletions(state, document, position, context)
 

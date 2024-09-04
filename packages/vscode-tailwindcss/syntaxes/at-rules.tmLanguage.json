@@ -142,6 +142,92 @@
       ]
     },
     {
+      "begin": "(?i)((@)plugin)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.plugin.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.tailwind"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.plugin.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.plugin.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.plugin.body.tailwind",
+          "patterns": [
+            {
+              "include": "#property-list"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)source)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.source.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.tailwind"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)config)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.config.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.tailwind"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)variants)(?=[\\s{]|/\\*|$)",
       "beginCaptures": {
         "1": {
@@ -177,6 +263,102 @@
             }
           },
           "name": "meta.at-rule.variants.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)utility)(?=[\\s{]|/\\*|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.utility.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=})(?!\\G)",
+      "patterns": [
+        {
+          "match": "[^\\s{,]+?",
+          "name": "variable.parameter.utility.tailwind"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.utility.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.utility.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.utility.body.tailwind",
+          "patterns": [
+            {
+              "include": "source.css#rule-list"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "begin": "(?i)((@)variant)(?=[\\s{(]|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.variant.tailwind"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": "(?<=[};])(?!\\G)",
+      "patterns": [
+        {
+          "match": "[^\\s({;,]+?",
+          "name": "variable.parameter.variant.tailwind"
+        },
+        {
+          "begin": "[(]",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.begin.bracket.paren.tailwind"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.end.bracket.paren.tailwind"
+            }
+          },
+          "name": "meta.selector.tailwind",
+          "patterns": [
+            {
+              "include": "source.css#selector-innards"
+            }
+          ]
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.variant.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.variant.body.tailwind",
           "patterns": [
             {
               "include": "source.css"
@@ -222,5 +404,48 @@
         }
       ]
     }
-  ]
+  ],
+  "repository": {
+    "property-list": {
+      "patterns": [
+        {
+          "begin": "(?<![-a-zA-Z])(?=[-a-zA-Z])",
+          "end": "$|(?![-a-zA-Z])",
+          "name": "meta.property-name.css",
+          "patterns": [
+            {
+              "include": "source.css#property-names"
+            }
+          ]
+        },
+        {
+          "begin": "(:)\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.separator.key-value.css"
+            }
+          },
+          "end": "\\s*(;)|\\s*(?=}|\\))",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.terminator.rule.css"
+            }
+          },
+          "contentName": "meta.property-value.css",
+          "patterns": [
+            {
+              "include": "source.css#comment-block"
+            },
+            {
+              "include": "source.css#property-values"
+            }
+          ]
+        },
+        {
+          "match": ";",
+          "name": "punctuation.terminator.rule.css"
+        }
+      ]
+    }
+  }
 }
