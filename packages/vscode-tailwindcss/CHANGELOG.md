@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yer!
+
+## 0.12.10
+
 - Improve support for new v4 at rules ([#1045](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1045))
 
 ## 0.12.9
