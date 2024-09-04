@@ -6,7 +6,7 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts}` in your workspace.
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
 
 ## Features
 
@@ -164,7 +164,7 @@ Enable the Node.js inspector agent for the language server and listen on the spe
 
 **Default: `null`**
 
-By default the extension will automatically use the first `tailwind.config.{js,cjs,mjs,ts}` file that it can find to provide Tailwind CSS IntelliSense. Use this setting to manually specify the config file(s) yourself instead.
+By default the extension will automatically use the first `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file that it can find to provide Tailwind CSS IntelliSense. Use this setting to manually specify the config file(s) yourself instead.
 
 If your project contains a single Tailwind config file you can specify a string value:
 
@@ -185,7 +185,7 @@ For projects with multiple config files use an object where each key is a config
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
-- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.{js,cjs,mjs,ts}`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation#create-your-configuration-file).
+- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.{js,cjs,mjs,ts,cts,mts}`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/installation#create-your-configuration-file).
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
 - Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
