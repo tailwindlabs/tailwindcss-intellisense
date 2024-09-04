@@ -477,6 +477,36 @@ withFixture('v4/basic', (c) => {
     expect(result.items.filter((item) => item.label.startsWith('--')).length).toBe(23)
   })
 
+  test.concurrent('@slot is suggeted inside @variant', async ({ expect }) => {
+    let result = await completion({
+      lang: 'css',
+      text: '@',
+      position: { line: 0, character: 1 },
+    })
+
+    // Make sure `@slot` is NOT suggested by default
+    expect(result.items.length).toBe(10)
+    expect(result.items).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),
+      ]),
+    )
+
+    result = await completion({
+      lang: 'css',
+      text: '@variant foo {\n@',
+      position: { line: 1, character: 1 },
+    })
+
+    // Make sure `@slot` is suggested
+    expect(result.items.length).toBe(11)
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),
+      ]),
+    )
+  })
+
   test.concurrent('resolve', async ({ expect }) => {
     let result = await completion({
       text: '<div class="">',

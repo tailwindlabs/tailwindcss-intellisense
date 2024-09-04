@@ -13,12 +13,24 @@ export function getDocumentLinks(
   document: TextDocument,
   resolveTarget: (linkPath: string) => string,
 ): DocumentLink[] {
-  return getConfigDirectiveLinks(state, document, resolveTarget)
+  let patterns = [
+    /@config\s*(?<path>'[^']+'|"[^"]+")/g,
+  ]
+
+  if (state.v4) {
+    patterns.push(
+      /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
+      /@source\s*(?<path>'[^']+'|"[^"]+")/g,
+    )
+  }
+
+  return getDirectiveLinks(state, document, patterns, resolveTarget)
 }
 
-function getConfigDirectiveLinks(
+function getDirectiveLinks(
   state: State,
   document: TextDocument,
+  patterns: RegExp[],
   resolveTarget: (linkPath: string) => string,
 ): DocumentLink[] {
   if (!semver.gte(state.version, '3.2.0')) {
@@ -38,7 +50,11 @@ function getConfigDirectiveLinks(
 
   for (let range of ranges) {
     let text = getTextWithoutComments(document, 'css', range)
-    let matches = findAll(/@config\s*(?<path>'[^']+'|"[^"]+")/g, text)
+    let matches: RegExpMatchArray[] = []
+
+    for (let pattern of patterns) {
+      matches.push(...findAll(pattern, text))
+    }
 
     for (let match of matches) {
       links.push({
