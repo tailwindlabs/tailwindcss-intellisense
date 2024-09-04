@@ -4,10 +4,6 @@
 
 - Nothing yet!
 
-## 0.12.6
-
-- Add support for .cts and .mts config files ([#1025](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1025))
-
 ## 0.12.5
 
 - Use paths relative to opened folder when searching for projects ([#1013](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1013))
