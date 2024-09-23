@@ -25,31 +25,31 @@ export async function isMaybeV4(css: string): Promise<boolean> {
  * Create a loader function that can load plugins and config files relative to
  * the CSS file that uses them. However, we don't want missing files to prevent
  * everything from working so we'll let the error handler decide how to proceed.
- *
- * @param {object} param0
- * @returns
  */
 function createLoader<T>({
   filepath,
   onError,
 }: {
   filepath: string
-  onError: (id: string, error: unknown) => T
+  onError: (id: string, error: unknown, resourceType: string) => T
 }) {
-  let baseDir = path.dirname(filepath)
   let cacheKey = `${+Date.now()}`
 
-  return async function loadFile(id: string) {
+  async function loadFile(id: string, base: string, resourceType: string) {
     try {
-      let resolved = resolveFrom(baseDir, id)
+      let resolved = resolveFrom(base, id)
+
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
 
       return await import(url.href).then((m) => m.default ?? m)
     } catch (err) {
-      return onError(id, err)
+      return onError(id, err, resourceType)
     }
   }
+
+  let baseDir = path.dirname(filepath)
+  return (id: string) => loadFile(id, baseDir, 'module')
 }
 
 export async function loadDesignSystem(
