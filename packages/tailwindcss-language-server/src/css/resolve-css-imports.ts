@@ -11,14 +11,15 @@ const resolver = createResolver({
 
 const resolveImports = postcss([
   postcssImport({
-    resolve(id, basedir) {
-      let paths = resolver.resolveSync({}, basedir, id)
-      return paths ? paths : id
-    },
+    resolve: (id, base) => resolveCssFrom(base, id),
   }),
   fixRelativePaths(),
 ])
 
 export function resolveCssImports() {
   return resolveImports
+}
+
+export function resolveCssFrom(base: string, id: string) {
+  return resolver.resolveSync({}, base, id) || id
 }
