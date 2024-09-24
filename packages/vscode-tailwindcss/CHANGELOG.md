@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Add support for `.cts` and `.mts` config files ([#1025](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1025))
+- Add support for Tailwind CSS v4.0.0-alpha.25 ([#1058](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1058))
 
 ## 0.12.10
 
