@@ -155,6 +155,11 @@ testFixture('v4/auto-content', [
 testFixture('v4/auto-content-split', [
   //
   {
+    // TODO: This should _probably_ not be present
+    config: 'node_modules/tailwindcss/index.css',
+    content: [],
+  },
+  {
     config: 'src/app.css',
     content: [
       '{URL}/package.json',
