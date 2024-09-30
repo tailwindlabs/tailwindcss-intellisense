@@ -152,6 +152,19 @@ testFixture('v4/auto-content', [
   },
 ])
 
+testFixture('v4/auto-content-split', [
+  //
+  {
+    config: 'src/app.css',
+    content: [
+      '{URL}/package.json',
+      '{URL}/src/index.html',
+      '{URL}/src/components/example.html',
+      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+    ],
+  },
+])
+
 testFixture('v4/custom-source', [
   //
   {
