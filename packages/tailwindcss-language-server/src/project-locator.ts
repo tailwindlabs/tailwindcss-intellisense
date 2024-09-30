@@ -661,7 +661,7 @@ class FileEntry {
   isMaybeTailwindRelated(): boolean {
     if (!this.content) return false
 
-    let HAS_IMPORT = /@import\s*('[^']+'|"[^"]+");/
+    let HAS_IMPORT = /@import\s*['"]/
     let HAS_TAILWIND = /@tailwind\s*[^;]+;/
     let HAS_DIRECTIVE = /@(theme|plugin|config|utility|variant|apply)\s*[^;{]+[;{]/
 
