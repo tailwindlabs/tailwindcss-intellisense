@@ -38,7 +38,7 @@ An alternative to VS Code's built-in CSS language mode which maintains full CSS 
 
 Use the `files.associations` setting to tell VS Code to always open `.css` files in Tailwind CSS mode:
 
-```
+```json
 "files.associations": {
   "*.css": "tailwindcss"
 }
@@ -48,7 +48,7 @@ Use the `files.associations` setting to tell VS Code to always open `.css` files
 
 By default VS Code will not trigger completions when editing "string" content, for example within JSX attribute values. Updating the `editor.quickSuggestions` setting may improve your experience:
 
-```
+```json
 "editor.quickSuggestions": {
   "strings": "on"
 }
@@ -168,13 +168,13 @@ By default the extension will automatically use the first `tailwind.config.{js,c
 
 If your project contains a single Tailwind config file you can specify a string value:
 
-```
+```json
 "tailwindCSS.experimental.configFile": ".config/tailwind.config.js"
 ```
 
 For projects with multiple config files use an object where each key is a config file path and each value is a glob pattern (or array of glob patterns) representing the set of files that the config file applies to:
 
-```
+```json
 "tailwindCSS.experimental.configFile": {
   "themes/simple/tailwind.config.js": "themes/simple/**",
   "themes/neon/tailwind.config.js": "themes/neon/**"
