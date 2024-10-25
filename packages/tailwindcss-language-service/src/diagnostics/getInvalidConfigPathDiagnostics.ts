@@ -8,6 +8,10 @@ import { combinations } from '../util/combinations'
 import dlv from 'dlv'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
+type ValidationResult =
+  | { isValid: true; value: any }
+  | { isValid: false; reason: string; suggestions: string[] }
+
 function pathToString(path: string | string[]): string {
   if (typeof path === 'string') return path
   return path.reduce((acc, cur, i) => {
@@ -21,7 +25,7 @@ export function validateConfigPath(
   state: State,
   path: string | string[],
   base: string[] = [],
-): { isValid: true; value: any } | { isValid: false; reason: string; suggestions: string[] } {
+): ValidationResult {
   let keys = Array.isArray(path) ? path : stringToPath(path)
   let fullPath = [...base, ...keys]
   let value = dlv(state.config, fullPath)
