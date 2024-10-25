@@ -7,6 +7,7 @@ import { closest, distance } from '../util/closest'
 import { combinations } from '../util/combinations'
 import dlv from 'dlv'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import type { DesignSystem } from '../util/v4'
 
 type ValidationResult =
   | { isValid: true; value: any }
@@ -205,7 +206,9 @@ export function getInvalidConfigPathDiagnostics(
   return diagnostics
 }
 
-function validateV4ThemePath(state: State, path: string): ValidationResult {
+function resolveThemeValue(design: DesignSystem, path: string) {
+  let candidate = `[--custom:theme(${path})]`
+
   // Compile a dummy candidate that uses the theme function with the given path.
   //
   // We'll get a rule with a declaration from which we read the value. No rule
@@ -213,7 +216,7 @@ function validateV4ThemePath(state: State, path: string): ValidationResult {
   //
   // Non-CSS representable values are not a concern here because the validation
   // only happens for calls in a CSS context.
-  let [root] = state.designSystem.compile([`[--custom:theme(${path})]`])
+  let [root] = design.compile([candidate])
 
   let value: string | null = null
 
@@ -221,7 +224,21 @@ function validateV4ThemePath(state: State, path: string): ValidationResult {
     value = decl.value
   })
 
-  if (value !== null) {
+  return value
+}
+
+function resolveKnownThemeKeys(design: DesignSystem): string[] {
+  let validThemeKeys = Array.from(design.theme.entries(), ([key]) => key)
+
+  return validThemeKeys
+}
+
+function validateV4ThemePath(state: State, path: string): ValidationResult {
+  let prefix = state.designSystem.theme.prefix ?? null
+
+  let value = resolveThemeValue(state.designSystem, path)
+
+  if (value !== null && value !== undefined) {
     return { isValid: true, value }
   }
 
@@ -251,14 +268,10 @@ function suggestAlternativeThemeKeys(state: State, path: string): string[] {
   // exposed in any v4 API
   if (!path.startsWith('--')) return []
 
-  // This is an older version of v4 and it does not have an `entries()` method
-  // TODO: Check this against old versions — might be unncessary
-  if (!('entries' in state.designSystem.theme)) return []
-
   let parts = path.slice(2).split('-')
   parts[0] = `--${parts[0]}`
 
-  let validThemeKeys = Array.from(state.designSystem.theme.entries(), ([key]) => key)
+  let validThemeKeys = resolveKnownThemeKeys(state.designSystem)
   let potentialThemeKey: string | null = null
 
   while (parts.length > 1) {
