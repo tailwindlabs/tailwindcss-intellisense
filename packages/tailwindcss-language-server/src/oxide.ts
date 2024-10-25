@@ -131,9 +131,21 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   }
 
   // V3
+  if (lte(options.oxideVersion, '4.0.0-alpha.30')) {
+    let scanner = new oxide.Scanner({
+      detectSources: { base: options.basePath },
+      sources: options.sources,
+    })
+
+    return {
+      files: scanner.files,
+      globs: scanner.globs,
+    }
+  }
+
+  // V4
   let scanner = new oxide.Scanner({
-    detectSources: { base: options.basePath },
-    sources: options.sources,
+    sources: [{ base: options.basePath, pattern: '**/*' }, ...options.sources],
   })
 
   return {
