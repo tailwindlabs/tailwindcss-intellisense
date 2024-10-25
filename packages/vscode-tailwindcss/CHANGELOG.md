@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Fix display of color swatches using new v4 oklch color palette ([#1073](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1073))
+- Show colors for logical border properties ([#1075](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1075))
 
 ## 0.12.11
 
