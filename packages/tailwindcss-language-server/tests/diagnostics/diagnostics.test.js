@@ -59,6 +59,23 @@ withFixture('v4/basic', (c) => {
     })
   }
 
+  function testInline(fixture, { code, expected, language = 'html' }) {
+    test(fixture, async () => {
+      let promise = new Promise((resolve) => {
+        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
+          resolve(diagnostics)
+        })
+      })
+
+      let doc = await c.openDocument({ text: code, lang: language })
+      let diagnostics = await promise
+
+      expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
+
+      expect(diagnostics).toEqual(expected)
+    })
+  }
+
   testFixture('css-conflict/simple')
   testFixture('css-conflict/variants-negative')
   testFixture('css-conflict/variants-positive')
@@ -69,5 +86,72 @@ withFixture('v4/basic', (c) => {
   // testFixture('css-conflict/css-multi-rule')
   // testFixture('css-conflict/css-multi-prop')
   // testFixture('invalid-screen/simple')
-  // testFixture('invalid-theme/simple')
+
+  testInline('simple typos in theme keys (in key)', {
+    code: '.test { color: theme(--color-red-901) }',
+    language: 'css',
+    expected: [
+      {
+        code: 'invalidConfigPath',
+        range: { start: { line: 0, character: 21 }, end: { line: 0, character: 36 } },
+        severity: 1,
+        message: "'--color-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
+        suggestions: ['--color-red-900'],
+      },
+    ],
+  })
+
+  testInline('simple typos in theme keys (in namespace)', {
+    code: '.test { color: theme(--colors-red-901) }',
+    language: 'css',
+    expected: [
+      {
+        code: 'invalidConfigPath',
+        range: { start: { line: 0, character: 21 }, end: { line: 0, character: 37 } },
+        severity: 1,
+        message: "'--colors-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
+        suggestions: ['--color-red-900'],
+      },
+    ],
+  })
+
+  testInline('No similar theme key exists', {
+    code: '.test { color: theme(--font-obliqueness-90) }',
+    language: 'css',
+    expected: [
+      {
+        code: 'invalidConfigPath',
+        range: { start: { line: 0, character: 21 }, end: { line: 0, character: 42 } },
+        severity: 1,
+        message: "'--font-obliqueness-90' does not exist in your theme.",
+        suggestions: [],
+      },
+    ],
+  })
+
+  testInline('valid theme keys dont issue diagnostics', {
+    code: '.test { color: theme(--color-red-900) }',
+    language: 'css',
+    expected: [],
+  })
+
+  testInline('types in legacy theme config paths', {
+    code: '.test { color: theme(colors.red.901) }',
+    language: 'css',
+    expected: [
+      {
+        code: 'invalidConfigPath',
+        range: { start: { line: 0, character: 21 }, end: { line: 0, character: 35 } },
+        severity: 1,
+        message: "'colors.red.901' does not exist in your theme config.",
+        suggestions: [],
+      },
+    ],
+  })
+
+  testInline('valid legacy theme config paths', {
+    code: '.test { color: theme(colors.red.900) }',
+    language: 'css',
+    expected: [],
+  })
 })

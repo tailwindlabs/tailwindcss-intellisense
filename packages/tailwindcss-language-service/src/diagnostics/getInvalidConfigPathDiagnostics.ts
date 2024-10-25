@@ -3,7 +3,7 @@ import { type InvalidConfigPathDiagnostic, DiagnosticKind } from './types'
 import { findHelperFunctionsInDocument } from '../util/find'
 import { stringToPath } from '../util/stringToPath'
 import isObject from '../util/isObject'
-import { closest } from '../util/closest'
+import { closest, distance } from '../util/closest'
 import { combinations } from '../util/combinations'
 import dlv from 'dlv'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -27,6 +27,11 @@ export function validateConfigPath(
   base: string[] = [],
 ): ValidationResult {
   let keys = Array.isArray(path) ? path : stringToPath(path)
+
+  if (state.v4) {
+    return validateV4ThemePath(state, pathToString(keys))
+  }
+
   let fullPath = [...base, ...keys]
   let value = dlv(state.config, fullPath)
   let suggestions: string[] = []
@@ -198,4 +203,96 @@ export function getInvalidConfigPathDiagnostics(
   })
 
   return diagnostics
+}
+
+function validateV4ThemePath(state: State, path: string): ValidationResult {
+  // Compile a dummy candidate that uses the theme function with the given path.
+  //
+  // We'll get a rule with a declaration from which we read the value. No rule
+  // will be generated and the root will be empty if the path is invalid.
+  //
+  // Non-CSS representable values are not a concern here because the validation
+  // only happens for calls in a CSS context.
+  let [root] = state.designSystem.compile([`[--custom:theme(${path})]`])
+
+  let value: string | null = null
+
+  root.walkDecls((decl) => {
+    value = decl.value
+  })
+
+  if (value !== null) {
+    return { isValid: true, value }
+  }
+
+  let reason = path.startsWith('--')
+    ? `'${path}' does not exist in your theme.`
+    : `'${path}' does not exist in your theme config.`
+
+  let suggestions = suggestAlternativeThemeKeys(state, path)
+
+  if (suggestions.length > 0) {
+    reason += ` Did you mean '${suggestions[0]}'?`
+  }
+
+  return {
+    isValid: false,
+    reason,
+    suggestions,
+  }
+}
+
+function suggestAlternativeThemeKeys(state: State, path: string): string[] {
+  // Non-v4 projects don't contain CSS variable theme keys
+  if (!state.v4) return []
+
+  // v4 only supports suggesting keys currently known by the theme
+  // it does not support suggesting keys from the config as that is not
+  // exposed in any v4 API
+  if (!path.startsWith('--')) return []
+
+  // This is an older version of v4 and it does not have an `entries()` method
+  // TODO: Check this against old versions — might be unncessary
+  if (!('entries' in state.designSystem.theme)) return []
+
+  let parts = path.slice(2).split('-')
+  parts[0] = `--${parts[0]}`
+
+  let validThemeKeys = Array.from(state.designSystem.theme.entries(), ([key]) => key)
+  let potentialThemeKey: string | null = null
+
+  while (parts.length > 1) {
+    // Slice off the end of the theme key at the `-`
+    parts.pop()
+
+    // Look at all theme keys that start with that
+    let prefix = parts.join('-')
+
+    let possibleKeys = validThemeKeys.filter((key) => key.startsWith(prefix))
+
+    // If there are none, slice again and repeat
+    if (possibleKeys.length === 0) continue
+
+    // Find the closest match using the Fast String Distance (SIFT) algorithm
+    // ensuring `--color-red-901` suggests `--color-red-900` instead of
+    // `--color-red-950`. We could in theory use the algorithm directly but it
+    // does not make sense to suggest keys from an unrelated namespace which is
+    // why we do filtering beforehand.
+    potentialThemeKey = closest(path, possibleKeys)!
+
+    break
+  }
+
+  // If we haven't found a key based on prefix matching, we'll do one more
+  // search based on the full list of available keys. This is useful if the
+  // namespace itself has a typo.
+  potentialThemeKey ??= closest(path, validThemeKeys)!
+
+  // This number was chosen arbitrarily. From some light testing it seems like
+  // it's a decent threshold for determine if a key is a reasonable suggestion.
+  // This wasn't chosen by rigorous testing so if it needs to be adjusted it can
+  // be. Chances are it'll need to be increased instead of decreased.
+  const MAX_DISTANCE = 5
+
+  return distance(path, potentialThemeKey) <= MAX_DISTANCE ? [potentialThemeKey] : []
 }

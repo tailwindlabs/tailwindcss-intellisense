@@ -2,7 +2,9 @@ import postcss from 'postcss'
 import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
-export interface Theme {}
+export interface Theme {
+  entries(): [string, any][]
+}
 
 export interface ClassMetadata {
   modifiers: string[]
