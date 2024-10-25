@@ -190,7 +190,8 @@ withFixture('v4/basic', (c) => {
   testHover('hover', {
     text: '<div class="bg-red-500">',
     position: { line: 0, character: 13 },
-    expected: '.bg-red-500 {\n  background-color: var(--color-red-500, #ef4444);\n}',
+    expected:
+      '.bg-red-500 {\n  background-color: var(--color-red-500, oklch(0.637 0.237 25.331));\n}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 22 },

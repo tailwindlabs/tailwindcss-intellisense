@@ -1,4 +1,4 @@
-import { test } from 'vitest'
+import { test, expect } from 'vitest'
 import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
@@ -169,9 +169,9 @@ withFixture('v4/basic', (c) => {
       {
         range: { start: { line: 0, character: 12 }, end: { line: 0, character: 22 } },
         color: {
-          red: 0.9372549019607843,
-          green: 0.26666666666666666,
-          blue: 0.26666666666666666,
+          red: expect.closeTo(0.98, 0.01),
+          green: expect.closeTo(0.172, 0.01),
+          blue: expect.closeTo(0.21, 0.01),
           alpha: 1,
         },
       },
@@ -184,9 +184,9 @@ withFixture('v4/basic', (c) => {
       {
         range: { start: { line: 0, character: 12 }, end: { line: 0, character: 25 } },
         color: {
-          red: 0.9372549019607843,
-          green: 0.26666666666666666,
-          blue: 0.26666666666666666,
+          red: expect.closeTo(0.98, 0.01),
+          green: expect.closeTo(0.172, 0.01),
+          blue: expect.closeTo(0.21, 0.01),
           alpha: 0.2,
         },
       },

@@ -310,8 +310,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12398)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(224)
+    expect(result.items.length).toBe(12492)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(270)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
@@ -553,11 +553,11 @@ withFixture('v4/basic', (c) => {
     expect(resolved).toEqual({
       ...item,
       detail:
-        'font-size: var(--font-size-sm, 0.875rem /* 8.75px */); line-height: var(--font-size-sm--line-height, 1.25rem /* 12.5px */);',
+        'font-size: var(--font-size-sm, 0.875rem /* 8.75px */); line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));',
       documentation: {
         kind: 'markdown',
         value:
-          '```css\n.text-sm {\n  font-size: var(--font-size-sm, 0.875rem /* 8.75px */);\n  line-height: var(--font-size-sm--line-height, 1.25rem /* 12.5px */);\n}\n```',
+          '```css\n.text-sm {\n  font-size: var(--font-size-sm, 0.875rem /* 8.75px */);\n  line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));\n}\n```',
       },
     })
   })
@@ -579,8 +579,8 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: var(--color-red-500, #ef4444);',
-      documentation: '#ef4444',
+      detail: 'background-color: var(--color-red-500, oklch(0.637 0.237 25.331));',
+      documentation: '#fb2c36',
     })
   })
 })
