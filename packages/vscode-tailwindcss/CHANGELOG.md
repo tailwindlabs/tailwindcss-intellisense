@@ -4,6 +4,7 @@
 
 - Fix display of color swatches using new v4 oklch color palette ([#1073](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1073))
 - Properly validate `theme(…)` function paths in v4 ([#1074](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1074))
+- Show all potential class conflicts in v4 projects ([#1077](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1077))
 
 ## 0.12.11
 

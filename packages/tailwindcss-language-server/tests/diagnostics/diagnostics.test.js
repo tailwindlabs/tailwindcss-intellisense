@@ -254,3 +254,64 @@ withFixture('v4/with-prefix', (c) => {
     expected: [],
   })
 })
+
+withFixture('v4/basic', (c) => {
+  function testMatch(name, { code, expected, language = 'html' }) {
+    test.only(name, async () => {
+      let promise = new Promise((resolve) => {
+        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
+          resolve(diagnostics)
+        })
+      })
+
+      let doc = await c.openDocument({ text: code, lang: language })
+      let diagnostics = await promise
+
+      expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
+
+      expect(diagnostics).toMatchObject(expected)
+    })
+  }
+
+  testMatch('conflicts show even when unknown classes are present', {
+    code: `<div class="foo max-w-4xl max-w-6xl hover:underline">testing</div>`,
+    expected: [
+      {
+        code: 'cssConflict',
+        message: "'max-w-4xl' applies the same CSS properties as 'max-w-6xl'.",
+        className: {
+          className: 'max-w-4xl',
+          classList: {
+            classList: 'foo max-w-4xl max-w-6xl hover:underline',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'max-w-6xl',
+            classList: {
+              classList: 'foo max-w-4xl max-w-6xl hover:underline',
+            },
+          },
+        ],
+      },
+      {
+        code: 'cssConflict',
+        message: "'max-w-6xl' applies the same CSS properties as 'max-w-4xl'.",
+        className: {
+          className: 'max-w-6xl',
+          classList: {
+            classList: 'foo max-w-4xl max-w-6xl hover:underline',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'max-w-4xl',
+            classList: {
+              classList: 'foo max-w-4xl max-w-6xl hover:underline',
+            },
+          },
+        ],
+      },
+    ],
+  })
+})
