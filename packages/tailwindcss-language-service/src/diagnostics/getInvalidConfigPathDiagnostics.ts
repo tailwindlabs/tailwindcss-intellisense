@@ -207,7 +207,8 @@ export function getInvalidConfigPathDiagnostics(
 }
 
 function resolveThemeValue(design: DesignSystem, path: string) {
-  let candidate = `[--custom:theme(${path})]`
+  let prefix = design.theme.prefix ?? null
+  let candidate = prefix ? `${prefix}:[--custom:theme(${path})]` : `[--custom:theme(${path})]`
 
   // Compile a dummy candidate that uses the theme function with the given path.
   //
@@ -230,7 +231,12 @@ function resolveThemeValue(design: DesignSystem, path: string) {
 function resolveKnownThemeKeys(design: DesignSystem): string[] {
   let validThemeKeys = Array.from(design.theme.entries(), ([key]) => key)
 
-  return validThemeKeys
+  let prefixLength = design.theme.prefix?.length ?? 0
+
+  return prefixLength > 0
+    ? // Strip the configured prefix from the list of valid theme keys
+      validThemeKeys.map((key) => `--${key.slice(prefixLength + 3)}`)
+    : validThemeKeys
 }
 
 function validateV4ThemePath(state: State, path: string): ValidationResult {

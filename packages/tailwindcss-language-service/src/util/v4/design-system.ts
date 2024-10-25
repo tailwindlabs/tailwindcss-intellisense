@@ -3,6 +3,8 @@ import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
 export interface Theme {
+  // Prefix didn't exist on
+  prefix?: string
   entries(): [string, any][]
 }
 
