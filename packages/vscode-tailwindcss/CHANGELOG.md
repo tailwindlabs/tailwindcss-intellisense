@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Support loading TypeScript configs and plugins in v4 projects ([#1076](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1076))
 
 ## 0.12.11
 

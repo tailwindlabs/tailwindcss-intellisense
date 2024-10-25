@@ -1,11 +1,13 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
+import { createJiti } from 'jiti'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { resolveCssFrom, resolveCssImports } from '../../css'
 import { resolveFrom } from '../resolveFrom'
 import { pathToFileURL } from 'tailwindcss-language-server/src/utils'
+import type { Jiti } from 'jiti/lib/types'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -20,6 +22,20 @@ export async function isMaybeV4(css: string): Promise<boolean> {
   // - @theme { … }
 
   return HAS_V4_THEME.test(css) || HAS_V4_IMPORT.test(css)
+}
+
+let jiti: Jiti | undefined
+
+async function importFile(id: string) {
+  try {
+    // Load ESM/CJS files through Node/Bun/whatever runtime is being used
+    return await import(id)
+  } catch {
+    jiti ??= createJiti(__filename, { moduleCache: false, fsCache: false })
+
+    // Transpile using Jiti if we can't load the file directly
+    return await jiti.import(id)
+  }
 }
 
 /**
@@ -45,7 +61,7 @@ function createLoader<T>({
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
 
-      return await import(url.href).then((m) => m.default ?? m)
+      return await importFile(url.href).then((m) => m.default ?? m)
     } catch (err) {
       return onError(id, err, resourceType)
     }
