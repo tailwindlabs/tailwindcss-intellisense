@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Add support for Tailwind CSS v4.0.0-alpha.31 ([#1078](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1078))
 
 ## 0.12.11
 
