@@ -45,6 +45,27 @@ let isUtil = (className) =>
     ? className.__info.some((x) => x.__source === 'utilities')
     : className.__info.__source === 'utilities'
 
+const PX_PATTERN = /-((\d+)px)$/
+
+function literalToScaledSuggestion(partialClassName: string, state: State): string | null {
+  // Look for a literal pixel value at the end of the class name
+  let match = partialClassName.match(PX_PATTERN)
+  if (!match) return null
+
+  let literal = match[1]
+  let scaledValue = parseInt(match[2]) / 4
+
+  // Look for an existing utility matching the scaled value
+  let scaledClassName = partialClassName.replace(PX_PATTERN, `-${scaledValue}`)
+  let exists = state.classList.findIndex(([className]) => className === scaledClassName)
+
+  // If that class doesn't exist use an arbitrary value
+  if (exists === -1) return partialClassName.replace(PX_PATTERN, `-[${literal}]`)
+
+  // Otherwise use the existing utility
+  return scaledClassName
+}
+
 export function completionsFromClassList(
   state: State,
   classList: string,
@@ -128,6 +149,17 @@ export function completionsFromClassList(
     }
 
     let items: CompletionItem[] = []
+
+    let literalToScaled = literalToScaledSuggestion(partialClassName, state)
+    if (literalToScaled) {
+      items.push({
+        kind: CompletionItemKind.Constant,
+        label: literalToScaled,
+        sortText: '-000000000000',
+        filterText: partialClassName,
+      })
+    }
+
     let seenVariants = new Set<string>()
 
     let variantOrder = 0
