@@ -1626,6 +1626,9 @@ async function provideFileDirectiveCompletions(
 
     if (suggest === 'source') return IS_TEMPLATE_SOURCE.test(name)
 
+    // Files are not allowed but directories are
+    if (suggest === 'directory') return false
+
     return false
   }
 
@@ -1638,16 +1641,16 @@ async function provideFileDirectiveCompletions(
     return type.isDirectory || isAllowedFile(name)
   })
 
+  let items: CompletionItem[] = entries.map(([name, type]) => ({
+    label: type.isDirectory ? name + '/' : name,
+    kind: type.isDirectory ? 19 : 17,
+    command: type.isDirectory ? { command: 'editor.action.triggerSuggest', title: '' } : undefined,
+  }))
+
   return withDefaults(
     {
       isIncomplete: false,
-      items: entries.map(([name, type]) => ({
-        label: type.isDirectory ? name + '/' : name,
-        kind: type.isDirectory ? 19 : 17,
-        command: type.isDirectory
-          ? { command: 'editor.action.triggerSuggest', title: '' }
-          : undefined,
-      })),
+      items,
     },
     {
       data: {
