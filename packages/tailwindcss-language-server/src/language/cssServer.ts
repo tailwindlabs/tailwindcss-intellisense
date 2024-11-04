@@ -346,6 +346,12 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@media(\s+screen\s*\([^)]+\))/g,
         (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
       )
+      // Replace `@import "…" source()` with `@import "…"` otherwise we'll
+      // get warnings about expecting a semi-colon instead of the source function
+      .replace(
+        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*source\([^)]+\)/g,
+        (_match, url) => `@import "${url.slice(1, -1)}"`,
+      )
       .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
   return TextDocument.create(
