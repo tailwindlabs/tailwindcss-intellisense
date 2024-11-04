@@ -3,7 +3,7 @@ let scriptExtensions = [
   'js',
   'cjs',
   'mjs',
-  'ts',
+  '(?<!d.)ts', // matches .ts but not .d.ts
   'mts',
   'cts',
 ]
