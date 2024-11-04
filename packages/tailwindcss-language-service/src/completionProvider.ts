@@ -1626,6 +1626,9 @@ async function provideFileDirectiveCompletions(
 
     if (suggest === 'source') return IS_TEMPLATE_SOURCE.test(name)
 
+    // Files are not allowed but directories are
+    if (suggest === 'directory') return false
+
     return false
   }
 
@@ -1638,16 +1641,40 @@ async function provideFileDirectiveCompletions(
     return type.isDirectory || isAllowedFile(name)
   })
 
-  return withDefaults(
+  let items: CompletionItem[] = entries.map(([name, type]) => ({
+    label: type.isDirectory ? name + '/' : name,
+    kind: type.isDirectory ? 19 : 17,
+    command: type.isDirectory
+      ? { command: 'editor.action.triggerSuggest', title: '' }
+      : undefined,
+  }))
+
+  let sourceStart = suggest === 'directory'
+    ? text.lastIndexOf('source(') + 7
+    : -1
+
+  if (sourceStart !== -1) {
+    items.push({
+      filterText: '/',
+      label: '(none)',
+      kind: 15, // Snippet
+      textEdit: {
+        range: {
+          start: {
+            line: position.line,
+            character: sourceStart,
+          },
+          end: position,
+        },
+        newText: 'none',
+      },
+    })
+  }
+
+  let wip = withDefaults(
     {
       isIncomplete: false,
-      items: entries.map(([name, type]) => ({
-        label: type.isDirectory ? name + '/' : name,
-        kind: type.isDirectory ? 19 : 17,
-        command: type.isDirectory
-          ? { command: 'editor.action.triggerSuggest', title: '' }
-          : undefined,
-      })),
+      items,
     },
     {
       data: {
@@ -1664,6 +1691,10 @@ async function provideFileDirectiveCompletions(
     },
     state.editor.capabilities.itemDefaults,
   )
+
+  console.log(JSON.stringify(wip))
+
+  return wip
 }
 
 async function provideEmmetCompletions(
