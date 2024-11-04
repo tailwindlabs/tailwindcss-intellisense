@@ -39,6 +39,7 @@ import {
 import { customClassesIn } from './util/classes'
 import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
+import { findFileDirective } from './completions/file-paths'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -1613,27 +1614,28 @@ async function provideFileDirectiveCompletions(
     return null
   }
 
-  let pattern = state.v4
-    ? /@(?<directive>config|plugin|source)\s*(?<partial>'[^']*|"[^"]*)$/
-    : /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
-
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
-  let match = text.match(pattern)
-  if (!match) {
-    return null
+
+  let fd = await findFileDirective(state, text)
+  if (!fd) return null
+
+  let { partial, suggest } = fd
+
+  function isAllowedFile(name: string) {
+    if (suggest === 'script') return IS_SCRIPT_SOURCE.test(name)
+
+    if (suggest === 'source') return IS_TEMPLATE_SOURCE.test(name)
+
+    return false
   }
-  let directive = match.groups.directive
-  let partial = match.groups.partial.slice(1) // remove quote
+
   let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
   let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
 
   let entries = await state.editor.readDirectory(document, valueBeforeLastSlash || '.')
 
-  let isAllowedFile = directive === 'source' ? IS_TEMPLATE_SOURCE : IS_SCRIPT_SOURCE
-
-  // Only show directories and JavaScript/TypeScript files
   entries = entries.filter(([name, type]) => {
-    return type.isDirectory || isAllowedFile.test(name)
+    return type.isDirectory || isAllowedFile(name)
   })
 
   return withDefaults(

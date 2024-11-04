@@ -3,7 +3,7 @@ import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
 
 export interface Theme {
-  // Prefix didn't exist on
+  // Prefix didn't exist for earlier Tailwind versions
   prefix?: string
   entries(): [string, any][]
 }

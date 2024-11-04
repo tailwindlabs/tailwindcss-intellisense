@@ -37,51 +37,23 @@ export function getInvalidTailwindDirectiveDiagnostics(
     regex = /(?:\s|^)@tailwind\s+(?<value>[^;]+)/g
   }
 
-  let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
-
   ranges.forEach((range) => {
     let text = getTextWithoutComments(document, 'css', range)
     let matches = findAll(regex, text)
 
-    let valid = [
-      'utilities',
-      'components',
-      'screens',
-      semver.gte(state.version, '1.0.0-beta.1') ? 'base' : 'preflight',
-      hasVariantsDirective && 'variants',
-    ].filter(Boolean)
-
-    let suggestable = valid
-
-    if (hasVariantsDirective) {
-      // Don't suggest `screens`, because it's deprecated
-      suggestable = suggestable.filter((value) => value !== 'screens')
-    }
-
     matches.forEach((match) => {
-      if (valid.includes(match.groups.value)) {
-        return null
-      }
+      let layerName = match.groups.value
 
-      let message = `'${match.groups.value}' is not a valid value.`
-      let suggestions: string[] = []
+      let result = validateLayerName(state, layerName)
+      if (!result) return
 
-      if (match.groups.value === 'preflight') {
-        suggestions.push('base')
-        message += ` Did you mean 'base'?`
-      } else {
-        let suggestion = closest(match.groups.value, suggestable)
-        if (suggestion) {
-          suggestions.push(suggestion)
-          message += ` Did you mean '${suggestion}'?`
-        }
-      }
+      let { message, suggestions } = result
 
       diagnostics.push({
         code: DiagnosticKind.InvalidTailwindDirective,
         range: absoluteRange(
           {
-            start: indexToPosition(text, match.index + match[0].length - match.groups.value.length),
+            start: indexToPosition(text, match.index + match[0].length - layerName.length),
             end: indexToPosition(text, match.index + match[0].length),
           },
           range,
@@ -97,4 +69,53 @@ export function getInvalidTailwindDirectiveDiagnostics(
   })
 
   return diagnostics
+}
+
+function validateLayerName(
+  state: State,
+  layerName: string,
+): { message: string; suggestions: string[] } | null {
+  let valid = ['utilities', 'components', 'screens']
+
+  if (semver.gte(state.version, '1.0.0-beta.1')) {
+    valid.push('base')
+  } else {
+    valid.push('preflight')
+  }
+
+  let hasVariantsDirective = state.jit && semver.gte(state.version, '2.1.99')
+
+  if (hasVariantsDirective) {
+    valid.push('variants')
+  }
+
+  if (valid.includes(layerName)) {
+    return null
+  }
+
+  let suggestable = valid
+
+  if (hasVariantsDirective) {
+    // Don't suggest `screens`, because it's deprecated
+    suggestable = suggestable.filter((value) => value !== 'screens')
+  }
+
+  let message = `'${layerName}' is not a valid value.`
+  let suggestions: string[] = []
+
+  if (layerName === 'preflight') {
+    suggestions.push('base')
+    message += ` Did you mean 'base'?`
+  } else {
+    let suggestion = closest(layerName, suggestable)
+    if (suggestion) {
+      suggestions.push(suggestion)
+      message += ` Did you mean '${suggestion}'?`
+    }
+  }
+
+  return {
+    message,
+    suggestions,
+  }
 }
