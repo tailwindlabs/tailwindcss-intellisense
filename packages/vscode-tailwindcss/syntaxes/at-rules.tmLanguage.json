@@ -29,6 +29,9 @@
           "include": "source.css#escapes"
         },
         {
+          "include": "#source-fn"
+        },
+        {
           "match": "[^\\s;]+?",
           "name": "variable.parameter.tailwind.tailwind"
         }
@@ -444,6 +447,25 @@
         {
           "match": ";",
           "name": "punctuation.terminator.rule.css"
+        }
+      ]
+    },
+    "source-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(source)[(](?=.*?[)])",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.keyword.css"
+            }
+          },
+          "name": "variable.parameter.tailwind.source",
+          "end": "(?<=[)])(?!\\G)",
+          "patterns": [
+            {
+              "include": "source.css#string"
+            }
+          ]
         }
       ]
     }
