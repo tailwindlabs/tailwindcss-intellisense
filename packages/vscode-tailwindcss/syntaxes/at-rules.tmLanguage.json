@@ -5,6 +5,47 @@
   "name": "TailwindCSS",
   "patterns": [
     {
+      "begin": "(?i)((@)import)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.import.css"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "name": "meta.at-rule.import.css",
+      "patterns": [
+        {
+          "begin": "\\G\\s*(?=/\\*)",
+          "end": "(?<=\\*/)\\s*",
+          "patterns": [
+            {
+              "include": "source.css#comment-block"
+            }
+          ]
+        },
+        {
+          "include": "source.css#string"
+        },
+        {
+          "include": "source.css#url"
+        },
+        {
+          "include": "#source-fn"
+        },
+        {
+          "include": "source.css#media-query-list"
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)tailwind)(?=\\s|/\\*|$)",
       "beginCaptures": {
         "1": {
