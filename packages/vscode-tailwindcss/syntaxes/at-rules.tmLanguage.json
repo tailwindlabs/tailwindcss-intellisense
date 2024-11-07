@@ -204,6 +204,10 @@
       },
       "patterns": [
         {
+          "match": "none(?=;)",
+          "name": "invalid.illegal.invalid-source.css"
+        },
+        {
           "include": "source.css#string"
         }
       ]
