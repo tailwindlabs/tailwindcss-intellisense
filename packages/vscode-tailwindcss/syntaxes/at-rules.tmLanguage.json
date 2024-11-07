@@ -457,15 +457,26 @@
     "source-fn": {
       "patterns": [
         {
-          "begin": "(?i)(source)[(](?=.*?[)])",
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(source)([(])",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.css"
+              "name": "support.function.source.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
             }
           },
-          "name": "variable.parameter.tailwind.source",
-          "end": "(?<=[)])(?!\\G)",
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
           "patterns": [
+            {
+              "match": "none(?=[)])",
+              "name": "variable.other.css"
+            },
             {
               "include": "source.css#string"
             }
