@@ -54,6 +54,11 @@ function getDirectiveLinks(
     for (let match of matches) {
       let path = match.groups.path.slice(1, -1)
 
+      // Ignore glob-like paths
+      if (path.includes('*') || path.includes('{') || path.includes('}')) {
+        continue
+      }
+
       let range = {
         start: indexToPosition(text, match.index + match[0].length - match.groups.path.length),
         end: indexToPosition(text, match.index + match[0].length),
