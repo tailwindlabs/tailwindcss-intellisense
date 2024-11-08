@@ -257,7 +257,7 @@ withFixture('v4/with-prefix', (c) => {
 
 withFixture('v4/basic', (c) => {
   function testMatch(name, { code, expected, language = 'html' }) {
-    test.only(name, async () => {
+    test(name, async () => {
       let promise = new Promise((resolve) => {
         c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
           resolve(diagnostics)
