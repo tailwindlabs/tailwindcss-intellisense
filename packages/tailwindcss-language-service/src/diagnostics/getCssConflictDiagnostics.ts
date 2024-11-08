@@ -353,7 +353,7 @@ function* findConflicts(
       conflictingClassNames.push(otherClassName)
     }
 
-    if (conflictingClassNames.length === 0) return
+    if (conflictingClassNames.length === 0) continue
 
     yield [className, conflictingClassNames]
   }
