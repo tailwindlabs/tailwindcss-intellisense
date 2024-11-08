@@ -27,6 +27,7 @@ function getDefaultSettings(): Settings {
         invalidVariant: 'error',
         invalidConfigPath: 'error',
         invalidTailwindDirective: 'error',
+        invalidSourceDirective: 'error',
         recommendedVariantOrder: 'warning',
       },
       showPixelEquivalents: true,
