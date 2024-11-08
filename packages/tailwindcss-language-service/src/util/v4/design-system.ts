@@ -10,6 +10,7 @@ export interface Theme {
 
 export interface ClassMetadata {
   modifiers: string[]
+  deprecated?: boolean
 }
 
 export type ClassEntry = [string, ClassMetadata]
@@ -32,6 +33,9 @@ export interface DesignSystem {
   getClassOrder(classes: string[]): [string, bigint | null][]
   getClassList(): ClassEntry[]
   getVariants(): VariantEntry[]
+
+  // Only later alpha releases have this method
+  classMetadata?(classes: string[]): (ClassMetadata | null)[]
 }
 
 export interface DesignSystem {

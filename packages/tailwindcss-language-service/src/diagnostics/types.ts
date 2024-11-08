@@ -6,9 +6,22 @@ export enum DiagnosticKind {
   InvalidApply = 'invalidApply',
   InvalidScreen = 'invalidScreen',
   InvalidVariant = 'invalidVariant',
+  DeprecatedClass = 'deprecatedClass',
   InvalidConfigPath = 'invalidConfigPath',
   InvalidTailwindDirective = 'invalidTailwindDirective',
   RecommendedVariantOrder = 'recommendedVariantOrder',
+}
+
+export type DeprecatedClassDiagnostic = Diagnostic & {
+  code: DiagnosticKind.DeprecatedClass
+  className: DocumentClassName
+  suggestions: string[]
+}
+
+export function isDeprecatedClassDiagnostic(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is DeprecatedClassDiagnostic {
+  return diagnostic.code === DiagnosticKind.DeprecatedClass
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -90,6 +103,7 @@ export function isRecommendedVariantOrderDiagnostic(
 }
 
 export type AugmentedDiagnostic =
+  | DeprecatedClassDiagnostic
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
   | InvalidScreenDiagnostic
