@@ -7,6 +7,7 @@
 - Support loading TypeScript configs and plugins in v4 projects ([#1076](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1076))
 - Show colors for logical border properties ([#1075](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1075))
 - Show all potential class conflicts in v4 projects ([#1077](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1077))
+- Lookup variables in the CSS theme ([#1082](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1082))
 
 ## 0.12.12
 
