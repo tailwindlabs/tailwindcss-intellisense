@@ -1,9 +1,14 @@
 import type { State } from './util/state'
-import type { Hover, Position } from 'vscode-languageserver'
+import type { Hover, MarkupContent, Position, Range } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
-import { findClassNameAtPosition, findHelperFunctionsInRange } from './util/find'
+import {
+  findAll,
+  findClassNameAtPosition,
+  findHelperFunctionsInRange,
+  indexToPosition,
+} from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
@@ -11,6 +16,9 @@ import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostic
 import { isWithinRange } from './util/isWithinRange'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
+import { getTextWithoutComments } from './util/doc'
+import braces from 'braces'
+import { absoluteRange } from './util/absoluteRange'
 
 export async function doHover(
   state: State,
@@ -19,7 +27,8 @@ export async function doHover(
 ): Promise<Hover> {
   return (
     (await provideClassNameHover(state, document, position)) ||
-    (await provideCssHelperHover(state, document, position))
+    (await provideCssHelperHover(state, document, position)) ||
+    (await provideSourceGlobHover(state, document, position))
   )
 }
 
@@ -132,4 +141,65 @@ async function provideClassNameHover(
     },
     range: className.range,
   }
+}
+
+function markdown(lines: string[]): MarkupContent {
+  return {
+    kind: 'markdown',
+    value: lines.join('\n'),
+  }
+}
+
+async function provideSourceGlobHover(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): Promise<Hover> {
+  if (!isCssContext(state, document, position)) {
+    return null
+  }
+
+  let range = {
+    start: { line: position.line, character: 0 },
+    end: { line: position.line + 1, character: 0 },
+  }
+
+  let text = getTextWithoutComments(document, 'css', range)
+
+  let pattern = /@source\s*(?<path>'[^']+'|"[^"]+")/dg
+
+  for (let match of findAll(pattern, text)) {
+    let path = match.groups.path.slice(1, -1)
+
+    // Ignore paths that don't need brace expansion
+    if (!path.includes('{') || !path.includes('}')) continue
+
+    // Ignore paths that don't contain the current position
+    let slice: Range = absoluteRange(
+      {
+        start: indexToPosition(text, match.indices.groups.path[0]),
+        end: indexToPosition(text, match.indices.groups.path[1]),
+      },
+      range,
+    )
+
+    if (!isWithinRange(position, slice)) continue
+
+    // Perform brace expansion
+    let paths = new Set(braces.expand(path))
+    if (paths.size < 2) continue
+
+    return {
+      range: slice,
+      contents: markdown([
+        //
+        '**Expansion**',
+        '```plaintext',
+        ...Array.from(paths, (path) => `- ${path}`),
+        '```',
+      ]),
+    }
+  }
+
+  return null
 }
