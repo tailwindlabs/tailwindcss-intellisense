@@ -64,7 +64,7 @@ function getColorsInString(state: State, str: string): (culori.Color | KeywordCo
     return getKeywordColor(color) ?? culori.parse(color)
   }
 
-  str = replaceCssVarsWithFallbacks(str)
+  str = replaceCssVarsWithFallbacks(state, str)
   str = removeColorMixWherePossible(str)
 
   let possibleColors = str.matchAll(colorRegex)
