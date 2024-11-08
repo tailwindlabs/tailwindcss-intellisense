@@ -75,6 +75,25 @@ function validateLayerName(
   state: State,
   layerName: string,
 ): { message: string; suggestions: string[] } | null {
+  if (state.v4) {
+    // `@tailwind utilities` is valid
+    if (layerName === 'utilities') {
+      return null
+    }
+
+    let parts = layerName.split(/\s+/)
+
+    // `@tailwind utilities source(…)` is valid
+    if (parts[0] === 'utilities' && parts[1]?.startsWith('source(')) {
+      return null
+    }
+
+    return {
+      message: `'${layerName}' is not a valid value.`,
+      suggestions: [],
+    }
+  }
+
   let valid = ['utilities', 'components', 'screens']
 
   if (semver.gte(state.version, '1.0.0-beta.1')) {
