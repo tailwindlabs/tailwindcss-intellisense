@@ -37,4 +37,7 @@ export interface DesignSystem {
 export interface DesignSystem {
   compile(classes: string[]): postcss.Root[]
   toCss(nodes: postcss.Root | postcss.Node[]): string
+
+  // Optional because it did not exist in earlier v4 alpha versions
+  resolveThemeValue?(path: string): string | undefined
 }

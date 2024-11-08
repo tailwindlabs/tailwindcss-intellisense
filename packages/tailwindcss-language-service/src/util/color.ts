@@ -56,7 +56,7 @@ const colorRegex = new RegExp(
   'gi',
 )
 
-function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
+function getColorsInString(state: State, str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
   function toColor(match: RegExpMatchArray) {
@@ -64,7 +64,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
     return getKeywordColor(color) ?? culori.parse(color)
   }
 
-  str = replaceCssVarsWithFallbacks(str)
+  str = replaceCssVarsWithFallbacks(state, str)
   str = removeColorMixWherePossible(str)
 
   let possibleColors = str.matchAll(colorRegex)
@@ -73,6 +73,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
 }
 
 function getColorFromDecls(
+  state: State,
   decls: Record<string, string | string[]>,
 ): culori.Color | KeywordColor | null {
   let props = Object.keys(decls).filter((prop) => {
@@ -99,7 +100,9 @@ function getColorFromDecls(
 
   const propsToCheck = areAllCustom ? props : nonCustomProps
 
-  const colors = propsToCheck.flatMap((prop) => ensureArray(decls[prop]).flatMap(getColorsInString))
+  const colors = propsToCheck.flatMap((prop) => ensureArray(decls[prop]).flatMap((str) => {
+    return getColorsInString(state, str)
+  }))
 
   // check that all of the values are valid colors
   // if (colors.some((color) => color instanceof TinyColor && !color.isValid)) {
@@ -170,7 +173,7 @@ function getColorFromRoot(state: State, css: postcss.Root): culori.Color | Keywo
     decls[decl.prop].push(decl.value)
   })
 
-  return getColorFromDecls(decls)
+  return getColorFromDecls(state, decls)
 }
 
 export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
@@ -186,7 +189,7 @@ export function getColor(state: State, className: string): culori.Color | Keywor
     if (state.classNames) {
       const item = dlv(state.classNames.classNames, [className, '__info'])
       if (item && item.__rule) {
-        return getColorFromDecls(removeMeta(item))
+        return getColorFromDecls(state, removeMeta(item))
       }
     }
 
@@ -215,7 +218,7 @@ export function getColor(state: State, className: string): culori.Color | Keywor
         decls[decl.prop] = decl.value
       }
     })
-    return getColorFromDecls(decls)
+    return getColorFromDecls(state, decls)
   }
 
   let parts = getClassNameParts(state, className)
@@ -224,7 +227,7 @@ export function getColor(state: State, className: string): culori.Color | Keywor
   const item = dlv(state.classNames.classNames, [...parts, '__info'])
   if (!item.__rule) return null
 
-  return getColorFromDecls(removeMeta(item))
+  return getColorFromDecls(state, removeMeta(item))
 }
 
 export function getColorFromValue(value: unknown): culori.Color | KeywordColor | null {
