@@ -5,6 +5,10 @@
 - Fix display of color swatches using new v4 oklch color palette ([#1073](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1073))
 - Properly validate `theme(…)` function paths in v4 ([#1074](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1074))
 
+## 0.12.12
+
+- Add support for Tailwind CSS v4.0.0-alpha.31 ([#1078](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1078))
+
 ## 0.12.11
 
 - Add support for `.cts` and `.mts` config files ([#1025](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1025))
