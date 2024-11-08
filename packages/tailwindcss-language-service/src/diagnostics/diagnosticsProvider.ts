@@ -8,6 +8,7 @@ import { getInvalidVariantDiagnostics } from './getInvalidVariantDiagnostics'
 import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnostics'
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
+import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -19,6 +20,7 @@ export async function doValidate(
     DiagnosticKind.InvalidVariant,
     DiagnosticKind.InvalidConfigPath,
     DiagnosticKind.InvalidTailwindDirective,
+    DiagnosticKind.InvalidSourceDirective,
     DiagnosticKind.RecommendedVariantOrder,
   ],
 ): Promise<AugmentedDiagnostic[]> {
@@ -43,6 +45,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.InvalidTailwindDirective)
           ? getInvalidTailwindDirectiveDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidSourceDirective)
+          ? getInvalidSourceDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.RecommendedVariantOrder)
           ? await getRecommendedVariantOrderDiagnostics(state, document, settings)
