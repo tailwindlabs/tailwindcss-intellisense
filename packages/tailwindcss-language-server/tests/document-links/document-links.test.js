@@ -130,4 +130,22 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testDocumentLinks('Directories in source(…) show links', {
+    text: `
+      @import "tailwindcss" source("../../");
+      @tailwind utilities source("../../");
+    `,
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        range: { start: { line: 1, character: 35 }, end: { line: 1, character: 43 } },
+      },
+      {
+        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        range: { start: { line: 2, character: 33 }, end: { line: 2, character: 41 } },
+      },
+    ],
+  })
 })
