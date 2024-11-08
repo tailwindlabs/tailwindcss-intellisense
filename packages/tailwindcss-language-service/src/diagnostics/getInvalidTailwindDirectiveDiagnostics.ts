@@ -81,6 +81,13 @@ function validateLayerName(
       return null
     }
 
+    // `@tailwind components | screens | variants` do not exist in v4
+    if (layerName === 'components' || layerName === 'screens' || layerName === 'variants') {
+      return {
+        message: `'@tailwind ${layerName}' is no longer available in v4. Use '@tailwind utilities' instead.`,
+        suggestions: [],
+      }
+    }
     let parts = layerName.split(/\s+/)
 
     // `@tailwind utilities source(…)` is valid
