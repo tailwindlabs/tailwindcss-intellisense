@@ -225,6 +225,17 @@
           "markdownDescription": "Class names on the same HTML element which apply the same CSS property or properties",
           "scope": "language-overridable"
         },
+        "tailwindCSS.lint.deprecatedClass": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "Use of a deprecated utility class",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.lint.invalidApply": {
           "type": "string",
           "enum": [

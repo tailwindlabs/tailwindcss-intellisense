@@ -54,6 +54,7 @@ export type TailwindCssSettings = {
   colorDecorators: boolean
   lint: {
     cssConflict: DiagnosticSeveritySetting
+    deprecatedClass: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
     invalidVariant: DiagnosticSeveritySetting
