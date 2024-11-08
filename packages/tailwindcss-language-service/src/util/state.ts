@@ -54,6 +54,7 @@ export type TailwindCssSettings = {
   colorDecorators: boolean
   lint: {
     cssConflict: DiagnosticSeveritySetting
+    deprecatedClass: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
     invalidVariant: DiagnosticSeveritySetting
@@ -86,6 +87,12 @@ export interface Variant {
   isArbitrary: boolean
   hasDash: boolean
   selectors: (params?: { value?: string; label?: string }) => string[]
+}
+
+export interface ClassMetadata {
+  color: culori.Color | KeywordColor | null
+  modifiers?: string[]
+  deprecated?: boolean
 }
 
 export interface State {
@@ -126,7 +133,7 @@ export interface State {
   editor?: EditorState
   jit?: boolean
   jitContext?: any
-  classList?: Array<[string, { color: culori.Color | KeywordColor | null; modifiers?: string[] }]>
+  classList?: Array<[string, ClassMetadata]>
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
