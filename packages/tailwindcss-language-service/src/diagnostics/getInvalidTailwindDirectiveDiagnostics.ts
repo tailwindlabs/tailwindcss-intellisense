@@ -88,6 +88,15 @@ function validateLayerName(
         suggestions: [],
       }
     }
+
+    // `@tailwind base | preflight` do not exist in v4
+    if (layerName === 'base' || layerName === 'preflight') {
+      return {
+        message: `'@tailwind ${layerName}' is no longer available in v4. Use '@import "tailwindcss/base"' instead.`,
+        suggestions: [],
+      }
+    }
+
     let parts = layerName.split(/\s+/)
 
     // `@tailwind utilities source(…)` is valid
