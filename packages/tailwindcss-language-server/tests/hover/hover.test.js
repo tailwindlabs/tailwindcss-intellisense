@@ -157,7 +157,10 @@ withFixture('basic', (c) => {
 })
 
 withFixture('v4/basic', (c) => {
-  async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
+  async function testHover(
+    name,
+    { text, exact = false, lang, position, expected, expectedRange, settings },
+  ) {
     test.concurrent(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
@@ -165,17 +168,17 @@ withFixture('v4/basic', (c) => {
         position,
       })
 
-      expect(res).toEqual(
-        expected
-          ? {
-              contents: {
-                language: 'css',
-                value: expected,
-              },
-              range: expectedRange,
-            }
-          : expected,
-      )
+      if (!exact && expected) {
+        expected = {
+          contents: {
+            language: 'css',
+            value: expected,
+          },
+          range: expectedRange,
+        }
+      }
+
+      expect(res).toEqual(expected)
     })
   }
 
@@ -237,6 +240,33 @@ withFixture('v4/basic', (c) => {
 </style>`,
     position: { line: 2, character: 13 },
     expected: '.underline {\n' + '  text-decoration-line: underline;\n' + '}',
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
+  testHover('css @source glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source "../{app,components}/**/*.jsx"`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- ../app/**/*.jsx',
+          '- ../components/**/*.jsx',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 8 },
+        end: { line: 0, character: 38 },
+      },
+    },
     expectedRange: {
       start: { line: 2, character: 9 },
       end: { line: 2, character: 18 },
