@@ -7,6 +7,7 @@ import { findAll, indexToPosition } from './util/find'
 import { getTextWithoutComments } from './util/doc'
 import { absoluteRange } from './util/absoluteRange'
 import * as semver from './util/semver'
+import { getCssBlocks } from './util/language-blocks'
 
 export function getDocumentLinks(
   state: State,
@@ -38,18 +39,10 @@ function getDirectiveLinks(
   }
 
   let links: DocumentLink[] = []
-  let ranges: Range[] = []
 
-  if (isCssDoc(state, document)) {
-    ranges.push(undefined)
-  } else {
-    let boundaries = getLanguageBoundaries(state, document)
-    if (!boundaries) return []
-    ranges.push(...boundaries.filter((b) => b.type === 'css').map(({ range }) => range))
-  }
+  for (let block of getCssBlocks(state, document)) {
+    let text = block.text
 
-  for (let range of ranges) {
-    let text = getTextWithoutComments(document, 'css', range)
     let matches: RegExpMatchArray[] = []
 
     for (let pattern of patterns) {
@@ -57,15 +50,16 @@ function getDirectiveLinks(
     }
 
     for (let match of matches) {
+      let path = match.groups.path.slice(1, -1)
+
+      let range = {
+        start: indexToPosition(text, match.index + match[0].length - match.groups.path.length),
+        end: indexToPosition(text, match.index + match[0].length),
+      }
+
       links.push({
-        target: resolveTarget(match.groups.path.slice(1, -1)),
-        range: absoluteRange(
-          {
-            start: indexToPosition(text, match.index + match[0].length - match.groups.path.length),
-            end: indexToPosition(text, match.index + match[0].length),
-          },
-          range,
-        ),
+        target: resolveTarget(path),
+        range: absoluteRange(range, block.range),
       })
     }
   }
