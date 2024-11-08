@@ -148,4 +148,13 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testDocumentLinks('Globs in source(…) do not show links', {
+    text: `
+      @import "tailwindcss" source("../{a,b,c}");
+      @tailwind utilities source("../{a,b,c}");
+    `,
+    lang: 'css',
+    expected: [],
+  })
 })
