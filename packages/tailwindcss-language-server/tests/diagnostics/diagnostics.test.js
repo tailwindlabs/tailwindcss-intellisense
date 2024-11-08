@@ -320,6 +320,9 @@ withFixture('v4/basic', (c) => {
     code: `
       @tailwind base;
       @tailwind preflight;
+      @tailwind components;
+      @tailwind screens;
+      @tailwind variants;
     `,
     expected: [
       {
@@ -339,6 +342,36 @@ withFixture('v4/basic', (c) => {
         range: {
           start: { line: 2, character: 16 },
           end: { line: 2, character: 25 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind components' is no longer available in v4. Use '@tailwind utilities' instead.",
+        range: {
+          start: { line: 3, character: 16 },
+          end: { line: 3, character: 26 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind screens' is no longer available in v4. Use '@tailwind utilities' instead.",
+        range: {
+          start: { line: 4, character: 16 },
+          end: { line: 4, character: 23 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind variants' is no longer available in v4. Use '@tailwind utilities' instead.",
+        range: {
+          start: { line: 5, character: 16 },
+          end: { line: 5, character: 24 },
         },
         severity: 1,
       },
