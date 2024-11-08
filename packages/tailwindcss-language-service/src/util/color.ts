@@ -8,6 +8,7 @@ import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import postcss from 'postcss'
+import { replaceCssVarsWithFallbacks } from './css-vars'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -49,18 +50,6 @@ const colorRegex = new RegExp(
   'gi',
 )
 
-function replaceColorVarsWithTheirDefaults(str: string): string {
-  // rgb(var(--primary, 66 66 66))
-  // -> rgb(66 66 66)
-  return str.replace(/((?:rgba?|hsla?|(?:ok)?(?:lab|lch))\(\s*)var\([^,]+,\s*([^)]+)\)/gi, '$1$2')
-}
-
-function replaceHexColorVarsWithTheirDefaults(str: string): string {
-  // var(--color-red-500, #ef4444)
-  // -> #ef4444
-  return str.replace(/var\([^,]+,\s*(#[^)]+)\)/gi, '$1')
-}
-
 function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
   if (/(?:box|drop)-shadow/.test(str)) return []
 
@@ -69,8 +58,7 @@ function getColorsInString(str: string): (culori.Color | KeywordColor)[] {
     return getKeywordColor(color) ?? culori.parse(color)
   }
 
-  str = replaceHexColorVarsWithTheirDefaults(str)
-  str = replaceColorVarsWithTheirDefaults(str)
+  str = replaceCssVarsWithFallbacks(str)
   str = removeColorMixWherePossible(str)
 
   let possibleColors = str.matchAll(colorRegex)
@@ -268,7 +256,7 @@ export function formatColor(color: culori.Color): string {
   return culori.formatHex8(color)
 }
 
-const COLOR_MIX_REGEX = /color-mix\(in srgb, (.*?) (\d+|\.\d+|\d+\.\d+)%, transparent\)/g
+const COLOR_MIX_REGEX = /color-mix\(in [^,]+,\s*(.*?)\s*(\d+|\.\d+|\d+\.\d+)%,\s*transparent\)/g
 
 function removeColorMixWherePossible(str: string) {
   return str.replace(COLOR_MIX_REGEX, (match, color, percentage) => {
