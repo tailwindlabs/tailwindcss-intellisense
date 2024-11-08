@@ -314,4 +314,34 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testMatch('Old Tailwind directives warn when used in a v4 project', {
+    language: 'css',
+    code: `
+      @tailwind base;
+      @tailwind preflight;
+    `,
+    expected: [
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+        range: {
+          start: { line: 1, character: 16 },
+          end: { line: 1, character: 20 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+        range: {
+          start: { line: 2, character: 16 },
+          end: { line: 2, character: 25 },
+        },
+        severity: 1,
+      },
+    ],
+  })
 })
