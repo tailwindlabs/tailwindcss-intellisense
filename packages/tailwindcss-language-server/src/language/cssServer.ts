@@ -336,11 +336,7 @@ function replace(delta = 0) {
 }
 
 function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
-  return TextDocument.create(
-    textDocument.uri,
-    textDocument.languageId,
-    textDocument.version,
-    textDocument
+  let content = textDocument
       .getText()
       .replace(/@screen(\s+[^{]+){/g, replace(-2))
       .replace(/@variants(\s+[^{]+){/g, replace())
@@ -350,7 +346,13 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@media(\s+screen\s*\([^)]+\))/g,
         (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
       )
-      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_'),
+      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
+
+  return TextDocument.create(
+    textDocument.uri,
+    textDocument.languageId,
+    textDocument.version,
+    content,
   )
 }
 
