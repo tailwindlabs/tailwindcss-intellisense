@@ -8,6 +8,7 @@
 - Show colors for logical border properties ([#1075](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1075))
 - Show all potential class conflicts in v4 projects ([#1077](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1077))
 - Lookup variables in the CSS theme ([#1082](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1082))
+- Auto-switch CSS files to tailwindcss language in valid projects ([#1087](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1087))
 
 ## 0.12.12
 
