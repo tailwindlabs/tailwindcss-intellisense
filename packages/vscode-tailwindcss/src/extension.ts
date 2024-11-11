@@ -16,6 +16,7 @@ import {
   Position,
   Range,
   RelativePattern,
+  languages,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -124,11 +125,15 @@ async function getActiveTextEditorProject(): Promise<{ version: string } | null>
   let editor = Window.activeTextEditor
   if (!editor) return null
 
+  return projectForDocument(editor.document)
+}
+
+async function projectForDocument(document: TextDocument): Promise<{ version: string } | null> {
   // No server yet, no project
   if (!currentClient) return null
 
   // No workspace folder, no project
-  let uri = editor.document.uri
+  let uri = document.uri
   let folder = Workspace.getWorkspaceFolder(uri)
   if (!folder) return null
 
@@ -160,12 +165,41 @@ async function activeTextEditorSupportsClassSorting(): Promise<boolean> {
   return semver.gte(project.version, '3.0.0')
 }
 
+const switchedDocuments = new Set<string>()
+
+async function switchDocumentLanguageIfNeeded(document: TextDocument): Promise<void> {
+  // Consider documents that are already in `tailwindcss` language mode as
+  // having been switched automatically. This ensures that a user can still
+  // manually switch this document to `css` and have it stay that way.
+  if (document.languageId === 'tailwindcss') {
+    switchedDocuments.add(document.uri.toString())
+    return
+  }
+
+  if (document.languageId !== 'css') return
+
+  // When a document is manually switched back to the `css` language we do not
+  // want to switch it back to `tailwindcss` because the user has explicitly
+  // chosen to use the `css` language mode.
+  if (switchedDocuments.has(document.uri.toString())) return
+
+  let project = await projectForDocument(document)
+  if (!project) return
+
+  // CSS files in a known project should be switched to `tailwindcss`
+  // when they are opened
+  languages.setTextDocumentLanguage(document, 'tailwindcss')
+  switchedDocuments.add(document.uri.toString())
+}
+
 async function updateActiveTextEditorContext(): Promise<void> {
   commands.executeCommand(
     'setContext',
     'tailwindCSS.activeTextEditorSupportsClassSorting',
     await activeTextEditorSupportsClassSorting(),
   )
+
+  await Promise.all(Workspace.textDocuments.map(switchDocumentLanguageIfNeeded))
 }
 
 function resetActiveTextEditorContext(): void {
@@ -173,6 +207,8 @@ function resetActiveTextEditorContext(): void {
 }
 
 export async function activate(context: ExtensionContext) {
+  switchedDocuments.clear()
+
   let outputChannel = Window.createOutputChannel(CLIENT_NAME)
   context.subscriptions.push(outputChannel)
   context.subscriptions.push(
@@ -628,6 +664,8 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
+    await switchDocumentLanguageIfNeeded(document)
+
     if (document.languageId === 'tailwindcss') {
       servers.css.boot(context, outputChannel)
     }
