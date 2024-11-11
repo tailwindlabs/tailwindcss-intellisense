@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.13
+
 - Fix display of color swatches using new v4 oklch color palette ([#1073](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1073))
 - Properly validate `theme(…)` function paths in v4 ([#1074](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1074))
 - Support loading TypeScript configs and plugins in v4 projects ([#1076](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1076))
