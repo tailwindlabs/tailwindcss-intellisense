@@ -1,22 +1,11 @@
 import type { State, Settings } from '../util/state'
-import { Diagnostic, type Range } from 'vscode-languageserver'
 import {
-  type InvalidConfigPathDiagnostic,
   DiagnosticKind,
   InvalidSourceDirectiveDiagnostic,
 } from './types'
-import { findAll, findHelperFunctionsInDocument, indexToPosition } from '../util/find'
-import { stringToPath } from '../util/stringToPath'
-import isObject from '../util/isObject'
-import { closest, distance } from '../util/closest'
-import { combinations } from '../util/combinations'
-import dlv from 'dlv'
+import { findAll, indexToPosition } from '../util/find'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import type { DesignSystem } from '../util/v4'
-import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
-import { isCssDoc } from '../util/css'
 import { getCssBlocks } from '../util/language-blocks'
-import { isSemicolonlessCssLanguage } from '../util/languages'
 import { absoluteRange } from '../util/absoluteRange'
 
 // @import … source('…')
