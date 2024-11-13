@@ -87,7 +87,7 @@ export function getInvalidSourceDiagnostics(
         }
 
         add({
-          message: 'Need a path for the source directive',
+          message: 'The source directive requires a path to a directory.',
           range: absoluteRange(range, block.range),
         })
       }
@@ -116,7 +116,7 @@ export function getInvalidSourceDiagnostics(
         }
 
         add({
-          message: `POSIX-style paths are required with source() but \`${source}\` is a Windows-style path.`,
+          message: `POSIX-style paths are required with \`source(…)\` but \`${source}\` is a Windows-style path.`,
           range: absoluteRange(range, block.range),
         })
       }
@@ -132,7 +132,7 @@ export function getInvalidSourceDiagnostics(
         }
 
         add({
-          message: `source(${rawSource}) uses a glob but a glob cannot be used here. Use a directory name instead.`,
+          message: `\`source(${rawSource})\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
           range: absoluteRange(range, block.range),
         })
       }

@@ -32,7 +32,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 1, character: 35 },
           end: { line: 1, character: 35 },
@@ -40,7 +40,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 2, character: 35 },
           end: { line: 2, character: 37 },
@@ -48,7 +48,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 3, character: 35 },
           end: { line: 3, character: 37 },
@@ -56,7 +56,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 4, character: 33 },
           end: { line: 4, character: 33 },
@@ -64,7 +64,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 5, character: 33 },
           end: { line: 5, character: 35 },
@@ -72,7 +72,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: 'Need a path for the source directive',
+        message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 6, character: 33 },
           end: { line: 6, character: 35 },
@@ -129,7 +129,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
-        message: `source('../app/**/*.html') uses a glob but a glob cannot be used here. Use a directory name instead.`,
+        message: `\`source('../app/**/*.html')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
         range: {
           start: { line: 1, character: 35 },
           end: { line: 1, character: 53 },
@@ -137,7 +137,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: `source('../app/index.{html,js}') uses a glob but a glob cannot be used here. Use a directory name instead.`,
+        message: `\`source('../app/index.{html,js}')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
         range: {
           start: { line: 2, character: 35 },
           end: { line: 2, character: 59 },
@@ -145,7 +145,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: `source('../app/**/*.html') uses a glob but a glob cannot be used here. Use a directory name instead.`,
+        message: `\`source('../app/**/*.html')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
         range: {
           start: { line: 3, character: 33 },
           end: { line: 3, character: 51 },
@@ -153,7 +153,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: `source('../app/index.{html,js}') uses a glob but a glob cannot be used here. Use a directory name instead.`,
+        message: `\`source('../app/index.{html,js}')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
         range: {
           start: { line: 4, character: 33 },
           end: { line: 4, character: 57 },
@@ -172,7 +172,7 @@ withFixture('v4/basic', (c) => {
       {
         code: 'invalidSourceDirective',
         message:
-          'POSIX-style paths are required with source() but `C:\\absolute\\path` is a Windows-style path.',
+          'POSIX-style paths are required with `source(…)` but `C:\\absolute\\path` is a Windows-style path.',
         range: {
           start: { line: 1, character: 35 },
           end: { line: 1, character: 55 },
@@ -181,7 +181,7 @@ withFixture('v4/basic', (c) => {
       {
         code: 'invalidSourceDirective',
         message:
-          'POSIX-style paths are required with source() but `C:relative.txt` is a Windows-style path.',
+          'POSIX-style paths are required with `source(…)` but `C:relative.txt` is a Windows-style path.',
         range: {
           start: { line: 2, character: 35 },
           end: { line: 2, character: 51 },
