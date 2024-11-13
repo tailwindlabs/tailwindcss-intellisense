@@ -57,7 +57,7 @@ async function provideCssHelperHover(
       helperFn.helper === 'theme' ? ['theme'] : [],
     )
 
-    // This property may not exist in the state object because of compatability with Tailwind Play
+    // This property may not exist in the state object because of compatibility with Tailwind Play
     let value = validated.isValid ? stringifyConfigValue(validated.value) : null
     if (value === null) return null
 
