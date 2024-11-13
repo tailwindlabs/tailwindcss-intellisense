@@ -329,6 +329,7 @@ withFixture('v4/basic', (c) => {
         code: 'invalidTailwindDirective',
         message:
           "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+        suggestions: [],
         range: {
           start: { line: 1, character: 16 },
           end: { line: 1, character: 20 },
@@ -339,6 +340,7 @@ withFixture('v4/basic', (c) => {
         code: 'invalidTailwindDirective',
         message:
           "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+        suggestions: [],
         range: {
           start: { line: 2, character: 16 },
           end: { line: 2, character: 25 },
@@ -349,6 +351,7 @@ withFixture('v4/basic', (c) => {
         code: 'invalidTailwindDirective',
         message:
           "'@tailwind components' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
         range: {
           start: { line: 3, character: 16 },
           end: { line: 3, character: 26 },
@@ -359,6 +362,7 @@ withFixture('v4/basic', (c) => {
         code: 'invalidTailwindDirective',
         message:
           "'@tailwind screens' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
         range: {
           start: { line: 4, character: 16 },
           end: { line: 4, character: 23 },
@@ -369,6 +373,7 @@ withFixture('v4/basic', (c) => {
         code: 'invalidTailwindDirective',
         message:
           "'@tailwind variants' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
         range: {
           start: { line: 5, character: 16 },
           end: { line: 5, character: 24 },
