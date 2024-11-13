@@ -1,10 +1,7 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { State } from './util/state'
 import type { DocumentLink, Range } from 'vscode-languageserver'
-import { isCssDoc } from './util/css'
-import { getLanguageBoundaries } from './util/getLanguageBoundaries'
 import { findAll, indexToPosition } from './util/find'
-import { getTextWithoutComments } from './util/doc'
 import { absoluteRange } from './util/absoluteRange'
 import * as semver from './util/semver'
 import { getCssBlocks } from './util/language-blocks'
@@ -14,9 +11,7 @@ export function getDocumentLinks(
   document: TextDocument,
   resolveTarget: (linkPath: string) => string,
 ): DocumentLink[] {
-  let patterns = [
-    /@config\s*(?<path>'[^']+'|"[^"]+")/g,
-  ]
+  let patterns = [/@config\s*(?<path>'[^']+'|"[^"]+")/g]
 
   if (state.v4) {
     patterns.push(
