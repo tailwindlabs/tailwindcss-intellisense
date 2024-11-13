@@ -1,8 +1,6 @@
 import { expect, test } from 'vitest'
 import { withFixture } from '../common'
 
-const css = String.raw
-
 withFixture('v4/basic', (c) => {
   function runTest(name, { code, expected, language }) {
     test(name, async () => {
