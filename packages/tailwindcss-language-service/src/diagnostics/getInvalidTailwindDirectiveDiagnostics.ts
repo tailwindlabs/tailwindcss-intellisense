@@ -93,7 +93,7 @@ function validateLayerName(
     if (layerName === 'components' || layerName === 'screens' || layerName === 'variants') {
       return {
         message: `'@tailwind ${layerName}' is no longer available in v4. Use '@tailwind utilities' instead.`,
-        suggestions: [],
+        suggestions: ['utilities'],
       }
     }
 
