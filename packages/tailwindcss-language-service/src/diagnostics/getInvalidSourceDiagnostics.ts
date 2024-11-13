@@ -1,8 +1,5 @@
 import type { State, Settings } from '../util/state'
-import {
-  DiagnosticKind,
-  InvalidSourceDirectiveDiagnostic,
-} from './types'
+import { DiagnosticKind, InvalidSourceDirectiveDiagnostic } from './types'
 import { findAll, indexToPosition } from '../util/find'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { getCssBlocks } from '../util/language-blocks'
@@ -104,7 +101,7 @@ export function getInvalidSourceDiagnostics(
         }
 
         add({
-          message: `\`source(${source})\` is invalid. Did you mean \`source(none)\`.`,
+          message: `\`source(${source})\` is invalid. Did you mean \`source(none)\`?`,
           range: absoluteRange(range, block.range),
         })
       }

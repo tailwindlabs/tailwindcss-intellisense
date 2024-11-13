@@ -90,7 +90,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
-        message: '`source(no)` is invalid. Did you mean `source(none)`.',
+        message: '`source(no)` is invalid. Did you mean `source(none)`?',
         range: {
           start: { line: 1, character: 35 },
           end: { line: 1, character: 37 },
@@ -98,7 +98,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
-        message: '`source(no)` is invalid. Did you mean `source(none)`.',
+        message: '`source(no)` is invalid. Did you mean `source(none)`?',
         range: {
           start: { line: 2, character: 33 },
           end: { line: 2, character: 35 },
