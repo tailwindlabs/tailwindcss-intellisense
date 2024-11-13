@@ -83,7 +83,7 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
-  runTest('source(none) must not be mispelled', {
+  runTest('source(none) must not be misspelled', {
     language: 'css',
     code: `
       @import 'tailwindcss' source(no);
