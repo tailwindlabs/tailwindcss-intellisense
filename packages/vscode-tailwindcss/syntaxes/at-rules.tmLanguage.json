@@ -534,7 +534,7 @@
           "begin": "(?i)(?:\\s*)(?<![\\w@-])(theme)([(])",
           "beginCaptures": {
             "1": {
-              "name": "support.function.meta.css"
+              "name": "support.function.theme.css"
             },
             "2": {
               "name": "punctuation.section.function.begin.bracket.round.css"
