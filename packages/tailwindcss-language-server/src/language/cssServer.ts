@@ -352,6 +352,12 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*source\([^)]+\)/g,
         (_match, url) => `@import "${url.slice(1, -1)}"`,
       )
+      // Replace `@import "…" theme()` with `@import "…"` otherwise we'll
+      // get warnings about expecting a semi-colon instead of the theme function
+      .replace(
+        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*theme\([^)]+\)/g,
+        (_match, url) => `@import "${url.slice(1, -1)}"`,
+      )
       .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
   return TextDocument.create(
