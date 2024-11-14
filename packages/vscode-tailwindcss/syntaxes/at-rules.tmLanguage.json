@@ -44,6 +44,9 @@
           "include": "#theme-meta-fn"
         },
         {
+          "include": "#prefix-meta-fn"
+        },
+        {
           "include": "source.css#media-query-list"
         }
       ]
@@ -569,6 +572,37 @@
             },
             {
               "match": "[^)]+",
+              "name": "invalid.illegal.invalid-source.css"
+            }
+          ]
+        }
+      ]
+    },
+    "prefix-meta-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(prefix)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.prefix.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "[a-z]+",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "[^a-z]+",
               "name": "invalid.illegal.invalid-source.css"
             }
           ]
