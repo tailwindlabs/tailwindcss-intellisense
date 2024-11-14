@@ -107,7 +107,7 @@ export function getInvalidSourceDiagnostics(
       }
 
       // Detection of Windows-style paths
-      else if (source.includes('\\\\') || HAS_DRIVE_LETTER.test(source)) {
+      else if (source.includes('\\') || HAS_DRIVE_LETTER.test(source)) {
         source = source.replaceAll('\\\\', '\\')
 
         let range = {
