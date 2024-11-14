@@ -84,7 +84,7 @@ function validateLayerName(
     // `@tailwind base | preflight` do not exist in v4
     if (layerName === 'base' || layerName === 'preflight') {
       return {
-        message: `'@tailwind ${layerName}' is no longer available in v4. Use '@import "tailwindcss/base"' instead.`,
+        message: `'@tailwind ${layerName}' is no longer available in v4. Use '@import "tailwindcss/preflight"' instead.`,
         suggestions: [],
       }
     }

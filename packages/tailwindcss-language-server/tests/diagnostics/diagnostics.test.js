@@ -328,7 +328,7 @@ withFixture('v4/basic', (c) => {
       {
         code: 'invalidTailwindDirective',
         message:
-          "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+          "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
         suggestions: [],
         range: {
           start: { line: 1, character: 16 },
@@ -339,7 +339,7 @@ withFixture('v4/basic', (c) => {
       {
         code: 'invalidTailwindDirective',
         message:
-          "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/base\"' instead.",
+          "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
         suggestions: [],
         range: {
           start: { line: 2, character: 16 },
