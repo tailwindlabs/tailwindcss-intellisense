@@ -6,6 +6,8 @@ import { absoluteRange } from './util/absoluteRange'
 import * as semver from './util/semver'
 import { getCssBlocks } from './util/language-blocks'
 
+const HAS_DRIVE_LETTER = /^[A-Z]:/
+
 export function getDocumentLinks(
   state: State,
   document: TextDocument,
@@ -51,6 +53,11 @@ function getDirectiveLinks(
 
       // Ignore glob-like paths
       if (path.includes('*') || path.includes('{') || path.includes('}')) {
+        continue
+      }
+
+      // Ignore Windows-style paths
+      if (path.includes('\\') || HAS_DRIVE_LETTER.test(path)) {
         continue
       }
 

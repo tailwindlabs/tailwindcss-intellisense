@@ -157,4 +157,19 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [],
   })
+
+  testDocumentLinks('Windows paths in source(…) do not show links', {
+    text: String.raw`
+      @import "tailwindcss" source("..\foo\bar");
+      @tailwind utilities source("..\foo\bar");
+
+      @import "tailwindcss" source("C:\foo\bar");
+      @tailwind utilities source("C:\foo\bar");
+
+      @import "tailwindcss" source("C:foo");
+      @tailwind utilities source("C:bar");
+    `,
+    lang: 'css',
+    expected: [],
+  })
 })
