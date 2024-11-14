@@ -12,7 +12,6 @@ export interface LanguageBlock {
   readonly text: string
 }
 
-/** */
 export function* getCssBlocks(
   state: State,
   document: TextDocument,
