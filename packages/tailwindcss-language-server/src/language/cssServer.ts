@@ -346,22 +346,10 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
         /@media(\s+screen\s*\([^)]+\))/g,
         (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
       )
-      // Replace `@import "…" source()` with `@import "…"` otherwise we'll
-      // get warnings about expecting a semi-colon instead of the source function
+      // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
+      // otherwise we'll show syntax-error diagnostics which we don't want
       .replace(
-        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*source\([^)]+\)/g,
-        (_match, url) => `@import "${url.slice(1, -1)}"`,
-      )
-      // Replace `@import "…" theme()` with `@import "…"` otherwise we'll
-      // get warnings about expecting a semi-colon instead of the theme function
-      .replace(
-        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*theme\([^)]+\)/g,
-        (_match, url) => `@import "${url.slice(1, -1)}"`,
-      )
-      // Replace `@import "…" prefix()` with `@import "…"` otherwise we'll
-      // get warnings about expecting a semi-colon instead of the theme function
-      .replace(
-        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*prefix\([^)]+\)/g,
+        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*((source|theme|prefix)\([^)]+\)\s*)+/g,
         (_match, url) => `@import "${url.slice(1, -1)}"`,
       )
       .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
