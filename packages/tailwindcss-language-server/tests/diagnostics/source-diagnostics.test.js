@@ -118,50 +118,6 @@ withFixture('v4/basic', (c) => {
     expected: [],
   })
 
-  runTest('source("…") must not be a glob', {
-    language: 'css',
-    code: `
-      @import 'tailwindcss' source('../app/**/*.html');
-      @import 'tailwindcss' source('../app/index.{html,js}');
-      @tailwind utilities source('../app/**/*.html');
-      @tailwind utilities source('../app/index.{html,js}');
-    `,
-    expected: [
-      {
-        code: 'invalidSourceDirective',
-        message: `\`source('../app/**/*.html')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
-        range: {
-          start: { line: 1, character: 35 },
-          end: { line: 1, character: 53 },
-        },
-      },
-      {
-        code: 'invalidSourceDirective',
-        message: `\`source('../app/index.{html,js}')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
-        range: {
-          start: { line: 2, character: 35 },
-          end: { line: 2, character: 59 },
-        },
-      },
-      {
-        code: 'invalidSourceDirective',
-        message: `\`source('../app/**/*.html')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
-        range: {
-          start: { line: 3, character: 33 },
-          end: { line: 3, character: 51 },
-        },
-      },
-      {
-        code: 'invalidSourceDirective',
-        message: `\`source('../app/index.{html,js}')\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
-        range: {
-          start: { line: 4, character: 33 },
-          end: { line: 4, character: 57 },
-        },
-      },
-    ],
-  })
-
   runTest('paths given to source("…") must error when not POSIX', {
     language: 'css',
     code: String.raw`

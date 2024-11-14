@@ -121,22 +121,6 @@ export function getInvalidSourceDiagnostics(
         })
       }
 
-      // Detection of globs in non-`@source` directives
-      else if (
-        directive !== 'source' &&
-        (source.includes('*') || source.includes('{') || source.includes('}'))
-      ) {
-        let range = {
-          start: indexToPosition(text, sourceRange[0]),
-          end: indexToPosition(text, sourceRange[1]),
-        }
-
-        add({
-          message: `\`source(${rawSource})\` uses a glob but a glob cannot be used here. Use a directory name instead.`,
-          range: absoluteRange(range, block.range),
-        })
-      }
-
       // `@source none` is invalid
       else if (directive === 'source' && source === 'none') {
         let range = {
