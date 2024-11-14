@@ -41,6 +41,9 @@
           "include": "#source-fn"
         },
         {
+          "include": "#theme-meta-fn"
+        },
+        {
           "include": "source.css#media-query-list"
         }
       ]
@@ -520,6 +523,53 @@
             },
             {
               "include": "source.css#string"
+            }
+          ]
+        }
+      ]
+    },
+    "theme-meta-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(theme)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.meta.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\s+",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "reference",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "inline",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "default",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "deprecated",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "[^)]+",
+              "name": "invalid.illegal.invalid-source.css"
             }
           ]
         }
