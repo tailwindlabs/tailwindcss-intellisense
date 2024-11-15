@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.14
+
 - Add suggestions for theme options ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
 - Add suggestions when using `@source "…"` and `source(…)` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
 - Show brace expansion when hovering `@source` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
