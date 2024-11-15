@@ -1615,8 +1615,6 @@ async function provideThemeDirectiveCompletions(
 
   let match = text.match(PATTERN_AT_THEME) ?? text.match(PATTERN_IMPORT_THEME)
 
-  console.log({ text, match })
-
   // Are we in a context where suggesting theme(…) stuff makes sense?
   if (!match) return null
 
