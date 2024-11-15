@@ -1602,7 +1602,7 @@ function isInsideAtRule(name: string, document: TextDocument, position: Position
 
 // Provide completions for directives that take file paths
 const PATTERN_AT_THEME = /@(?<directive>theme)\s+(?:(?<parts>[^{]+)\s$|$)/
-const PATTERN_IMPORT_THEME = /@(?<directive>import)\s*[^;]+?theme\((?<parts>[^)]+)?\s$/
+const PATTERN_IMPORT_THEME = /@(?<directive>import)\s*[^;]+?theme\((?:(?<parts>[^)]+)\s$|$)/
 
 async function provideThemeDirectiveCompletions(
   state: State,
