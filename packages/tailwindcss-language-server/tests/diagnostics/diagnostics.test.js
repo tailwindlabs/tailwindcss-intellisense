@@ -314,4 +314,72 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testMatch('Old Tailwind directives warn when used in a v4 project', {
+    language: 'css',
+    code: `
+      @tailwind base;
+      @tailwind preflight;
+      @tailwind components;
+      @tailwind screens;
+      @tailwind variants;
+    `,
+    expected: [
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
+        suggestions: [],
+        range: {
+          start: { line: 1, character: 16 },
+          end: { line: 1, character: 20 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
+        suggestions: [],
+        range: {
+          start: { line: 2, character: 16 },
+          end: { line: 2, character: 25 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind components' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
+        range: {
+          start: { line: 3, character: 16 },
+          end: { line: 3, character: 26 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind screens' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
+        range: {
+          start: { line: 4, character: 16 },
+          end: { line: 4, character: 23 },
+        },
+        severity: 1,
+      },
+      {
+        code: 'invalidTailwindDirective',
+        message:
+          "'@tailwind variants' is no longer available in v4. Use '@tailwind utilities' instead.",
+        suggestions: ['utilities'],
+        range: {
+          start: { line: 5, character: 16 },
+          end: { line: 5, character: 24 },
+        },
+        severity: 1,
+      },
+    ],
+  })
 })

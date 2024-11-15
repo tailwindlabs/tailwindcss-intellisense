@@ -5,6 +5,53 @@
   "name": "TailwindCSS",
   "patterns": [
     {
+      "begin": "(?i)((@)import)(?:\\s+|$|(?=['\"]|/\\*))",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.at-rule.import.css"
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.css"
+        }
+      },
+      "end": ";",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.terminator.rule.css"
+        }
+      },
+      "name": "meta.at-rule.import.css",
+      "patterns": [
+        {
+          "begin": "\\G\\s*(?=/\\*)",
+          "end": "(?<=\\*/)\\s*",
+          "patterns": [
+            {
+              "include": "source.css#comment-block"
+            }
+          ]
+        },
+        {
+          "include": "source.css#string"
+        },
+        {
+          "include": "source.css#url"
+        },
+        {
+          "include": "#source-fn"
+        },
+        {
+          "include": "#theme-meta-fn"
+        },
+        {
+          "include": "#prefix-meta-fn"
+        },
+        {
+          "include": "source.css#media-query-list"
+        }
+      ]
+    },
+    {
       "begin": "(?i)((@)tailwind)(?=\\s|/\\*|$)",
       "beginCaptures": {
         "1": {
@@ -27,6 +74,9 @@
         },
         {
           "include": "source.css#escapes"
+        },
+        {
+          "include": "#source-fn"
         },
         {
           "match": "[^\\s;]+?",
@@ -200,6 +250,10 @@
         }
       },
       "patterns": [
+        {
+          "match": "none(?=;)",
+          "name": "invalid.illegal.invalid-source.css"
+        },
         {
           "include": "source.css#string"
         }
@@ -444,6 +498,114 @@
         {
           "match": ";",
           "name": "punctuation.terminator.rule.css"
+        }
+      ]
+    },
+    "source-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(source)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.source.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "none(?=[)])",
+              "name": "variable.other.css"
+            },
+            {
+              "include": "source.css#string"
+            }
+          ]
+        }
+      ]
+    },
+    "theme-meta-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(theme)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.theme.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\s+",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "reference",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "inline",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "default",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "deprecated",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "[^)]+",
+              "name": "invalid.illegal.invalid-source.css"
+            }
+          ]
+        }
+      ]
+    },
+    "prefix-meta-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(prefix)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.prefix.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "[a-z]+",
+              "name": "variable.other.css"
+            },
+            {
+              "match": "[^a-z]+",
+              "name": "invalid.illegal.invalid-source.css"
+            }
+          ]
         }
       ]
     }

@@ -354,6 +354,24 @@ export function findHelperFunctionsInRange(
     text,
   )
 
+  // Eliminate matches that are on an `@import`
+  matches = matches.filter((match) => {
+    // Scan backwards to see if we're in an `@import` statement
+    for (let i = match.index - 1; i >= 0; i--) {
+      let char = text[i]
+      if (char === '\n') break
+      if (char === ';') break
+      // Detecting theme(…) inside the media query list of `@import` is okay
+      if (char === '(') break
+      if (char === ')') break
+      if (text.startsWith('@import', i)) {
+        return false
+      }
+    }
+
+    return true
+  })
+
   return matches.map((match) => {
     let quotesBefore = ''
     let path = match.groups.path

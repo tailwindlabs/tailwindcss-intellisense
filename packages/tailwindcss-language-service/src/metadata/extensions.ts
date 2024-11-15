@@ -3,9 +3,9 @@ let scriptExtensions = [
   'js',
   'cjs',
   'mjs',
-  'ts',
-  'mts',
-  'cts',
+  '(?<!d.)ts', // matches .ts but not .d.ts
+  '(?<!d.)mts', // matches .mts but not .d.mts
+  '(?<!d.)cts', // matches .cts but not .d.cts
 ]
 
 let templateExtensions = [
@@ -20,14 +20,14 @@ let templateExtensions = [
   // JS
   'astro',
   'cjs',
-  'cts',
+  '(?<!d.)cts', // matches .cts but not .d.cts
   'jade',
   'js',
   'jsx',
   'mjs',
-  'mts',
+  '(?<!d.)mts', // matches .mts but not .d.mts
   'svelte',
-  'ts',
+  '(?<!d.)ts', // matches .ts but not .d.ts
   'tsx',
   'vue',
 

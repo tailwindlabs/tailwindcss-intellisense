@@ -130,4 +130,46 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testDocumentLinks('Directories in source(…) show links', {
+    text: `
+      @import "tailwindcss" source("../../");
+      @tailwind utilities source("../../");
+    `,
+    lang: 'css',
+    expected: [
+      {
+        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        range: { start: { line: 1, character: 35 }, end: { line: 1, character: 43 } },
+      },
+      {
+        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        range: { start: { line: 2, character: 33 }, end: { line: 2, character: 41 } },
+      },
+    ],
+  })
+
+  testDocumentLinks('Globs in source(…) do not show links', {
+    text: `
+      @import "tailwindcss" source("../{a,b,c}");
+      @tailwind utilities source("../{a,b,c}");
+    `,
+    lang: 'css',
+    expected: [],
+  })
+
+  testDocumentLinks('Windows paths in source(…) do not show links', {
+    text: String.raw`
+      @import "tailwindcss" source("..\foo\bar");
+      @tailwind utilities source("..\foo\bar");
+
+      @import "tailwindcss" source("C:\foo\bar");
+      @tailwind utilities source("C:\foo\bar");
+
+      @import "tailwindcss" source("C:foo");
+      @tailwind utilities source("C:bar");
+    `,
+    lang: 'css',
+    expected: [],
+  })
 })

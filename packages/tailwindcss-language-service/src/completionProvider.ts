@@ -39,6 +39,7 @@ import {
 import { customClassesIn } from './util/classes'
 import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
+import { findFileDirective } from './completions/file-paths'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -1600,6 +1601,95 @@ function isInsideAtRule(name: string, document: TextDocument, position: Position
 }
 
 // Provide completions for directives that take file paths
+const PATTERN_AT_THEME = /@(?<directive>theme)\s+(?:(?<parts>[^{]+)\s$|$)/
+const PATTERN_IMPORT_THEME = /@(?<directive>import)\s*[^;]+?theme\((?:(?<parts>[^)]+)\s$|$)/
+
+async function provideThemeDirectiveCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): Promise<CompletionList> {
+  if (!state.v4) return null
+
+  let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
+
+  let match = text.match(PATTERN_AT_THEME) ?? text.match(PATTERN_IMPORT_THEME)
+
+  // Are we in a context where suggesting theme(…) stuff makes sense?
+  if (!match) return null
+
+  let directive = match.groups.directive
+  let parts = new Set(
+    (match.groups.parts ?? '')
+      .trim()
+      .split(/\s+/)
+      .map((part) => part.trim())
+      .filter((part) => part !== ''),
+  )
+
+  let items: CompletionItem[] = [
+    {
+      label: 'reference',
+      documentation: {
+        kind: 'markdown',
+        value:
+          directive === 'import'
+            ? `Don't emit CSS variables for imported theme values.`
+            : `Don't emit CSS variables for these theme values.`,
+      },
+      sortText: '-000000',
+    },
+    {
+      label: 'inline',
+      documentation: {
+        kind: 'markdown',
+        value:
+          directive === 'import'
+            ? `Inline imported theme values into generated utilities instead of using \`var(…)\`.`
+            : `Inline these theme values into generated utilities instead of using \`var(…)\`.`,
+      },
+      sortText: '-000001',
+    },
+    {
+      label: 'default',
+      documentation: {
+        kind: 'markdown',
+        value:
+          directive === 'import'
+            ? `Allow imported theme values to be overriden by JS configs and plugins.`
+            : `Allow these theme values to be overriden by JS configs and plugins.`,
+      },
+      sortText: '-000003',
+    },
+  ]
+
+  items = items.filter((item) => !parts.has(item.label))
+
+  if (items.length === 0) return null
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items,
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'filesystem',
+      },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character,
+        },
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults,
+  )
+}
+
+// Provide completions for directives that take file paths
 async function provideFileDirectiveCompletions(
   state: State,
   document: TextDocument,
@@ -1613,39 +1703,43 @@ async function provideFileDirectiveCompletions(
     return null
   }
 
-  let pattern = state.v4
-    ? /@(?<directive>config|plugin|source)\s*(?<partial>'[^']*|"[^"]*)$/
-    : /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
-
   let text = document.getText({ start: { line: position.line, character: 0 }, end: position })
-  let match = text.match(pattern)
-  if (!match) {
-    return null
+
+  let fd = await findFileDirective(state, text)
+  if (!fd) return null
+
+  let { partial, suggest } = fd
+
+  function isAllowedFile(name: string) {
+    if (suggest === 'script') return IS_SCRIPT_SOURCE.test(name)
+
+    if (suggest === 'source') return IS_TEMPLATE_SOURCE.test(name)
+
+    // Files are not allowed but directories are
+    if (suggest === 'directory') return false
+
+    return false
   }
-  let directive = match.groups.directive
-  let partial = match.groups.partial.slice(1) // remove quote
+
   let valueBeforeLastSlash = partial.substring(0, partial.lastIndexOf('/'))
   let valueAfterLastSlash = partial.substring(partial.lastIndexOf('/') + 1)
 
   let entries = await state.editor.readDirectory(document, valueBeforeLastSlash || '.')
 
-  let isAllowedFile = directive === 'source' ? IS_TEMPLATE_SOURCE : IS_SCRIPT_SOURCE
-
-  // Only show directories and JavaScript/TypeScript files
   entries = entries.filter(([name, type]) => {
-    return type.isDirectory || isAllowedFile.test(name)
+    return type.isDirectory || isAllowedFile(name)
   })
+
+  let items: CompletionItem[] = entries.map(([name, type]) => ({
+    label: type.isDirectory ? name + '/' : name,
+    kind: type.isDirectory ? 19 : 17,
+    command: type.isDirectory ? { command: 'editor.action.triggerSuggest', title: '' } : undefined,
+  }))
 
   return withDefaults(
     {
       isIncomplete: false,
-      items: entries.map(([name, type]) => ({
-        label: type.isDirectory ? name + '/' : name,
-        kind: type.isDirectory ? 19 : 17,
-        command: type.isDirectory
-          ? { command: 'editor.action.triggerSuggest', title: '' }
-          : undefined,
-      })),
+      items,
     },
     {
       data: {
@@ -1751,6 +1845,7 @@ export async function doComplete(
 
   const result =
     (await provideClassNameCompletions(state, document, position, context)) ||
+    (await provideThemeDirectiveCompletions(state, document, position)) ||
     provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||

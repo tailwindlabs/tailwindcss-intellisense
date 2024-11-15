@@ -296,4 +296,90 @@ withFixture('v4/dependencies', (c) => {
       ],
     })
   })
+
+  test.concurrent('@import "…" source(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@import "tailwindcss" source("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 30,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'sub-dir/',
+          kind: 19,
+          command: { command: 'editor.action.triggerSuggest', title: '' },
+          data: expect.anything(),
+          textEdit: {
+            newText: 'sub-dir/',
+            range: { start: { line: 0, character: 30 }, end: { line: 0, character: 30 } },
+          },
+        },
+      ],
+    })
+  })
+
+  test.concurrent('@tailwind utilities source(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@tailwind utilities source("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 28,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'sub-dir/',
+          kind: 19,
+          command: { command: 'editor.action.triggerSuggest', title: '' },
+          data: expect.anything(),
+          textEdit: {
+            newText: 'sub-dir/',
+            range: { start: { line: 0, character: 28 }, end: { line: 0, character: 28 } },
+          },
+        },
+      ],
+    })
+  })
+
+  test.concurrent('@import "…" source(…) directory', async ({ expect }) => {
+    let result = await completion({
+      text: '@import "tailwindcss" source("sub-dir/',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 38,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [],
+    })
+  })
+
+  test.concurrent('@tailwind utilities source(…) directory', async ({ expect }) => {
+    let result = await completion({
+      text: '@tailwind utilities source("sub-dir/',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 36,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [],
+    })
+  })
 })

@@ -59,6 +59,7 @@ export type TailwindCssSettings = {
     invalidVariant: DiagnosticSeveritySetting
     invalidConfigPath: DiagnosticSeveritySetting
     invalidTailwindDirective: DiagnosticSeveritySetting
+    invalidSourceDirective: DiagnosticSeveritySetting
     recommendedVariantOrder: DiagnosticSeveritySetting
   }
   experimental: {

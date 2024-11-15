@@ -8,6 +8,7 @@ export enum DiagnosticKind {
   InvalidVariant = 'invalidVariant',
   InvalidConfigPath = 'invalidConfigPath',
   InvalidTailwindDirective = 'invalidTailwindDirective',
+  InvalidSourceDirective = 'invalidSourceDirective',
   RecommendedVariantOrder = 'recommendedVariantOrder',
 }
 
@@ -78,6 +79,16 @@ export function isInvalidTailwindDirectiveDiagnostic(
   return diagnostic.code === DiagnosticKind.InvalidTailwindDirective
 }
 
+export type InvalidSourceDirectiveDiagnostic = Diagnostic & {
+  code: DiagnosticKind.InvalidSourceDirective
+}
+
+export function isInvalidSourceDirectiveDiagnostic(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is InvalidSourceDirectiveDiagnostic {
+  return diagnostic.code === DiagnosticKind.InvalidSourceDirective
+}
+
 export type RecommendedVariantOrderDiagnostic = Diagnostic & {
   code: DiagnosticKind.RecommendedVariantOrder
   suggestions: string[]
@@ -96,4 +107,5 @@ export type AugmentedDiagnostic =
   | InvalidVariantDiagnostic
   | InvalidConfigPathDiagnostic
   | InvalidTailwindDirectiveDiagnostic
+  | InvalidSourceDirectiveDiagnostic
   | RecommendedVariantOrderDiagnostic
