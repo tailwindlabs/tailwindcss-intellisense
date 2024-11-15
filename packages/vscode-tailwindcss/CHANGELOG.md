@@ -2,7 +2,21 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Add suggestions for theme options ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Add suggestions when using `@source "…"` and `source(…)` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Show brace expansion when hovering `@source` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Highlight `source(…)`, `theme(…)`, and `prefix(…)` when used with `@import "…"` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Highlight `@tailwind utilities source(…)` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Show document links when using `source(…)` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+
+- Ensure language server starts as needed ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Don't show syntax errors when using `source(…)`, `theme(…)`, or `prefix(…)` with `@import "…"` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Don't show warning when using `@tailwind utilities source(…)` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Don't suggest TypeScript declaration files for `@config`, `@plugin`, and `@source` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Don't link Windows-style paths in `@source`, `@config`, and `@plugin` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+
+- Warn on invalid uses of `source(…)`, `@source`, `@config`, and `@plugin` ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
+- Warn when a v4 project uses an old `@tailwind` directive ([#1083](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1083))
 
 ## 0.12.13
 
