@@ -507,6 +507,40 @@ withFixture('v4/basic', (c) => {
     )
   })
 
+  test.concurrent('@theme suggests options', async ({ expect }) => {
+    let result = await completion({
+      lang: 'css',
+      text: '@theme ',
+      position: { line: 0, character: 7 },
+    })
+
+    expect(result.items.length).toBe(3)
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'reference' }),
+        expect.objectContaining({ label: 'inline' }),
+        expect.objectContaining({ label: 'default' }),
+      ]),
+    )
+  })
+
+  test.concurrent('@import "…" theme(…) suggests options', async ({ expect }) => {
+    let result = await completion({
+      lang: 'css',
+      text: '@import "tailwindcss/theme" theme()',
+      position: { line: 0, character: 34 },
+    })
+
+    expect(result.items.length).toBe(3)
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: 'reference' }),
+        expect.objectContaining({ label: 'inline' }),
+        expect.objectContaining({ label: 'default' }),
+      ]),
+    )
+  })
+
   test.concurrent('resolve', async ({ expect }) => {
     let result = await completion({
       text: '<div class="">',
