@@ -35,6 +35,25 @@ export function generateRules(
   }
 }
 
+export function addThemeValues(css: string, state: State) {
+  if (!state.designSystem) return css
+
+  // Add fallbacks to variables with their theme values
+  // Ideally these would just be commentss like
+  // `var(--foo) /* 3rem = 48px */` or
+  // `calc(var(--spacing) * 5) /* 1.25rem = 20px */`
+  css = replaceCssVars(css, (name) => {
+    if (!name.startsWith('--')) return null
+
+    let value = state.designSystem.resolveThemeValue?.(name) ?? null
+    if (value === null) return null
+
+    return `var(${name}, ${value})`
+  })
+
+  return css
+}
+
 export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
   let clone = root.clone()
@@ -45,21 +64,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   let css = clone.toString()
 
-  // Add fallbacks to variables with their theme values
-  // Ideally these would just be commentss like
-  // `var(--foo) /* 3rem = 48px */` or
-  // `calc(var(--spacing) * 5) /* 1.25rem = 20px */`
-  if (state.designSystem) {
-    css = replaceCssVars(css, (name) => {
-      if (!name.startsWith('--')) return null
-
-      let value = state.designSystem.resolveThemeValue?.(name) ?? null
-      if (value === null) return null
-
-      return `var(${name}, ${value})`
-    })
-  }
-
+  css = addThemeValues(css, state)
   css = addEquivalents(css, settings.tailwindCSS)
 
   let identSize = state.v4 ? 2 : 4
