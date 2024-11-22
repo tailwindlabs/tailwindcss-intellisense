@@ -346,12 +346,13 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
       /@media(\s+screen\s*\([^)]+\))/g,
       (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
     )
-    // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
-    // otherwise we'll show syntax-error diagnostics which we don't want
-    .replace(
-      /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*((source|theme|prefix)\([^)]+\)\s*)+/g,
-      (_match, url) => `@import "${url.slice(1, -1)}"`,
-    )
+    .replace(/@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*(.*?)(?=;|$)/g, (_match, url, other) => {
+      // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
+      // otherwise we'll show syntax-error diagnostics which we don't want
+      other = other.replace(/((source|theme|prefix)\([^)]+\)\s*)+?/g, '')
+
+      return `@import "${url.slice(1, -1)}" ${other}`
+    })
     .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
   return TextDocument.create(
