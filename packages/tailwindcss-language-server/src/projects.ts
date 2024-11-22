@@ -1026,6 +1026,7 @@ export async function createProjectService(
 
       state.designSystem = designSystem
       state.classList = classList as any
+      state.variants = getVariants(state)
 
       console.log('---- RELOADED ----')
     },
