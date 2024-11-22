@@ -337,22 +337,22 @@ function replace(delta = 0) {
 
 function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
   let content = textDocument
-      .getText()
-      .replace(/@screen(\s+[^{]+){/g, replace(-2))
-      .replace(/@variants(\s+[^{]+){/g, replace())
-      .replace(/@responsive(\s*){/g, replace())
-      .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
-      .replace(
-        /@media(\s+screen\s*\([^)]+\))/g,
-        (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
-      )
-      // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
-      // otherwise we'll show syntax-error diagnostics which we don't want
-      .replace(
-        /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*((source|theme|prefix)\([^)]+\)\s*)+/g,
-        (_match, url) => `@import "${url.slice(1, -1)}"`,
-      )
-      .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
+    .getText()
+    .replace(/@screen(\s+[^{]+){/g, replace(-2))
+    .replace(/@variants(\s+[^{]+){/g, replace())
+    .replace(/@responsive(\s*){/g, replace())
+    .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
+    .replace(
+      /@media(\s+screen\s*\([^)]+\))/g,
+      (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
+    )
+    // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
+    // otherwise we'll show syntax-error diagnostics which we don't want
+    .replace(
+      /@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*((source|theme|prefix)\([^)]+\)\s*)+/g,
+      (_match, url) => `@import "${url.slice(1, -1)}"`,
+    )
+    .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
   return TextDocument.create(
     textDocument.uri,
@@ -389,7 +389,9 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     .filter((diagnostic) => {
       if (
         diagnostic.code === 'unknownAtRules' &&
-        /Unknown at rule @(tailwind|apply|config|theme|plugin|source|utility|variant)/.test(diagnostic.message)
+        /Unknown at rule @(tailwind|apply|config|theme|plugin|source|utility|variant)/.test(
+          diagnostic.message,
+        )
       ) {
         return false
       }
