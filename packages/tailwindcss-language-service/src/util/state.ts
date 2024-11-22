@@ -89,6 +89,13 @@ export interface Variant {
   selectors: (params?: { value?: string; label?: string }) => string[]
 }
 
+export interface ClassMetadata {
+  color: culori.Color | KeywordColor | null
+  modifiers?: string[]
+}
+
+export type ClassEntry = [string, ClassMetadata]
+
 export interface State {
   enabled: boolean
   isCssConfig?: boolean
@@ -127,7 +134,7 @@ export interface State {
   editor?: EditorState
   jit?: boolean
   jitContext?: any
-  classList?: Array<[string, { color: culori.Color | KeywordColor | null; modifiers?: string[] }]>
+  classList?: ClassEntry[]
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>

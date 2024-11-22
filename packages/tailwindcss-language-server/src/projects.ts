@@ -45,6 +45,7 @@ import type {
   Settings,
   ClassNames,
   Variant,
+  ClassEntry,
 } from '@tailwindcss/language-service/src/util/state'
 import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
@@ -1014,7 +1015,7 @@ export async function createProjectService(
         },
       })
 
-      let classList = designSystem.getClassList().map((className) => {
+      let classList: ClassEntry[] = designSystem.getClassList().map((className) => {
         return [
           className[0],
           {
@@ -1025,7 +1026,7 @@ export async function createProjectService(
       })
 
       state.designSystem = designSystem
-      state.classList = classList as any
+      state.classList = classList
       state.variants = getVariants(state)
 
       console.log('---- RELOADED ----')
