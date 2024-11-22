@@ -1,43 +1,29 @@
 import type { State, TailwindCssSettings } from './state'
-import { equivalentPixelValues } from './pixelEquivalents'
-import { equivalentColorValues } from './colorEquivalents'
-import postcss, { type AcceptedPlugin } from 'postcss'
-import { applyComments, type Comment } from './comments'
-
-export function addEquivalents(css: string, settings: TailwindCssSettings): string {
-  let comments: Comment[] = []
-
-  let plugins: AcceptedPlugin[] = []
-
-  if (settings.showPixelEquivalents) {
-    plugins.push(
-      equivalentPixelValues({
-        comments,
-        rootFontSize: settings.rootFontSize,
-      }),
-    )
-  }
-
-  plugins.push(equivalentColorValues({ comments }))
-
-  try {
-    postcss(plugins).process(css, { from: undefined }).css
-  } catch {
-    return css
-  }
-
-  return applyComments(css, comments)
-}
 
 import type { Plugin } from 'postcss'
 import { inlineCalc } from './css-calc'
+import { getEquivalentColor } from './colorEquivalents'
+import { addPixelEquivalentsToValue } from './pixelEquivalents'
+import { Comment } from './comments'
 
 export function wip(state: State, comments: Comment[], settings: TailwindCssSettings): Plugin {
   return {
     postcssPlugin: 'plugin',
     Declaration(decl) {
-      let result = inlineCalc(state, decl.value)
-      if (result === decl.value) return
+      let value = inlineCalc(state, decl.value)
+      if (value === decl.value) return
+
+      let comment = ''
+
+      let color = getEquivalentColor(value)
+      if (color !== value) {
+        comment = `${value} = ${color}`
+      } else {
+        let pixels = addPixelEquivalentsToValue(value, settings.rootFontSize, false)
+        if (pixels !== value) {
+          comment = `${value} = ${pixels}`
+        }
+      }
 
       comments.push({
         index: decl.source.end.offset,
@@ -48,16 +34,6 @@ export function wip(state: State, comments: Comment[], settings: TailwindCssSett
 }
 
 export function addThemeValues(state: State, settings: TailwindCssSettings) {
-  root.walkDecls((decl) => {
-    let result = inlineCalc(state, decl.value)
-    if (result === decl.value) return
-
-    comments.push({
-      index: decl.source.end.offset,
-      value: result,
-    })
-  })
-
   // Add fallbacks to variables with their theme values
   // Ideally these would just be commentss like
   // `var(--foo) /* 3rem = 48px */` or
