@@ -522,7 +522,7 @@
           "patterns": [
             {
               "match": "none(?=[)])",
-              "name": "variable.other.css"
+              "name": "support.constant.none.css"
             },
             {
               "include": "source.css#string"
