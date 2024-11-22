@@ -338,6 +338,12 @@ function replace(delta = 0) {
 function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
   let content = textDocument
     .getText()
+
+    // Remove inline `@layer` directives
+    // TODO: This should be unnecessary once we have updated the bundled CSS
+    // language service
+    .replace(/@layer\s+[^;{]+(;|$)/g, '')
+
     .replace(/@screen(\s+[^{]+){/g, replace(-2))
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
