@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Reload variants when editing the theme in v4 ([#1094](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1094))
 
 ## 0.12.14
 
