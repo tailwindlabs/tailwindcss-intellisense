@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet
+
+## 0.12.15
+
 - Reload variants when editing the theme in v4 ([#1094](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1094))
 - Don't show syntax errors when imports contain `layer(…)` and `source(…)` ([#1095](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1095))
 - Don't show syntax errors when document contains an `@layer` statement ([#1095](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1095))
