@@ -38,6 +38,9 @@
           "include": "source.css#url"
         },
         {
+          "include": "#layer-fn"
+        },
+        {
           "include": "#source-fn"
         },
         {
@@ -522,10 +525,37 @@
           "patterns": [
             {
               "match": "none(?=[)])",
-              "name": "variable.other.css"
+              "name": "support.constant.none.css"
             },
             {
               "include": "source.css#string"
+            }
+          ]
+        }
+      ]
+    },
+    "layer-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(layer)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.layer.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "\\s*([a-zA-Z][a-zA-Z0-9.]+|\\\\(?:[0-9a-fA-F]{1,6}))?\\s*",
+              "name": "support.constant.layer-name.css"
             }
           ]
         }
