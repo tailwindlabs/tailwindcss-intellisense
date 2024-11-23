@@ -1,7 +1,11 @@
-import type { State } from './state'
+import type { State, TailwindCssSettings } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
+import { replaceCssVars } from './css-vars'
+import { addColorEquivalentToValue, getEquivalentColor } from './colorEquivalents'
+import { inlineCalc, replaceCssCalc } from './css-calc'
+import { applyComments, Comment } from './comments'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -34,6 +38,49 @@ export function generateRules(
   }
 }
 
+export function addThemeValues(root: Root, state: State, settings: TailwindCssSettings) {
+  if (!state.designSystem) return root
+
+  let comments: Comment[] = []
+
+  root.walkDecls((decl) => {
+    let result = inlineCalc(state, decl.value)
+    if (result === decl.value) return
+
+    comments.push({
+      index: decl.source.end.offset,
+      value: result,
+    })
+  })
+
+  // Add fallbacks to variables with their theme values
+  // Ideally these would just be commentss like
+  // `var(--foo) /* 3rem = 48px */` or
+  // `calc(var(--spacing) * 5) /* 1.25rem = 20px */`
+  css = replaceCssVars(css, (name) => {
+    if (!name.startsWith('--')) return null
+
+    let value = state.designSystem.resolveThemeValue?.(name) ?? null
+    if (value === null) return null
+
+    let comment = ''
+
+    let color = getEquivalentColor(value)
+    if (color !== value) {
+      comment = ` /* ${value} = ${color} */`
+    } else {
+      let pixels = addPixelEquivalentsToValue(value, settings.rootFontSize, false)
+      if (pixels !== value) {
+        comment = ` /* ${value} = ${pixels} */`
+      }
+    }
+
+    return `var(${name})${comment}`
+  })
+
+  return css
+}
+
 export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
   let clone = root.clone()
@@ -41,6 +88,8 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
   clone.walkAtRules('defaults', (node) => {
     node.remove()
   })
+
+  addThemeValues(clone, state, settings.tailwindCSS)
 
   let css = clone.toString()
 
