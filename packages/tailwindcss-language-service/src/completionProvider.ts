@@ -789,6 +789,8 @@ function provideThemeVariableCompletions(
   position: Position,
   _context?: CompletionContext,
 ): CompletionList {
+  if (!state.v4) return null
+
   // Make sure we're in a CSS "context'
   if (!isCssContext(state, document, position)) return null
   let text = getTextWithoutComments(document, 'css', {
@@ -804,52 +806,46 @@ function provideThemeVariableCompletions(
   if (themeBlock === -1) return null
   if (braceLevel(text.slice(themeBlock)) !== 1) return null
 
-  function themeVar(label: string) {
-    return {
-      label,
-      kind: CompletionItemKind.Variable,
-      // insertTextFormat: InsertTextFormat.Snippet,
-      // textEditText: `${label}-[\${1}]`,
-    }
-  }
+  let entries: ThemeEntry[] = [
+    // Polyfill data for older versions of the design system
+    { kind: 'variable', name: '--default-transition-duration' },
+    { kind: 'variable', name: '--default-transition-timing-function' },
+    { kind: 'variable', name: '--default-font-family' },
+    { kind: 'variable', name: '--default-font-feature-settings' },
+    { kind: 'variable', name: '--default-font-variation-settings' },
+    { kind: 'variable', name: '--default-mono-font-family' },
+    { kind: 'variable', name: '--default-mono-font-feature-settings' },
+    { kind: 'variable', name: '--default-mono-font-variation-settings' },
+    { kind: 'namespace', name: '--breakpoint' },
+    { kind: 'namespace', name: '--color' },
+    { kind: 'namespace', name: '--animate' },
+    { kind: 'namespace', name: '--blur' },
+    { kind: 'namespace', name: '--radius' },
+    { kind: 'namespace', name: '--shadow' },
+    { kind: 'namespace', name: '--inset-shadow' },
+    { kind: 'namespace', name: '--drop-shadow' },
+    { kind: 'namespace', name: '--spacing' },
+    { kind: 'namespace', name: '--width' },
+    { kind: 'namespace', name: '--font-family' },
+    { kind: 'namespace', name: '--font-size' },
+    { kind: 'namespace', name: '--letter-spacing' },
+    { kind: 'namespace', name: '--line-height' },
+    { kind: 'namespace', name: '--transition-timing-function' },
+  ]
 
-  function themeNamespace(label: string) {
-    return {
-      label: `${label}-`,
+  let items: CompletionItem[] = []
+
+  for (let entry of entries) {
+    items.push({
+      label: entry.kind === 'namespace' ? entry.name : `${entry.name}-`,
       kind: CompletionItemKind.Variable,
-      // insertTextFormat: InsertTextFormat.Snippet,
-      // textEditText: `${label}-[\${1}]`,
-    }
+    })
   }
 
   return withDefaults(
     {
       isIncomplete: false,
-      items: [
-        themeVar('--default-transition-duration'),
-        themeVar('--default-transition-timing-function'),
-        themeVar('--default-font-family'),
-        themeVar('--default-font-feature-settings'),
-        themeVar('--default-font-variation-settings'),
-        themeVar('--default-mono-font-family'),
-        themeVar('--default-mono-font-feature-settings'),
-        themeVar('--default-mono-font-variation-settings'),
-        themeNamespace('--breakpoint'),
-        themeNamespace('--color'),
-        themeNamespace('--animate'),
-        themeNamespace('--blur'),
-        themeNamespace('--radius'),
-        themeNamespace('--shadow'),
-        themeNamespace('--inset-shadow'),
-        themeNamespace('--drop-shadow'),
-        themeNamespace('--spacing'),
-        themeNamespace('--width'),
-        themeNamespace('--font-family'),
-        themeNamespace('--font-size'),
-        themeNamespace('--letter-spacing'),
-        themeNamespace('--line-height'),
-        themeNamespace('--transition-timing-function'),
-      ],
+      items,
     },
     {
       data: {
