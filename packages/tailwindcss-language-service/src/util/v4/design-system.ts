@@ -24,6 +24,11 @@ export interface VariantEntry {
 
 export type VariantFn = (rule: Rule, variant: NamedVariant) => null | void
 
+export interface ThemeEntry {
+  kind: 'namespace' | 'variable'
+  name: string
+}
+
 export interface DesignSystem {
   theme: Theme
   variants: Map<string, VariantFn>
