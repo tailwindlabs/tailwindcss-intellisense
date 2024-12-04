@@ -32,12 +32,12 @@ export interface DesignSystem {
   getClassOrder(classes: string[]): [string, bigint | null][]
   getClassList(): ClassEntry[]
   getVariants(): VariantEntry[]
+
+  // Optional because it did not exist in earlier v4 alpha versions
+  resolveThemeValue?(path: string): string | undefined
 }
 
 export interface DesignSystem {
   compile(classes: string[]): postcss.Root[]
   toCss(nodes: postcss.Root | postcss.Node[]): string
-
-  // Optional because it did not exist in earlier v4 alpha versions
-  resolveThemeValue?(path: string): string | undefined
 }
