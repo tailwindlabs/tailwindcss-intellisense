@@ -40,6 +40,9 @@ export interface DesignSystem {
 
   // Optional because it did not exist in earlier v4 alpha versions
   resolveThemeValue?(path: string): string | undefined
+
+  // Earlier v4 versions did not have this method
+  getThemeEntries?(): ThemeEntry[]
 }
 
 export interface DesignSystem {

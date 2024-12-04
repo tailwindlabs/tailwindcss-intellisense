@@ -40,6 +40,7 @@ import { customClassesIn } from './util/classes'
 import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
 import { findFileDirective } from './completions/file-paths'
+import type { ThemeEntry } from './util/v4'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -832,6 +833,10 @@ function provideThemeVariableCompletions(
     { kind: 'namespace', name: '--line-height' },
     { kind: 'namespace', name: '--transition-timing-function' },
   ]
+
+  if (state.designSystem.getThemeEntries) {
+    entries = state.designSystem.getThemeEntries()
+  }
 
   let items: CompletionItem[] = []
 
