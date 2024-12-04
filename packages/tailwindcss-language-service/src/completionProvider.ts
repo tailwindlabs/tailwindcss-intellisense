@@ -842,7 +842,7 @@ function provideThemeVariableCompletions(
 
   for (let entry of entries) {
     items.push({
-      label: entry.kind === 'namespace' ? entry.name : `${entry.name}-`,
+      label: entry.kind === 'namespace' ? `${entry.name}-` : entry.name,
       kind: CompletionItemKind.Variable,
     })
   }
