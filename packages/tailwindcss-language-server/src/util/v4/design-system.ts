@@ -129,11 +129,22 @@ export async function loadDesignSystem(
     }),
 
     loadStylesheet: async (id: string, base: string) => {
-      let resolved = resolveCssFrom(base, id)
+      // Skip over missing stylesheets (and log an error) so we can do our best
+      // to compile the design system even when the build might be incomplete.
+      // TODO: Figure out if we can recover from parsing errors in stylesheets
+      // we'd want to surface diagnostics when we discover imports that cause
+      // parsing errors or other logic errors.
 
-      return {
-        base: path.dirname(resolved),
-        content: await fs.readFile(resolved, 'utf-8'),
+      try {
+        let resolved = resolveCssFrom(base, id)
+
+        return {
+          base: path.dirname(resolved),
+          content: await fs.readFile(resolved, 'utf-8'),
+        }
+      } catch (err) {
+        console.error(`Unable to load stylesheet: ${id}`, err)
+        return { base, content: '' }
       }
     },
 
