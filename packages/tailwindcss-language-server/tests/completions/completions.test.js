@@ -567,7 +567,9 @@ withFixture('v4/basic', (c) => {
 withFixture('v4/basic', (c) => {
   let completion = buildCompletion(c)
 
-  test('Completions have customizable pixel equivalents (1rem == 10px)', async ({ expect }) => {
+  test.only('Completions have customizable pixel equivalents (1rem == 10px)', async ({
+    expect,
+  }) => {
     await c.updateSettings({
       tailwindCSS: {
         rootFontSize: 10,

@@ -23,4 +23,7 @@ test('Inlicing calc expressions using the design system', () => {
 
   expect(inlineCalc(state, 'calc(var(--spacing) * 4)')).toBe('1rem')
   expect(inlineCalc(state, 'calc(var(--spacing) / 4)')).toBe('0.0625rem')
+  expect(inlineCalc(state, 'calc(var(--spacing) * 1)')).toBe('0.25rem')
+  expect(inlineCalc(state, 'calc(var(--spacing) * -1)')).toBe('-0.25rem')
+  expect(inlineCalc(state, 'calc(1.25 / 0.875)')).toBe('1.4286')
 })

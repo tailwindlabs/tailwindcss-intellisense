@@ -70,11 +70,16 @@ function parseLength(length: string): [number, string] | null {
   return [numberPart, match[2]]
 }
 
+function round(n: number, precision: number): number {
+  return Math.round(n * Math.pow(10, precision)) / Math.pow(10, precision)
+}
+
 export function evaluateExpression(str: string): string | null {
   // We're only interested simple calc expressions of the form
   // A + B, A - B, A * B, A / B
 
-  let parts = str.split(/\s*([+*/-])\s*/)
+  let parts = str.split(/\s+([+*/-])\s+/)
+
   if (parts.length === 1) return null
   if (parts.length !== 3) return null
 
@@ -98,13 +103,13 @@ export function evaluateExpression(str: string): string | null {
 
   switch (parts[1]) {
     case '+':
-      return (a[0] + b[0]).toString() + a[1]
+      return round(a[0] + b[0], 4).toString() + a[1]
     case '*':
-      return (a[0] * b[0]).toString() + a[1]
+      return round(a[0] * b[0], 4).toString() + a[1]
     case '-':
-      return (a[0] - b[0]).toString() + a[1]
+      return round(a[0] - b[0], 4).toString() + a[1]
     case '/':
-      return (a[0] / b[0]).toString() + a[1]
+      return round(a[0] / b[0], 4).toString() + a[1]
   }
 
   return null
