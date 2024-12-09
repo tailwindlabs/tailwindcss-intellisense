@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet
+- Update theme entry suggestions ([#1105](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1105))
 
 ## 0.12.15
 
