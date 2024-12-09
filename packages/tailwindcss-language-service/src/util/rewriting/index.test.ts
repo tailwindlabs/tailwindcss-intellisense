@@ -65,10 +65,17 @@ test('Evaluating CSS calc expressions', () => {
   expect(replaceCssCalc('calc(1rem + 1px)', (node) => evaluateExpression(node.value))).toBe(
     'calc(1rem + 1px)',
   )
+
+  expect(replaceCssCalc('calc(1.25 / 0.875)', (node) => evaluateExpression(node.value))).toBe(
+    '1.4286',
+  )
 })
 
-test('Inlicing calc expressions using the design system', () => {
-  let map = new Map<string, string>([['--spacing', '0.25rem']])
+test('Inlining calc expressions using the design system', () => {
+  let map = new Map<string, string>([
+    ['--spacing', '0.25rem'],
+    ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
+  ])
 
   let state: State = {
     enabled: true,
@@ -81,6 +88,8 @@ test('Inlicing calc expressions using the design system', () => {
     rootFontSize: 10,
   } as any
 
+  // Inlining calc expressions
+  // + pixel equivalents
   expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
     'calc(var(--spacing) * 4) /* 1rem = 10px */',
   )
@@ -107,5 +116,10 @@ test('Inlicing calc expressions using the design system', () => {
 
   expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
     'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
+  )
+
+  // Color equivalents
+  expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
+    'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
   )
 })

@@ -4,6 +4,7 @@ import { evaluateExpression } from './calc'
 import { replaceCssVars, replaceCssCalc, Range } from './replacements'
 import { addPixelEquivalentsToValue } from '../pixelEquivalents'
 import { applyComments, Comment } from '../comments'
+import { getEquivalentColor } from '../colorEquivalents'
 
 export function addThemeValues(css: string, state: State, settings: TailwindCssSettings) {
   let comments: Comment[] = []
@@ -16,6 +17,9 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
 
       let value = state.designSystem.resolveThemeValue?.(name) ?? null
       if (value === null) return null
+
+      // Inline CSS calc expressions in theme values
+      value = replaceCssCalc(value, (expr) => evaluateExpression(expr.value))
 
       return value
     })
@@ -33,6 +37,16 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
       comments.push({
         index: expr.range.end + 1,
         value: `${evaluated} = ${px}`,
+      })
+
+      return null
+    }
+
+    let color = getEquivalentColor(evaluated)
+    if (color !== evaluated) {
+      comments.push({
+        index: expr.range.end + 1,
+        value: `${evaluated} = ${color}`,
       })
 
       return null
@@ -68,6 +82,25 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
       return null
     }
 
+    let color = getEquivalentColor(value)
+    if (color !== value) {
+      comments.push({
+        index: range.end + 1,
+        value: `${value} = ${color}`,
+      })
+
+      return null
+    }
+
+    // Inline CSS calc expressions in theme values
+    value = replaceCssCalc(value, (expr) => {
+      let evaluated = evaluateExpression(expr.value)
+      if (!evaluated) return null
+      if (evaluated === expr.value) return null
+
+      return `calc(${expr.value}) ≈ ${evaluated}`
+    })
+
     comments.push({
       index: range.end + 1,
       value,
@@ -75,8 +108,6 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
 
     return null
   })
-
-  comments.sort((a, b) => a.index - b.index)
 
   return applyComments(css, comments)
 }
