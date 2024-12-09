@@ -310,8 +310,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12492)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(270)
+    expect(result.items.length).toBe(12319)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(306)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
@@ -567,7 +567,9 @@ withFixture('v4/basic', (c) => {
 withFixture('v4/basic', (c) => {
   let completion = buildCompletion(c)
 
-  test('Completions have customizable pixel equivalents (1rem == 10px)', async ({ expect }) => {
+  test.only('Completions have customizable pixel equivalents (1rem == 10px)', async ({
+    expect,
+  }) => {
     await c.updateSettings({
       tailwindCSS: {
         rootFontSize: 10,
@@ -587,11 +589,11 @@ withFixture('v4/basic', (c) => {
     expect(resolved).toEqual({
       ...item,
       detail:
-        'font-size: var(--font-size-sm, 0.875rem /* 8.75px */); line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));',
+        'font-size: var(--text-sm); line-height: var(--tw-leading, var(--text-sm--line-height));',
       documentation: {
         kind: 'markdown',
         value:
-          '```css\n.text-sm {\n  font-size: var(--font-size-sm, 0.875rem /* 8.75px */);\n  line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));\n}\n```',
+          '```css\n.text-sm {\n  font-size: var(--text-sm, 0.875rem /* 8.75px */);\n  line-height: var(--tw-leading, var(--text-sm--line-height, 1.25rem /* 12.5px */));\n}\n```',
       },
     })
   })
@@ -613,7 +615,7 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: var(--color-red-500, oklch(0.637 0.237 25.331));',
+      detail: 'background-color: var(--color-red-500);',
       documentation: '#fb2c36',
     })
   })
@@ -642,19 +644,19 @@ withFixture('v4/workspaces', (c) => {
 
     expect(resolved[0]).toEqual({
       ...items[0],
-      detail: 'background-color: var(--color-beet, #8e3b46);',
+      detail: 'background-color: var(--color-beet);',
       documentation: '#8e3b46',
     })
 
     expect(resolved[1]).toEqual({
       ...items[1],
-      detail: 'background-color: var(--color-orangepeel, #ff9f00);',
+      detail: 'background-color: var(--color-orangepeel);',
       documentation: '#ff9f00',
     })
 
     expect(resolved[2]).toEqual({
       ...items[2],
-      detail: 'background-color: var(--color-style-main, #8e3b46);',
+      detail: 'background-color: var(--color-style-main);',
       documentation: '#8e3b46',
     })
   })

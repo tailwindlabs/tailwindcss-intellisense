@@ -3,6 +3,6 @@
     "packages/*"
   ],
   "dependencies": {
-    "tailwindcss": "^4.0.0-alpha.30"
+    "tailwindcss": "^4.0.0-beta.6"
   }
 }

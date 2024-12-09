@@ -1,4 +1,4 @@
-import type { TailwindCssSettings } from './state'
+import type { State, TailwindCssSettings } from './state'
 import { equivalentPixelValues } from './pixelEquivalents'
 import { equivalentColorValues } from './colorEquivalents'
 import postcss, { type AcceptedPlugin } from 'postcss'
