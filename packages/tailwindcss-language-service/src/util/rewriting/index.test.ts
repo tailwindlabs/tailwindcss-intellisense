@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
-import { evaluateExpression, replaceCssCalc, replaceCssVarsWithFallbacks } from './index'
-import { State } from '../state'
+import {
+  addThemeValues,
+  evaluateExpression,
+  replaceCssCalc,
+  replaceCssVarsWithFallbacks,
+} from './index'
+import { State, TailwindCssSettings } from '../state'
 import { DesignSystem } from '../v4'
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
@@ -62,36 +67,45 @@ test('Evaluating CSS calc expressions', () => {
   )
 })
 
-// test('Inlicing calc expressions using the design system', () => {
-//   let map = new Map<string, string>([['--spacing', '0.25rem']])
+test('Inlicing calc expressions using the design system', () => {
+  let map = new Map<string, string>([['--spacing', '0.25rem']])
 
-//   let state: State = {
-//     enabled: true,
-//     designSystem: {
-//       resolveThemeValue: (name) => map.get(name) ?? null,
-//     } as DesignSystem,
-//   }
+  let state: State = {
+    enabled: true,
+    designSystem: {
+      resolveThemeValue: (name) => map.get(name) ?? null,
+    } as DesignSystem,
+  }
 
-//   expect(inlineCalc(state, 'calc(var(--spacing) * 4)')).toBe('1rem')
-//   expect(inlineCalc(state, 'calc(var(--spacing) / 4)')).toBe('0.0625rem')
-//   expect(inlineCalc(state, 'calc(var(--spacing) * 1)')).toBe('0.25rem')
-//   expect(inlineCalc(state, 'calc(var(--spacing) * -1)')).toBe('-0.25rem')
-//   expect(inlineCalc(state, 'calc(1.25 / 0.875)')).toBe('1.4286')
-// })
+  let settings: TailwindCssSettings = {
+    rootFontSize: 10,
+  } as any
 
-// test('Inlicing calc expressions using the design system', () => {
-//   let map = new Map<string, string>([['--spacing', '0.25rem']])
+  expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
+    'calc(var(--spacing) * 4) /* 1rem = 10px */',
+  )
 
-//   let state: State = {
-//     enabled: true,
-//     designSystem: {
-//       resolveThemeValue: (name) => map.get(name) ?? null,
-//     } as DesignSystem,
-//   }
+  expect(addThemeValues('calc(var(--spacing) / 4)', state, settings)).toBe(
+    'calc(var(--spacing) / 4) /* 0.0625rem = 0.625px */',
+  )
 
-//   let settings: TailwindCssSettings = {
-//     rootFontSize: 10,
-//   } as any
+  expect(addThemeValues('calc(var(--spacing) * 1)', state, settings)).toBe(
+    'calc(var(--spacing) * 1) /* 0.25rem = 2.5px */',
+  )
 
-//   expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe('1rem')
-// })
+  expect(addThemeValues('calc(var(--spacing) * -1)', state, settings)).toBe(
+    'calc(var(--spacing) * -1) /* -0.25rem = -2.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) + 1rem)', state, settings)).toBe(
+    'calc(var(--spacing) + 1rem) /* 1.25rem = 12.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) - 1rem)', state, settings)).toBe(
+    'calc(var(--spacing) - 1rem) /* -0.75rem = -7.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
+    'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
+  )
+})
