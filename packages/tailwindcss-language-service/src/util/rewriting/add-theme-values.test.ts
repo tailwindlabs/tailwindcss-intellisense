@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
-import { State, TailwindCssSettings } from './state'
-import { DesignSystem } from './v4'
+import { State, TailwindCssSettings } from '../state'
+import { DesignSystem } from '../v4'
 import { addThemeValues } from './add-theme-values'
 
 test('Inlicing calc expressions using the design system', () => {

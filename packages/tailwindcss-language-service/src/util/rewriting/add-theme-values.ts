@@ -1,8 +1,8 @@
-import type { State, TailwindCssSettings } from './state'
+import type { State, TailwindCssSettings } from '../state'
 
-import { evaluateExpression, replaceCssCalc } from './css-calc'
-import { replaceCssVars } from './css-vars'
-import { addPixelEquivalentsToValue } from './pixelEquivalents'
+import { evaluateExpression } from './calc'
+import { replaceCssVars, replaceCssCalc } from './replacements'
+import { addPixelEquivalentsToValue } from '../pixelEquivalents'
 
 export function addThemeValues(css: string, state: State, settings: TailwindCssSettings) {
   // TODO: Add fallbacks to variables with their theme values
@@ -11,7 +11,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
   // `calc(var(--spacing) * 5) /* 1.25rem = 20px */`
 
   css = replaceCssCalc(css, (expr) => {
-    let inlined = replaceCssVars(expr, (name) => {
+    let inlined = replaceCssVars(expr.value, ({ name }) => {
       if (!name.startsWith('--')) return null
 
       let value = state.designSystem.resolveThemeValue?.(name) ?? null
@@ -23,7 +23,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
     let evaluated = evaluateExpression(inlined)
 
     // No changes were made so we can just return the original expression
-    if (expr === evaluated) return expr
+    if (expr.value === evaluated) return expr.value
 
     let equiv = addPixelEquivalentsToValue(evaluated, settings.rootFontSize, false)
     if (equiv !== evaluated) {
@@ -33,7 +33,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
     return `calc(${expr}) /* ${evaluated} */`
   })
 
-  css = replaceCssVars(css, (name) => {
+  css = replaceCssVars(css, ({ name }) => {
     if (!name.startsWith('--')) return null
 
     let value = state.designSystem.resolveThemeValue?.(name) ?? null

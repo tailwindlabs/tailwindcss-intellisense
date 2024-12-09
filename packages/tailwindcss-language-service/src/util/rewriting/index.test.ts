@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-import { replaceCssVarsWithFallbacks } from './css-vars'
-import { State } from './state'
-import { DesignSystem } from './v4'
+import { evaluateExpression, replaceCssCalc, replaceCssVarsWithFallbacks } from './index'
+import { State } from '../state'
+import { DesignSystem } from '../v4'
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
   let map = new Map<string, string>([['--known', 'blue']])
@@ -52,3 +52,46 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
   // Unknown theme keys without fallbacks are not replaced
   expect(replaceCssVarsWithFallbacks(state, 'var(--unknown)')).toBe('var(--unknown)')
 })
+
+test('Evaluating CSS calc expressions', () => {
+  expect(replaceCssCalc('calc(1px + 1px)', (node) => evaluateExpression(node.value))).toBe('2px')
+  expect(replaceCssCalc('calc(1px * 4)', (node) => evaluateExpression(node.value))).toBe('4px')
+  expect(replaceCssCalc('calc(1px / 4)', (node) => evaluateExpression(node.value))).toBe('0.25px')
+  expect(replaceCssCalc('calc(1rem + 1px)', (node) => evaluateExpression(node.value))).toBe(
+    'calc(1rem + 1px)',
+  )
+})
+
+// test('Inlicing calc expressions using the design system', () => {
+//   let map = new Map<string, string>([['--spacing', '0.25rem']])
+
+//   let state: State = {
+//     enabled: true,
+//     designSystem: {
+//       resolveThemeValue: (name) => map.get(name) ?? null,
+//     } as DesignSystem,
+//   }
+
+//   expect(inlineCalc(state, 'calc(var(--spacing) * 4)')).toBe('1rem')
+//   expect(inlineCalc(state, 'calc(var(--spacing) / 4)')).toBe('0.0625rem')
+//   expect(inlineCalc(state, 'calc(var(--spacing) * 1)')).toBe('0.25rem')
+//   expect(inlineCalc(state, 'calc(var(--spacing) * -1)')).toBe('-0.25rem')
+//   expect(inlineCalc(state, 'calc(1.25 / 0.875)')).toBe('1.4286')
+// })
+
+// test('Inlicing calc expressions using the design system', () => {
+//   let map = new Map<string, string>([['--spacing', '0.25rem']])
+
+//   let state: State = {
+//     enabled: true,
+//     designSystem: {
+//       resolveThemeValue: (name) => map.get(name) ?? null,
+//     } as DesignSystem,
+//   }
+
+//   let settings: TailwindCssSettings = {
+//     rootFontSize: 10,
+//   } as any
+
+//   expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe('1rem')
+// })

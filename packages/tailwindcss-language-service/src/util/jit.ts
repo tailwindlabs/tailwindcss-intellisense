@@ -2,11 +2,7 @@ import type { State, TailwindCssSettings } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
-import { replaceCssVars, replaceCssVarsWithFallbacks } from './css-vars'
-import { addColorEquivalentToValue, getEquivalentColor } from './colorEquivalents'
-import { evaluateExpression, inlineCalc, replaceCssCalc } from './css-calc'
-import { applyComments, Comment } from './comments'
-import { addThemeValues } from './add-theme-values'
+import { addThemeValues } from './rewriting'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
