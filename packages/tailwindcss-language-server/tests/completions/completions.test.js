@@ -593,8 +593,8 @@ withFixture('v4/basic', (c) => {
         value: [
           '```css',
           '.text-sm {',
-          '  font-size: var(--text-sm);',
-          '  line-height: var(--tw-leading, var(--text-sm--line-height));',
+          '  font-size: var(--text-sm) /* 0.875rem = 8.75px */;',
+          '  line-height: var(--tw-leading, var(--text-sm--line-height) /* calc(1.25 / 0.875) ≈ 1.4286 */);',
           '  letter-spacing: undefined;',
           '  font-weight: undefined;',
           '}',
