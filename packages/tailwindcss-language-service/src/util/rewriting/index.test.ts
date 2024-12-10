@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
-import { replaceCssVarsWithFallbacks } from './index'
-import { State } from '../state'
+import {
+  addThemeValues,
+  evaluateExpression,
+  replaceCssCalc,
+  replaceCssVarsWithFallbacks,
+} from './index'
+import { State, TailwindCssSettings } from '../state'
 import { DesignSystem } from '../v4'
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
@@ -51,4 +56,70 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
 
   // Unknown theme keys without fallbacks are not replaced
   expect(replaceCssVarsWithFallbacks(state, 'var(--unknown)')).toBe('var(--unknown)')
+})
+
+test('Evaluating CSS calc expressions', () => {
+  expect(replaceCssCalc('calc(1px + 1px)', (node) => evaluateExpression(node.value))).toBe('2px')
+  expect(replaceCssCalc('calc(1px * 4)', (node) => evaluateExpression(node.value))).toBe('4px')
+  expect(replaceCssCalc('calc(1px / 4)', (node) => evaluateExpression(node.value))).toBe('0.25px')
+  expect(replaceCssCalc('calc(1rem + 1px)', (node) => evaluateExpression(node.value))).toBe(
+    'calc(1rem + 1px)',
+  )
+
+  expect(replaceCssCalc('calc(1.25 / 0.875)', (node) => evaluateExpression(node.value))).toBe(
+    '1.4286',
+  )
+})
+
+test('Inlining calc expressions using the design system', () => {
+  let map = new Map<string, string>([
+    ['--spacing', '0.25rem'],
+    ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
+  ])
+
+  let state: State = {
+    enabled: true,
+    designSystem: {
+      resolveThemeValue: (name) => map.get(name) ?? null,
+    } as DesignSystem,
+  }
+
+  let settings: TailwindCssSettings = {
+    rootFontSize: 10,
+  } as any
+
+  // Inlining calc expressions
+  // + pixel equivalents
+  expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
+    'calc(var(--spacing) * 4) /* 1rem = 10px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) / 4)', state, settings)).toBe(
+    'calc(var(--spacing) / 4) /* 0.0625rem = 0.625px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) * 1)', state, settings)).toBe(
+    'calc(var(--spacing) * 1) /* 0.25rem = 2.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) * -1)', state, settings)).toBe(
+    'calc(var(--spacing) * -1) /* -0.25rem = -2.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) + 1rem)', state, settings)).toBe(
+    'calc(var(--spacing) + 1rem) /* 1.25rem = 12.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) - 1rem)', state, settings)).toBe(
+    'calc(var(--spacing) - 1rem) /* -0.75rem = -7.5px */',
+  )
+
+  expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
+    'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
+  )
+
+  // Color equivalents
+  expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
+    'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
+  )
 })

@@ -68,3 +68,55 @@ export function replaceCssVars(str: string, replace: CssVarReplacer): string {
 
   return str
 }
+
+/**
+ * A calc(…) expression in a CSS value
+ */
+export interface CalcExpression {
+  kind: 'calc-expression'
+  range: Range
+  value: string
+}
+
+export type CssCalcReplacer = (node: CalcExpression) => string | null
+
+/**
+ * Replace all calc expression in a string using the replacer function
+ */
+export function replaceCssCalc(str: string, replace: CssCalcReplacer): string {
+  for (let i = 0; i < str.length; ++i) {
+    if (!str.startsWith('calc(', i)) continue
+
+    let depth = 0
+
+    for (let j = i + 5; i < str.length; ++j) {
+      if (str[j] === '(') {
+        depth++
+      } else if (str[j] === ')' && depth > 0) {
+        depth--
+      } else if (str[j] === ')' && depth === 0) {
+        let expr = str.slice(i + 5, j)
+
+        let replacement = replace({
+          kind: 'calc-expression',
+          value: expr,
+          range: {
+            start: i,
+            end: j,
+          },
+        })
+
+        if (replacement !== null) {
+          str = str.slice(0, i) + replacement + str.slice(j + 1)
+        }
+
+        // We don't want to skip past anything here because `replacement`
+        // might contain more var(…) calls in which case `i` will already
+        // be pointing at the right spot to start looking for them
+        break
+      }
+    }
+  }
+
+  return str
+}
