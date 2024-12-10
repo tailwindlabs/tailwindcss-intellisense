@@ -8,7 +8,7 @@ import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import postcss from 'postcss'
-import { replaceCssVarsWithFallbacks } from './css-vars'
+import { replaceCssVarsWithFallbacks } from './rewriting'
 
 const COLOR_PROPS = [
   'accent-color',

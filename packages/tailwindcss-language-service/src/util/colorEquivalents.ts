@@ -6,6 +6,16 @@ import type { Comment } from './comments'
 
 let allowedFunctions = ['rgb', 'rgba', 'hsl', 'hsla', 'lch', 'lab', 'oklch', 'oklab']
 
+export function getEquivalentColor(value: string): string {
+  const color = getColorFromValue(value)
+
+  if (!color) return value
+  if (typeof color === 'string') return value
+  if (!inGamut('rgb')(color)) return value
+
+  return formatColor(color)
+}
+
 export function equivalentColorValues({ comments }: { comments: Comment[] }): Plugin {
   return {
     postcssPlugin: 'plugin',
@@ -28,12 +38,11 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
           return false
         }
 
-        const color = getColorFromValue(`${node.value}(${values.join(' ')})`)
-        if (!inGamut('rgb')(color)) {
-          return false
-        }
+        let color = `${node.value}(${values.join(' ')})`
 
-        if (!color || typeof color === 'string') {
+        let equivalent = getEquivalentColor(color)
+
+        if (equivalent === color) {
           return false
         }
 
@@ -42,7 +51,7 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
             decl.source.start.offset +
             `${decl.prop}${decl.raws.between}`.length +
             node.sourceEndIndex,
-          value: formatColor(color),
+          value: equivalent,
         })
 
         return false

@@ -1,27 +1,27 @@
-import type { State } from './state'
-
-export function replaceCssVarsWithFallbacks(state: State, str: string): string {
-  return replaceCssVars(str, (name, fallback) => {
-    // Replace with the value from the design system first. The design system
-    // take precedences over other sources as that emulates the behavior of a
-    // browser where the fallback is only used if the variable is defined.
-    if (state.designSystem && name.startsWith('--')) {
-      let value = state.designSystem.resolveThemeValue?.(name) ?? null
-      if (value !== null) return value
-    }
-
-    if (fallback) {
-      return fallback
-    }
-
-    // Don't touch it since there's no suitable replacement
-    return null
-  })
+/**
+ * A var(…) expression which may have an optional fallback value
+ */
+export interface CssVariable {
+  kind: 'css-variable'
+  range: Range
+  name: string
+  fallback: string | null
 }
 
-type CssVarReplacer = (name: string, fallback: string | null) => string | null
+export interface Range {
+  /** The zero-based offset where this node starts */
+  start: number
 
-function replaceCssVars(str: string, replace: CssVarReplacer): string {
+  /** The zero-based offset where this node ends */
+  end: number
+}
+
+export type CssVarReplacer = (node: CssVariable) => string | null
+
+/**
+ * Replace all var expressions in a string using the replacer function
+ */
+export function replaceCssVars(str: string, replace: CssVarReplacer): string {
   for (let i = 0; i < str.length; ++i) {
     if (!str.startsWith('var(', i)) continue
 
@@ -47,7 +47,12 @@ function replaceCssVars(str: string, replace: CssVarReplacer): string {
           fallback = str.slice(fallbackStart, j)
         }
 
-        let replacement = replace(varName, fallback)
+        let replacement = replace({
+          kind: 'css-variable',
+          name: varName,
+          fallback,
+          range: { start: i, end: j },
+        })
 
         if (replacement !== null) {
           str = str.slice(0, i) + replacement + str.slice(j + 1)

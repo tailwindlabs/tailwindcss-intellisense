@@ -1,12 +1,10 @@
 import { expect, test } from 'vitest'
-import { replaceCssVarsWithFallbacks } from './css-vars'
-import { State } from './state'
-import { DesignSystem } from './v4'
+import { replaceCssVarsWithFallbacks } from './index'
+import { State } from '../state'
+import { DesignSystem } from '../v4'
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
-  let map = new Map<string, string>([
-      ['--known', 'blue'],
-  ])
+  let map = new Map<string, string>([['--known', 'blue']])
 
   let state: State = {
     enabled: true,
