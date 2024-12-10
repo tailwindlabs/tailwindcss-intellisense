@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Show theme values in comments in later v4 betas ([#1092](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1092))
 
 ## 0.12.16
 
