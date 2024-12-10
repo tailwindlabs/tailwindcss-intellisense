@@ -24,7 +24,7 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
       state,
       'rgb(var(var(--bar, var(--baz), var(--qux), var(--thing))))',
     ),
-  ).toBe('rgb(var(var(--bar, var(--baz), var(--qux), var(--thing))))')
+  ).toBe('rgb(var( var(--baz), var(--qux), var(--thing)))')
 
   expect(
     replaceCssVarsWithFallbacks(

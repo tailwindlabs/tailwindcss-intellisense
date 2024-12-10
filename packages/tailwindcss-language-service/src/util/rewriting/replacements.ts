@@ -56,16 +56,11 @@ export function replaceCssVars(str: string, replace: CssVarReplacer): string {
 
         if (replacement !== null) {
           str = str.slice(0, i) + replacement + str.slice(j + 1)
-
-          // We don't want to skip past anything here because `replacement`
-          // might contain more var(…) calls in which case `i` will already
-          // be pointing at the right spot to start looking for them
-          break
         }
 
-        // It can't be replaced so we can avoid unncessary work by skipping over
-        // the entire var(…) call.
-        i = j + 1
+        // We don't want to skip past anything here because `replacement`
+        // might contain more var(…) calls in which case `i` will already
+        // be pointing at the right spot to start looking for them
         break
       }
     }
