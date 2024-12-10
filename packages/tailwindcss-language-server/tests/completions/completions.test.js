@@ -588,7 +588,7 @@ withFixture('v4/basic', (c) => {
       ...item,
       detail: [
         'font-size: 0.875rem /* 8.75px */;',
-        'line-height: ≈ 1.4286;',
+        'line-height: calc(1.25 / 0.875);',
         'letter-spacing: undefined;',
         'font-weight: undefined;',
       ].join(' '),
