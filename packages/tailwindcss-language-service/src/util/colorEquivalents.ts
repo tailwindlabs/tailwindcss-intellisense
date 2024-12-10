@@ -29,6 +29,10 @@ export function equivalentColorValues({ comments }: { comments: Comment[] }): Pl
           return true
         }
 
+        if (node.value === 'var') {
+          return true
+        }
+
         if (!allowedFunctions.includes(node.value)) {
           return false
         }

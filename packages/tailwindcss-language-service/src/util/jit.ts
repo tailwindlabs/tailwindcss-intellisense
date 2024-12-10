@@ -2,6 +2,7 @@ import type { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
+import { addThemeValues } from './rewriting'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -44,6 +45,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   let css = clone.toString()
 
+  css = addThemeValues(css, state, settings.tailwindCSS)
   css = addEquivalents(css, settings.tailwindCSS)
 
   let identSize = state.v4 ? 2 : 4
