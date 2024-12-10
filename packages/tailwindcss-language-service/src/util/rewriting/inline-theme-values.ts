@@ -33,7 +33,7 @@ export function inlineThemeValues(css: string, state: State) {
       if (!evaluated) return null
       if (evaluated === expr.value) return null
 
-      return `≈ ${evaluated}`
+      return evaluated
     })
 
     return value
