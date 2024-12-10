@@ -100,9 +100,9 @@ function getColorFromDecls(
 
   const propsToCheck = areAllCustom ? props : nonCustomProps
 
-  const colors = propsToCheck.flatMap((prop) => ensureArray(decls[prop]).flatMap((str) => {
-    return getColorsInString(state, str)
-  }))
+  const colors = propsToCheck.flatMap((prop) =>
+    ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str)),
+  )
 
   // check that all of the values are valid colors
   // if (colors.some((color) => color instanceof TinyColor && !color.isValid)) {
