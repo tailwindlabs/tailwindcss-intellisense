@@ -586,8 +586,12 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail:
-        'font-size: var(--text-sm); line-height: var(--tw-leading, var(--text-sm--line-height)); letter-spacing: undefined; font-weight: undefined;',
+      detail: [
+        'font-size: 0.875rem /* 8.75px */;',
+        'line-height: ≈ 1.4286;',
+        'letter-spacing: undefined;',
+        'font-weight: undefined;',
+      ].join(' '),
       documentation: {
         kind: 'markdown',
         value: [
@@ -621,7 +625,7 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: var(--color-red-500);',
+      detail: 'background-color: oklch(0.637 0.237 25.331);',
       documentation: '#fb2c36',
     })
   })
@@ -650,19 +654,19 @@ withFixture('v4/workspaces', (c) => {
 
     expect(resolved[0]).toEqual({
       ...items[0],
-      detail: 'background-color: var(--color-beet);',
+      detail: 'background-color: #8e3b46;',
       documentation: '#8e3b46',
     })
 
     expect(resolved[1]).toEqual({
       ...items[1],
-      detail: 'background-color: var(--color-orangepeel);',
+      detail: 'background-color: #ff9f00;',
       documentation: '#ff9f00',
     })
 
     expect(resolved[2]).toEqual({
       ...items[2],
-      detail: 'background-color: var(--color-style-main);',
+      detail: 'background-color: #8e3b46;',
       documentation: '#8e3b46',
     })
   })
