@@ -587,11 +587,19 @@ withFixture('v4/basic', (c) => {
     expect(resolved).toEqual({
       ...item,
       detail:
-        'font-size: var(--font-size-sm, 0.875rem /* 8.75px */); line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));',
+        'font-size: var(--text-sm); line-height: var(--tw-leading, var(--text-sm--line-height)); letter-spacing: undefined; font-weight: undefined;',
       documentation: {
         kind: 'markdown',
-        value:
-          '```css\n.text-sm {\n  font-size: var(--font-size-sm, 0.875rem /* 8.75px */);\n  line-height: var(--tw-leading, var(--font-size-sm--line-height, 1.25rem /* 12.5px */));\n}\n```',
+        value: [
+          '```css',
+          '.text-sm {',
+          '  font-size: var(--text-sm);',
+          '  line-height: var(--tw-leading, var(--text-sm--line-height));',
+          '  letter-spacing: undefined;',
+          '  font-weight: undefined;',
+          '}',
+          '```',
+        ].join('\n'),
       },
     })
   })
@@ -613,7 +621,7 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: var(--color-red-500, oklch(0.637 0.237 25.331));',
+      detail: 'background-color: var(--color-red-500);',
       documentation: '#fb2c36',
     })
   })
@@ -642,19 +650,19 @@ withFixture('v4/workspaces', (c) => {
 
     expect(resolved[0]).toEqual({
       ...items[0],
-      detail: 'background-color: var(--color-beet, #8e3b46);',
+      detail: 'background-color: var(--color-beet);',
       documentation: '#8e3b46',
     })
 
     expect(resolved[1]).toEqual({
       ...items[1],
-      detail: 'background-color: var(--color-orangepeel, #ff9f00);',
+      detail: 'background-color: var(--color-orangepeel);',
       documentation: '#ff9f00',
     })
 
     expect(resolved[2]).toEqual({
       ...items[2],
-      detail: 'background-color: var(--color-style-main, #8e3b46);',
+      detail: 'background-color: var(--color-style-main);',
       documentation: '#8e3b46',
     })
   })
