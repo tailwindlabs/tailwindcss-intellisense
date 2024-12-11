@@ -8,7 +8,7 @@ import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import postcss from 'postcss'
-import { replaceCssVarsWithFallbacks } from './css-vars'
+import { replaceCssVarsWithFallbacks } from './rewriting'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -100,9 +100,9 @@ function getColorFromDecls(
 
   const propsToCheck = areAllCustom ? props : nonCustomProps
 
-  const colors = propsToCheck.flatMap((prop) => ensureArray(decls[prop]).flatMap((str) => {
-    return getColorsInString(state, str)
-  }))
+  const colors = propsToCheck.flatMap((prop) =>
+    ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str)),
+  )
 
   // check that all of the values are valid colors
   // if (colors.some((color) => color instanceof TinyColor && !color.isValid)) {

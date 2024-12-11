@@ -2,6 +2,7 @@ import type { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
+import { addThemeValues, inlineThemeValues } from './rewriting'
 
 export function bigSign(bigIntValue) {
   // @ts-ignore
@@ -44,6 +45,7 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   let css = clone.toString()
 
+  css = addThemeValues(css, state, settings.tailwindCSS)
   css = addEquivalents(css, settings.tailwindCSS)
 
   let identSize = state.v4 ? 2 : 4
@@ -67,12 +69,18 @@ export async function stringifyDecls(state: State, rule: Rule, uri?: string): Pr
   let settings = await state.editor.getConfiguration(uri)
 
   let result = []
+
   rule.walkDecls(({ prop, value }) => {
+    // In v4 we inline theme values into declarations (this is a no-op in v3)
+    value = inlineThemeValues(value, state).trim()
+
     if (settings.tailwindCSS.showPixelEquivalents) {
       value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
     }
+
     result.push(`${prop}: ${value};`)
   })
+
   return result.join(' ')
 }
 

@@ -5,7 +5,11 @@ import { isTokenNode } from '@csstools/css-parser-algorithms'
 import type { Comment } from './comments'
 import { applyComments } from './comments'
 
-export function addPixelEquivalentsToValue(value: string, rootFontSize: number): string {
+export function addPixelEquivalentsToValue(
+  value: string,
+  rootFontSize: number,
+  inComment = true,
+): string {
   if (!value.includes('rem')) {
     return value
   }
@@ -20,8 +24,15 @@ export function addPixelEquivalentsToValue(value: string, rootFontSize: number):
       return false
     }
 
-    let commentStr = ` /* ${parseFloat(unit.number) * rootFontSize}px */`
-    value = value.slice(0, node.sourceEndIndex) + commentStr + value.slice(node.sourceEndIndex)
+    if (inComment) {
+      let commentStr = ` /* ${parseFloat(unit.number) * rootFontSize}px */`
+      value = value.slice(0, node.sourceEndIndex) + commentStr + value.slice(node.sourceEndIndex)
+
+      return false
+    }
+
+    let commentStr = `${parseFloat(unit.number) * rootFontSize}px`
+    value = value.slice(0, node.sourceIndex) + commentStr + value.slice(node.sourceEndIndex)
 
     return false
   })
