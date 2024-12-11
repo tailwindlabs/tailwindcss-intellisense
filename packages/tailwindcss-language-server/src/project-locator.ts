@@ -321,8 +321,6 @@ export class ProjectLocator {
       // we'll verify after config resolution.
       let configPath = file.configPathInCss()
       if (configPath) {
-        // We don't need the content for this file anymore
-        file.content = null
         file.configs.push(
           configs.remember(configPath, () => ({
             // A CSS file produced a JS config file
@@ -598,6 +596,10 @@ class FileEntry {
     try {
       let result = await resolveCssImports().process(this.content, { from: this.path })
       let deps = result.messages.filter((msg) => msg.type === 'dependency')
+
+      deps = deps.filter((msg) => {
+        return !msg.file.startsWith('/virtual:missing/')
+      })
 
       // Record entries for each of the dependencies
       this.deps = deps.map((msg) => new FileEntry('css', normalizePath(msg.file)))
