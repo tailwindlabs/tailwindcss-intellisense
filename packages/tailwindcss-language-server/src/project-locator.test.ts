@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
+import { createResolver } from './resolver'
 
 let settings: Settings = {
   tailwindCSS: {
@@ -17,7 +18,8 @@ function testFixture(fixture: string, details: any[]) {
   let fixturePath = `${fixtures}/${fixture}`
 
   test.concurrent(fixture, async ({ expect }) => {
-    let locator = new ProjectLocator(fixturePath, settings)
+    let resolver = await createResolver({ root: fixturePath })
+    let locator = new ProjectLocator(fixturePath, settings, resolver)
     let projects = await locator.search()
 
     for (let i = 0; i < Math.max(projects.length, details.length); i++) {

@@ -7,11 +7,10 @@ import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import type { AtRule, Message } from 'postcss'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
-import { resolveFrom } from './util/resolveFrom'
+import type { Resolver } from './resolver'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
@@ -46,6 +45,7 @@ export class ProjectLocator {
   constructor(
     private base: string,
     private settings: Settings,
+    private resolver: Resolver,
   ) {}
 
   async search(): Promise<ProjectConfig[]> {
@@ -196,7 +196,11 @@ export class ProjectLocator {
     })
 
     // - Content patterns from config
-    for await (let selector of contentSelectorsFromConfig(config, tailwind.features)) {
+    for await (let selector of contentSelectorsFromConfig(
+      config,
+      tailwind.features,
+      this.resolver,
+    )) {
       selectors.push(selector)
     }
 
@@ -343,7 +347,7 @@ export class ProjectLocator {
     }
 
     // Resolve imports in all the CSS files
-    await Promise.all(imports.map((file) => file.resolveImports()))
+    await Promise.all(imports.map((file) => file.resolveImports(this.resolver)))
 
     // Resolve real paths for all the files in the CSS import graph
     await Promise.all(imports.map((file) => file.resolveRealpaths()))
@@ -421,7 +425,10 @@ export class ProjectLocator {
 
   private async detectTailwindVersion(config: ConfigEntry) {
     try {
-      let metadataPath = resolveFrom(path.dirname(config.path), 'tailwindcss/package.json')
+      let metadataPath = await this.resolver.resolveJsId(
+        'tailwindcss/package.json',
+        path.dirname(config.path),
+      )
       let { version } = require(metadataPath)
       let features = supportedFeatures(version)
 
@@ -448,14 +455,14 @@ export class ProjectLocator {
 function contentSelectorsFromConfig(
   entry: ConfigEntry,
   features: Feature[],
-  actualConfig?: any,
+  resolver: Resolver,
 ): AsyncIterable<DocumentSelector> {
   if (entry.type === 'css') {
-    return contentSelectorsFromCssConfig(entry)
+    return contentSelectorsFromCssConfig(entry, resolver)
   }
 
   if (entry.type === 'js') {
-    return contentSelectorsFromJsConfig(entry, features, actualConfig)
+    return contentSelectorsFromJsConfig(entry, features)
   }
 }
 
@@ -500,7 +507,10 @@ async function* contentSelectorsFromJsConfig(
   }
 }
 
-async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable<DocumentSelector> {
+async function* contentSelectorsFromCssConfig(
+  entry: ConfigEntry,
+  resolver: Resolver,
+): AsyncIterable<DocumentSelector> {
   let auto = false
   for (let item of entry.content) {
     if (item.kind === 'file') {
@@ -516,7 +526,12 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       // other entries should have sources.
       let sources = entry.entries.flatMap((entry) => entry.sources)
 
-      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, sources)) {
+      for await (let pattern of detectContentFiles(
+        entry.packageRoot,
+        entry.path,
+        sources,
+        resolver,
+      )) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -530,11 +545,15 @@ async function* detectContentFiles(
   base: string,
   inputFile: string,
   sources: string[],
+  resolver: Resolver,
 ): AsyncIterable<string> {
   try {
-    let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
+    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', path.dirname(base))
     oxidePath = pathToFileURL(oxidePath).href
-    let oxidePackageJsonPath = resolveFrom(path.dirname(base), '@tailwindcss/oxide/package.json')
+    let oxidePackageJsonPath = await resolver.resolveJsId(
+      '@tailwindcss/oxide/package.json',
+      path.dirname(base),
+    )
     let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
     let result = await oxide.scan({
@@ -597,9 +616,9 @@ class FileEntry {
     }
   }
 
-  async resolveImports() {
+  async resolveImports(resolver: Resolver) {
     try {
-      let result = await resolveCssImports().process(this.content, { from: this.path })
+      let result = await resolveCssImports({ resolver }).process(this.content, { from: this.path })
       let deps = result.messages.filter((msg) => msg.type === 'dependency')
 
       deps = deps.filter((msg) => {

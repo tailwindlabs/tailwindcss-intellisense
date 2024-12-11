@@ -47,6 +47,7 @@ import { type SettingsCache, createSettingsCache } from './config'
 import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
+import { createResolver, Resolver } from './resolver'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -243,7 +244,12 @@ export class TW {
       return
     }
 
-    let locator = new ProjectLocator(base, globalSettings)
+    let resolver = await createResolver({
+      root: base,
+      pnp: true,
+    })
+
+    let locator = new ProjectLocator(base, globalSettings, resolver)
 
     if (configs.length > 0) {
       console.log('Loading Tailwind CSS projects from the workspace settings.')
@@ -524,6 +530,7 @@ export class TW {
           this.watchPatterns,
           configTailwindVersionMap.get(projectConfig.configPath),
           userLanguages,
+          resolver,
         ),
       ),
     )
@@ -654,6 +661,7 @@ export class TW {
     watchPatterns: (patterns: string[]) => void,
     tailwindVersion: string,
     userLanguages: Record<string, string>,
+    resolver: Resolver,
   ): Promise<void> {
     let key = String(this.projectCounter++)
     const project = await createProjectService(
@@ -678,6 +686,7 @@ export class TW {
       tailwindVersion,
       this.settingsCache.get,
       userLanguages,
+      resolver,
     )
     this.projects.set(key, project)
 
