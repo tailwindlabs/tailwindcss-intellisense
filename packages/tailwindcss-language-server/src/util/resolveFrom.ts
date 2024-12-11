@@ -1,21 +1,41 @@
-import { equal } from '@tailwindcss/language-service/src/util/array'
+import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { createResolver } from './resolve'
+import { equal } from '@tailwindcss/language-service/src/util/array'
+import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve'
 
 let pnpApi: any
 let extensions = Object.keys(require.extensions)
 
 function recreateResolver() {
-  return createResolver({ extensions, pnpApi })
+  let fileSystem = new CachedInputFileSystem(fs, 4000)
+
+  return ResolverFactory.createResolver({
+    fileSystem,
+    useSyncFileSystemCalls: true,
+    conditionNames: ['node', 'require'],
+    extensions,
+    pnpApi,
+  })
 }
 
 let resolver = recreateResolver()
 
+/**
+ * @deprecated Use `createResolver()` instead.
+ */
 export function setPnpApi(newPnpApi: any): void {
   pnpApi = newPnpApi
   resolver = recreateResolver()
 }
 
+/**
+ * Resolve a module id from a given path synchronously.
+ *
+ * This is a legacy API and should be avoided in favor of the async version as
+ * it does not support TypeScript path mapping.
+ *
+ * @deprecated Use `createResolver().resolveJsId(…)` instead.
+ */
 export function resolveFrom(from?: string, id?: string): string {
   // Network share path on Windows
   if (id.startsWith('\\\\')) return id
