@@ -195,3 +195,11 @@ testFixture('v4/custom-source', [
     ],
   },
 ])
+
+testFixture('v4/missing-files', [
+  //
+  {
+    config: 'app.css',
+    content: ['{URL}/package.json'],
+  },
+])
