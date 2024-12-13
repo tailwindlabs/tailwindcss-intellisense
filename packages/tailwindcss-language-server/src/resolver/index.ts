@@ -105,6 +105,10 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     mainFields: ['style'],
     conditionNames: ['style'],
     pnpApi,
+
+    // Given `foo/bar.css` try `./foo/bar.css` first before trying `foo/bar.css`
+    // as a module
+    preferRelative: true,
   })
 
   async function resolveId(
