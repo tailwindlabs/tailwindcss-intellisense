@@ -247,6 +247,7 @@ export class TW {
     let resolver = await createResolver({
       root: base,
       pnp: true,
+      tsconfig: true,
     })
 
     let locator = new ProjectLocator(base, globalSettings, resolver)

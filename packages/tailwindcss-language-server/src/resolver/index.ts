@@ -7,6 +7,7 @@ import {
   FileSystem,
 } from 'enhanced-resolve'
 import { loadPnPApi, type PnpApi } from './pnp'
+import { loadTsConfig, type TSConfigApi } from './tsconfig'
 
 export interface ResolverOptions {
   /**
@@ -22,6 +23,15 @@ export interface ResolverOptions {
    * instead.
    */
   pnp?: boolean | PnpApi
+
+  /**
+   * Whether or not the resolver should load tsconfig path mappings.
+   *
+   * If `true`, the resolver will look for all `tsconfig` files in the project
+   * and use them to resolve module paths where possible. However, if an API is
+   * provided, the resolver will use that API to resolve module paths.
+   */
+  tsconfig?: boolean | TSConfigApi
 
   /**
    * A filesystem to use for resolution. If not provided, the resolver will
@@ -62,6 +72,15 @@ export interface Resolver {
   resolveCssId(id: string, base: string): Promise<string>
 
   /**
+   * Return a list of path resolution aliases for the given base directory
+   *
+   * This isn't a direct mapping of the `paths` property in a `tsconfig.json`
+   * because tsconfig paths support more than one pathspec per alias whereas
+   * this function returns a single pathspec per alias.
+   */
+  aliases(base: string): Promise<Record<string, string>>
+
+  /**
    * Create a child resolver with the given options.
    *
    * Use this to share state between resolvers. For example, if a resolver has
@@ -81,6 +100,15 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     pnpApi = opts.pnp
   } else if (opts.pnp) {
     pnpApi = await loadPnPApi(opts.root)
+  }
+
+  let tsconfig: TSConfigApi | null = null
+
+  // Load TSConfig path mappings
+  if (typeof opts.tsconfig === 'object') {
+    tsconfig = opts.tsconfig
+  } else if (opts.tsconfig) {
+    tsconfig = await loadTsConfig(opts.root)
   }
 
   let esmResolver = ResolverFactory.createResolver({
@@ -128,6 +156,11 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
       if (base.startsWith('//')) base = `\\\\${base.slice(2)}`
     }
 
+    if (tsconfig) {
+      let match = await tsconfig.resolveId(id, base)
+      if (match) id = match
+    }
+
     return new Promise((resolve, reject) => {
       resolver.resolve({}, base, id, {}, (err, res) => {
         if (err) {
@@ -155,10 +188,25 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     pnpApi?.setup()
   }
 
+  async function aliases(base: string) {
+    if (!tsconfig) return {}
+
+    let paths = await tsconfig.paths(base)
+    let aliases = {}
+
+    for (let [key, value] of Object.entries(paths)) {
+      aliases[key] = value[0]
+    }
+
+    return aliases
+  }
+
   return {
     setupPnP,
     resolveJsId,
     resolveCssId,
+
+    aliases,
 
     child(childOpts: Partial<ResolverOptions>) {
       return createResolver({
@@ -167,6 +215,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
         // Inherit defaults from parent
         pnp: childOpts.pnp ?? pnpApi,
+        tsconfig: childOpts.tsconfig ?? tsconfig,
         fileSystem: childOpts.fileSystem ?? fileSystem,
       })
     },
