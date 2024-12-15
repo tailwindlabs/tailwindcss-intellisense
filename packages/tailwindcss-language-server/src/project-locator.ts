@@ -130,7 +130,12 @@ export class ProjectLocator {
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
-    console.log(JSON.stringify({ tailwind }))
+    console.log(
+      JSON.stringify({
+        tailwind,
+        path: config.path,
+      }),
+    )
 
     // A JS/TS config file was loaded from an `@config` directive in a CSS file
     // This is only relevant for v3 projects so we'll do some feature detection
