@@ -1,5 +1,5 @@
 import Module from 'node:module'
-import path from 'node:path'
+import * as path from 'node:path'
 import { URI } from 'vscode-uri'
 import normalizePathBase from 'normalize-path'
 import { pathToFileURL as pathToFileURLBase } from 'node:url'

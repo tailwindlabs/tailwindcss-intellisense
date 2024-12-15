@@ -33,7 +33,7 @@ import {
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
-import * as path from 'path'
+import * as path from 'node:path'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import { resolveFrom } from './util/resolveFrom'

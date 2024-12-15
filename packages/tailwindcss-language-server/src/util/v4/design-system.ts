@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { resolveCssFrom, resolveCssImports } from '../../css'
 import { resolveFrom } from '../resolveFrom'
-import { pathToFileURL } from 'tailwindcss-language-server/src/utils'
+import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
