@@ -20,8 +20,8 @@ import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, SilentError } from './util/error'
-import * as path from 'path'
-import * as fs from 'fs'
+import * as path from 'node:path'
+import * as fs from 'node:fs'
 import findUp from 'find-up'
 import picomatch from 'picomatch'
 import { resolveFrom, setPnpApi } from './util/resolveFrom'
@@ -53,7 +53,7 @@ import { getDocumentColors } from '@tailwindcss/language-service/src/documentCol
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
-import assert from 'assert'
+import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import { bigSign } from '@tailwindcss/language-service/src/util/jit'
 import { getColor } from '@tailwindcss/language-service/src/util/color'
@@ -107,7 +107,7 @@ export interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
-  onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
+  onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
   sortClassLists(classLists: string[]): string[]
 
   dependencies(): Iterable<string>
@@ -228,7 +228,9 @@ export async function createProjectService(
       },
       async readDirectory(document, directory) {
         try {
-          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+          let baseDir = path.dirname(getFileFsPath(document.uri))
+          directory = path.resolve(baseDir, directory)
+
           let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
 
           let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
@@ -1127,13 +1129,19 @@ export async function createProjectService(
         return doCodeActions(state, params, document)
       }, null)
     },
-    onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+    onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
-      return getDocumentLinks(state, document, (linkPath) =>
-        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString(),
-      )
+
+      let documentPath = URI.parse(document.uri).fsPath
+      let baseDir = path.dirname(documentPath)
+
+      async function resolveTarget(linkPath: string) {
+        return URI.file(path.resolve(baseDir, linkPath)).toString()
+      }
+
+      return getDocumentLinks(state, document, resolveTarget)
     },
     provideDiagnostics: debounce(
       (document: TextDocument) => {
