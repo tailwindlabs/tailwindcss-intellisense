@@ -35,6 +35,7 @@ import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
 import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
+import { Resolver } from './resolver'
 import {
   doComplete,
   resolveCompletionItem,
@@ -80,6 +81,7 @@ import type { ProjectConfig } from './project-locator'
 import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
+import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 const colorNames = Object.keys(namedColors)
 
@@ -185,6 +187,7 @@ export async function createProjectService(
   initialTailwindVersion: string,
   getConfiguration: (uri?: string) => Promise<Settings>,
   userLanguages: Record<string, string>,
+  parentResolver?: Resolver,
 ): Promise<ProjectService> {
   let enabled = false
   const folder = projectConfig.folder
@@ -258,6 +261,10 @@ export async function createProjectService(
       ...deps.flatMap((dep) => getWatchPatternsForFile(dep, projectConfig.folder)),
     ])
   }
+
+  let resolver = await parentResolver.child({
+    root: projectConfig.folder,
+  })
 
   function log(...args: string[]): void {
     console.log(
@@ -426,9 +433,9 @@ export async function createProjectService(
     let applyComplexClasses: any
 
     try {
-      let tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
-      const tailwindcssPkgPath = resolveFrom(configDir, 'tailwindcss/package.json')
-      const tailwindDir = path.dirname(tailwindcssPkgPath)
+      let tailwindcssPath = await resolver.resolveJsId('tailwindcss', configDir)
+      let tailwindcssPkgPath = await resolver.resolveJsId('tailwindcss/package.json', configDir)
+      let tailwindDir = path.dirname(tailwindcssPkgPath)
       tailwindcssVersion = require(tailwindcssPkgPath).version
 
       let features = supportedFeatures(tailwindcssVersion)
@@ -436,13 +443,16 @@ export async function createProjectService(
 
       tailwindcssPath = pathToFileURL(tailwindcssPath).href
       tailwindcss = await import(tailwindcssPath)
-      tailwindcss = tailwindcss.default ?? tailwindcss
+
+      if (!features.includes('css-at-theme')) {
+        tailwindcss = tailwindcss.default ?? tailwindcss
+      }
+
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       if (features.includes('css-at-theme')) {
         state.configPath = configPath
         state.version = tailwindcssVersion
-        // TODO: Handle backwards compat stuff here too
         state.isCssConfig = true
         state.v4 = true
         state.jit = true
@@ -750,6 +760,7 @@ export async function createProjectService(
       try {
         let css = await readCssFile(state.configPath)
         let designSystem = await loadDesignSystem(
+          resolver,
           state.modules.tailwindcss.module,
           state.configPath,
           css,
@@ -1000,12 +1011,22 @@ export async function createProjectService(
       if (!state.v4) return
 
       console.log('---- RELOADING DESIGN SYSTEM ----')
+      console.log(`---- ${state.configPath} ----`)
+
       let css = await readCssFile(state.configPath)
-      let designSystem = await loadDesignSystem(
-        state.modules.tailwindcss.module,
-        state.configPath,
-        css,
-      )
+      let designSystem: DesignSystem
+
+      try {
+        designSystem = await loadDesignSystem(
+          resolver,
+          state.modules.tailwindcss.module,
+          state.configPath,
+          css,
+        )
+      } catch (err) {
+        console.error(err)
+        throw err
+      }
 
       // TODO: This is weird and should be changed
       // We use Object.create so no global state is mutated until necessary

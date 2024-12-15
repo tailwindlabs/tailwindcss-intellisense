@@ -4,8 +4,8 @@ import postcss from 'postcss'
 import { createJiti } from 'jiti'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { resolveCssFrom, resolveCssImports } from '../../css'
-import { resolveFrom } from '../resolveFrom'
+import { resolveCssImports } from '../../css'
+import { Resolver } from '../../resolver'
 import { pathToFileURL } from 'tailwindcss-language-server/src/utils'
 import type { Jiti } from 'jiti/lib/types'
 
@@ -46,17 +46,19 @@ async function importFile(id: string) {
 function createLoader<T>({
   legacy,
   filepath,
+  resolver,
   onError,
 }: {
   legacy: boolean
   filepath: string
+  resolver: Resolver
   onError: (id: string, error: unknown, resourceType: string) => T
 }) {
   let cacheKey = `${+Date.now()}`
 
   async function loadFile(id: string, base: string, resourceType: string) {
     try {
-      let resolved = resolveFrom(base, id)
+      let resolved = await resolver.resolveJsId(id, base)
 
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
@@ -81,6 +83,7 @@ function createLoader<T>({
 }
 
 export async function loadDesignSystem(
+  resolver: Resolver,
   tailwindcss: any,
   filepath: string,
   css: string,
@@ -105,7 +108,7 @@ export async function loadDesignSystem(
 
   // Step 2: Use postcss to resolve `@import` rules in the CSS file
   if (!supportsImports) {
-    let resolved = await resolveCssImports().process(css, { from: filepath })
+    let resolved = await resolveCssImports(resolver).process(css, { from: filepath })
     css = resolved.css
   }
 
@@ -117,6 +120,7 @@ export async function loadDesignSystem(
     loadModule: createLoader({
       legacy: false,
       filepath,
+      resolver,
       onError: (id, err, resourceType) => {
         console.error(`Unable to load ${resourceType}: ${id}`, err)
 
@@ -129,11 +133,22 @@ export async function loadDesignSystem(
     }),
 
     loadStylesheet: async (id: string, base: string) => {
-      let resolved = resolveCssFrom(base, id)
+      // Skip over missing stylesheets (and log an error) so we can do our best
+      // to compile the design system even when the build might be incomplete.
+      // TODO: Figure out if we can recover from parsing errors in stylesheets
+      // we'd want to surface diagnostics when we discover imports that cause
+      // parsing errors or other logic errors.
 
-      return {
-        base: path.dirname(resolved),
-        content: await fs.readFile(resolved, 'utf-8'),
+      try {
+        let resolved = await resolver.resolveCssId(id, base)
+
+        return {
+          base: path.dirname(resolved),
+          content: await fs.readFile(resolved, 'utf-8'),
+        }
+      } catch (err) {
+        console.error(`Unable to load stylesheet: ${id}`, err)
+        return { base, content: '' }
       }
     },
 
@@ -141,6 +156,7 @@ export async function loadDesignSystem(
     loadPlugin: createLoader({
       legacy: true,
       filepath,
+      resolver,
       onError(id, err) {
         console.error(`Unable to load plugin: ${id}`, err)
 
@@ -151,6 +167,7 @@ export async function loadDesignSystem(
     loadConfig: createLoader({
       legacy: true,
       filepath,
+      resolver,
       onError(id, err) {
         console.error(`Unable to load config: ${id}`, err)
 
