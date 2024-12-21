@@ -1,25 +1,29 @@
+import * as fs from 'node:fs/promises'
 import postcss from 'postcss'
 import postcssImport from 'postcss-import'
-import { createResolver } from '../util/resolve'
 import { fixRelativePaths } from './fix-relative-paths'
+import { Resolver } from '../resolver'
 
-const resolver = createResolver({
-  extensions: ['.css'],
-  mainFields: ['style'],
-  conditionNames: ['style'],
-})
+export function resolveCssImports(resolver: Resolver) {
+  return postcss([
+    postcssImport({
+      async resolve(id, base) {
+        try {
+          return await resolver.resolveCssId(id, base)
+        } catch (e) {
+          // TODO: Need to test this on windows
+          return `/virtual:missing/${id}`
+        }
+      },
 
-const resolveImports = postcss([
-  postcssImport({
-    resolve: (id, base) => resolveCssFrom(base, id),
-  }),
-  fixRelativePaths(),
-])
+      load(filepath) {
+        if (filepath.startsWith('/virtual:missing/')) {
+          return Promise.resolve('')
+        }
 
-export function resolveCssImports() {
-  return resolveImports
-}
-
-export function resolveCssFrom(base: string, id: string) {
-  return resolver.resolveSync({}, base, id) || id
+        return fs.readFile(filepath, 'utf-8')
+      },
+    }),
+    fixRelativePaths(),
+  ])
 }

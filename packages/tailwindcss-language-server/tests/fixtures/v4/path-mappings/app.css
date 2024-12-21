@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+
+@import '#a/file.css';
+@config '#a/my-config.ts';
+@plugin '#a/my-plugin.ts';
