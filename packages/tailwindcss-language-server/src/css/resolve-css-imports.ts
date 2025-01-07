@@ -12,6 +12,17 @@ export function resolveCssImports({
   loose?: boolean
 }) {
   return postcss([
+    // Replace `@reference "…"` with `@import "…" reference`
+    {
+      postcssPlugin: 'replace-at-reference',
+      Once(root) {
+        root.walkAtRules('reference', (atRule) => {
+          atRule.name = 'import'
+          atRule.params += ' reference'
+        })
+      },
+    },
+
     // Hoist imports to the top of the file
     {
       postcssPlugin: 'hoist-at-import',
