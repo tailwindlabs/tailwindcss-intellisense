@@ -9,6 +9,7 @@
 - Add variant suggestions to `@variant` ([#1127](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1127))
 - Don't suggest at-rules when nested that cannot be used in a nested context ([#1127](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1127))
 - Make sure completions work when using prefixes in v4 ([#1129](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1129))
+- Add support for `@reference` ([#1117](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1117))
 
 ## 0.12.18
 
