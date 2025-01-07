@@ -6,8 +6,10 @@ const PATTERN_CUSTOM_V3 = /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
 
 // @import … source('…')
 // @tailwind utilities source('…')
-const PATTERN_IMPORT_SOURCE = /@(?<directive>import)\s*(?<path>'[^']*'|"[^"]*")\s*source\((?<partial>'[^']*|"[^"]*)$/
-const PATTERN_UTIL_SOURCE = /@(?<directive>tailwind)\s+utilities\s+source\((?<partial>'[^']*|"[^"]*)?$/
+const PATTERN_IMPORT_SOURCE =
+  /@(?<directive>(?:import|reference))\s*(?<path>'[^']*'|"[^"]*")\s*source\((?<partial>'[^']*|"[^"]*)$/
+const PATTERN_UTIL_SOURCE =
+  /@(?<directive>tailwind)\s+utilities\s+source\((?<partial>'[^']*|"[^"]*)?$/
 
 export type FileDirective = {
   directive: string
@@ -17,14 +19,15 @@ export type FileDirective = {
 
 export async function findFileDirective(state: State, text: string): Promise<FileDirective | null> {
   if (state.v4) {
-    let match = text.match(PATTERN_CUSTOM_V4)
-      ?? text.match(PATTERN_IMPORT_SOURCE)
-      ?? text.match(PATTERN_UTIL_SOURCE)
+    let match =
+      text.match(PATTERN_CUSTOM_V4) ??
+      text.match(PATTERN_IMPORT_SOURCE) ??
+      text.match(PATTERN_UTIL_SOURCE)
 
     if (!match) return null
 
     let directive = match.groups.directive
-    let partial = match.groups.partial?.slice(1) ?? "" // remove leading quote
+    let partial = match.groups.partial?.slice(1) ?? '' // remove leading quote
 
     // Most suggestions are for JS files so we'll default to that
     let suggest: FileDirective['suggest'] = 'script'
