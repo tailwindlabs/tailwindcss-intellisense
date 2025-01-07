@@ -24,20 +24,6 @@ export async function isMaybeV4(css: string): Promise<boolean> {
   return HAS_V4_THEME.test(css) || HAS_V4_IMPORT.test(css)
 }
 
-let jiti: Jiti | undefined
-
-async function importFile(id: string) {
-  try {
-    // Load ESM/CJS files through Node/Bun/whatever runtime is being used
-    return await import(id)
-  } catch {
-    jiti ??= createJiti(__filename, { moduleCache: false, fsCache: false })
-
-    // Transpile using Jiti if we can't load the file directly
-    return await jiti.import(id)
-  }
-}
-
 /**
  * Create a loader function that can load plugins and config files relative to
  * the CSS file that uses them. However, we don't want missing files to prevent
@@ -45,11 +31,13 @@ async function importFile(id: string) {
  */
 function createLoader<T>({
   legacy,
+  jiti,
   filepath,
   resolver,
   onError,
 }: {
   legacy: boolean
+  jiti: Jiti
   filepath: string
   resolver: Resolver
   onError: (id: string, error: unknown, resourceType: string) => T
@@ -63,7 +51,7 @@ function createLoader<T>({
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
 
-      return await importFile(url.href).then((m) => m.default ?? m)
+      return await jiti.import(url.href, { default: true })
     } catch (err) {
       return onError(id, err, resourceType)
     }
@@ -112,6 +100,12 @@ export async function loadDesignSystem(
     css = resolved.css
   }
 
+  // Create a Jiti instance that can be used to load plugins and config files
+  let jiti = createJiti(__filename, {
+    moduleCache: false,
+    fsCache: false,
+  })
+
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
   let design: DesignSystem = await tailwindcss.__unstable__loadDesignSystem(css, {
     base: path.dirname(filepath),
@@ -119,6 +113,7 @@ export async function loadDesignSystem(
     // v4.0.0-alpha.25+
     loadModule: createLoader({
       legacy: false,
+      jiti,
       filepath,
       resolver,
       onError: (id, err, resourceType) => {
@@ -155,6 +150,7 @@ export async function loadDesignSystem(
     // v4.0.0-alpha.24 and below
     loadPlugin: createLoader({
       legacy: true,
+      jiti,
       filepath,
       resolver,
       onError(id, err) {
@@ -166,6 +162,7 @@ export async function loadDesignSystem(
 
     loadConfig: createLoader({
       legacy: true,
+      jiti,
       filepath,
       resolver,
       onError(id, err) {
