@@ -1,5 +1,5 @@
 import picomatch from 'picomatch'
-import * as path from 'path'
+import * as path from 'node:path'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { State } from '@tailwindcss/language-service/src/util/state'
 import { getFileFsPath } from './uri'

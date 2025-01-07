@@ -1,4 +1,4 @@
-import path from 'node:path'
+import * as path from 'node:path'
 import type { AtRule, Plugin } from 'postcss'
 import { normalizePath } from '../utils'
 

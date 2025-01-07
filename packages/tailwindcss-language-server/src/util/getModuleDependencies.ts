@@ -1,6 +1,6 @@
 // https://github.com/tailwindlabs/tailwindcss/blob/bac5ecf0040aa9a788d1b22d706506146ee831ff/src/lib/getModuleDependencies.js
-import fs from 'fs'
-import path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { normalizeDriveLetter, normalizePath } from '../utils'
 
 let jsExtensions = ['.js', '.cjs', '.mjs']
