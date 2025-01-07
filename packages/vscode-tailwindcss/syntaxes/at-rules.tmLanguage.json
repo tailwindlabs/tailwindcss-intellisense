@@ -5,7 +5,7 @@
   "name": "TailwindCSS",
   "patterns": [
     {
-      "begin": "(?i)((@)import)(?:\\s+|$|(?=['\"]|/\\*))",
+      "begin": "(?i)((@)(?:import|reference))(?:\\s+|$|(?=['\"]|/\\*))",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.at-rule.import.css"
