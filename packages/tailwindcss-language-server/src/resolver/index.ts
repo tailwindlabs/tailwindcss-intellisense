@@ -7,6 +7,7 @@ import {
   FileSystem,
 } from 'enhanced-resolve'
 import { loadPnPApi, type PnpApi } from './pnp'
+import { loadTsConfig, type TSConfigApi } from './tsconfig'
 
 export interface ResolverOptions {
   /**
@@ -22,6 +23,15 @@ export interface ResolverOptions {
    * instead.
    */
   pnp?: boolean | PnpApi
+
+  /**
+   * Whether or not the resolver should load tsconfig path mappings.
+   *
+   * If `true`, the resolver will look for all `tsconfig` files in the project
+   * and use them to resolve module paths where possible. However, if an API is
+   * provided, the resolver will use that API to resolve module paths.
+   */
+  tsconfig?: boolean | TSConfigApi
 
   /**
    * A filesystem to use for resolution. If not provided, the resolver will
@@ -62,6 +72,23 @@ export interface Resolver {
   resolveCssId(id: string, base: string): Promise<string>
 
   /**
+   * Resolves a module to a possible file or directory path.
+   *
+   * This provides reasonable results when TypeScript config files are in use.
+   * This file may not exist but is the likely path that would be used to load
+   * the module if it were to exist.
+   *
+   * @param id The module, file, or directory to resolve
+   * @param base The base directory to resolve the module from
+   */
+  substituteId(id: string, base: string): Promise<string>
+
+  /**
+   * Return a list of path resolution aliases for the given base directory
+   */
+  aliases(base: string): Promise<Record<string, string[]>>
+
+  /**
    * Create a child resolver with the given options.
    *
    * Use this to share state between resolvers. For example, if a resolver has
@@ -69,6 +96,13 @@ export interface Resolver {
    * the same PnP API without needing to load it again.
    */
   child(opts: Partial<ResolverOptions>): Promise<Resolver>
+
+  /**
+   * Refresh information the resolver may have cached
+   *
+   * This may look for new TypeScript configs if necessary
+   */
+  refresh(): Promise<void>
 }
 
 export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
@@ -81,6 +115,22 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     pnpApi = opts.pnp
   } else if (opts.pnp) {
     pnpApi = await loadPnPApi(opts.root)
+  }
+
+  let tsconfig: TSConfigApi | null = null
+
+  // Load TSConfig path mappings
+  if (typeof opts.tsconfig === 'object') {
+    tsconfig = opts.tsconfig
+  } else if (opts.tsconfig) {
+    try {
+      tsconfig = await loadTsConfig(opts.root)
+    } catch (err) {
+      // We don't want to hard crash in case of an error handling tsconfigs
+      // It does affect what projects we can resolve or how we load files
+      // but the LSP shouldn't become unusable because of it.
+      console.error('Failed to load tsconfig', err)
+    }
   }
 
   let esmResolver = ResolverFactory.createResolver({
@@ -128,6 +178,11 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
       if (base.startsWith('//')) base = `\\\\${base.slice(2)}`
     }
 
+    if (tsconfig) {
+      let match = await tsconfig.resolveId(id, base)
+      if (match) id = match
+    }
+
     return new Promise((resolve, reject) => {
       resolver.resolve({}, base, id, {}, (err, res) => {
         if (err) {
@@ -151,14 +206,34 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     return (await resolveId(cssResolver, id, base)) || id
   }
 
+  // Takes a path which may or may not be complete and returns the aliased path
+  // if possible
+  async function substituteId(id: string, base: string): Promise<string> {
+    return (await tsconfig?.substituteId(id, base)) ?? id
+  }
+
   async function setupPnP() {
     pnpApi?.setup()
+  }
+
+  async function aliases(base: string) {
+    if (!tsconfig) return {}
+
+    return await tsconfig.paths(base)
+  }
+
+  async function refresh() {
+    await tsconfig?.refresh()
   }
 
   return {
     setupPnP,
     resolveJsId,
     resolveCssId,
+    substituteId,
+    refresh,
+
+    aliases,
 
     child(childOpts: Partial<ResolverOptions>) {
       return createResolver({
@@ -167,6 +242,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
         // Inherit defaults from parent
         pnp: childOpts.pnp ?? pnpApi,
+        tsconfig: childOpts.tsconfig ?? tsconfig,
         fileSystem: childOpts.fileSystem ?? fileSystem,
       })
     },
