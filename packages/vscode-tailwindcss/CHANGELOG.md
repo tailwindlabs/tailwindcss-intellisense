@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Stop auto-switching CSS files to the Tailwind CSS language mode ([#1116](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1116))
 
 ## 0.12.17
 
