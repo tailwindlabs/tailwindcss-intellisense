@@ -18,7 +18,7 @@ function testFixture(fixture: string, details: any[]) {
   let fixturePath = `${fixtures}/${fixture}`
 
   test.concurrent(fixture, async ({ expect }) => {
-    let resolver = await createResolver({ root: fixturePath })
+    let resolver = await createResolver({ root: fixturePath, tsconfig: true })
     let locator = new ProjectLocator(fixturePath, settings, resolver)
     let projects = await locator.search()
 
@@ -203,5 +203,19 @@ testFixture('v4/missing-files', [
   {
     config: 'app.css',
     content: ['{URL}/package.json'],
+  },
+])
+
+testFixture('v4/path-mappings', [
+  //
+  {
+    config: 'app.css',
+    content: [
+      '{URL}/package.json',
+      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/src/a/my-config.ts',
+      '{URL}/src/a/my-plugin.ts',
+      '{URL}/tsconfig.json',
+    ],
   },
 ])

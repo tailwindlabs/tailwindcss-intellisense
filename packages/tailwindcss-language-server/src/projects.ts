@@ -226,6 +226,7 @@ export async function createProjectService(
       async readDirectory(document, directory) {
         try {
           let baseDir = path.dirname(getFileFsPath(document.uri))
+          directory = await resolver.substituteId(`${directory}/`, baseDir)
           directory = path.resolve(baseDir, directory)
 
           let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
@@ -1128,6 +1129,8 @@ export async function createProjectService(
       let baseDir = path.dirname(documentPath)
 
       async function resolveTarget(linkPath: string) {
+        linkPath = (await resolver.substituteId(linkPath, baseDir)) ?? linkPath
+
         return URI.file(path.resolve(baseDir, linkPath)).toString()
       }
 
