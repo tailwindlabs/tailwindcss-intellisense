@@ -219,3 +219,11 @@ testFixture('v4/path-mappings', [
     ],
   },
 ])
+
+testFixture('v4/invalid-import-order', [
+  //
+  {
+    config: 'tailwind.css',
+    content: ['{URL}/package.json'],
+  },
+])
