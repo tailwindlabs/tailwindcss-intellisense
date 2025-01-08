@@ -618,7 +618,9 @@ class FileEntry {
 
   async resolveImports(resolver: Resolver) {
     try {
-      let result = await resolveCssImports({ resolver }).process(this.content, { from: this.path })
+      let result = await resolveCssImports({ resolver, loose: true }).process(this.content, {
+        from: this.path,
+      })
       let deps = result.messages.filter((msg) => msg.type === 'dependency')
 
       deps = deps.filter((msg) => {
@@ -630,9 +632,10 @@ class FileEntry {
 
       // Replace the file content with the processed CSS
       this.content = result.css
-    } catch {
-      // TODO: Errors here should be surfaced in tests and possibly the user in
-      // `trace` logs or something like that
+    } catch (err) {
+      console.debug(`Unable to resolve imports for ${this.path}.`)
+      console.debug(`This may result in failure to locate Tailwind CSS projects.`)
+      console.error(err)
     }
   }
 
