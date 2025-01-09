@@ -84,7 +84,7 @@ export function normalizeDriveLetter(filepath: string) {
   return filepath.replace(WIN_DRIVE_LETTER, (_, letter) => letter.toUpperCase() + ':')
 }
 
-export function changeAffectsFile(change: string, files: string[]): boolean {
+export function changeAffectsFile(change: string, files: Iterable<string>): boolean {
   for (let file of files) {
     if (change === file || dirContains(change, file)) {
       return true

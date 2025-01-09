@@ -331,12 +331,7 @@ export class TW {
         for (let [, project] of this.projects) {
           if (!project.state.v4) continue
 
-          let reloadableFiles = [
-            project.projectConfig.configPath,
-            ...project.projectConfig.config.entries.map((entry) => entry.path),
-          ]
-
-          if (!changeAffectsFile(normalizedFilename, reloadableFiles)) continue
+          if (!changeAffectsFile(normalizedFilename, project.dependencies())) continue
 
           needsSoftRestart = true
           break changeLoop

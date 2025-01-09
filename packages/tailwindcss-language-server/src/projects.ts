@@ -110,6 +110,7 @@ export interface ProjectService {
   onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
   sortClassLists(classLists: string[]): string[]
 
+  dependencies(): Iterable<string>
   reload(): Promise<void>
 }
 
@@ -186,6 +187,11 @@ export async function createProjectService(
   getConfiguration: (uri?: string) => Promise<Settings>,
   userLanguages: Record<string, string>,
 ): Promise<ProjectService> {
+  /* Project dependencies require a design system reload */
+  let dependencies = new Set<string>()
+
+  dependencies.add(projectConfig.configPath)
+
   let enabled = false
   const folder = projectConfig.folder
   const disposables: Array<Disposable | Promise<Disposable>> = []
@@ -757,6 +763,14 @@ export async function createProjectService(
 
         state.designSystem = designSystem
 
+        let deps = designSystem.dependencies()
+
+        for (let dep of deps) {
+          dependencies.add(dep)
+        }
+
+        watchPatterns(Array.from(deps))
+
         originalConfig = { theme: {} }
       } catch {
         // TODO: Fall back to built-in v4 stuff
@@ -987,6 +1001,14 @@ export async function createProjectService(
     updateCapabilities()
   }
 
+  for (let entry of projectConfig.config.entries) {
+    dependencies.add(entry.path)
+
+    for (let dep of entry.deps) {
+      dependencies.add(dep.path)
+    }
+  }
+
   return {
     projectConfig,
     enabled() {
@@ -996,6 +1018,7 @@ export async function createProjectService(
       enabled = true
     },
 
+    dependencies: () => dependencies,
     async reload() {
       if (!state.v4) return
 
@@ -1028,6 +1051,18 @@ export async function createProjectService(
       state.designSystem = designSystem
       state.classList = classList
       state.variants = getVariants(state)
+
+      let deps = designSystem.dependencies()
+
+      for (let dep of deps) {
+        dependencies.add(dep)
+      }
+
+      watchPatterns(Array.from(deps))
+
+      // Update capabilities to force color swatches to update across editors
+      // TODO: Need to verify how well this works across various editors
+      // updateCapabilities()
 
       console.log('---- RELOADED ----')
     },
