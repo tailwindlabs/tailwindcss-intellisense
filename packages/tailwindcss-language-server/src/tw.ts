@@ -39,7 +39,7 @@ import picomatch from 'picomatch'
 import { resolveFrom } from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { equal } from '@tailwindcss/language-service/src/util/array'
-import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB } from './lib/constants'
+import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB, TSCONFIG_GLOB } from './lib/constants'
 import { clearRequireCache, isObject, changeAffectsFile, normalizeDriveLetter } from './utils'
 import { DocumentService } from './documents'
 import { createProjectService, type ProjectService } from './projects'
@@ -48,6 +48,7 @@ import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
+import { retry } from './util/retry'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -296,6 +297,7 @@ export class TW {
       let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
       let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
       let isConfigMatcher = picomatch(`**/${CONFIG_GLOB}`, { dot: true })
+      let isTSConfigMatcher = picomatch(`**/${TSCONFIG_GLOB}`, { dot: true })
 
       changeLoop: for (let change of changes) {
         let normalizedFilename = normalizePath(change.file)
@@ -333,6 +335,25 @@ export class TW {
               break changeLoop
             }
           }
+        }
+
+        let isTsconfig = isTSConfigMatcher(normalizedFilename)
+        if (isTsconfig) {
+          // TODO: Use a refresh() instead of a full server restart
+          // let refreshPromise = retry({
+          //   tries: 4,
+          //   delay: 250,
+          //   callback: () => resolver.refresh(),
+          // })
+
+          // try {
+          //   await refreshPromise
+          // } catch (err) {
+          //   console.error('Unable to reload resolver', err)
+          // }
+
+          needsRestart = true
+          break changeLoop
         }
 
         for (let [, project] of this.projects) {
@@ -424,6 +445,7 @@ export class TW {
             { globPattern: `**/${CONFIG_GLOB}` },
             { globPattern: `**/${PACKAGE_LOCK_GLOB}` },
             { globPattern: `**/${CSS_GLOB}` },
+            { globPattern: `**/${TSCONFIG_GLOB}` },
           ],
         },
       )
@@ -472,7 +494,7 @@ export class TW {
     } else {
       let watch: typeof chokidar.watch = require('chokidar').watch
       let chokidarWatcher = watch(
-        [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`],
+        [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`, `**/${TSCONFIG_GLOB}`],
         {
           cwd: base,
           ignorePermissionErrors: true,
