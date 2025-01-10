@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.12.18
+
 - Stop auto-switching CSS files to the Tailwind CSS language mode ([#1116](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1116))
 - Reload v4 design system when dependencies change ([#1119](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1119))
 
