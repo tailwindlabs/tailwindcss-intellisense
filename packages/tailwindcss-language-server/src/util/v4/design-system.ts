@@ -44,10 +44,12 @@ async function importFile(id: string) {
  * everything from working so we'll let the error handler decide how to proceed.
  */
 function createLoader<T>({
+  dependencies,
   legacy,
   filepath,
   onError,
 }: {
+  dependencies: Set<string>
   legacy: boolean
   filepath: string
   onError: (id: string, error: unknown, resourceType: string) => T
@@ -57,6 +59,8 @@ function createLoader<T>({
   async function loadFile(id: string, base: string, resourceType: string) {
     try {
       let resolved = resolveFrom(base, id)
+
+      dependencies.add(resolved)
 
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
@@ -93,6 +97,8 @@ export async function loadDesignSystem(
     return null
   }
 
+  let dependencies = new Set<string>()
+
   let supportsImports = false
   try {
     await tailwindcss.__unstable__loadDesignSystem(css, {
@@ -115,6 +121,7 @@ export async function loadDesignSystem(
 
     // v4.0.0-alpha.25+
     loadModule: createLoader({
+      dependencies,
       legacy: false,
       filepath,
       onError: (id, err, resourceType) => {
@@ -131,6 +138,8 @@ export async function loadDesignSystem(
     loadStylesheet: async (id: string, base: string) => {
       let resolved = resolveCssFrom(base, id)
 
+      dependencies.add(resolved)
+
       return {
         base: path.dirname(resolved),
         content: await fs.readFile(resolved, 'utf-8'),
@@ -139,6 +148,7 @@ export async function loadDesignSystem(
 
     // v4.0.0-alpha.24 and below
     loadPlugin: createLoader({
+      dependencies,
       legacy: true,
       filepath,
       onError(id, err) {
@@ -149,6 +159,7 @@ export async function loadDesignSystem(
     }),
 
     loadConfig: createLoader({
+      dependencies,
       legacy: true,
       filepath,
       onError(id, err) {
@@ -161,6 +172,8 @@ export async function loadDesignSystem(
 
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
+    dependencies: () => dependencies,
+
     compile(classes: string[]): (postcss.Root | null)[] {
       let css = design.candidatesToCss(classes)
       let errors: any[] = []
