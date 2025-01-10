@@ -5,6 +5,7 @@ import { stringToPath } from '../util/stringToPath'
 import isObject from '../util/isObject'
 import { closest, distance } from '../util/closest'
 import { combinations } from '../util/combinations'
+import { resolveKnownThemeKeys } from '../util/v4/theme-keys'
 import dlv from 'dlv'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DesignSystem } from '../util/v4'
@@ -226,17 +227,6 @@ function resolveThemeValue(design: DesignSystem, path: string) {
   })
 
   return value
-}
-
-function resolveKnownThemeKeys(design: DesignSystem): string[] {
-  let validThemeKeys = Array.from(design.theme.entries(), ([key]) => key)
-
-  let prefixLength = design.theme.prefix?.length ?? 0
-
-  return prefixLength > 0
-    ? // Strip the configured prefix from the list of valid theme keys
-      validThemeKeys.map((key) => `--${key.slice(prefixLength + 3)}`)
-    : validThemeKeys
 }
 
 function validateV4ThemePath(state: State, path: string): ValidationResult {
