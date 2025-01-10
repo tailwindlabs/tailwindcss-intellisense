@@ -7,6 +7,7 @@ import {
   type CompletionList,
   type Position,
   type CompletionContext,
+  InsertTextFormat,
 } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
@@ -18,7 +19,7 @@ import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
-import braceLevel from './util/braceLevel'
+import { braceLevel, parenLevel } from './util/braceLevel'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
 import { isJsDoc, isJsxContext } from './util/js'
@@ -41,6 +42,9 @@ import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
 import { findFileDirective } from './completions/file-paths'
 import type { ThemeEntry } from './util/v4'
+import { posix } from 'node:path/win32'
+import { segment } from './util/segment'
+import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/theme-keys'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -1128,6 +1132,172 @@ function provideCssHelperCompletions(
   )
 }
 
+function getCsstUtilityNameAtPosition(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): { root: string; kind: 'static' | 'functional' } | null {
+  if (!isCssContext(state, document, position)) return null
+  if (!isInsideAtRule('utility', document, position)) return null
+
+  let text = document.getText({
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+
+  // Make sure we're in a functional utility block
+  let block = text.lastIndexOf(`@utility`)
+  if (block === -1) return null
+
+  let curly = text.indexOf('{', block)
+  if (curly === -1) return null
+
+  let root = text.slice(block + 8, curly).trim()
+
+  if (root.length === 0) return null
+
+  if (root.endsWith('-*')) {
+    root = root.slice(0, -2)
+
+    if (root.length === 0) return null
+
+    return { root, kind: 'functional' }
+  }
+
+  return { root: root, kind: 'static' }
+}
+
+function provideUtilityFunctionCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): CompletionList {
+  let utilityName = getCsstUtilityNameAtPosition(state, document, position)
+  if (!utilityName) return null
+
+  let text = document.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  // Make sure we're in "value position"
+  // e.g. --foo: <cursor>
+  let pattern = /^[^:]+:[^;]*$/
+  if (!pattern.test(text)) return null
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: [
+        {
+          label: '--value()',
+          textEditText: '--value($1)',
+          sortText: '-00000',
+          insertTextFormat: InsertTextFormat.Snippet,
+          kind: CompletionItemKind.Function,
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: 'Reference a value based on the name of the utility. e.g. the `md` in `text-md`',
+          },
+          command: { command: 'editor.action.triggerSuggest', title: '' },
+        },
+        {
+          label: '--modifier()',
+          textEditText: '--modifier($1)',
+          sortText: '-00001',
+          insertTextFormat: InsertTextFormat.Snippet,
+          kind: CompletionItemKind.Function,
+          documentation: {
+            kind: 'markdown' as typeof MarkupKind.Markdown,
+            value: "Reference a value based on the utility's modifier. e.g. the `6` in `text-md/6`",
+          },
+        },
+      ],
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+      },
+      range: {
+        start: position,
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults,
+  )
+}
+
+async function provideUtilityFunctionArgumentCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): Promise<CompletionList | null> {
+  let utilityName = getCsstUtilityNameAtPosition(state, document, position)
+  if (!utilityName) return null
+
+  let text = document.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  // Look to see if we're inside --value() or --modifier()
+  let fn = null
+  let fnStart = 0
+  let valueIdx = text.lastIndexOf('--value(')
+  let modifierIdx = text.lastIndexOf('--modifier(')
+  let fnIdx = Math.max(valueIdx, modifierIdx)
+  if (fnIdx === -1) return null
+
+  if (fnIdx === valueIdx) {
+    fn = '--value'
+  } else if (fnIdx === modifierIdx) {
+    fn = '--modifier'
+  }
+
+  fnStart = fnIdx + fn.length + 1
+
+  // Make sure we're actaully inside the function
+  if (parenLevel(text.slice(fnIdx)) === 0) return null
+
+  let args = Array.from(await knownUtilityFunctionArguments(state, fn))
+
+  let parts = segment(text.slice(fnStart), ',').map((s) => s.trim())
+
+  // Only suggest at the start of the argument
+  if (parts.at(-1) !== '') return null
+
+  // Remove items that are already used
+  args = args.filter((arg) => !parts.includes(arg.name))
+
+  let items: CompletionItem[] = args.map((arg, idx) => ({
+    label: arg.name,
+    insertText: arg.name,
+    kind: CompletionItemKind.Constant,
+    sortText: naturalExpand(idx, args.length),
+    documentation: {
+      kind: 'markdown' as typeof MarkupKind.Markdown,
+      value: arg.description.replace(/\{utility\}-/g, `${utilityName.root}-`),
+    },
+  }))
+
+  return withDefaults(
+    {
+      isIncomplete: true,
+      items,
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+      },
+      range: {
+        start: position,
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults,
+  )
+}
+
 function provideTailwindDirectiveCompletions(
   state: State,
   document: TextDocument,
@@ -2001,6 +2171,8 @@ export async function doComplete(
   const result =
     (await provideClassNameCompletions(state, document, position, context)) ||
     (await provideThemeDirectiveCompletions(state, document, position)) ||
+    (await provideUtilityFunctionArgumentCompletions(state, document, position)) ||
+    provideUtilityFunctionCompletions(state, document, position) ||
     provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
@@ -2169,4 +2341,88 @@ async function getCssDetail(state: State, className: any): Promise<string> {
     return stringifyDecls(removeMeta(className), settings)
   }
   return null
+}
+
+type UtilityFn = '--value' | '--modifier'
+
+interface UtilityFnArg {
+  name: string
+  description: string
+}
+
+async function knownUtilityFunctionArguments(state: State, fn: UtilityFn): Promise<UtilityFnArg[]> {
+  if (!state.designSystem) return []
+
+  let args: UtilityFnArg[] = []
+
+  let namespaces = resolveKnownThemeNamespaces(state.designSystem)
+
+  for (let ns of namespaces) {
+    args.push({
+      name: `${ns}-*`,
+      description: `Support theme values from \`${ns}-*\``,
+    })
+  }
+
+  args.push({
+    name: 'integer',
+    description: 'Support integer values, e.g. `{utility}-6`',
+  })
+
+  args.push({
+    name: 'number',
+    description:
+      'Support numeric values in increments of 0.25, e.g. `{utility}-6` and `{utility}-7.25`',
+  })
+
+  args.push({
+    name: 'percentage',
+    description: 'Support integer percentage values, e.g. `{utility}-50%` and `{utility}-21%`',
+  })
+
+  if (fn === '--value') {
+    args.push({
+      name: 'ratio',
+      description: 'Support fractions, e.g. `{utility}-1/5` and `{utility}-16/9`',
+    })
+  }
+
+  args.push({
+    name: '[integer]',
+    description: 'Support arbitrary integer values, e.g. `{utility}-[123]`',
+  })
+
+  args.push({
+    name: '[number]',
+    description: 'Support arbitrary numeric values, e.g. `{utility}-[10]` and `{utility}-[10.234]`',
+  })
+
+  args.push({
+    name: '[percentage]',
+    description:
+      'Support arbitrary percentage values, e.g. `{utility}-[10%]` and `{utility}-[10.234%]`',
+  })
+
+  args.push({
+    name: '[ratio]',
+    description: 'Support arbitrary fractions, e.g. `{utility}-[1/5]` and `{utility}-[16/9]`',
+  })
+
+  args.push({
+    name: '[color]',
+    description:
+      'Support arbitrary color values, e.g. `{utility}-[#639]` and `{utility}-[oklch(44.03% 0.1603 303.37)]`',
+  })
+
+  args.push({
+    name: '[angle]',
+    description: 'Support arbitrary angle, e.g. `{utility}-[12deg]` and `{utility}-[0.21rad]`',
+  })
+
+  args.push({
+    name: '[url]',
+    description: "Support arbitrary URL functions, e.g. `{utility}-['url(…)']`",
+  })
+
+  return args
 }
