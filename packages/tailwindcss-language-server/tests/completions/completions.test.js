@@ -310,8 +310,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12319)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(306)
+    expect(result.items.length).toBe(12309)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(304)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
@@ -587,10 +587,9 @@ withFixture('v4/basic', (c) => {
     expect(resolved).toEqual({
       ...item,
       detail: [
+        //
         'font-size: 0.875rem /* 8.75px */;',
         'line-height: calc(1.25 / 0.875);',
-        'letter-spacing: undefined;',
-        'font-weight: undefined;',
       ].join(' '),
       documentation: {
         kind: 'markdown',
@@ -599,8 +598,6 @@ withFixture('v4/basic', (c) => {
           '.text-sm {',
           '  font-size: var(--text-sm) /* 0.875rem = 8.75px */;',
           '  line-height: var(--tw-leading, var(--text-sm--line-height) /* calc(1.25 / 0.875) ≈ 1.4286 */);',
-          '  letter-spacing: undefined;',
-          '  font-weight: undefined;',
           '}',
           '```',
         ].join('\n'),
