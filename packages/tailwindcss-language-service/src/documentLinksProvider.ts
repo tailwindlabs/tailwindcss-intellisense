@@ -20,6 +20,7 @@ export function getDocumentLinks(
       /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
       /@source\s*(?<path>'[^']+'|"[^"]+")/g,
       /@import\s*('[^']*'|"[^"]*")\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
+      /@reference\s*('[^']*'|"[^"]*")\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
       /@tailwind\s*utilities\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
     )
   }

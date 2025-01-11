@@ -10,6 +10,16 @@ const resolver = createResolver({
 })
 
 const resolveImports = postcss([
+  // Replace `@reference "…"` with `@import "…" reference`
+  {
+    postcssPlugin: 'replace-at-reference',
+    Once(root) {
+      root.walkAtRules('reference', (atRule) => {
+        atRule.name = 'import'
+        atRule.params += ' reference'
+      })
+    },
+  },
   postcssImport({
     resolve: (id, base) => resolveCssFrom(base, id),
   }),

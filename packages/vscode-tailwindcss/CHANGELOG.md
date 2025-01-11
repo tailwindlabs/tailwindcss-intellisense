@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Add support for `@reference` ([#1117](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1117))
 
 ## 0.12.18
 
