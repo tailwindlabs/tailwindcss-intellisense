@@ -34,9 +34,7 @@
     "color": "#f9fafb"
   },
   "icon": "media/icon.png",
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "activationEvents": [],
   "main": "dist/extension.js",
   "capabilities": {
     "virtualWorkspaces": false
