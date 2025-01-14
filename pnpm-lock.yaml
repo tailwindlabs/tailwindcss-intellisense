@@ -27,8 +27,8 @@ importers:
         specifier: ^3.2.5
         version: 3.2.5
       semver:
-        specifier: ^7.5.4
-        version: 7.5.4
+        specifier: ^7.6.3
+        version: 7.6.3
 
   packages/tailwindcss-language-server:
     devDependencies:
@@ -264,8 +264,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0
       semver:
-        specifier: 7.5.2
-        version: 7.5.2
+        specifier: 7.6.3
+        version: 7.6.3
       sift-string:
         specifier: 0.0.2
         version: 0.0.2
@@ -2273,13 +2273,8 @@ packages:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
 
-  semver@7.5.2:
-    resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
-    engines: {node: '>=10'}
-    hasBin: true
-
-  semver@7.5.4:
-    resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
+  semver@7.6.3:
+    resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -2970,7 +2965,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.4
+      semver: 7.6.3
       which: 4.0.0
     transitivePeerDependencies:
       - bluebird
@@ -2983,7 +2978,7 @@ snapshots:
       json-parse-even-better-errors: 3.0.0
       normalize-package-data: 6.0.0
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.6.3
     transitivePeerDependencies:
       - bluebird
 
@@ -3221,7 +3216,7 @@ snapshots:
       minimatch: 3.1.2
       parse-semver: 1.1.1
       read: 1.0.7
-      semver: 7.5.4
+      semver: 7.6.3
       tmp: 0.2.3
       typed-rest-client: 1.8.11
       url-join: 4.0.1
@@ -3325,7 +3320,7 @@ snapshots:
 
   builtins@5.0.1:
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.3
 
   bun-types@1.1.21:
     dependencies:
@@ -4108,7 +4103,7 @@ snapshots:
 
   node-abi@3.65.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.3
     optional: true
 
   node-addon-api@3.2.1: {}
@@ -4136,21 +4131,21 @@ snapshots:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.13.0
-      semver: 7.5.4
+      semver: 7.6.3
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@6.0.0:
     dependencies:
       hosted-git-info: 7.0.1
       is-core-module: 2.13.0
-      semver: 7.5.4
+      semver: 7.6.3
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
 
   npm-install-checks@6.3.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.3
 
   npm-normalize-package-bin@1.0.1: {}
 
@@ -4160,7 +4155,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.1
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.6.3
       validate-npm-package-name: 5.0.0
 
   npm-pick-manifest@9.0.0:
@@ -4168,7 +4163,7 @@ snapshots:
       npm-install-checks: 6.3.0
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 11.0.1
-      semver: 7.5.4
+      semver: 7.6.3
 
   npm-run-path@5.3.0:
     dependencies:
@@ -4543,13 +4538,7 @@ snapshots:
 
   semver@5.7.2: {}
 
-  semver@7.5.2:
-    dependencies:
-      lru-cache: 6.0.0
-
-  semver@7.5.4:
-    dependencies:
-      lru-cache: 6.0.0
+  semver@7.6.3: {}
 
   set-function-length@1.2.2:
     dependencies:
@@ -4921,13 +4910,13 @@ snapshots:
   vscode-languageclient@8.0.2:
     dependencies:
       minimatch: 3.1.2
-      semver: 7.5.4
+      semver: 7.6.3
       vscode-languageserver-protocol: 3.17.2
 
   vscode-languageclient@8.1.0:
     dependencies:
       minimatch: 5.1.6
-      semver: 7.5.4
+      semver: 7.6.3
       vscode-languageserver-protocol: 3.17.3
 
   vscode-languageserver-protocol@3.17.2:
