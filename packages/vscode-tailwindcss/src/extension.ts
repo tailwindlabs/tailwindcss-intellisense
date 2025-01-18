@@ -574,7 +574,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    if (!await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [])) {
+    if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? []))) {
       return
     }
 
