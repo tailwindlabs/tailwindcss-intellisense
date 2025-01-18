@@ -446,9 +446,6 @@ export async function createProjectService(
       let tailwindDir = path.dirname(tailwindcssPkgPath)
       tailwindcssVersion = require(tailwindcssPkgPath).version
 
-      let features = supportedFeatures(tailwindcssVersion)
-      log(`supported features: ${JSON.stringify(features)}`)
-
       // Loading via `await import(…)` with the Yarn PnP API is not possible
       if (await resolver.hasPnP()) {
         let tailwindcssPath = await resolver.resolveCjsId('tailwindcss', configDir)
@@ -460,6 +457,11 @@ export async function createProjectService(
 
         tailwindcss = await import(tailwindcssURL)
       }
+
+      // TODO: The module should be loaded in the project locator
+      // and this should be determined there and passed in instead
+      let features = supportedFeatures(tailwindcssVersion, tailwindcss)
+      log(`supported features: ${JSON.stringify(features)}`)
 
       if (!features.includes('css-at-theme')) {
         tailwindcss = tailwindcss.default ?? tailwindcss

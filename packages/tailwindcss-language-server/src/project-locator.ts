@@ -425,12 +425,25 @@ export class ProjectLocator {
 
   private async detectTailwindVersion(config: ConfigEntry) {
     try {
-      let metadataPath = await this.resolver.resolveJsId(
+      let metadataPath = await this.resolver.resolveCjsId(
         'tailwindcss/package.json',
         path.dirname(config.path),
       )
+
       let { version } = require(metadataPath)
-      let features = supportedFeatures(version)
+
+      let mod: unknown = undefined
+
+      if (this.resolver.hasPnP()) {
+        let modPath = await this.resolver.resolveCjsId('tailwindcss', path.dirname(config.path))
+        mod = require(modPath)
+      } else {
+        let modPath = await this.resolver.resolveJsId('tailwindcss', path.dirname(config.path))
+        let modURL = pathToFileURL(modPath).href
+        mod = await import(modURL)
+      }
+
+      let features = supportedFeatures(version, mod)
 
       if (typeof version === 'string') {
         return {
@@ -442,7 +455,8 @@ export class ProjectLocator {
     } catch {}
 
     let { version } = require('tailwindcss/package.json')
-    let features = supportedFeatures(version)
+    let mod = require('tailwindcss')
+    let features = supportedFeatures(version, mod)
 
     return {
       version,
