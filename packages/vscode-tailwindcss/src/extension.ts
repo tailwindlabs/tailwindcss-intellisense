@@ -157,6 +157,7 @@ async function activeTextEditorSupportsClassSorting(): Promise<boolean> {
   if (!project) {
     return false
   }
+  // TODO: Use feature detection instead of version checking
   return semver.gte(project.version, '3.0.0')
 }
 
