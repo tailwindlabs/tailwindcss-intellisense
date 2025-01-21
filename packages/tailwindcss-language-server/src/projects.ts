@@ -1365,7 +1365,20 @@ function isAtRule(node: Node): node is AtRule {
 
 function getVariants(state: State): Array<Variant> {
   if (state.v4) {
-    return state.designSystem.getVariants()
+    let variants = Array.from(state.designSystem.getVariants())
+
+    let prefix = state.designSystem.theme.prefix ?? ''
+    if (prefix.length > 0) {
+      variants.unshift({
+        name: prefix,
+        values: [],
+        isArbitrary: false,
+        hasDash: true,
+        selectors: () => ['&'],
+      })
+    }
+
+    return variants
   }
 
   if (state.jitContext?.getVariants) {
