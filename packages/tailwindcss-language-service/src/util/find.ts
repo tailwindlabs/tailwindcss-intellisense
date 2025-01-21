@@ -395,7 +395,7 @@ export function findHelperFunctionsInRange(
       match.groups.helper.length +
       match.groups.innerPrefix.length
 
-    let helper = 'config'
+    let helper: 'config' | 'theme' = 'config'
 
     if (match.groups.helper === 'theme' || match.groups.helper === '--theme') {
       helper = 'theme'
