@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix detection of TypeScript config paths on Windows ([#1130](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1130))
 
 ## 0.14.0
 
