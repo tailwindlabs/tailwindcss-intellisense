@@ -1,0 +1,250 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import {
+  CachedInputFileSystem,
+  ResolverFactory,
+  Resolver as BaseResolver,
+  FileSystem,
+} from 'enhanced-resolve'
+import { loadPnPApi, type PnpApi } from './pnp'
+import { loadTsConfig, type TSConfigApi } from './tsconfig'
+
+export interface ResolverOptions {
+  /**
+   * The root directory for the resolver
+   */
+  root: string
+
+  /**
+   * Whether or not the resolver should attempt to use PnP resolution.
+   *
+   * If `true`, the resolver will attempt to load the PnP API and use it for
+   * resolution. However, if an API is provided, the resolver will use that API
+   * instead.
+   */
+  pnp?: boolean | PnpApi
+
+  /**
+   * Whether or not the resolver should load tsconfig path mappings.
+   *
+   * If `true`, the resolver will look for all `tsconfig` files in the project
+   * and use them to resolve module paths where possible. However, if an API is
+   * provided, the resolver will use that API to resolve module paths.
+   */
+  tsconfig?: boolean | TSConfigApi
+
+  /**
+   * A filesystem to use for resolution. If not provided, the resolver will
+   * create one and use it internally for itself and any child resolvers that
+   * do not provide their own filesystem.
+   */
+  fileSystem?: FileSystem
+}
+
+export interface Resolver {
+  /**
+   * Sets up the PnP API if it is available such that globals like `require`
+   * have been monkey-patched to use PnP resolution.
+   *
+   * This function does nothing if PnP resolution is not enabled or if the PnP
+   * API is not available.
+   */
+  setupPnP(): Promise<void>
+
+  /**
+   * Resolves a JavaScript module to a file path.
+   *
+   * Assumes dynamic imports or some other ESM-captable mechanism will be used
+   * to load the module. Tries to resolve the ESM module first, then falls back
+   * to the CommonJS module if the ESM module is not found.
+   *
+   * @param id The module or file to resolve
+   * @param base The base directory to resolve the module from
+   */
+  resolveJsId(id: string, base: string): Promise<string>
+
+  /**
+   * Resolves a CSS module to a file path.
+   *
+   * @param id The module or file to resolve
+   * @param base The base directory to resolve the module from
+   */
+  resolveCssId(id: string, base: string): Promise<string>
+
+  /**
+   * Resolves a module to a possible file or directory path.
+   *
+   * This provides reasonable results when TypeScript config files are in use.
+   * This file may not exist but is the likely path that would be used to load
+   * the module if it were to exist.
+   *
+   * @param id The module, file, or directory to resolve
+   * @param base The base directory to resolve the module from
+   */
+  substituteId(id: string, base: string): Promise<string>
+
+  /**
+   * Return a list of path resolution aliases for the given base directory
+   */
+  aliases(base: string): Promise<Record<string, string[]>>
+
+  /**
+   * Create a child resolver with the given options.
+   *
+   * Use this to share state between resolvers. For example, if a resolver has
+   * already loaded the PnP API, you can create a child resolver that reuses
+   * the same PnP API without needing to load it again.
+   */
+  child(opts: Partial<ResolverOptions>): Promise<Resolver>
+
+  /**
+   * Refresh information the resolver may have cached
+   *
+   * This may look for new TypeScript configs if necessary
+   */
+  refresh(): Promise<void>
+}
+
+export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
+  let fileSystem = opts.fileSystem ? opts.fileSystem : new CachedInputFileSystem(fs, 4000)
+
+  let pnpApi: PnpApi | null = null
+
+  // Load PnP API if requested
+  if (typeof opts.pnp === 'object') {
+    pnpApi = opts.pnp
+  } else if (opts.pnp) {
+    pnpApi = await loadPnPApi(opts.root)
+  }
+
+  let tsconfig: TSConfigApi | null = null
+
+  // Load TSConfig path mappings
+  if (typeof opts.tsconfig === 'object') {
+    tsconfig = opts.tsconfig
+  } else if (opts.tsconfig) {
+    try {
+      tsconfig = await loadTsConfig(opts.root)
+    } catch (err) {
+      // We don't want to hard crash in case of an error handling tsconfigs
+      // It does affect what projects we can resolve or how we load files
+      // but the LSP shouldn't become unusable because of it.
+      console.error('Failed to load tsconfig', err)
+    }
+  }
+
+  let esmResolver = ResolverFactory.createResolver({
+    fileSystem,
+    extensions: ['.mjs', '.js'],
+    mainFields: ['module'],
+    conditionNames: ['node', 'import'],
+    pnpApi,
+  })
+
+  let cjsResolver = ResolverFactory.createResolver({
+    fileSystem,
+    extensions: ['.cjs', '.js'],
+    mainFields: ['main'],
+    conditionNames: ['node', 'require'],
+    pnpApi,
+  })
+
+  let cssResolver = ResolverFactory.createResolver({
+    fileSystem,
+    extensions: ['.css'],
+    mainFields: ['style'],
+    conditionNames: ['style'],
+    pnpApi,
+
+    // Given `foo/bar.css` try `./foo/bar.css` first before trying `foo/bar.css`
+    // as a module
+    preferRelative: true,
+  })
+
+  async function resolveId(
+    resolver: BaseResolver,
+    id: string,
+    base: string,
+  ): Promise<string | false> {
+    // Windows-specific path tweaks
+    if (path.sep === '\\') {
+      // Absolute path on Network Share
+      if (id.startsWith('\\\\')) return id
+
+      // Absolute path on Network Share (normalized)
+      if (id.startsWith('//')) return id
+
+      // Relative to Network Share (normalized)
+      if (base.startsWith('//')) base = `\\\\${base.slice(2)}`
+    }
+
+    if (tsconfig) {
+      let match = await tsconfig.resolveId(id, base)
+      if (match) id = match
+    }
+
+    return new Promise((resolve, reject) => {
+      resolver.resolve({}, base, id, {}, (err, res) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(res)
+        }
+      })
+    })
+  }
+
+  async function resolveJsId(id: string, base: string): Promise<string> {
+    try {
+      return (await resolveId(esmResolver, id, base)) || id
+    } catch {
+      return (await resolveId(cjsResolver, id, base)) || id
+    }
+  }
+
+  async function resolveCssId(id: string, base: string): Promise<string> {
+    return (await resolveId(cssResolver, id, base)) || id
+  }
+
+  // Takes a path which may or may not be complete and returns the aliased path
+  // if possible
+  async function substituteId(id: string, base: string): Promise<string> {
+    return (await tsconfig?.substituteId(id, base)) ?? id
+  }
+
+  async function setupPnP() {
+    pnpApi?.setup()
+  }
+
+  async function aliases(base: string) {
+    if (!tsconfig) return {}
+
+    return await tsconfig.paths(base)
+  }
+
+  async function refresh() {
+    await tsconfig?.refresh()
+  }
+
+  return {
+    setupPnP,
+    resolveJsId,
+    resolveCssId,
+    substituteId,
+    refresh,
+
+    aliases,
+
+    child(childOpts: Partial<ResolverOptions>) {
+      return createResolver({
+        ...opts,
+        ...childOpts,
+
+        // Inherit defaults from parent
+        pnp: childOpts.pnp ?? pnpApi,
+        tsconfig: childOpts.tsconfig ?? tsconfig,
+        fileSystem: childOpts.fileSystem ?? fileSystem,
+      })
+    },
+  }
+}

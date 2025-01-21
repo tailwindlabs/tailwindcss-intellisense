@@ -2,7 +2,9 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Don't break when importing missing CSS files ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
+- Resolve CSS imports as relative first ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
+- Add TypeScript config path support in v4 CSS files ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
 
 ## 0.12.18
 
