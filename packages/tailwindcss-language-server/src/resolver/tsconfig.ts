@@ -8,7 +8,7 @@
 import * as path from 'node:path'
 import * as tsconfig from 'tsconfig-paths'
 import * as tsconfck from 'tsconfck'
-import { normalizePath } from '../utils'
+import { normalizeDriveLetter, normalizePath } from '../utils'
 import { DefaultMap } from '../util/default-map'
 
 export interface TSConfigApi {
@@ -205,7 +205,7 @@ async function createMatchers(
   let assumeExists: tsconfig.FileExistsAsync = (_, callback) => callback(undefined, true)
 
   for (let result of configs) {
-    let parent = normalizePath(path.dirname(result.tsconfigFile))
+    let parent = normalizeDriveLetter(normalizePath(path.dirname(result.tsconfigFile)))
 
     let opts = result.tsconfig.compilerOptions ?? {}
 
@@ -257,7 +257,7 @@ async function createMatchers(
 }
 
 function* walkPaths(base: string) {
-  let projectDir = normalizePath(base)
+  let projectDir = normalizeDriveLetter(normalizePath(base))
 
   let prevProjectDir: string | undefined
   while (projectDir !== prevProjectDir) {
