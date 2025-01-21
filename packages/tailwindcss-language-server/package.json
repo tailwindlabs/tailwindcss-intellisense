@@ -1,6 +1,6 @@
 {
   "name": "@tailwindcss/language-server",
-  "version": "0.12.18",
+  "version": "0.14.0",
   "description": "Tailwind CSS Language Server",
   "license": "MIT",
   "repository": {
