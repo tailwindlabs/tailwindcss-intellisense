@@ -348,17 +348,22 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
     .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
+    .replace(/@reference\s*([^;]{2,})/g, '@import    $1')
     .replace(
       /@media(\s+screen\s*\([^)]+\))/g,
       (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
     )
-    .replace(/@import\s*("(?:[^"]+)"|'(?:[^']+)')\s*(.*?)(?=;|$)/g, (_match, url, other) => {
-      // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
-      // otherwise we'll show syntax-error diagnostics which we don't want
-      other = other.replace(/((source|theme|prefix)\([^)]+\)\s*)+?/g, '')
+    .replace(
+      /@import(\s*)("(?:[^"]+)"|'(?:[^']+)')\s*(.*?)(?=;|$)/g,
+      (_match, spaces, url, other) => {
+        // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
+        // otherwise we'll show syntax-error diagnostics which we don't want
+        other = other.replace(/((source|theme|prefix)\([^)]+\)\s*)+?/g, '')
 
-      return `@import "${url.slice(1, -1)}" ${other}`
-    })
+        // We have to add the spaces here so the character positions line up
+        return `@import${spaces}"${url.slice(1, -1)}" ${other}`
+      },
+    )
     .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
   return TextDocument.create(

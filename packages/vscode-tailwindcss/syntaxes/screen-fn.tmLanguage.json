@@ -32,6 +32,64 @@
           "name": "variable.parameter.screen.tailwind"
         }
       ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(--spacing)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.spacing.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+?",
+          "name": "variable.parameter.spacing.tailwind"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(--alpha)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.alpha.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+?",
+          "name": "variable.parameter.alpha.tailwind"
+        }
+      ]
     }
   ]
 }
