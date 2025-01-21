@@ -1005,7 +1005,7 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/[\s:;/*(){}](?<helper>config|theme)\(\s*['"]?(?<path>[^)'"]*)$/)
+    .match(/[\s:;/*(){}](?<helper>config|theme|--theme)\(\s*['"]?(?<path>[^)'"]*)$/)
 
   if (match === null) {
     return null
@@ -1021,6 +1021,39 @@ function provideCssHelperCompletions(
 
   if (alpha !== undefined) {
     return null
+  }
+
+  let editRange = {
+    start: {
+      line: position.line,
+      character: position.character,
+    },
+    end: position,
+  }
+
+  if (state.v4 && match.groups.helper === '--theme') {
+    // List known theme keys
+    let validThemeKeys = resolveKnownThemeKeys(state.designSystem)
+
+    let items: CompletionItem[] = validThemeKeys.map((themeKey, index) => {
+      return {
+        label: themeKey,
+        sortText: naturalExpand(index, validThemeKeys.length),
+        kind: 9,
+      }
+    })
+
+    return withDefaults(
+      { isIncomplete: false, items },
+      {
+        range: editRange,
+        data: {
+          ...(state.completionItemData ?? {}),
+          _type: 'helper',
+        },
+      },
+      state.editor.capabilities.itemDefaults,
+    )
   }
 
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
@@ -1056,13 +1089,7 @@ function provideCssHelperCompletions(
 
   if (!obj) return null
 
-  let editRange = {
-    start: {
-      line: position.line,
-      character: position.character - offset,
-    },
-    end: position,
-  }
+  editRange.start.character = position.character - offset
 
   return withDefaults(
     {
