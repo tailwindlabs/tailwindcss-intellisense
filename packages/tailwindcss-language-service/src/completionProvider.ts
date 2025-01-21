@@ -1275,6 +1275,66 @@ function provideVariantsDirectiveCompletions(
   )
 }
 
+function provideVariantDirectiveCompletions(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): CompletionList {
+  if (!state.v4) return null
+  if (!isCssContext(state, document, position)) return null
+
+  let text = document.getText({
+    start: { line: position.line, character: 0 },
+    end: position,
+  })
+
+  let match = text.match(/^\s*@variant\s+(?<partial>[^}]*)$/i)
+  if (match === null) return null
+
+  let partial = match.groups.partial.trim()
+
+  // We only allow one variant `@variant` call
+  if (/\s/.test(partial)) return null
+
+  // We don't allow applying stacked variants so don't suggest them
+  if (/:/.test(partial)) return null
+
+  let possibleVariants = state.variants.flatMap((variant) => {
+    if (variant.values.length) {
+      return variant.values.map((value) =>
+        value === 'DEFAULT' ? variant.name : `${variant.name}${variant.hasDash ? '-' : ''}${value}`,
+      )
+    }
+
+    return [variant.name]
+  })
+
+  return withDefaults(
+    {
+      isIncomplete: false,
+      items: possibleVariants.map((variant, index, variants) => ({
+        label: variant,
+        kind: 21,
+        sortText: naturalExpand(index, variants.length),
+      })),
+    },
+    {
+      data: {
+        ...(state.completionItemData ?? {}),
+        _type: 'variant',
+      },
+      range: {
+        start: {
+          line: position.line,
+          character: position.character,
+        },
+        end: position,
+      },
+    },
+    state.editor.capabilities.itemDefaults,
+  )
+}
+
 function provideLayerDirectiveCompletions(
   state: State,
   document: TextDocument,
@@ -1423,6 +1483,8 @@ function provideCssDirectiveCompletions(
 
   if (match === null) return null
 
+  let isNested = isInsideNesting(document, position)
+
   let items: CompletionItem[] = []
 
   items.push({
@@ -1535,12 +1597,12 @@ function provideCssDirectiveCompletions(
     })
 
     items.push({
-      label: '@variant',
+      label: '@custom-variant',
       documentation: {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@variant\` directive to define a custom variant or override an existing one.\n\n[Tailwind CSS Documentation](${docsUrl(
+        value: `Use the \`@custom-variant\` directive to define a custom variant or override an existing one.\n\n[Tailwind CSS Documentation](${docsUrl(
           state.version,
-          'functions-and-directives/#variant',
+          'functions-and-directives/#custom-variant',
         )})`,
       },
     })
@@ -1566,9 +1628,22 @@ function provideCssDirectiveCompletions(
         )})`,
       },
     })
+  }
 
-    // If we're inside an @variant directive, also add `@slot`
-    if (isInsideAtRule('variant', document, position)) {
+  if (state.v4 && isNested) {
+    items.push({
+      label: '@variant',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@variant\` directive to use a variant in CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/variant',
+        )})`,
+      },
+    })
+
+    // If we're inside an @custom-variant directive, also add `@slot`
+    if (isInsideAtRule('custom-variant', document, position)) {
       items.push({
         label: '@slot',
         documentation: {
@@ -1611,18 +1686,27 @@ function provideCssDirectiveCompletions(
 }
 
 function isInsideAtRule(name: string, document: TextDocument, position: Position) {
-  // 1. Get all text up to the current position
   let text = document.getText({
     start: { line: 0, character: 0 },
     end: position,
   })
 
-  // 2. Find the last instance of the at-rule
+  // Find the last instance of the at-rule
   let block = text.lastIndexOf(`@${name}`)
   if (block === -1) return false
 
-  // 4. Count the number of open and close braces following the rule to determine if we're inside it
+  // Check if we're inside it by counting the number of still-open braces
   return braceLevel(text.slice(block)) > 0
+}
+
+function isInsideNesting(document: TextDocument, position: Position) {
+  let text = document.getText({
+    start: { line: 0, character: 0 },
+    end: position,
+  })
+
+  // Check if we're inside a rule by counting the number of still-open braces
+  return braceLevel(text) > 0
 }
 
 // Provide completions for directives that take file paths
@@ -1874,6 +1958,7 @@ export async function doComplete(
     provideCssHelperCompletions(state, document, position) ||
     provideCssDirectiveCompletions(state, document, position) ||
     provideScreenDirectiveCompletions(state, document, position) ||
+    provideVariantDirectiveCompletions(state, document, position) ||
     provideVariantsDirectiveCompletions(state, document, position) ||
     provideTailwindDirectiveCompletions(state, document, position) ||
     provideLayerDirectiveCompletions(state, document, position) ||
