@@ -72,6 +72,8 @@ export function completionsFromClassList(
   }
 
   if (state.v4) {
+    let prefix = state.designSystem.theme.prefix ?? ''
+
     let { variants: existingVariants, offset } = getVariantsFromClassName(state, partialClassName)
 
     if (
@@ -274,6 +276,35 @@ export function completionsFromClassList(
             detail: selectors.join(', '),
           }),
         )
+      }
+    }
+
+    // TODO: This is a bit of a hack
+    if (prefix.length > 0) {
+      // No variants seen: suggest the prefix only
+      if (existingVariants.length === 0) {
+        items = items.slice(0, 1)
+
+        return withDefaults(
+          {
+            isIncomplete: false,
+            items,
+          },
+          {
+            data: {
+              ...(state.completionItemData ?? {}),
+              ...(important ? { important } : {}),
+              variants: existingVariants,
+            },
+            range: replacementRange,
+          },
+          state.editor.capabilities.itemDefaults,
+        )
+      }
+
+      // The first variant is not the prefix: don't suggest anything
+      if (existingVariants[0] !== prefix) {
+        return null
       }
     }
 
