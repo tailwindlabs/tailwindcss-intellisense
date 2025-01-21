@@ -4,7 +4,7 @@
  * This is invalid in this position because some `@import`s are not at the top of the file.
  * We don't want project discovery to fail so we hoist them up and then warn in the console.
  */
-@variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @import './a.css';
 @import './b.css';
