@@ -1353,10 +1353,16 @@ function provideLayerDirectiveCompletions(
 
   if (match === null) return null
 
+  let layerNames = ['base', 'components', 'utilities']
+
+  if (state.v4) {
+    layerNames = ['theme', 'base', 'components', 'utilities']
+  }
+
   return withDefaults(
     {
       isIncomplete: false,
-      items: ['base', 'components', 'utilities'].map((layer, index, layers) => ({
+      items: layerNames.map((layer, index, layers) => ({
         label: layer,
         kind: 21,
         sortText: naturalExpand(index, layers.length),
@@ -1487,40 +1493,49 @@ function provideCssDirectiveCompletions(
 
   let items: CompletionItem[] = []
 
-  items.push({
-    label: '@tailwind',
-    documentation: {
-      kind: 'markdown' as typeof MarkupKind.Markdown,
-      value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
-        state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
-      }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
-        state.version,
-        'functions-and-directives/#tailwind',
-      )})`,
-    },
-  })
+  if (state.v4) {
+    // We don't suggest @tailwind anymore in v4 because we prefer that people
+    // use the imports instead
+  } else {
+    items.push({
+      label: '@tailwind',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use the \`@tailwind\` directive to insert Tailwind’s \`base\`, \`components\`, \`utilities\` and \`${
+          state.jit && semver.gte(state.version, '2.1.99') ? 'variants' : 'screens'
+        }\` styles into your CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#tailwind',
+        )})`,
+      },
+    })
+  }
 
-  items.push({
-    label: '@screen',
-    documentation: {
-      kind: 'markdown' as typeof MarkupKind.Markdown,
-      value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
-        state.version,
-        'functions-and-directives/#screen',
-      )})`,
-    },
-  })
+  if (!state.v4) {
+    items.push({
+      label: '@screen',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `The \`@screen\` directive allows you to create media queries that reference your breakpoints by name instead of duplicating their values in your own CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#screen',
+        )})`,
+      },
+    })
+  }
 
-  items.push({
-    label: '@apply',
-    documentation: {
-      kind: 'markdown' as typeof MarkupKind.Markdown,
-      value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
-        state.version,
-        'functions-and-directives/#apply',
-      )})`,
-    },
-  })
+  if (isNested) {
+    items.push({
+      label: '@apply',
+      documentation: {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `Use \`@apply\` to inline any existing utility classes into your own custom CSS.\n\n[Tailwind CSS Documentation](${docsUrl(
+          state.version,
+          'functions-and-directives/#apply',
+        )})`,
+      },
+    })
+  }
 
   if (semver.gte(state.version, '1.8.0')) {
     items.push({
@@ -1560,7 +1575,7 @@ function provideCssDirectiveCompletions(
     })
   }
 
-  if (semver.gte(state.version, '3.2.0')) {
+  if (semver.gte(state.version, '3.2.0') && !isNested) {
     items.push({
       label: '@config',
       documentation: {
@@ -1573,7 +1588,7 @@ function provideCssDirectiveCompletions(
     })
   }
 
-  if (state.v4) {
+  if (state.v4 && !isNested) {
     items.push({
       label: '@theme',
       documentation: {
