@@ -35,7 +35,8 @@
   },
   "icon": "media/icon.png",
   "activationEvents": [
-    "onStartupFinished"
+    "workspaceContains:**/*{tailwind}*.config*.{js,cjs,mjs,ts,cts,mts}",
+    "workspaceContains:node_modules/.bin/tailwindcss"
   ],
   "main": "dist/extension.js",
   "capabilities": {
