@@ -17,7 +17,9 @@ export async function updateAnnotation(state: State, document: TextDocument): Pr
     extractorContext.tailwindConfig.prefix = state.jitContext.tailwindConfig.prefix
   }
 
-  const classNames = state.modules.defaultExtractor.module(extractorContext)(text) as string[]
+  const classNames = (
+    state.modules.defaultExtractor.module(extractorContext)(text) as string[]
+  ).map((className) => className.replace(/;$/, ''))
 
   const result: Range[] = []
 
