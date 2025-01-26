@@ -1,5 +1,4 @@
 import type { Range, TextDocument } from 'vscode-languageserver-textdocument'
-import * as jit from './util/jit'
 import type { State } from './util/state'
 
 export async function updateAnnotation(state: State, document: TextDocument): Promise<Range[]> {
