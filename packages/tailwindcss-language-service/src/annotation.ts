@@ -35,13 +35,13 @@ export async function updateAnnotation(state: State, document: TextDocument): Pr
       index = end
     })
   } else if (state.jit) {
-    const rules = jit.generateRules(state, classNames).rules
+    const rules = state.modules.jit.generateRules.module(classNames, state.jitContext)
 
     let index = 0
-    classNames.forEach((className, i) => {
+    classNames.forEach((className) => {
       const start = text.indexOf(className, index)
       const end = start + className.length
-      if ((rules.at(i).raws.tailwind as any)?.candidate === className && start !== -1) {
+      if (rules?.find(([, i]) => (i.raws.tailwind as any)?.candidate === className)) {
         result.push({ start: document.positionAt(start), end: document.positionAt(end) })
       }
       index = end
