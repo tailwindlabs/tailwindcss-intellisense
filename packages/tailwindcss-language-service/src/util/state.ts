@@ -47,6 +47,7 @@ export type TailwindCssSettings = {
   classAttributes: string[]
   suggestions: boolean
   hovers: boolean
+  annotations: boolean
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean

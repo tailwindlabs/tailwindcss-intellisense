@@ -1194,7 +1194,8 @@ export async function createProjectService(
       if (!state.enabled) return []
       let document = documentService.getDocument(params.uri)
       if (!document) return []
-      await state.editor.getConfiguration(document.uri)
+      let settings = await state.editor.getConfiguration(document.uri)
+      if (!settings.tailwindCSS.annotations) return []
       if (await isExcluded(state, document)) return []
       return updateAnnotation(state, params)
     },
