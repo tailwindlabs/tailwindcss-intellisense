@@ -543,8 +543,10 @@ export async function activate(context: ExtensionContext) {
     client.onNotification('@/tailwindCSS/projectInitialized', updateActiveTextEditorContext)
     client.onNotification('@/tailwindCSS/projectReset', updateActiveTextEditorContext)
     client.onNotification('@/tailwindCSS/projectsDestroyed', resetActiveTextEditorContext)
-    client.onRequest('@/tailwindCSS/annotations', (ranges) => {
-      Window.activeTextEditor.setDecorations(underlineDecorationType, ranges)
+    client.onRequest('@/tailwindCSS/annotations', ({ uri, annotations }) => {
+      Window.visibleTextEditors
+        .find((editor) => editor.document.uri.toString() === uri)
+        ?.setDecorations(underlineDecorationType, annotations)
     })
     client.onRequest('@/tailwindCSS/getDocumentSymbols', showSymbols)
 

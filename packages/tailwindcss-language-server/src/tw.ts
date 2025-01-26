@@ -629,7 +629,10 @@ export class TW {
         this.getProject(document)
           ?.provideAnnotations(document)
           .then((annotations) => {
-            this.connection.sendRequest('@/tailwindCSS/annotations', annotations)
+            this.connection.sendRequest('@/tailwindCSS/annotations', {
+              uri: document.uri,
+              annotations,
+            })
           })
       }),
     )
@@ -656,10 +659,24 @@ export class TW {
         this.getProject(document)
           ?.provideAnnotations(document)
           .then((annotations) => {
-            this.connection.sendRequest('@/tailwindCSS/annotations', annotations)
+            this.connection.sendRequest('@/tailwindCSS/annotations', {
+              uri: document.uri,
+              annotations,
+            })
           })
       }),
     )
+
+    this.documentService.getAllDocuments().forEach((document) => {
+      this.getProject(document)
+        ?.provideAnnotations(document)
+        .then((annotations) => {
+          this.connection.sendRequest('@/tailwindCSS/annotations', {
+            uri: document.uri,
+            annotations,
+          })
+        })
+    })
 
     if (this.initializeParams.capabilities.workspace.workspaceFolders) {
       this.disposables.push(
