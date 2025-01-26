@@ -1191,13 +1191,18 @@ export async function createProjectService(
       provideDiagnostics(state, document)
     },
     provideAnnotations: async (params) => {
-      if (!state.enabled) return []
-      let document = documentService.getDocument(params.uri)
-      if (!document) return []
-      let settings = await state.editor.getConfiguration(document.uri)
-      if (!settings.tailwindCSS.annotations) return []
-      if (await isExcluded(state, document)) return []
-      return updateAnnotation(state, params)
+      try {
+        if (!state.enabled) return []
+        let document = documentService.getDocument(params.uri)
+        if (!document) return []
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.annotations) return []
+        if (await isExcluded(state, document)) return []
+        return updateAnnotation(state, params)
+      } catch (error) {
+        console.error(error)
+        return []
+      }
     },
     async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
       return withFallback(async () => {
