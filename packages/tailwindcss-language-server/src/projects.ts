@@ -17,7 +17,7 @@ import type {
   DocumentLink,
 } from 'vscode-languageserver/node'
 import { FileChangeType } from 'vscode-languageserver/node'
-import type { TextDocument } from 'vscode-languageserver-textdocument'
+import type { Range, TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, SilentError } from './util/error'
 import * as path from 'node:path'
@@ -35,6 +35,7 @@ import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
 import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
+import { updateAnnotation } from '@tailwindcss/language-service/src/annotation'
 import { Resolver } from './resolver'
 import {
   doComplete,
@@ -106,6 +107,7 @@ export interface ProjectService {
   onCompletionResolve(item: CompletionItem): Promise<CompletionItem>
   provideDiagnostics(document: TextDocument): void
   provideDiagnosticsForce(document: TextDocument): void
+  provideAnnotations(document: TextDocument): Promise<Range[]>
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
@@ -470,6 +472,9 @@ export async function createProjectService(
           postcss: { version: null, module: null },
           resolveConfig: { module: null },
           loadConfig: { module: null },
+          defaultExtractor: {
+            module: require('tailwindcss/lib/lib/defaultExtractor').defaultExtractor,
+          }
         }
 
         return tryRebuild()
@@ -695,6 +700,9 @@ export async function createProjectService(
       loadConfig: { module: loadConfigFn },
       transformThemeValue: { module: transformThemeValueFn },
       jit: jitModules,
+      defaultExtractor: {
+        module: require('tailwindcss/lib/lib/defaultExtractor').defaultExtractor,
+      }
     }
     state.browserslist = browserslist
     state.featureFlags = featureFlags
@@ -1181,6 +1189,14 @@ export async function createProjectService(
     provideDiagnosticsForce: (document: TextDocument) => {
       if (!state.enabled) return
       provideDiagnostics(state, document)
+    },
+    provideAnnotations: async (params) => {
+      if (!state.enabled) return []
+      let document = documentService.getDocument(params.uri)
+      if (!document) return []
+      await state.editor.getConfiguration(document.uri)
+      if (await isExcluded(state, document)) return []
+      return updateAnnotation(state, params)
     },
     async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
       return withFallback(async () => {

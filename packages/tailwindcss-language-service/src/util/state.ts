@@ -123,6 +123,7 @@ export interface State {
       expandApplyAtRules: { module: any }
       evaluateTailwindFunctions?: { module: any }
     }
+    defaultExtractor: { module: any }
   }
 
   v4?: boolean

@@ -624,6 +624,13 @@ export class TW {
     this.disposables.push(
       this.documentService.onDidChangeContent((change) => {
         this.getProject(change.document)?.provideDiagnostics(change.document)
+
+        const { document } = change
+        this.getProject(document)
+          ?.provideAnnotations(document)
+          .then((annotations) => {
+            this.connection.sendRequest('@/tailwindCSS/annotations', annotations)
+          })
       }),
     )
 
@@ -644,6 +651,13 @@ export class TW {
         await this.connection.sendNotification('@/tailwindCSS/documentReady', {
           uri: event.document.uri,
         })
+
+        const { document } = event
+        this.getProject(document)
+          ?.provideAnnotations(document)
+          .then((annotations) => {
+            this.connection.sendRequest('@/tailwindCSS/annotations', annotations)
+          })
       }),
     )
 
