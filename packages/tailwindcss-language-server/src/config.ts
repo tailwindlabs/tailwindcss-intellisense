@@ -16,6 +16,7 @@ function getDefaultSettings(): Settings {
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
       codeActions: true,
       hovers: true,
+      annotations: false,
       suggestions: true,
       validate: true,
       colorDecorators: true,
