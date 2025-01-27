@@ -1,5 +1,6 @@
 import findUp from 'find-up'
 import * as path from 'node:path'
+import { pathToFileURL } from '../utils'
 
 export interface PnpApi {
   setup(): void
@@ -25,7 +26,8 @@ export async function loadPnPApi(root: string): Promise<PnpApi | null> {
     return null
   }
 
-  let mod = await import(pnpPath)
+  let pnpUrl = pathToFileURL(pnpPath).href
+  let mod = await import(pnpUrl)
   let api = mod.default
   cache.set(root, api)
   return api

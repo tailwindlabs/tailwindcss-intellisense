@@ -115,7 +115,7 @@ export function pathToFileURL(filepath: string) {
   } catch (err) {
     if (process.platform !== 'win32') throw err
 
-    // If `pathToFileURL` failsed on windows it's probably because the path was
+    // If `pathToFileURL` failed on windows it's probably because the path was
     // a windows network share path and there were mixed slashes.
     // Fix the path and try again.
     filepath = URI.file(filepath).fsPath
