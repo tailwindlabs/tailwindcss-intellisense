@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Don't suggest `--font-size-*` theme keys in v4.0 ([#1150](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1150))
 
 ## 0.14.1
 
