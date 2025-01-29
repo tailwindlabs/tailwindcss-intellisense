@@ -40,7 +40,15 @@ export function resolveCssImports({
             if (seenOtherNodes) {
               seenImportsAfterOtherNodes = true
             }
-          } else if (hoist.length > 0 && (node.type === 'atrule' || node.type === 'rule')) {
+          } else if (node.type === 'atrule') {
+            if (node.name === 'layer') {
+              if (!node.nodes || node.nodes.length > 0) {
+                continue
+              }
+            }
+
+            seenOtherNodes = true
+          } else if (node.type === 'rule') {
             seenOtherNodes = true
           }
         }
