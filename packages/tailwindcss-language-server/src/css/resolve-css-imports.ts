@@ -30,13 +30,26 @@ export function resolveCssImports({
         if (!loose) return
 
         let hoist: postcss.AtRule[] = []
+        let seenOtherNodes = false
         let seenImportsAfterOtherNodes = false
 
         for (let node of root.nodes) {
           if (node.type === 'atrule' && (node.name === 'import' || node.name === 'charset')) {
             hoist.push(node)
-          } else if (hoist.length > 0 && (node.type === 'atrule' || node.type === 'rule')) {
-            seenImportsAfterOtherNodes = true
+
+            if (seenOtherNodes) {
+              seenImportsAfterOtherNodes = true
+            }
+          } else if (node.type === 'atrule') {
+            if (node.name === 'layer') {
+              if (!node.nodes || node.nodes.length > 0) {
+                continue
+              }
+            }
+
+            seenOtherNodes = true
+          } else if (node.type === 'rule') {
+            seenOtherNodes = true
           }
         }
 
