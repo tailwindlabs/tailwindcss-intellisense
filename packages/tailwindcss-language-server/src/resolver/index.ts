@@ -44,15 +44,6 @@ export interface ResolverOptions {
 
 export interface Resolver {
   /**
-   * Sets up the PnP API if it is available such that globals like `require`
-   * have been monkey-patched to use PnP resolution.
-   *
-   * This function does nothing if PnP resolution is not enabled or if the PnP
-   * API is not available.
-   */
-  setupPnP(): Promise<void>
-
-  /**
    * Resolves a JavaScript module to a file path.
    *
    * Assumes dynamic imports or some other ESM-captable mechanism will be used
@@ -99,6 +90,11 @@ export interface Resolver {
   child(opts: Partial<ResolverOptions>): Promise<Resolver>
 
   /**
+   * Whether or not the PnP API is being used by the resolver
+   */
+  hasPnP(): Promise<boolean>
+
+  /**
    * Refresh information the resolver may have cached
    *
    * This may look for new TypeScript configs if necessary
@@ -107,16 +103,17 @@ export interface Resolver {
 }
 
 export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
-  let fileSystem = opts.fileSystem ? opts.fileSystem : new CachedInputFileSystem(fs, 4000)
-
   let pnpApi: PnpApi | null = null
 
   // Load PnP API if requested
+  // This MUST be done before `CachedInputFileSystem` is created
   if (typeof opts.pnp === 'object') {
     pnpApi = opts.pnp
   } else if (opts.pnp) {
     pnpApi = await loadPnPApi(opts.root)
   }
+
+  let fileSystem = opts.fileSystem ? opts.fileSystem : new CachedInputFileSystem(fs, 4000)
 
   let tsconfig: TSConfigApi | null = null
 
@@ -217,10 +214,6 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     return (await tsconfig?.substituteId(id, base)) ?? id
   }
 
-  async function setupPnP() {
-    pnpApi?.setup()
-  }
-
   async function aliases(base: string) {
     if (!tsconfig) return {}
 
@@ -231,12 +224,16 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     await tsconfig?.refresh()
   }
 
+  async function hasPnP() {
+    return !!pnpApi
+  }
+
   return {
-    setupPnP,
     resolveJsId,
     resolveCssId,
     substituteId,
     refresh,
+    hasPnP,
 
     aliases,
 
