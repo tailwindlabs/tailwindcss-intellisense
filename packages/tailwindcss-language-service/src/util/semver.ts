@@ -1,5 +1,5 @@
-import semverGte from 'semver/functions/gte'
-import semverLte from 'semver/functions/lte'
+import semverGte from 'semver/functions/gte.js'
+import semverLte from 'semver/functions/lte.js'
 
 export function gte(v1: string, v2: string): boolean {
   if (v1.startsWith('0.0.0-insiders')) {
