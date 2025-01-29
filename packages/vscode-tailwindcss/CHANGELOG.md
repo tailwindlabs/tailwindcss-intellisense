@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Don't suggest `--font-size-*` theme keys in v4.0 ([#1150](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1150))
+- Fix detection of Tailwind CSS version when using Yarn PnP ([#1151](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1151))
 
 ## 0.14.1
 
