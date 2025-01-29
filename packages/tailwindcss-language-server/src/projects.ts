@@ -492,10 +492,13 @@ export async function createProjectService(
         return
       }
 
-      const postcssPath = resolveFrom(tailwindDir, 'postcss')
-      const postcssPkgPath = resolveFrom(tailwindDir, 'postcss/package.json')
+      const postcssPath = await resolver.resolveCjsId('postcss', tailwindDir)
+      const postcssPkgPath = await resolver.resolveCjsId('postcss/package.json', tailwindDir)
       const postcssDir = path.dirname(postcssPkgPath)
-      const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
+      const postcssSelectorParserPath = await resolver.resolveCjsId(
+        'postcss-selector-parser',
+        tailwindDir,
+      )
 
       postcssVersion = require(postcssPkgPath).version
 
