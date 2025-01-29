@@ -196,6 +196,12 @@
           "markdownDescription": "Enable hovers.",
           "scope": "language-overridable"
         },
+        "tailwindCSS.annotations": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable annotations.",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.codeActions": {
           "type": "boolean",
           "default": true,

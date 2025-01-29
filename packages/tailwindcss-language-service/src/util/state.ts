@@ -47,6 +47,7 @@ export type TailwindCssSettings = {
   classAttributes: string[]
   suggestions: boolean
   hovers: boolean
+  annotations: boolean
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean
@@ -123,6 +124,7 @@ export interface State {
       expandApplyAtRules: { module: any }
       evaluateTailwindFunctions?: { module: any }
     }
+    defaultExtractor: { module: any }
   }
 
   v4?: boolean
