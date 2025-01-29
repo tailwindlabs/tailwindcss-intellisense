@@ -442,16 +442,24 @@ export async function createProjectService(
     let applyComplexClasses: any
 
     try {
-      let tailwindcssPath = await resolver.resolveJsId('tailwindcss', configDir)
-      let tailwindcssPkgPath = await resolver.resolveJsId('tailwindcss/package.json', configDir)
+      let tailwindcssPkgPath = await resolver.resolveCjsId('tailwindcss/package.json', configDir)
       let tailwindDir = path.dirname(tailwindcssPkgPath)
       tailwindcssVersion = require(tailwindcssPkgPath).version
 
       let features = supportedFeatures(tailwindcssVersion)
       log(`supported features: ${JSON.stringify(features)}`)
 
-      tailwindcssPath = pathToFileURL(tailwindcssPath).href
-      tailwindcss = await import(tailwindcssPath)
+      // Loading via `await import(…)` with the Yarn PnP API is not possible
+      if (await resolver.hasPnP()) {
+        let tailwindcssPath = await resolver.resolveCjsId('tailwindcss', configDir)
+
+        tailwindcss = require(tailwindcssPath)
+      } else {
+        let tailwindcssPath = await resolver.resolveJsId('tailwindcss', configDir)
+        let tailwindcssURL = pathToFileURL(tailwindcssPath).href
+
+        tailwindcss = await import(tailwindcssURL)
+      }
 
       if (!features.includes('css-at-theme')) {
         tailwindcss = tailwindcss.default ?? tailwindcss
@@ -484,10 +492,13 @@ export async function createProjectService(
         return
       }
 
-      const postcssPath = resolveFrom(tailwindDir, 'postcss')
-      const postcssPkgPath = resolveFrom(tailwindDir, 'postcss/package.json')
+      const postcssPath = await resolver.resolveCjsId('postcss', tailwindDir)
+      const postcssPkgPath = await resolver.resolveCjsId('postcss/package.json', tailwindDir)
       const postcssDir = path.dirname(postcssPkgPath)
-      const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
+      const postcssSelectorParserPath = await resolver.resolveCjsId(
+        'postcss-selector-parser',
+        tailwindDir,
+      )
 
       postcssVersion = require(postcssPkgPath).version
 
