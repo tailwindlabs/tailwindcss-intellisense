@@ -56,6 +56,16 @@ export interface Resolver {
   resolveJsId(id: string, base: string): Promise<string>
 
   /**
+   * Resolves a CJS module to a file path.
+   *
+   * Assumes ESM-captable mechanisms are not available.
+   *
+   * @param id The module or file to resolve
+   * @param base The base directory to resolve the module from
+   */
+  resolveCjsId(id: string, base: string): Promise<string>
+
+  /**
    * Resolves a CSS module to a file path.
    *
    * @param id The module or file to resolve
@@ -204,6 +214,10 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     }
   }
 
+  async function resolveCjsId(id: string, base: string): Promise<string> {
+    return (await resolveId(cjsResolver, id, base)) || id
+  }
+
   async function resolveCssId(id: string, base: string): Promise<string> {
     return (await resolveId(cssResolver, id, base)) || id
   }
@@ -230,6 +244,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
   return {
     resolveJsId,
+    resolveCjsId,
     resolveCssId,
     substituteId,
     refresh,
