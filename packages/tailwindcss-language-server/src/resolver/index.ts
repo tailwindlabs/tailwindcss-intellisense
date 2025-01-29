@@ -8,6 +8,7 @@ import {
 } from 'enhanced-resolve'
 import { loadPnPApi, type PnpApi } from './pnp'
 import { loadTsConfig, type TSConfigApi } from './tsconfig'
+import { normalizeYarnPnPDriveLetter } from '../utils'
 
 export interface ResolverOptions {
   /**
@@ -182,6 +183,10 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
       let match = await tsconfig.resolveId(id, base)
       if (match) id = match
     }
+
+    // 2. Normalize the drive letters to the case that the PnP API expects
+    id = normalizeYarnPnPDriveLetter(id)
+    base = normalizeYarnPnPDriveLetter(base)
 
     return new Promise((resolve, reject) => {
       resolver.resolve({}, base, id, {}, (err, res) => {
