@@ -5,57 +5,6 @@ import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
 
-let settings: Settings = {
-  tailwindCSS: {
-    files: {
-      exclude: [],
-    },
-  },
-} as any
-
-function testFixture(fixture: string, details: any[]) {
-  let fixtures = fileURLToPath(new URL('../tests/fixtures', import.meta.url))
-  let fixturePath = `${fixtures}/${fixture}`
-
-  test.concurrent(fixture, async ({ expect }) => {
-    let resolver = await createResolver({ root: fixturePath, tsconfig: true })
-    let locator = new ProjectLocator(fixturePath, settings, resolver)
-    let projects = await locator.search()
-
-    for (let i = 0; i < Math.max(projects.length, details.length); i++) {
-      let project = projects[i]
-      expect(project).toBeDefined()
-
-      let detail = details[i]
-
-      let configPath = path.relative(fixturePath, project.config.path)
-
-      expect(configPath).toEqual(detail?.config)
-
-      if (detail?.content) {
-        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath)).sort()
-
-        let actual = project.documentSelector
-          .filter((selector) => selector.priority === 1 /** content */)
-          .map((selector) => selector.pattern)
-          .sort()
-
-        expect(actual).toEqual(expected)
-      }
-
-      if (detail?.selectors) {
-        let expected = detail?.selectors.map((path) => path.replace('{URL}', fixturePath)).sort()
-
-        let actual = project.documentSelector.map((selector) => selector.pattern).sort()
-
-        expect(actual).toEqual(expected)
-      }
-    }
-
-    expect(projects).toHaveLength(details.length)
-  })
-}
-
 testFixture('basic', [
   //
   { config: 'tailwind.config.js' },
@@ -227,3 +176,54 @@ testFixture('v4/invalid-import-order', [
     content: ['{URL}/package.json'],
   },
 ])
+
+function testFixture(fixture: string, details: any[]) {
+  let settings: Settings = {
+    tailwindCSS: {
+      files: {
+        exclude: [],
+      },
+    },
+  } as any
+
+  let fixtures = fileURLToPath(new URL('../tests/fixtures', import.meta.url))
+  let fixturePath = `${fixtures}/${fixture}`
+
+  test.concurrent(fixture, async ({ expect }) => {
+    let resolver = await createResolver({ root: fixturePath, tsconfig: true })
+    let locator = new ProjectLocator(fixturePath, settings, resolver)
+    let projects = await locator.search()
+
+    for (let i = 0; i < Math.max(projects.length, details.length); i++) {
+      let project = projects[i]
+      expect(project).toBeDefined()
+
+      let detail = details[i]
+
+      let configPath = path.relative(fixturePath, project.config.path)
+
+      expect(configPath).toEqual(detail?.config)
+
+      if (detail?.content) {
+        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath)).sort()
+
+        let actual = project.documentSelector
+          .filter((selector) => selector.priority === 1 /** content */)
+          .map((selector) => selector.pattern)
+          .sort()
+
+        expect(actual).toEqual(expected)
+      }
+
+      if (detail?.selectors) {
+        let expected = detail?.selectors.map((path) => path.replace('{URL}', fixturePath)).sort()
+
+        let actual = project.documentSelector.map((selector) => selector.pattern).sort()
+
+        expect(actual).toEqual(expected)
+      }
+    }
+
+    expect(projects).toHaveLength(details.length)
+  })
+}
