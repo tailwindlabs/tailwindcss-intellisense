@@ -454,6 +454,24 @@ export class ProjectLocator {
       }
     } catch {}
 
+    // A local version of Tailwind CSS was not found so we need to use the
+    // fallback bundled with the language server. This is especially important
+    // for projects using the standalone CLI.
+
+    // This is a v4-style CSS config
+    if (config.type === 'css') {
+      let { version } = require('tailwindcss-v4/package.json')
+      // @ts-ignore
+      let mod = await import('tailwindcss-v4')
+      let features = supportedFeatures(version, mod)
+
+      return {
+        version,
+        features,
+        isDefaultVersion: true,
+      }
+    }
+
     let { version } = require('tailwindcss/package.json')
     let mod = require('tailwindcss')
     let features = supportedFeatures(version, mod)
