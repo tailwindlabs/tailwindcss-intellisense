@@ -126,6 +126,7 @@ export interface State {
   }
 
   v4?: boolean
+  v4Fallback?: boolean
   designSystem?: DesignSystem
 
   browserslist?: string[]
