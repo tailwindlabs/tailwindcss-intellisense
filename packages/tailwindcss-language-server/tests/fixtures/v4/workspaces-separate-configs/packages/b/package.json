@@ -1,0 +1,6 @@
+{
+  "name": "@private/b",
+  "dependencies": {
+    "tailwindcss": "^4.0.0"
+  }
+}
