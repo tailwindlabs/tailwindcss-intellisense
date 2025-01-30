@@ -256,6 +256,10 @@ export class ProjectLocator {
       concurrency: Math.max(os.cpus().length, 1),
     })
 
+    // Ignore config files that are in node_modules/tailwindcss
+    let isInsideTailwindPackage = picomatch(`**/node_modules/tailwindcss/${CONFIG_GLOB}`)
+    files = files.filter((file) => !isInsideTailwindPackage(file))
+
     let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
 
     // Remove files that are symlinked yet have an existing file in the list
