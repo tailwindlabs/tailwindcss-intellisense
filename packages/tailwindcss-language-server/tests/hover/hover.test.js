@@ -41,7 +41,7 @@ withFixture('basic', (c) => {
     expected:
       '.bg-red-500 {\n' +
       '  --tw-bg-opacity: 1;\n' +
-      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity)) /* #ef4444 */;\n' +
+      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity, 1)) /* #ef4444 */;\n' +
       '}',
     expectedRange: {
       start: { line: 0, character: 12 },

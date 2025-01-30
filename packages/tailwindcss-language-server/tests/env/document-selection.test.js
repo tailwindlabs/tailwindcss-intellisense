@@ -18,7 +18,7 @@ withFixture('document-selection/basic', (c) => {
       contents: {
         language: 'css',
         value:
-          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
       },
       range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
     })
@@ -40,7 +40,7 @@ withFixture('document-selection/(parens)', (c) => {
       contents: {
         language: 'css',
         value:
-          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
       },
       range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
     })
@@ -62,7 +62,7 @@ withFixture('document-selection/[brackets]', (c) => {
       contents: {
         language: 'css',
         value:
-          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
       },
       range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
     })
@@ -84,7 +84,7 @@ withFixture('document-selection/{curlies}', (c) => {
       contents: {
         language: 'css',
         value:
-          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+          '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
       },
       range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
     })
