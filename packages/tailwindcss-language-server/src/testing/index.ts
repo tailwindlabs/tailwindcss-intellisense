@@ -103,6 +103,7 @@ async function installDependenciesIn(dir: string) {
 }
 
 export const css = dedent
+export const scss = dedent
 export const html = dedent
 export const js = dedent
 export const json = dedent

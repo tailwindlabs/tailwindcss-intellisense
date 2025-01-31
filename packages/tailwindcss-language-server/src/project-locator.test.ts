@@ -1,9 +1,10 @@
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
 import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
+import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
 
 let settings: Settings = {
   tailwindCSS: {
@@ -227,3 +228,144 @@ testFixture('v4/invalid-import-order', [
     content: ['{URL}/package.json'],
   },
 ])
+
+// ---
+
+testLocator({
+  name: 'Sass files are not detected with v4',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^4.0.2"
+        }
+      }
+    `,
+    'src/app1.scss': scss`
+      @import 'tailwindcss';
+    `,
+    'src/app2.scss': scss`
+      @use 'tailwindcss';
+    `,
+  },
+  expected: [],
+})
+
+testLocator({
+  name: 'Sass files are detected with v3',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^3.4.17"
+        }
+      }
+    `,
+    'tailwind.admin.config.js': js`
+      module.exports = {
+        content: ['./src/**/*.{html,js}'],
+      }
+    `,
+    'src/app.scss': scss`
+      @config '../tailwind.admin.config.js';
+    `,
+  },
+  expected: [
+    {
+      version: '3.4.17',
+      config: '/tailwind.admin.config.js',
+      content: ['/src/**/*.{html,js}'],
+    },
+  ],
+})
+
+// ---
+
+function testLocator({
+  name,
+  fs,
+  expected,
+  settings,
+}: {
+  name: string
+  fs: Storage
+  settings?: Partial<Settings>
+  expected: any[]
+}) {
+  defineTest({
+    name,
+    fs,
+    prepare,
+    async handle({ search }) {
+      let projects = await search(settings)
+
+      let details = projects.map((project) => ({
+        version: project.tailwind.isDefaultVersion
+          ? `${project.tailwind.version} (bundled)`
+          : project.tailwind.version,
+        config: project.config.path,
+        content: project.documentSelector
+          .filter((selector) => selector.priority === 1 /** content */)
+          .map((selector) => selector.pattern)
+          .sort(),
+        selectors: project.documentSelector.map((selector) => selector.pattern).sort(),
+      }))
+
+      expect(details).toMatchObject(expected)
+    },
+  })
+}
+
+async function prepare({ root }: TestUtils) {
+  let defaultSettings = {
+    tailwindCSS: {
+      files: {
+        // We want to ignore `node_modules` folders otherwise we'll pick up
+        // configs from there and we don't want that.
+        exclude: ['**/node_modules'],
+      },
+    },
+  } as Settings
+
+  function adjustPath(filepath: string) {
+    filepath = filepath.replace(root, '{URL}')
+
+    if (filepath.startsWith('{URL}/')) {
+      filepath = filepath.slice(5)
+    }
+
+    return filepath
+  }
+
+  async function search(overrides?: Partial<Settings>) {
+    let settings = {
+      ...defaultSettings,
+      ...overrides,
+    }
+
+    let resolver = await createResolver({ root, tsconfig: true })
+    let locator = new ProjectLocator(root, settings, resolver)
+    let projects = await locator.search()
+
+    // Normalize all the paths for easier testing
+    for (let project of projects) {
+      project.folder = adjustPath(project.folder)
+      project.configPath = adjustPath(project.configPath)
+
+      // Config data
+      project.config.path = adjustPath(project.config.path)
+      project.config.packageRoot = adjustPath(project.config.packageRoot)
+      for (let entry of project.config.entries) {
+        entry.path = adjustPath(entry.path)
+      }
+
+      for (let selector of project.documentSelector ?? []) {
+        selector.pattern = adjustPath(selector.pattern)
+      }
+    }
+
+    return projects
+  }
+
+  return { search }
+}
