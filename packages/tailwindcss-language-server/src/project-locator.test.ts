@@ -232,7 +232,7 @@ testFixture('v4/invalid-import-order', [
 // ---
 
 testLocator({
-  name: 'Sass files are not supported detected with v4',
+  name: 'Sass files are not detected with v4',
   fs: {
     'package.json': json`
       {
@@ -248,18 +248,35 @@ testLocator({
       @use 'tailwindcss';
     `,
   },
-
-  // We want to ignore `node_modules` folders otherwise we'll pick up the
-  // default Tailwind CSS `index.css` file as a CSS-based config.
-  settings: {
-    tailwindCSS: {
-      files: {
-        exclude: ['**/node_modules'],
-      },
-    } as any,
-  },
-
   expected: [],
+})
+
+testLocator({
+  name: 'Sass files are detected with v3',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^3.4.17"
+        }
+      }
+    `,
+    'tailwind.admin.config.js': js`
+      module.exports = {
+        content: ['./src/**/*.{html,js}'],
+      }
+    `,
+    'src/app.scss': scss`
+      @config '../tailwind.admin.config.js';
+    `,
+  },
+  expected: [
+    {
+      version: '3.4.17',
+      config: '/tailwind.admin.config.js',
+      content: ['/src/**/*.{html,js}'],
+    },
+  ],
 })
 
 // ---
@@ -303,7 +320,9 @@ async function prepare({ root }: TestUtils) {
   let defaultSettings = {
     tailwindCSS: {
       files: {
-        exclude: [],
+        // We want to ignore `node_modules` folders otherwise we'll pick up
+        // configs from there and we don't want that.
+        exclude: ['**/node_modules'],
       },
     },
   } as Settings
