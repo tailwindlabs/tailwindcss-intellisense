@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 import { beforeAll, describe } from 'vitest'
-import { connect } from './connection'
+import { connect, launch } from './connection'
 import {
   CompletionRequest,
   ConfigurationRequest,
@@ -43,14 +43,25 @@ interface FixtureContext
   }
 }
 
+export interface InitOptions {
+  /**
+   * How to connect to the LSP:
+   * - `in-band` uses the same process
+   * - `launch-binary` launches the binary as a separate process and connects
+   * to stdin/stdout
+   */
+  mode?: 'in-band' | 'spawn'
+}
+
 export async function init(
   fixture: string | string[],
   options: Record<string, any> = {},
+  initOpts: InitOptions = {},
 ): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
-  const { client } = await connect()
+  const { client } = initOpts?.mode === 'spawn' ? await launch() : await connect()
 
   const capabilities: ClientCapabilities = {
     textDocument: {

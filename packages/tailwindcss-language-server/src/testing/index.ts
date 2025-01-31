@@ -1,5 +1,6 @@
 import { afterAll, onTestFinished, test, TestOptions } from 'vitest'
 import * as fs from 'node:fs/promises'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
 import dedent from 'dedent'
