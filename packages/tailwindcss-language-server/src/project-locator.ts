@@ -161,7 +161,7 @@ export class ProjectLocator {
       }
     }
 
-    // Don't boot a project for the CS config if using Tailwind v4
+    // Don't boot a project for the JS config if using Tailwind v4
     if (config.type === 'js' && tailwind.features.includes('css-at-theme')) {
       return null
     }
