@@ -43,9 +43,16 @@ interface FixtureContext
   }
 }
 
+export interface InitOptions {
+  /**
+   * Extra initialization options to pass to the LSP
+   */
+  options?: Record<string, any>
+}
+
 export async function init(
   fixture: string | string[],
-  options: Record<string, any> = {},
+  opts: InitOptions = {},
 ): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
@@ -162,7 +169,7 @@ export async function init(
     workspaceFolders,
     initializationOptions: {
       testMode: true,
-      ...options,
+      ...(opts.options ?? {}),
     },
   } as InitializeParams)
 

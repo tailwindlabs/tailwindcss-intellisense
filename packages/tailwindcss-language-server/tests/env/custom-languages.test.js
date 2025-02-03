@@ -28,8 +28,10 @@ test('Unknown languages do not provide completions', async ({ expect }) => {
 
 test('Custom languages may be specified via init options (deprecated)', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'html',
+    options: {
+      userLanguages: {
+        'some-lang': 'html',
+      },
     },
   })
 
@@ -102,8 +104,10 @@ test('Custom languages may be specified via settings', async ({ expect }) => {
 
 test('Custom languages are merged from init options and settings', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'html',
+    options: {
+      userLanguages: {
+        'some-lang': 'html',
+      },
     },
   })
 
@@ -171,8 +175,10 @@ test('Custom languages are merged from init options and settings', async ({ expe
 
 test('Language mappings from settings take precedence', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'css',
+    options: {
+      userLanguages: {
+        'some-lang': 'css',
+      },
     },
   })
 
