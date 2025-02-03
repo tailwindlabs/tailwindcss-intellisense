@@ -9,6 +9,7 @@ import { Resolver } from '../../resolver'
 import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
 import { assets } from './assets'
+import { loadBundledModules } from '../../lib/bundled'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -112,6 +113,7 @@ export async function loadDesignSystem(
   let jiti = createJiti(__filename, {
     moduleCache: false,
     fsCache: false,
+    nativeModules: ['tailwindcss/plugin'],
   })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`

@@ -73,7 +73,7 @@ defineTest({
    * close to that by using async loaders but there's still a lot of work to do
    * to make that a workable solution.
    */
-  options: { skip: true },
+  options: { skip: false, only: true },
 
   name: 'v4, no npm, with plugins',
   fs: {
