@@ -409,7 +409,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
     .filter((diagnostic) => {
       if (
         diagnostic.code === 'unknownAtRules' &&
-        /Unknown at rule @(tailwind|apply|config|theme|plugin|source|utility|variant|custom-variant)/.test(
+        /Unknown at rule @(tailwind|apply|config|theme|plugin|source|utility|variant|custom-variant|slot)/.test(
           diagnostic.message,
         )
       ) {
