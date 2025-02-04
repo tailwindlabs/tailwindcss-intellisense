@@ -31,7 +31,7 @@
     "postcss": "8.4.31",
     "postcss-selector-parser": "6.0.2",
     "postcss-value-parser": "4.2.0",
-    "semver": "7.5.2",
+    "semver": "7.7.1",
     "sift-string": "0.0.2",
     "stringify-object": "3.3.0",
     "tmp-cache": "1.1.0",
