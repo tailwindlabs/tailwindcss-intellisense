@@ -14,6 +14,7 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
   let state: State = {
     enabled: true,
     designSystem: {
+      theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
     } as DesignSystem,
   }
@@ -80,6 +81,7 @@ test('Inlining calc expressions using the design system', () => {
   let state: State = {
     enabled: true,
     designSystem: {
+      theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
     } as DesignSystem,
   }
