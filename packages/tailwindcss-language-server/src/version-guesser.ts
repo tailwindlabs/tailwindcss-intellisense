@@ -9,8 +9,6 @@ export type TailwindVersion = '3' | '4'
  * The order *does* matter, as the first item is the most likely version.
  */
 export function guessTailwindVersion(content: string): TailwindVersion[] {
-  if (!content) return []
-
   // It's likely this is a v4 file if it has a v4 import:
   // - `@import "tailwindcss"`
   // - `@import "tailwindcss/theme"
