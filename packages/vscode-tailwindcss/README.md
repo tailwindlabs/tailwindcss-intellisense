@@ -164,7 +164,28 @@ Enable the Node.js inspector agent for the language server and listen on the spe
 
 **Default: `null`**
 
-By default the extension will automatically use the first `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file that it can find to provide Tailwind CSS IntelliSense. Use this setting to manually specify the config file(s) yourself instead.
+By default the extension scans your project for CSS files and determines your "root" CSS file when looking for a Tailwind CSS v4 project. Likewise, for v3 projects, the extension will automatically use the first `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file that it can find.
+
+If IntelliSense is unable to detect your project you can use this setting to manually specify the CSS files (for v4) or config file(s) (for v3) yourself instead.
+
+#### v4.x
+
+If your project contains a single CSS entrypoint you can specify a string value:
+
+```json
+"tailwindCSS.experimental.configFile": "src/styles/app.css"
+```
+
+For projects with multiple CSS entrypoints use an object where each key is a file path and each value is a glob pattern (or array of glob patterns) representing the set of files that the file applies to:
+
+```json
+"tailwindCSS.experimental.configFile": {
+  "packages/a/src/app.css": "packages/a/src/**",
+  "packages/b/src/app.css": "packages/b/src/**"
+}
+```
+
+#### v3.x and below
 
 If your project contains a single Tailwind config file you can specify a string value:
 
