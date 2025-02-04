@@ -751,5 +751,5 @@ class FileEntry {
 function requiresPreprocessor(filepath: string) {
   let ext = path.extname(filepath)
 
-  return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl'
+  return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl' || ext === '.pcss'
 }
