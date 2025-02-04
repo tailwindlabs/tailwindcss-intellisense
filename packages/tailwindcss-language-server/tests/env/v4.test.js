@@ -344,3 +344,188 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  name: 'v4, using local, with explicit CSS entrypoints',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "4.0.1"
+        }
+      }
+    `,
+    'a/app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: #000000;
+      }
+    `,
+    'b/app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: #ffffff;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    await c.updateSettings({
+      tailwindCSS: {
+        experimental: {
+          configFile: {
+            'a/app.css': 'c/a/**',
+            'b/app.css': 'c/b/**',
+          },
+        },
+      },
+    })
+
+    let documentA = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+      name: 'c/a/index.html',
+    })
+
+    let documentB = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+      name: 'c/b/index.html',
+    })
+
+    let hoverA = await c.sendRequest(HoverRequest.type, {
+      textDocument: documentA,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    let hoverB = await c.sendRequest(HoverRequest.type, {
+      textDocument: documentB,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hoverA).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #000000 */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+
+    expect(hoverB).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #ffffff */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
+
+defineTest({
+  name: 'v4, using fallback, with explicit CSS entrypoints',
+  fs: {
+    'a/app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: #000000;
+      }
+    `,
+    'b/app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: #ffffff;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    await c.updateSettings({
+      tailwindCSS: {
+        experimental: {
+          configFile: {
+            'a/app.css': 'c/a/**',
+            'b/app.css': 'c/b/**',
+          },
+        },
+      },
+    })
+
+    let documentA = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+      name: 'c/a/index.html',
+    })
+
+    let documentB = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+      name: 'c/b/index.html',
+    })
+
+    let hoverA = await c.sendRequest(HoverRequest.type, {
+      textDocument: documentA,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    let hoverB = await c.sendRequest(HoverRequest.type, {
+      textDocument: documentB,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hoverA).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #000000 */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+
+    expect(hoverB).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #ffffff */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
