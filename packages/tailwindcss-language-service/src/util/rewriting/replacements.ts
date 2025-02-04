@@ -18,6 +18,13 @@ export interface Range {
 
 export interface ReplacerOptions {
   /**
+   * Whether or not the replacement should be performed recursively
+   *
+   * default: true
+   */
+  recursive?: boolean
+
+  /**
    * How to replace the CSS variable
    */
   replace: CssVarReplacer
@@ -32,6 +39,8 @@ export function replaceCssVars(
   str: string,
   { replace, recursive = true }: ReplacerOptions,
 ): string {
+  let seen = new Set<string>()
+
   for (let i = 0; i < str.length; ++i) {
     if (!str.startsWith('var(', i)) continue
 
@@ -68,9 +77,20 @@ export function replaceCssVars(
           str = str.slice(0, i) + replacement + str.slice(j + 1)
         }
 
-        // We don't want to skip past anything here because `replacement`
-        // might contain more var(…) calls in which case `i` will already
-        // be pointing at the right spot to start looking for them
+        // Move the index back one so it can look at the spot again since it'll
+        // be incremented by the outer loop. However, since we're replacing
+        // variables recursively we might end up in a loop so we need to keep
+        // track of which variables we've already seen and where they were
+        // replaced to avoid infinite loops.
+        if (recursive) {
+          let key = `${i}:${replacement}`
+
+          if (!seen.has(key)) {
+            seen.add(key)
+            i -= 1
+          }
+        }
+
         break
       }
     }

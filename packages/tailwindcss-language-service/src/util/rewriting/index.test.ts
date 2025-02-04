@@ -9,7 +9,16 @@ import { State, TailwindCssSettings } from '../state'
 import { DesignSystem } from '../v4'
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
-  let map = new Map<string, string>([['--known', 'blue']])
+  let map = new Map<string, string>([
+    ['--known', 'blue'],
+    ['--level-1', 'var(--known)'],
+    ['--level-2', 'var(--level-1)'],
+    ['--level-3', 'var(--level-2)'],
+
+    ['--circular-1', 'var(--circular-3)'],
+    ['--circular-2', 'var(--circular-1)'],
+    ['--circular-3', 'var(--circular-2)'],
+  ])
 
   let state: State = {
     enabled: true,
@@ -57,6 +66,17 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
 
   // Unknown theme keys without fallbacks are not replaced
   expect(replaceCssVarsWithFallbacks(state, 'var(--unknown)')).toBe('var(--unknown)')
+
+  // Fallbacks are replaced recursively
+  expect(replaceCssVarsWithFallbacks(state, 'var(--unknown,var(--unknown-2,red))')).toBe('red')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--level-1)')).toBe('blue')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--level-2)')).toBe('blue')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--level-3)')).toBe('blue')
+
+  // Circular replacements don't cause infinite loops
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-1)')).toBe('var(--circular-3)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-2)')).toBe('var(--circular-1)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-3)')).toBe('var(--circular-2)')
 })
 
 test('Evaluating CSS calc expressions', () => {

@@ -65,6 +65,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
   })
 
   css = replaceCssVars(css, {
+    recursive: false,
     replace({ name, range }) {
       if (!name.startsWith('--')) return null
 
