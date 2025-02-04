@@ -16,12 +16,22 @@ export interface Range {
   end: number
 }
 
+export interface ReplacerOptions {
+  /**
+   * How to replace the CSS variable
+   */
+  replace: CssVarReplacer
+}
+
 export type CssVarReplacer = (node: CssVariable) => string | null
 
 /**
  * Replace all var expressions in a string using the replacer function
  */
-export function replaceCssVars(str: string, replace: CssVarReplacer): string {
+export function replaceCssVars(
+  str: string,
+  { replace, recursive = true }: ReplacerOptions,
+): string {
   for (let i = 0; i < str.length; ++i) {
     if (!str.startsWith('var(', i)) continue
 
