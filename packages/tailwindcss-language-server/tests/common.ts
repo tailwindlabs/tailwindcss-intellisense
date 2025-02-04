@@ -261,14 +261,16 @@ export async function init(
       text,
       lang = 'html',
       dir = '',
+      name = null,
       settings = {},
     }: {
       text: string
       lang?: string
       dir?: string
+      name?: string
       settings?: Settings
     }) {
-      let uri = resolveUri(dir, `file-${counter++}`)
+      let uri = resolveUri(dir, name ?? `file-${counter++}`)
       docSettings.set(uri, settings)
 
       let openPromise = openingDocuments.remember(uri, () => {
