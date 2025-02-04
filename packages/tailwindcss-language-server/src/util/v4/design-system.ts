@@ -8,6 +8,7 @@ import { resolveCssImports } from '../../css'
 import { Resolver } from '../../resolver'
 import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
+import { assets } from './assets'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -79,6 +80,7 @@ export async function loadDesignSystem(
   tailwindcss: any,
   filepath: string,
   css: string,
+  isFallback: boolean,
 ): Promise<DesignSystem | null> {
   // This isn't a v4 project
   if (!tailwindcss.__unstable__loadDesignSystem) return null
@@ -151,6 +153,12 @@ export async function loadDesignSystem(
           content: await fs.readFile(resolved, 'utf-8'),
         }
       } catch (err) {
+        if (isFallback && id in assets) {
+          console.error(`Loading fallback stylesheet for: ${id}`)
+
+          return { base, content: assets[id] }
+        }
+
         console.error(`Unable to load stylesheet: ${id}`, err)
         return { base, content: '' }
       }

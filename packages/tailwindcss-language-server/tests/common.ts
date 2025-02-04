@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 import { beforeAll, describe } from 'vitest'
-import { connect } from './connection'
+import { connect, launch } from './connection'
 import {
   CompletionRequest,
   ConfigurationRequest,
@@ -12,6 +12,7 @@ import {
   RegistrationRequest,
   InitializeParams,
   DidOpenTextDocumentParams,
+  MessageType,
 } from 'vscode-languageserver-protocol'
 import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
 import type { Feature } from '@tailwindcss/language-service/src/features'
@@ -43,14 +44,45 @@ interface FixtureContext
   }
 }
 
+export interface InitOptions {
+  /**
+   * How to connect to the LSP:
+   * - `in-band` runs the server in the same process (default)
+   * - `spawn` launches the binary as a separate process, connects via stdio,
+   * and requires a rebuild of the server after making changes.
+   */
+  mode?: 'in-band' | 'spawn'
+
+  /**
+   * Extra initialization options to pass to the LSP
+   */
+  options?: Record<string, any>
+}
+
 export async function init(
   fixture: string | string[],
-  options: Record<string, any> = {},
+  opts: InitOptions = {},
 ): Promise<FixtureContext> {
   let settings = {}
   let docSettings = new Map<string, Settings>()
 
-  const { client } = await connect()
+  const { client } = opts?.mode === 'spawn' ? await launch() : await connect()
+
+  if (opts?.mode === 'spawn') {
+    client.onNotification('window/logMessage', ({ message, type }) => {
+      if (type === MessageType.Error) {
+        console.error(message)
+      } else if (type === MessageType.Warning) {
+        console.warn(message)
+      } else if (type === MessageType.Info) {
+        console.info(message)
+      } else if (type === MessageType.Log) {
+        console.log(message)
+      } else if (type === MessageType.Debug) {
+        console.debug(message)
+      }
+    })
+  }
 
   const capabilities: ClientCapabilities = {
     textDocument: {
@@ -162,7 +194,7 @@ export async function init(
     workspaceFolders,
     initializationOptions: {
       testMode: true,
-      ...options,
+      ...(opts.options ?? {}),
     },
   } as InitializeParams)
 

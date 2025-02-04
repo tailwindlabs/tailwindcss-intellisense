@@ -489,8 +489,8 @@ export async function createProjectService(
         log('CSS-based configuration is not supported before Tailwind CSS v4')
         state.enabled = false
         enabled = false
-        // CSS-based configuration is not supported before Tailwind CSS v4 so bail
-        // TODO: Fall back to built-in version of v4
+
+        // The fallback to a bundled v4 is in the catch block
         return
       }
 
@@ -673,6 +673,31 @@ export async function createProjectService(
         } catch (_) {}
       }
     } catch (error) {
+      if (projectConfig.config.source === 'css') {
+        // @ts-ignore
+        let tailwindcss = await import('tailwindcss-v4')
+        let tailwindcssVersion = require('tailwindcss-v4/package.json').version
+        let features = supportedFeatures(tailwindcssVersion, tailwindcss)
+
+        log('Failed to load workspace modules.')
+        log(`Using bundled version of \`tailwindcss\`: v${tailwindcssVersion}`)
+
+        state.configPath = configPath
+        state.version = tailwindcssVersion
+        state.isCssConfig = true
+        state.v4 = true
+        state.v4Fallback = true
+        state.jit = true
+        state.modules = {
+          tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
+          postcss: { version: null, module: null },
+          resolveConfig: { module: null },
+          loadConfig: { module: null },
+        }
+
+        return tryRebuild()
+      }
+
       let util = await import('node:util')
 
       console.error(util.format(error))
@@ -786,6 +811,7 @@ export async function createProjectService(
           state.modules.tailwindcss.module,
           state.configPath,
           css,
+          state.v4Fallback ?? false,
         )
 
         state.designSystem = designSystem
@@ -1063,6 +1089,7 @@ export async function createProjectService(
           state.modules.tailwindcss.module,
           state.configPath,
           css,
+          state.v4Fallback ?? false,
         )
       } catch (err) {
         console.error(err)
