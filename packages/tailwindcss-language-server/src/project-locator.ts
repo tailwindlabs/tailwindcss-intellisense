@@ -131,6 +131,8 @@ export class ProjectLocator {
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
+    let possibleVersions = config.entries.flatMap((entry) => entry.versions)
+
     console.log(
       JSON.stringify({
         tailwind,
@@ -158,6 +160,15 @@ export class ProjectLocator {
     if (config.type === 'css') {
       // This version of Tailwind doesn't support CSS-based configuration
       if (!tailwind.features.includes('css-at-theme')) {
+        return null
+      }
+
+      // This config doesn't include any v4 features (even ones that were also in v3)
+      if (!possibleVersions.includes('4')) {
+        console.warn(
+          `The config ${config.path} looks like it might be for a different Tailwind CSS version. Skipping.`,
+        )
+
         return null
       }
 
