@@ -1,10 +1,10 @@
-import { expect, test } from 'vitest'
+import { expect, test, TestOptions } from 'vitest'
 import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
-import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
+import { css, defineTest, html, js, json, scss, Storage, TestUtils } from './testing'
 
 let settings: Settings = {
   tailwindCSS: {
@@ -279,6 +279,58 @@ testLocator({
   ],
 })
 
+testLocator({
+  options: { only: true },
+
+  // Don't exclude any files when searching
+  settings: {
+    tailwindCSS: { files: { exclude: [] } } as any,
+  },
+
+  name: 'wip',
+  fs: {
+    'packages/a/package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "4.0.0"
+        }
+      }
+    `,
+    'packages/a/styles.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: #c0ffee;
+      }
+    `,
+    'packages/a/index.html': html` <div class="underline"></div> `,
+    'packages/b/package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "3.4.17"
+        }
+      }
+    `,
+    'packages/b/styles.css': css`
+      @tailwind base;
+      @tailwind utilities;
+      @tailwind components;
+    `,
+    'packages/b/index.html': html` <div class="underline"></div> `,
+  },
+  expected: [
+    {
+      version: '4.0.0',
+      config: '/packages/a/node_modules/tailwindcss/utilities.css',
+      content: [],
+    },
+    {
+      version: '4.0.0',
+      config: '/packages/a/styles.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({
@@ -286,16 +338,19 @@ function testLocator({
   fs,
   expected,
   settings,
+  options,
 }: {
   name: string
   fs: Storage
   settings?: Partial<Settings>
+  options?: TestOptions
   expected: any[]
 }) {
   defineTest({
     name,
     fs,
     prepare,
+    options,
     async handle({ search }) {
       let projects = await search(settings)
 

@@ -257,7 +257,14 @@ export class ProjectLocator {
     // Look for config files and CSS files
     let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
       cwd: this.base,
-      ignore: this.settings.tailwindCSS.files.exclude,
+      ignore: [
+        ...this.settings.tailwindCSS.files.exclude,
+
+        // If we're looking at a tailwind.config.js (or similar file) that's inside
+        // a node_modules/tailwindcss directory, we should ignore it because those
+        // files are "stubs" and not meant to be used as a project config
+        `**/node_modules/tailwindcss/**/${CONFIG_GLOB}`,
+      ],
       onlyFiles: true,
       absolute: true,
       suppressErrors: true,
