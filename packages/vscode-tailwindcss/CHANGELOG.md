@@ -5,6 +5,9 @@
 - Allow v4.0 projects not installed with npm to use IntelliSense ([#1157](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1157))
 - Ignore preprocessor files when looking for v4 configs ([#1159](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1159))
 - Allow language service to be used in native ESM environments ([#1122](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1122))
+- Support property and variable completions inside `@utility` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Support style-rule like completions inside `@custom-variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Make sure `@slot` isn't considered an unknown at-rule ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
 
 ## 0.14.2
 
