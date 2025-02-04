@@ -281,7 +281,7 @@ withFixture('basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: '--tw-bg-opacity: 1; background-color: rgb(239 68 68 / var(--tw-bg-opacity));',
+      detail: '--tw-bg-opacity: 1; background-color: rgb(239 68 68 / var(--tw-bg-opacity, 1));',
       documentation: '#ef4444',
     })
   })
@@ -310,7 +310,7 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12309)
+    expect(result.items.length).toBe(12314)
     expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(304)
     expect(result).toEqual({
       isIncomplete: false,
@@ -477,7 +477,7 @@ withFixture('v4/basic', (c) => {
     expect(result.items.filter((item) => item.label.startsWith('--')).length).toBe(23)
   })
 
-  test.concurrent('@slot is suggeted inside @variant', async ({ expect }) => {
+  test.concurrent('@slot is suggeted inside @custom-variant', async ({ expect }) => {
     let result = await completion({
       lang: 'css',
       text: '@',
@@ -485,7 +485,7 @@ withFixture('v4/basic', (c) => {
     })
 
     // Make sure `@slot` is NOT suggested by default
-    expect(result.items.length).toBe(10)
+    expect(result.items.length).toBe(7)
     expect(result.items).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),
@@ -494,12 +494,12 @@ withFixture('v4/basic', (c) => {
 
     result = await completion({
       lang: 'css',
-      text: '@variant foo {\n@',
+      text: '@custom-variant foo {\n@',
       position: { line: 1, character: 1 },
     })
 
     // Make sure `@slot` is suggested
-    expect(result.items.length).toBe(11)
+    expect(result.items.length).toBe(4)
     expect(result.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),

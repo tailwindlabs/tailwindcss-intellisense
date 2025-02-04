@@ -41,7 +41,7 @@ withFixture('basic', (c) => {
     expected:
       '.bg-red-500 {\n' +
       '  --tw-bg-opacity: 1;\n' +
-      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity)) /* #ef4444 */;\n' +
+      '  background-color: rgb(239 68 68 / var(--tw-bg-opacity, 1)) /* #ef4444 */;\n' +
       '}',
     expectedRange: {
       start: { line: 0, character: 12 },
@@ -354,6 +354,61 @@ withFixture('v4/css-loading-js', (c) => {
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 29 },
+    },
+  })
+})
+
+withFixture('v4/path-mappings', (c) => {
+  async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
+    test.concurrent(name, async ({ expect }) => {
+      let textDocument = await c.openDocument({ text, lang, settings })
+      let res = await c.sendRequest('textDocument/hover', {
+        textDocument,
+        position,
+      })
+
+      expect(res).toEqual(
+        expected
+          ? {
+              contents: {
+                language: 'css',
+                value: expected,
+              },
+              range: expectedRange,
+            }
+          : expected,
+      )
+    })
+  }
+
+  testHover('Mapping: CSS Imports', {
+    text: '<div class="bg-map-a-css">',
+    position: { line: 0, character: 13 },
+    expected:
+      '.bg-map-a-css {\n  background-color: var(--color-map-a-css) /* black = #000000 */;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 24 },
+    },
+  })
+
+  testHover('Mapping: Configs', {
+    text: '<div class="bg-map-a-config">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-map-a-config {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 27 },
+    },
+  })
+
+  testHover('Mapping: Plugins', {
+    text: '<div class="bg-map-a-plugin">',
+    position: { line: 0, character: 13 },
+    expected: '.bg-map-a-plugin {\n  background-color: black;\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 27 },
     },
   })
 })

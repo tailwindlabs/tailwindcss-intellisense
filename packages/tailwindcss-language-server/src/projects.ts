@@ -20,8 +20,8 @@ import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, SilentError } from './util/error'
-import * as path from 'path'
-import * as fs from 'fs'
+import * as path from 'node:path'
+import * as fs from 'node:fs'
 import findUp from 'find-up'
 import picomatch from 'picomatch'
 import { resolveFrom, setPnpApi } from './util/resolveFrom'
@@ -35,6 +35,7 @@ import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
 import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
+import { Resolver } from './resolver'
 import {
   doComplete,
   resolveCompletionItem,
@@ -53,7 +54,7 @@ import { getDocumentColors } from '@tailwindcss/language-service/src/documentCol
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
-import assert from 'assert'
+import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import { bigSign } from '@tailwindcss/language-service/src/util/jit'
 import { getColor } from '@tailwindcss/language-service/src/util/color'
@@ -80,6 +81,7 @@ import type { ProjectConfig } from './project-locator'
 import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
+import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 const colorNames = Object.keys(namedColors)
 
@@ -107,7 +109,7 @@ export interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
-  onDocumentLinks(params: DocumentLinkParams): DocumentLink[]
+  onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
   sortClassLists(classLists: string[]): string[]
 
   dependencies(): Iterable<string>
@@ -186,6 +188,7 @@ export async function createProjectService(
   initialTailwindVersion: string,
   getConfiguration: (uri?: string) => Promise<Settings>,
   userLanguages: Record<string, string>,
+  parentResolver?: Resolver,
 ): Promise<ProjectService> {
   /* Project dependencies require a design system reload */
   let dependencies = new Set<string>()
@@ -228,7 +231,10 @@ export async function createProjectService(
       },
       async readDirectory(document, directory) {
         try {
-          directory = path.resolve(path.dirname(getFileFsPath(document.uri)), directory)
+          let baseDir = path.dirname(getFileFsPath(document.uri))
+          directory = await resolver.substituteId(`${directory}/`, baseDir)
+          directory = path.resolve(baseDir, directory)
+
           let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
 
           let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
@@ -264,6 +270,10 @@ export async function createProjectService(
       ...deps.flatMap((dep) => getWatchPatternsForFile(dep, projectConfig.folder)),
     ])
   }
+
+  let resolver = await parentResolver.child({
+    root: projectConfig.folder,
+  })
 
   function log(...args: string[]): void {
     console.log(
@@ -432,23 +442,36 @@ export async function createProjectService(
     let applyComplexClasses: any
 
     try {
-      let tailwindcssPath = resolveFrom(configDir, 'tailwindcss')
-      const tailwindcssPkgPath = resolveFrom(configDir, 'tailwindcss/package.json')
-      const tailwindDir = path.dirname(tailwindcssPkgPath)
+      let tailwindcssPkgPath = await resolver.resolveCjsId('tailwindcss/package.json', configDir)
+      let tailwindDir = path.dirname(tailwindcssPkgPath)
       tailwindcssVersion = require(tailwindcssPkgPath).version
 
-      let features = supportedFeatures(tailwindcssVersion)
+      // Loading via `await import(…)` with the Yarn PnP API is not possible
+      if (await resolver.hasPnP()) {
+        let tailwindcssPath = await resolver.resolveCjsId('tailwindcss', configDir)
+
+        tailwindcss = require(tailwindcssPath)
+      } else {
+        let tailwindcssPath = await resolver.resolveJsId('tailwindcss', configDir)
+        let tailwindcssURL = pathToFileURL(tailwindcssPath).href
+
+        tailwindcss = await import(tailwindcssURL)
+      }
+
+      // TODO: The module should be loaded in the project locator
+      // and this should be determined there and passed in instead
+      let features = supportedFeatures(tailwindcssVersion, tailwindcss)
       log(`supported features: ${JSON.stringify(features)}`)
 
-      tailwindcssPath = pathToFileURL(tailwindcssPath).href
-      tailwindcss = await import(tailwindcssPath)
-      tailwindcss = tailwindcss.default ?? tailwindcss
+      if (!features.includes('css-at-theme')) {
+        tailwindcss = tailwindcss.default ?? tailwindcss
+      }
+
       log(`Loaded tailwindcss v${tailwindcssVersion}: ${tailwindDir}`)
 
       if (features.includes('css-at-theme')) {
         state.configPath = configPath
         state.version = tailwindcssVersion
-        // TODO: Handle backwards compat stuff here too
         state.isCssConfig = true
         state.v4 = true
         state.jit = true
@@ -466,15 +489,18 @@ export async function createProjectService(
         log('CSS-based configuration is not supported before Tailwind CSS v4')
         state.enabled = false
         enabled = false
-        // CSS-based configuration is not supported before Tailwind CSS v4 so bail
-        // TODO: Fall back to built-in version of v4
+
+        // The fallback to a bundled v4 is in the catch block
         return
       }
 
-      const postcssPath = resolveFrom(tailwindDir, 'postcss')
-      const postcssPkgPath = resolveFrom(tailwindDir, 'postcss/package.json')
+      const postcssPath = await resolver.resolveCjsId('postcss', tailwindDir)
+      const postcssPkgPath = await resolver.resolveCjsId('postcss/package.json', tailwindDir)
       const postcssDir = path.dirname(postcssPkgPath)
-      const postcssSelectorParserPath = resolveFrom(tailwindDir, 'postcss-selector-parser')
+      const postcssSelectorParserPath = await resolver.resolveCjsId(
+        'postcss-selector-parser',
+        tailwindDir,
+      )
 
       postcssVersion = require(postcssPkgPath).version
 
@@ -647,6 +673,31 @@ export async function createProjectService(
         } catch (_) {}
       }
     } catch (error) {
+      if (projectConfig.config.source === 'css') {
+        // @ts-ignore
+        let tailwindcss = await import('tailwindcss-v4')
+        let tailwindcssVersion = require('tailwindcss-v4/package.json').version
+        let features = supportedFeatures(tailwindcssVersion, tailwindcss)
+
+        log('Failed to load workspace modules.')
+        log(`Using bundled version of \`tailwindcss\`: v${tailwindcssVersion}`)
+
+        state.configPath = configPath
+        state.version = tailwindcssVersion
+        state.isCssConfig = true
+        state.v4 = true
+        state.v4Fallback = true
+        state.jit = true
+        state.modules = {
+          tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
+          postcss: { version: null, module: null },
+          resolveConfig: { module: null },
+          loadConfig: { module: null },
+        }
+
+        return tryRebuild()
+      }
+
       let util = await import('node:util')
 
       console.error(util.format(error))
@@ -756,9 +807,11 @@ export async function createProjectService(
       try {
         let css = await readCssFile(state.configPath)
         let designSystem = await loadDesignSystem(
+          resolver,
           state.modules.tailwindcss.module,
           state.configPath,
           css,
+          state.v4Fallback ?? false,
         )
 
         state.designSystem = designSystem
@@ -1023,12 +1076,25 @@ export async function createProjectService(
       if (!state.v4) return
 
       console.log('---- RELOADING DESIGN SYSTEM ----')
+      console.log(`---- ${state.configPath} ----`)
+
       let css = await readCssFile(state.configPath)
-      let designSystem = await loadDesignSystem(
-        state.modules.tailwindcss.module,
-        state.configPath,
-        css,
-      )
+      let designSystem: DesignSystem
+
+      let start = process.hrtime.bigint()
+
+      try {
+        designSystem = await loadDesignSystem(
+          resolver,
+          state.modules.tailwindcss.module,
+          state.configPath,
+          css,
+          state.v4Fallback ?? false,
+        )
+      } catch (err) {
+        console.error(err)
+        throw err
+      }
 
       // TODO: This is weird and should be changed
       // We use Object.create so no global state is mutated until necessary
@@ -1064,7 +1130,9 @@ export async function createProjectService(
       // TODO: Need to verify how well this works across various editors
       // updateCapabilities()
 
-      console.log('---- RELOADED ----')
+      let elapsed = process.hrtime.bigint() - start
+
+      console.log(`---- RELOADED IN ${(Number(elapsed) / 1e6).toFixed(2)}ms ----`)
     },
 
     state,
@@ -1127,13 +1195,21 @@ export async function createProjectService(
         return doCodeActions(state, params, document)
       }, null)
     },
-    onDocumentLinks(params: DocumentLinkParams): DocumentLink[] {
+    onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
       if (!state.enabled) return null
       let document = documentService.getDocument(params.textDocument.uri)
       if (!document) return null
-      return getDocumentLinks(state, document, (linkPath) =>
-        URI.file(path.resolve(path.dirname(URI.parse(document.uri).fsPath), linkPath)).toString(),
-      )
+
+      let documentPath = URI.parse(document.uri).fsPath
+      let baseDir = path.dirname(documentPath)
+
+      async function resolveTarget(linkPath: string) {
+        linkPath = (await resolver.substituteId(linkPath, baseDir)) ?? linkPath
+
+        return URI.file(path.resolve(baseDir, linkPath)).toString()
+      }
+
+      return getDocumentLinks(state, document, resolveTarget)
     },
     provideDiagnostics: debounce(
       (document: TextDocument) => {
@@ -1329,7 +1405,20 @@ function isAtRule(node: Node): node is AtRule {
 
 function getVariants(state: State): Array<Variant> {
   if (state.v4) {
-    return state.designSystem.getVariants()
+    let variants = Array.from(state.designSystem.getVariants())
+
+    let prefix = state.designSystem.theme.prefix ?? ''
+    if (prefix.length > 0) {
+      variants.unshift({
+        name: prefix,
+        values: [],
+        isArbitrary: false,
+        hasDash: true,
+        selectors: () => ['&'],
+      })
+    }
+
+    return variants
   }
 
   if (state.jitContext?.getVariants) {

@@ -8,7 +8,7 @@ import { absoluteRange } from '../util/absoluteRange'
 // @import … source('…')
 // @tailwind utilities source('…')
 const PATTERN_IMPORT_SOURCE =
-  /(?:\s|^)@(?<directive>import)\s*(?<path>'[^']*'|"[^"]*")\s*source\((?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
+  /(?:\s|^)@(?<directive>(?:import|reference))\s*(?<path>'[^']*'|"[^"]*")\s*source\((?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
 const PATTERN_UTIL_SOURCE =
   /(?:\s|^)@(?<directive>tailwind)\s+(?<layer>\S+)\s+source\((?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
 

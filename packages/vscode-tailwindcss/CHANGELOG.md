@@ -4,6 +4,29 @@
 
 - Nothing yet!
 
+## 0.14.2
+
+- Don't suggest `--font-size-*` theme keys in v4.0 ([#1150](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1150))
+- Fix detection of Tailwind CSS version when using Yarn PnP ([#1151](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1151))
+- Add support for v4.x insiders builds ([#1123](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1123))
+
+## 0.14.1
+
+- Fix detection of TypeScript config paths on Windows ([#1130](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1130))
+
+## 0.14.0
+
+- Don't break when importing missing CSS files ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
+- Resolve CSS imports as relative first ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
+- Add TypeScript config path support in v4 CSS files ([#1106](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1106))
+- Add support for `@custom-variant` ([#1127](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1127))
+- Add variant suggestions to `@variant` ([#1127](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1127))
+- Don't suggest at-rules when nested that cannot be used in a nested context ([#1127](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1127))
+- Make sure completions work when using prefixes in v4 ([#1129](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1129))
+- Add support for `@reference` ([#1117](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1117))
+- Add support for `--theme(…)`, `--utility(…)`, and `--modifier(…)` ([#1117](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1117))
+- Add basic completions for `--utility(…)` and `--modifier(…)` ([#1117](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1117))
+
 ## 0.12.18
 
 - Stop auto-switching CSS files to the Tailwind CSS language mode ([#1116](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1116))

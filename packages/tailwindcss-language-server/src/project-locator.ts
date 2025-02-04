@@ -7,11 +7,10 @@ import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
-import type { AtRule, Message } from 'postcss'
 import { type DocumentSelector, DocumentSelectorPriority } from './projects'
 import { CacheMap } from './cache-map'
 import { getPackageRoot } from './util/get-package-root'
-import { resolveFrom } from './util/resolveFrom'
+import type { Resolver } from './resolver'
 import { type Feature, supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
@@ -46,6 +45,7 @@ export class ProjectLocator {
   constructor(
     private base: string,
     private settings: Settings,
+    private resolver: Resolver,
   ) {}
 
   async search(): Promise<ProjectConfig[]> {
@@ -130,7 +130,12 @@ export class ProjectLocator {
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
-    console.log(JSON.stringify({ tailwind }))
+    console.log(
+      JSON.stringify({
+        tailwind,
+        path: config.path,
+      }),
+    )
 
     // A JS/TS config file was loaded from an `@config` directive in a CSS file
     // This is only relevant for v3 projects so we'll do some feature detection
@@ -191,7 +196,11 @@ export class ProjectLocator {
     })
 
     // - Content patterns from config
-    for await (let selector of contentSelectorsFromConfig(config, tailwind.features)) {
+    for await (let selector of contentSelectorsFromConfig(
+      config,
+      tailwind.features,
+      this.resolver,
+    )) {
       selectors.push(selector)
     }
 
@@ -321,8 +330,6 @@ export class ProjectLocator {
       // we'll verify after config resolution.
       let configPath = file.configPathInCss()
       if (configPath) {
-        // We don't need the content for this file anymore
-        file.content = null
         file.configs.push(
           configs.remember(configPath, () => ({
             // A CSS file produced a JS config file
@@ -340,7 +347,7 @@ export class ProjectLocator {
     }
 
     // Resolve imports in all the CSS files
-    await Promise.all(imports.map((file) => file.resolveImports()))
+    await Promise.all(imports.map((file) => file.resolveImports(this.resolver)))
 
     // Resolve real paths for all the files in the CSS import graph
     await Promise.all(imports.map((file) => file.resolveRealpaths()))
@@ -418,9 +425,25 @@ export class ProjectLocator {
 
   private async detectTailwindVersion(config: ConfigEntry) {
     try {
-      let metadataPath = resolveFrom(path.dirname(config.path), 'tailwindcss/package.json')
+      let metadataPath = await this.resolver.resolveCjsId(
+        'tailwindcss/package.json',
+        path.dirname(config.path),
+      )
+
       let { version } = require(metadataPath)
-      let features = supportedFeatures(version)
+
+      let mod: unknown = undefined
+
+      if (this.resolver.hasPnP()) {
+        let modPath = await this.resolver.resolveCjsId('tailwindcss', path.dirname(config.path))
+        mod = require(modPath)
+      } else {
+        let modPath = await this.resolver.resolveJsId('tailwindcss', path.dirname(config.path))
+        let modURL = pathToFileURL(modPath).href
+        mod = await import(modURL)
+      }
+
+      let features = supportedFeatures(version, mod)
 
       if (typeof version === 'string') {
         return {
@@ -431,8 +454,27 @@ export class ProjectLocator {
       }
     } catch {}
 
+    // A local version of Tailwind CSS was not found so we need to use the
+    // fallback bundled with the language server. This is especially important
+    // for projects using the standalone CLI.
+
+    // This is a v4-style CSS config
+    if (config.type === 'css') {
+      let { version } = require('tailwindcss-v4/package.json')
+      // @ts-ignore
+      let mod = await import('tailwindcss-v4')
+      let features = supportedFeatures(version, mod)
+
+      return {
+        version,
+        features,
+        isDefaultVersion: true,
+      }
+    }
+
     let { version } = require('tailwindcss/package.json')
-    let features = supportedFeatures(version)
+    let mod = require('tailwindcss')
+    let features = supportedFeatures(version, mod)
 
     return {
       version,
@@ -445,14 +487,14 @@ export class ProjectLocator {
 function contentSelectorsFromConfig(
   entry: ConfigEntry,
   features: Feature[],
-  actualConfig?: any,
+  resolver: Resolver,
 ): AsyncIterable<DocumentSelector> {
   if (entry.type === 'css') {
-    return contentSelectorsFromCssConfig(entry)
+    return contentSelectorsFromCssConfig(entry, resolver)
   }
 
   if (entry.type === 'js') {
-    return contentSelectorsFromJsConfig(entry, features, actualConfig)
+    return contentSelectorsFromJsConfig(entry, features)
   }
 }
 
@@ -497,7 +539,10 @@ async function* contentSelectorsFromJsConfig(
   }
 }
 
-async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable<DocumentSelector> {
+async function* contentSelectorsFromCssConfig(
+  entry: ConfigEntry,
+  resolver: Resolver,
+): AsyncIterable<DocumentSelector> {
   let auto = false
   for (let item of entry.content) {
     if (item.kind === 'file') {
@@ -513,7 +558,12 @@ async function* contentSelectorsFromCssConfig(entry: ConfigEntry): AsyncIterable
       // other entries should have sources.
       let sources = entry.entries.flatMap((entry) => entry.sources)
 
-      for await (let pattern of detectContentFiles(entry.packageRoot, entry.path, sources)) {
+      for await (let pattern of detectContentFiles(
+        entry.packageRoot,
+        entry.path,
+        sources,
+        resolver,
+      )) {
         yield {
           pattern,
           priority: DocumentSelectorPriority.CONTENT_FILE,
@@ -527,11 +577,15 @@ async function* detectContentFiles(
   base: string,
   inputFile: string,
   sources: string[],
+  resolver: Resolver,
 ): AsyncIterable<string> {
   try {
-    let oxidePath = resolveFrom(path.dirname(base), '@tailwindcss/oxide')
+    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', path.dirname(base))
     oxidePath = pathToFileURL(oxidePath).href
-    let oxidePackageJsonPath = resolveFrom(path.dirname(base), '@tailwindcss/oxide/package.json')
+    let oxidePackageJsonPath = await resolver.resolveJsId(
+      '@tailwindcss/oxide/package.json',
+      path.dirname(base),
+    )
     let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
     let result = await oxide.scan({
@@ -594,19 +648,26 @@ class FileEntry {
     }
   }
 
-  async resolveImports() {
+  async resolveImports(resolver: Resolver) {
     try {
-      let result = await resolveCssImports().process(this.content, { from: this.path })
+      let result = await resolveCssImports({ resolver, loose: true }).process(this.content, {
+        from: this.path,
+      })
       let deps = result.messages.filter((msg) => msg.type === 'dependency')
+
+      deps = deps.filter((msg) => {
+        return !msg.file.startsWith('/virtual:missing/')
+      })
 
       // Record entries for each of the dependencies
       this.deps = deps.map((msg) => new FileEntry('css', normalizePath(msg.file)))
 
       // Replace the file content with the processed CSS
       this.content = result.css
-    } catch {
-      // TODO: Errors here should be surfaced in tests and possibly the user in
-      // `trace` logs or something like that
+    } catch (err) {
+      console.debug(`Unable to resolve imports for ${this.path}.`)
+      console.debug(`This may result in failure to locate Tailwind CSS projects.`)
+      console.error(err)
     }
   }
 

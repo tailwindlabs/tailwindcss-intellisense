@@ -1,6 +1,6 @@
 {
   "name": "vscode-tailwindcss",
-  "version": "0.12.18",
+  "version": "0.14.2",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Intelligent Tailwind CSS tooling for VS Code",
   "author": "Brad Cornes <hello@bradley.dev>",
@@ -358,7 +358,7 @@
     "braces": "3.0.3",
     "color-name": "1.1.4",
     "concurrently": "7.0.0",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.24.0",
     "minimist": "^1.2.8",
     "move-file-cli": "3.0.0",
     "normalize-path": "3.0.0",

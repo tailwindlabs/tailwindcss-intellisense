@@ -1,5 +1,5 @@
 import Module from 'node:module'
-import path from 'node:path'
+import * as path from 'node:path'
 import { URI } from 'vscode-uri'
 import normalizePathBase from 'normalize-path'
 import { pathToFileURL as pathToFileURLBase } from 'node:url'
@@ -74,6 +74,7 @@ export function dirContains(dir: string, file: string): boolean {
 }
 
 const WIN_DRIVE_LETTER = /^([a-zA-Z]):/
+const POSIX_DRIVE_LETTER = /^\/([a-zA-Z]):/
 
 /**
  * Windows drive letters are case-insensitive and we may get them as either
@@ -81,7 +82,34 @@ const WIN_DRIVE_LETTER = /^([a-zA-Z]):/
  * to be consistent with the rest of the codebase.
  */
 export function normalizeDriveLetter(filepath: string) {
-  return filepath.replace(WIN_DRIVE_LETTER, (_, letter) => letter.toUpperCase() + ':')
+  return filepath
+    .replace(WIN_DRIVE_LETTER, (_, letter) => `${letter.toUpperCase()}:`)
+    .replace(POSIX_DRIVE_LETTER, (_, letter) => `/${letter.toUpperCase()}:`)
+}
+
+/**
+ * Windows drive letters are case-insensitive and we may get them as either
+ * lower or upper case.
+ *
+ * Yarn PnP only works when requests have the correct case for the drive letter
+ * that matches the drive letter of the current working directory.
+ *
+ * Even using makeApi with a custom base path doesn't work around this.
+ */
+export function normalizeYarnPnPDriveLetter(filepath: string) {
+  let cwdDriveLetter = process.cwd().match(WIN_DRIVE_LETTER)?.[1]
+
+  return filepath
+    .replace(WIN_DRIVE_LETTER, (_, letter) => {
+      return letter.toUpperCase() === cwdDriveLetter.toUpperCase()
+        ? `${cwdDriveLetter}:`
+        : `${letter.toUpperCase()}:`
+    })
+    .replace(POSIX_DRIVE_LETTER, (_, letter) => {
+      return letter.toUpperCase() === cwdDriveLetter.toUpperCase()
+        ? `/${cwdDriveLetter}:`
+        : `/${letter.toUpperCase()}:`
+    })
 }
 
 export function changeAffectsFile(change: string, files: Iterable<string>): boolean {
@@ -115,7 +143,7 @@ export function pathToFileURL(filepath: string) {
   } catch (err) {
     if (process.platform !== 'win32') throw err
 
-    // If `pathToFileURL` failsed on windows it's probably because the path was
+    // If `pathToFileURL` failed on windows it's probably because the path was
     // a windows network share path and there were mixed slashes.
     // Fix the path and try again.
     filepath = URI.file(filepath).fsPath

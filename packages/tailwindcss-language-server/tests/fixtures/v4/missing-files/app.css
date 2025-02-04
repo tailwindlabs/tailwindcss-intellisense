@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+
+@import './i-do-not-exist.css';
+@import './i-exist.css';

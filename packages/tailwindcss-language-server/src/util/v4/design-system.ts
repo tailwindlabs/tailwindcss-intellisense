@@ -4,10 +4,11 @@ import postcss from 'postcss'
 import { createJiti } from 'jiti'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { resolveCssFrom, resolveCssImports } from '../../css'
-import { resolveFrom } from '../resolveFrom'
-import { pathToFileURL } from 'tailwindcss-language-server/src/utils'
+import { resolveCssImports } from '../../css'
+import { Resolver } from '../../resolver'
+import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
+import { assets } from './assets'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -24,20 +25,6 @@ export async function isMaybeV4(css: string): Promise<boolean> {
   return HAS_V4_THEME.test(css) || HAS_V4_IMPORT.test(css)
 }
 
-let jiti: Jiti | undefined
-
-async function importFile(id: string) {
-  try {
-    // Load ESM/CJS files through Node/Bun/whatever runtime is being used
-    return await import(id)
-  } catch {
-    jiti ??= createJiti(__filename, { moduleCache: false, fsCache: false })
-
-    // Transpile using Jiti if we can't load the file directly
-    return await jiti.import(id)
-  }
-}
-
 /**
  * Create a loader function that can load plugins and config files relative to
  * the CSS file that uses them. However, we don't want missing files to prevent
@@ -46,26 +33,30 @@ async function importFile(id: string) {
 function createLoader<T>({
   dependencies,
   legacy,
+  jiti,
   filepath,
+  resolver,
   onError,
 }: {
   dependencies: Set<string>
   legacy: boolean
+  jiti: Jiti
   filepath: string
+  resolver: Resolver
   onError: (id: string, error: unknown, resourceType: string) => T
 }) {
   let cacheKey = `${+Date.now()}`
 
   async function loadFile(id: string, base: string, resourceType: string) {
     try {
-      let resolved = resolveFrom(base, id)
+      let resolved = await resolver.resolveJsId(id, base)
 
       dependencies.add(resolved)
 
       let url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
 
-      return await importFile(url.href).then((m) => m.default ?? m)
+      return await jiti.import(url.href, { default: true })
     } catch (err) {
       return onError(id, err, resourceType)
     }
@@ -85,9 +76,11 @@ function createLoader<T>({
 }
 
 export async function loadDesignSystem(
+  resolver: Resolver,
   tailwindcss: any,
   filepath: string,
   css: string,
+  isFallback: boolean,
 ): Promise<DesignSystem | null> {
   // This isn't a v4 project
   if (!tailwindcss.__unstable__loadDesignSystem) return null
@@ -111,9 +104,15 @@ export async function loadDesignSystem(
 
   // Step 2: Use postcss to resolve `@import` rules in the CSS file
   if (!supportsImports) {
-    let resolved = await resolveCssImports().process(css, { from: filepath })
+    let resolved = await resolveCssImports({ resolver }).process(css, { from: filepath })
     css = resolved.css
   }
+
+  // Create a Jiti instance that can be used to load plugins and config files
+  let jiti = createJiti(__filename, {
+    moduleCache: false,
+    fsCache: false,
+  })
 
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
   let design: DesignSystem = await tailwindcss.__unstable__loadDesignSystem(css, {
@@ -123,7 +122,9 @@ export async function loadDesignSystem(
     loadModule: createLoader({
       dependencies,
       legacy: false,
+      jiti,
       filepath,
+      resolver,
       onError: (id, err, resourceType) => {
         console.error(`Unable to load ${resourceType}: ${id}`, err)
 
@@ -136,13 +137,30 @@ export async function loadDesignSystem(
     }),
 
     loadStylesheet: async (id: string, base: string) => {
-      let resolved = resolveCssFrom(base, id)
+      // Skip over missing stylesheets (and log an error) so we can do our best
+      // to compile the design system even when the build might be incomplete.
+      // TODO: Figure out if we can recover from parsing errors in stylesheets
+      // we'd want to surface diagnostics when we discover imports that cause
+      // parsing errors or other logic errors.
 
-      dependencies.add(resolved)
+      try {
+        let resolved = await resolver.resolveCssId(id, base)
 
-      return {
-        base: path.dirname(resolved),
-        content: await fs.readFile(resolved, 'utf-8'),
+        dependencies.add(resolved)
+
+        return {
+          base: path.dirname(resolved),
+          content: await fs.readFile(resolved, 'utf-8'),
+        }
+      } catch (err) {
+        if (isFallback && id in assets) {
+          console.error(`Loading fallback stylesheet for: ${id}`)
+
+          return { base, content: assets[id] }
+        }
+
+        console.error(`Unable to load stylesheet: ${id}`, err)
+        return { base, content: '' }
       }
     },
 
@@ -150,7 +168,9 @@ export async function loadDesignSystem(
     loadPlugin: createLoader({
       dependencies,
       legacy: true,
+      jiti,
       filepath,
+      resolver,
       onError(id, err) {
         console.error(`Unable to load plugin: ${id}`, err)
 
@@ -161,7 +181,9 @@ export async function loadDesignSystem(
     loadConfig: createLoader({
       dependencies,
       legacy: true,
+      jiti,
       filepath,
+      resolver,
       onError(id, err) {
         console.error(`Unable to load config: ${id}`, err)
 

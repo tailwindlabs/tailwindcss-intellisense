@@ -1,4 +1,4 @@
-import { lte } from 'tailwindcss-language-service/src/util/semver'
+import { lte } from '@tailwindcss/language-service/src/util/semver'
 
 // This covers the Oxide API from v4.0.0-alpha.1 to v4.0.0-alpha.18
 declare namespace OxideV1 {

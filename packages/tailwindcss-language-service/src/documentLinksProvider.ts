@@ -11,8 +11,8 @@ const HAS_DRIVE_LETTER = /^[A-Z]:/
 export function getDocumentLinks(
   state: State,
   document: TextDocument,
-  resolveTarget: (linkPath: string) => string,
-): DocumentLink[] {
+  resolveTarget: (linkPath: string) => Promise<string>,
+): Promise<DocumentLink[]> {
   let patterns = [/@config\s*(?<path>'[^']+'|"[^"]+")/g]
 
   if (state.v4) {
@@ -20,6 +20,7 @@ export function getDocumentLinks(
       /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
       /@source\s*(?<path>'[^']+'|"[^"]+")/g,
       /@import\s*('[^']*'|"[^"]*")\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
+      /@reference\s*('[^']*'|"[^"]*")\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
       /@tailwind\s*utilities\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
     )
   }
@@ -27,12 +28,12 @@ export function getDocumentLinks(
   return getDirectiveLinks(state, document, patterns, resolveTarget)
 }
 
-function getDirectiveLinks(
+async function getDirectiveLinks(
   state: State,
   document: TextDocument,
   patterns: RegExp[],
-  resolveTarget: (linkPath: string) => string,
-): DocumentLink[] {
+  resolveTarget: (linkPath: string) => Promise<string>,
+): Promise<DocumentLink[]> {
   if (!semver.gte(state.version, '3.2.0')) {
     return []
   }
@@ -67,7 +68,7 @@ function getDirectiveLinks(
       }
 
       links.push({
-        target: resolveTarget(path),
+        target: await resolveTarget(path),
         range: absoluteRange(range, block.range),
       })
     }

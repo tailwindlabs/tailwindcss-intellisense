@@ -31,7 +31,7 @@
       ]
     },
     {
-      "begin": "(?i)(?<![\\w-])(theme)(\\()",
+      "begin": "(?i)(?<![\\w-])(--theme|theme)(\\()",
       "beginCaptures": {
         "1": {
           "name": "support.function.theme.tailwind"

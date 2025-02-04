@@ -1,7 +1,7 @@
 /**
  * Adapted from: https://github.com/elastic/require-in-the-middle
  */
-import Module from 'module'
+import Module from 'node:module'
 import plugins from './plugins'
 
 let bundledModules = {
