@@ -5,6 +5,7 @@ import { replaceCssVars, replaceCssCalc, Range } from './replacements'
 import { addPixelEquivalentsToValue } from '../pixelEquivalents'
 import { applyComments, Comment } from '../comments'
 import { getEquivalentColor } from '../colorEquivalents'
+import { resolveVariableValue } from './lookup'
 
 export function addThemeValues(css: string, state: State, settings: TailwindCssSettings) {
   if (!state.designSystem) return css
@@ -16,7 +17,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
     let inlined = replaceCssVars(expr.value, ({ name }) => {
       if (!name.startsWith('--')) return null
 
-      let value = state.designSystem.resolveThemeValue?.(name) ?? null
+      let value = resolveVariableValue(state.designSystem, name)
       if (value === null) return null
 
       // Inline CSS calc expressions in theme values
@@ -70,7 +71,7 @@ export function addThemeValues(css: string, state: State, settings: TailwindCssS
       }
     }
 
-    let value = state.designSystem.resolveThemeValue?.(name) ?? null
+    let value = resolveVariableValue(state.designSystem, name)
     if (value === null) return null
 
     let px = addPixelEquivalentsToValue(value, settings.rootFontSize, false)
