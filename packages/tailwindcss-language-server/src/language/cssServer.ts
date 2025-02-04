@@ -334,6 +334,12 @@ function replace(delta = 0) {
     return `@media(${MEDIA_MARKER})${' '.repeat(p1.length + delta)}{`
   }
 }
+function replaceWithStyleRule(delta = 0) {
+  return (_match: string, p1: string) => {
+    let spaces = ' '.repeat(p1.length + delta)
+    return `.foo${spaces}{`
+  }
+}
 
 function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
   let content = textDocument
@@ -347,6 +353,8 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@screen(\s+[^{]+){/g, replace(-2))
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
+    .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
+    .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
     .replace(/@reference\s*([^;]{2,})/g, '@import    $1')
     .replace(
