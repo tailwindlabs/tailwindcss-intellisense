@@ -16,6 +16,7 @@ import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
 import * as oxide from './oxide'
+import { guessTailwindVersion, TailwindVersion } from './version-guesser'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -324,6 +325,9 @@ export class ProjectLocator {
     // Read the content of all the CSS files
     await Promise.all(css.map((entry) => entry.read()))
 
+    // Determine what tailwind versions each file might be using
+    await Promise.all(css.map((entry) => entry.resolvePossibleVersions()))
+
     // Keep track of files that might import or involve Tailwind in some way
     let imports: FileEntry[] = []
 
@@ -331,8 +335,9 @@ export class ProjectLocator {
       // If the CSS file couldn't be read for some reason, skip it
       if (!file.content) continue
 
-      // Look for `@import`, `@tailwind`, `@theme`, `@config`, etc…
-      if (!file.isMaybeTailwindRelated()) continue
+      // This file doesn't appear to use Tailwind CSS nor any imports
+      // so we can skip it
+      if (file.versions.length === 0) continue
 
       // Find `@config` directives in CSS files and resolve them to the actual
       // config file that they point to. This is only relevant for v3 which
@@ -642,6 +647,7 @@ class FileEntry {
   deps: FileEntry[] = []
   realpath: string | null
   sources: string[] = []
+  versions: TailwindVersion[] = []
 
   constructor(
     public type: 'js' | 'css',
@@ -710,6 +716,13 @@ class FileEntry {
   }
 
   /**
+   * Determine which Tailwind versions this file might be using
+   */
+  async resolvePossibleVersions() {
+    this.versions = this.content ? guessTailwindVersion(this.content) : []
+  }
+
+  /**
    * Look for `@config` directives in a CSS file and return the path to the config
    * file that it points to. This path is (possibly) relative to the CSS file so
    * it must be resolved to an absolute path before returning.
@@ -726,25 +739,6 @@ class FileEntry {
     }
 
     return normalizePath(path.resolve(path.dirname(this.path), match.groups.config.slice(1, -1)))
-  }
-
-  /**
-   * Look for tailwind-specific directives in a CSS file. This means that it
-   * participates in the CSS "graph" for the project and we need to traverse
-   * the graph to find all the CSS files that are considered entrypoints.
-   */
-  isMaybeTailwindRelated(): boolean {
-    if (!this.content) return false
-
-    let HAS_IMPORT = /@import\s*['"]/
-    let HAS_TAILWIND = /@tailwind\s*[^;]+;/
-    let HAS_DIRECTIVE = /@(theme|plugin|config|utility|variant|apply)\s*[^;{]+[;{]/
-
-    return (
-      HAS_IMPORT.test(this.content) ||
-      HAS_TAILWIND.test(this.content) ||
-      HAS_DIRECTIVE.test(this.content)
-    )
   }
 }
 
