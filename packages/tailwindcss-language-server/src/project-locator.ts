@@ -159,9 +159,18 @@ export class ProjectLocator {
       if (!tailwind.features.includes('css-at-theme')) {
         return null
       }
+
+      // v4 does not support .sass, .scss, .less, and .styl files as configs
+      if (requiresPreprocessor(config.path)) {
+        console.warn(
+          `The config ${config.path} requires a preprocessor and is not supported by Tailwind CSS v4.0.`,
+        )
+
+        return null
+      }
     }
 
-    // Don't boot a project for the CS config if using Tailwind v4
+    // Don't boot a project for the JS config if using Tailwind v4
     if (config.type === 'js' && tailwind.features.includes('css-at-theme')) {
       return null
     }
@@ -649,6 +658,11 @@ class FileEntry {
   }
 
   async resolveImports(resolver: Resolver) {
+    // Files that require a preprocessor are not processed
+    if (requiresPreprocessor(this.path)) {
+      return
+    }
+
     try {
       let result = await resolveCssImports({ resolver, loose: true }).process(this.content, {
         from: this.path,
@@ -732,4 +746,10 @@ class FileEntry {
       HAS_DIRECTIVE.test(this.content)
     )
   }
+}
+
+function requiresPreprocessor(filepath: string) {
+  let ext = path.extname(filepath)
+
+  return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl' || ext === '.pcss'
 }
