@@ -24,7 +24,7 @@ export function guessTailwindVersion(content: string): TailwindVersion[] {
   // - @utility
   // - @variant
   // - @custom-variant
-  let HAS_V4_DIRECTIVE = /@(theme|plugin|utility|custom-variant|variant)\s*[^;{]+[;{]/
+  let HAS_V4_DIRECTIVE = /@(theme|plugin|utility|custom-variant|variant|reference)\s*[^;{]+[;{]/
   if (HAS_V4_DIRECTIVE.test(content)) return ['4']
 
   // If the file contains older `@tailwind` directives, it's likely a v3 file
