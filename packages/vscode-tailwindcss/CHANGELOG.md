@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Don't create v4 projects for CSS files that don't look like v4 configs [#1164](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1164)
 
 ## 0.14.2
 
