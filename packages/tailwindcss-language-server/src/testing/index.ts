@@ -81,7 +81,7 @@ async function installDependencies(base: string, storage: Storage) {
     if (!filepath.endsWith('package.json')) continue
 
     let pkgDir = path.dirname(filepath)
-    let basePath = path.resolve(pkgDir, base)
+    let basePath = path.resolve(base, pkgDir)
 
     await installDependenciesIn(basePath)
   }
