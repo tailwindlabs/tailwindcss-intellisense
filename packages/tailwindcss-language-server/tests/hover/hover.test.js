@@ -154,6 +154,24 @@ withFixture('basic', (c) => {
       },
     },
   })
+
+  testHover('theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=theme(screens.xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 21 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '1280px', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 21 },
+        end: { line: 0, character: 31 },
+      },
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
