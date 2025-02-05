@@ -87,7 +87,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "5.3.3",
     "vite-tsconfig-paths": "^4.3.1",
-    "vitest": "^1.4.0",
+    "vitest": "^1.6.1",
     "vscode-css-languageservice": "6.2.9",
     "vscode-jsonrpc": "8.2.0",
     "vscode-languageclient": "8.1.0",
