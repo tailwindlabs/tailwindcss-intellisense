@@ -154,6 +154,24 @@ withFixture('basic', (c) => {
       },
     },
   })
+
+  testHover('theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=theme(screens.xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 21 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '1280px', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 21 },
+        end: { line: 0, character: 31 },
+      },
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
@@ -270,6 +288,24 @@ withFixture('v4/basic', (c) => {
     expectedRange: {
       start: { line: 2, character: 9 },
       end: { line: 2, character: 18 },
+    },
+  })
+
+  testHover('--theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 23 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '80rem /* 1280px */', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 23 },
+        end: { line: 0, character: 38 },
+      },
     },
   })
 })
