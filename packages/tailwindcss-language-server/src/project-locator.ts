@@ -159,9 +159,18 @@ export class ProjectLocator {
       if (!tailwind.features.includes('css-at-theme')) {
         return null
       }
+
+      // v4 does not support .sass, .scss, .less, and .styl files as configs
+      if (requiresPreprocessor(config.path)) {
+        console.warn(
+          `The config ${config.path} requires a preprocessor and is not supported by Tailwind CSS v4.0.`,
+        )
+
+        return null
+      }
     }
 
-    // Don't boot a project for the CS config if using Tailwind v4
+    // Don't boot a project for the JS config if using Tailwind v4
     if (config.type === 'js' && tailwind.features.includes('css-at-theme')) {
       return null
     }
@@ -425,12 +434,25 @@ export class ProjectLocator {
 
   private async detectTailwindVersion(config: ConfigEntry) {
     try {
-      let metadataPath = await this.resolver.resolveJsId(
+      let metadataPath = await this.resolver.resolveCjsId(
         'tailwindcss/package.json',
         path.dirname(config.path),
       )
+
       let { version } = require(metadataPath)
-      let features = supportedFeatures(version)
+
+      let mod: unknown = undefined
+
+      if (this.resolver.hasPnP()) {
+        let modPath = await this.resolver.resolveCjsId('tailwindcss', path.dirname(config.path))
+        mod = require(modPath)
+      } else {
+        let modPath = await this.resolver.resolveJsId('tailwindcss', path.dirname(config.path))
+        let modURL = pathToFileURL(modPath).href
+        mod = await import(modURL)
+      }
+
+      let features = supportedFeatures(version, mod)
 
       if (typeof version === 'string') {
         return {
@@ -441,8 +463,27 @@ export class ProjectLocator {
       }
     } catch {}
 
+    // A local version of Tailwind CSS was not found so we need to use the
+    // fallback bundled with the language server. This is especially important
+    // for projects using the standalone CLI.
+
+    // This is a v4-style CSS config
+    if (config.type === 'css') {
+      let { version } = require('tailwindcss-v4/package.json')
+      // @ts-ignore
+      let mod = await import('tailwindcss-v4')
+      let features = supportedFeatures(version, mod)
+
+      return {
+        version,
+        features,
+        isDefaultVersion: true,
+      }
+    }
+
     let { version } = require('tailwindcss/package.json')
-    let features = supportedFeatures(version)
+    let mod = require('tailwindcss')
+    let features = supportedFeatures(version, mod)
 
     return {
       version,
@@ -617,6 +658,11 @@ class FileEntry {
   }
 
   async resolveImports(resolver: Resolver) {
+    // Files that require a preprocessor are not processed
+    if (requiresPreprocessor(this.path)) {
+      return
+    }
+
     try {
       let result = await resolveCssImports({ resolver, loose: true }).process(this.content, {
         from: this.path,
@@ -700,4 +746,10 @@ class FileEntry {
       HAS_DIRECTIVE.test(this.content)
     )
   }
+}
+
+function requiresPreprocessor(filepath: string) {
+  let ext = path.extname(filepath)
+
+  return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl' || ext === '.pcss'
 }

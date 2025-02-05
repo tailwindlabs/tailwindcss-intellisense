@@ -28,8 +28,10 @@ test('Unknown languages do not provide completions', async ({ expect }) => {
 
 test('Custom languages may be specified via init options (deprecated)', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'html',
+    options: {
+      userLanguages: {
+        'some-lang': 'html',
+      },
     },
   })
 
@@ -47,7 +49,7 @@ test('Custom languages may be specified via init options (deprecated)', async ({
     contents: {
       language: 'css',
       value:
-        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
     },
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })
@@ -86,7 +88,7 @@ test('Custom languages may be specified via settings', async ({ expect }) => {
     contents: {
       language: 'css',
       value:
-        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
     },
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })
@@ -102,8 +104,10 @@ test('Custom languages may be specified via settings', async ({ expect }) => {
 
 test('Custom languages are merged from init options and settings', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'html',
+    options: {
+      userLanguages: {
+        'some-lang': 'html',
+      },
     },
   })
 
@@ -151,7 +155,7 @@ test('Custom languages are merged from init options and settings', async ({ expe
     contents: {
       language: 'css',
       value:
-        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
     },
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })
@@ -160,7 +164,7 @@ test('Custom languages are merged from init options and settings', async ({ expe
     contents: {
       language: 'css',
       value:
-        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
     },
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })
@@ -171,8 +175,10 @@ test('Custom languages are merged from init options and settings', async ({ expe
 
 test('Language mappings from settings take precedence', async ({ expect }) => {
   let c = await init('basic', {
-    userLanguages: {
-      'some-lang': 'css',
+    options: {
+      userLanguages: {
+        'some-lang': 'css',
+      },
     },
   })
 
@@ -198,7 +204,7 @@ test('Language mappings from settings take precedence', async ({ expect }) => {
     contents: {
       language: 'css',
       value:
-        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity)) /* #000000 */;\n}',
+        '.bg-\\[\\#000\\] {\n  --tw-bg-opacity: 1;\n  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;\n}',
     },
     range: { start: { line: 0, character: 12 }, end: { line: 0, character: 21 } },
   })

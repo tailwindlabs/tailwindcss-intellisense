@@ -19,10 +19,28 @@ export type Feature =
 /**
  * Determine a list of features that are supported by the given Tailwind CSS version
  */
-export function supportedFeatures(version: string): Feature[] {
+export function supportedFeatures(version: string, mod?: unknown): Feature[] {
   let features: Feature[] = []
 
-  let isInsidersV3 = version.startsWith('0.0.0-insiders')
+  let isInsiders = version.startsWith('0.0.0-insiders')
+  let isInsidersV3 = false
+  let isInsidersV4 = false
+
+  if (isInsiders) {
+    if (mod && typeof mod === 'object' && 'compile' in mod) {
+      // ESM version for normal installations
+      isInsidersV4 = true
+    } else if (mod && typeof mod === 'function' && 'compile' in mod) {
+      // Common JS version for Yarn PnP support
+      isInsidersV4 = true
+    } else {
+      isInsidersV3 = true
+    }
+  }
+
+  if (isInsidersV4) {
+    return ['css-at-theme', 'layer:base', 'content-list']
+  }
 
   if (!isInsidersV3 && semver.gte(version, '4.0.0-alpha.1')) {
     return ['css-at-theme', 'layer:base', 'content-list']

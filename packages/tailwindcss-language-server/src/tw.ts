@@ -36,7 +36,6 @@ import normalizePath from 'normalize-path'
 import * as path from 'node:path'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
-import { resolveFrom } from './util/resolveFrom'
 import * as parcel from './watcher/index.js'
 import { equal } from '@tailwindcss/language-service/src/util/array'
 import { CONFIG_GLOB, CSS_GLOB, PACKAGE_LOCK_GLOB, TSCONFIG_GLOB } from './lib/constants'
@@ -321,9 +320,9 @@ export class TW {
             let twVersion = require('tailwindcss/package.json').version
             try {
               let v = require(
-                resolveFrom(
-                  path.dirname(project.projectConfig.configPath),
+                await resolver.resolveCjsId(
                   'tailwindcss/package.json',
+                  path.dirname(project.projectConfig.configPath),
                 ),
               ).version
               if (typeof v === 'string') {

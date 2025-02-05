@@ -1,6 +1,6 @@
 {
   "name": "vscode-tailwindcss",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Intelligent Tailwind CSS tooling for VS Code",
   "author": "Brad Cornes <hello@bradley.dev>",

@@ -281,7 +281,7 @@ withFixture('basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: '--tw-bg-opacity: 1; background-color: rgb(239 68 68 / var(--tw-bg-opacity));',
+      detail: '--tw-bg-opacity: 1; background-color: rgb(239 68 68 / var(--tw-bg-opacity, 1));',
       documentation: '#ef4444',
     })
   })

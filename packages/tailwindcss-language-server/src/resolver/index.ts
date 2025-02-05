@@ -8,6 +8,7 @@ import {
 } from 'enhanced-resolve'
 import { loadPnPApi, type PnpApi } from './pnp'
 import { loadTsConfig, type TSConfigApi } from './tsconfig'
+import { normalizeYarnPnPDriveLetter } from '../utils'
 
 export interface ResolverOptions {
   /**
@@ -43,15 +44,6 @@ export interface ResolverOptions {
 
 export interface Resolver {
   /**
-   * Sets up the PnP API if it is available such that globals like `require`
-   * have been monkey-patched to use PnP resolution.
-   *
-   * This function does nothing if PnP resolution is not enabled or if the PnP
-   * API is not available.
-   */
-  setupPnP(): Promise<void>
-
-  /**
    * Resolves a JavaScript module to a file path.
    *
    * Assumes dynamic imports or some other ESM-captable mechanism will be used
@@ -62,6 +54,16 @@ export interface Resolver {
    * @param base The base directory to resolve the module from
    */
   resolveJsId(id: string, base: string): Promise<string>
+
+  /**
+   * Resolves a CJS module to a file path.
+   *
+   * Assumes ESM-captable mechanisms are not available.
+   *
+   * @param id The module or file to resolve
+   * @param base The base directory to resolve the module from
+   */
+  resolveCjsId(id: string, base: string): Promise<string>
 
   /**
    * Resolves a CSS module to a file path.
@@ -98,6 +100,11 @@ export interface Resolver {
   child(opts: Partial<ResolverOptions>): Promise<Resolver>
 
   /**
+   * Whether or not the PnP API is being used by the resolver
+   */
+  hasPnP(): Promise<boolean>
+
+  /**
    * Refresh information the resolver may have cached
    *
    * This may look for new TypeScript configs if necessary
@@ -106,16 +113,17 @@ export interface Resolver {
 }
 
 export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
-  let fileSystem = opts.fileSystem ? opts.fileSystem : new CachedInputFileSystem(fs, 4000)
-
   let pnpApi: PnpApi | null = null
 
   // Load PnP API if requested
+  // This MUST be done before `CachedInputFileSystem` is created
   if (typeof opts.pnp === 'object') {
     pnpApi = opts.pnp
   } else if (opts.pnp) {
     pnpApi = await loadPnPApi(opts.root)
   }
+
+  let fileSystem = opts.fileSystem ? opts.fileSystem : new CachedInputFileSystem(fs, 4000)
 
   let tsconfig: TSConfigApi | null = null
 
@@ -183,6 +191,10 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
       if (match) id = match
     }
 
+    // 2. Normalize the drive letters to the case that the PnP API expects
+    id = normalizeYarnPnPDriveLetter(id)
+    base = normalizeYarnPnPDriveLetter(base)
+
     return new Promise((resolve, reject) => {
       resolver.resolve({}, base, id, {}, (err, res) => {
         if (err) {
@@ -202,6 +214,10 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     }
   }
 
+  async function resolveCjsId(id: string, base: string): Promise<string> {
+    return (await resolveId(cjsResolver, id, base)) || id
+  }
+
   async function resolveCssId(id: string, base: string): Promise<string> {
     return (await resolveId(cssResolver, id, base)) || id
   }
@@ -210,10 +226,6 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
   // if possible
   async function substituteId(id: string, base: string): Promise<string> {
     return (await tsconfig?.substituteId(id, base)) ?? id
-  }
-
-  async function setupPnP() {
-    pnpApi?.setup()
   }
 
   async function aliases(base: string) {
@@ -226,12 +238,17 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     await tsconfig?.refresh()
   }
 
+  async function hasPnP() {
+    return !!pnpApi
+  }
+
   return {
-    setupPnP,
     resolveJsId,
+    resolveCjsId,
     resolveCssId,
     substituteId,
     refresh,
+    hasPnP,
 
     aliases,
 

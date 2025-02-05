@@ -27,8 +27,8 @@ importers:
         specifier: ^3.2.5
         version: 3.2.5
       semver:
-        specifier: ^7.5.4
-        version: 7.5.4
+        specifier: ^7.7.1
+        version: 7.7.1
 
   packages/tailwindcss-language-server:
     devDependencies:
@@ -37,25 +37,25 @@ importers:
         version: 2.0.3
       '@tailwindcss/aspect-ratio':
         specifier: 0.4.2
-        version: 0.4.2(tailwindcss@3.4.4)
+        version: 0.4.2(tailwindcss@3.4.17)
       '@tailwindcss/container-queries':
         specifier: 0.1.0
-        version: 0.1.0(tailwindcss@3.4.4)
+        version: 0.1.0(tailwindcss@3.4.17)
       '@tailwindcss/forms':
         specifier: 0.5.3
-        version: 0.5.3(tailwindcss@3.4.4)
+        version: 0.5.3(tailwindcss@3.4.17)
       '@tailwindcss/language-service':
         specifier: workspace:*
         version: link:../tailwindcss-language-service
       '@tailwindcss/line-clamp':
         specifier: 0.4.2
-        version: 0.4.2(tailwindcss@3.4.4)
+        version: 0.4.2(tailwindcss@3.4.17)
       '@tailwindcss/oxide':
         specifier: ^4.0.0-alpha.19
         version: 4.0.0-alpha.19
       '@tailwindcss/typography':
         specifier: 0.5.7
-        version: 0.5.7(tailwindcss@3.4.4)
+        version: 0.5.7(tailwindcss@3.4.17)
       '@types/color-name':
         specifier: ^1.1.3
         version: 1.1.4
@@ -110,6 +110,9 @@ importers:
       debounce:
         specifier: 1.2.0
         version: 1.2.0
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
       deepmerge:
         specifier: 4.2.2
         version: 4.2.2
@@ -117,8 +120,8 @@ importers:
         specifier: 1.1.3
         version: 1.1.3
       dset:
-        specifier: 3.1.2
-        version: 3.1.2
+        specifier: 3.1.4
+        version: 3.1.4
       enhanced-resolve:
         specifier: ^5.16.1
         version: 5.17.1
@@ -174,8 +177,11 @@ importers:
         specifier: 0.0.10
         version: 0.0.10
       tailwindcss:
-        specifier: 3.4.4
-        version: 3.4.4
+        specifier: 3.4.17
+        version: 3.4.17
+      tailwindcss-v4:
+        specifier: npm:tailwindcss@4.0.0
+        version: tailwindcss@4.0.0
       tsconfck:
         specifier: ^3.1.4
         version: 3.1.4(typescript@5.3.3)
@@ -252,8 +258,8 @@ importers:
         specifier: 1.1.3
         version: 1.1.3
       dset:
-        specifier: 3.1.2
-        version: 3.1.2
+        specifier: 3.1.4
+        version: 3.1.4
       line-column:
         specifier: 1.0.2
         version: 1.0.2
@@ -270,8 +276,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0
       semver:
-        specifier: 7.5.2
-        version: 7.5.2
+        specifier: 7.7.1
+        version: 7.7.1
       sift-string:
         specifier: 0.0.2
         version: 0.0.2
@@ -1294,6 +1300,14 @@ packages:
     resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
     engines: {node: '>=10'}
 
+  dedent@1.5.3:
+    resolution: {integrity: sha512-NHQtfOOW68WD8lgypbLA5oT+Bt0xXJhiYvoR6SmmNXZfpzOGXwdKWmcwG8N7PwVVWV3eF/68nmD9BaJSsTBhyQ==}
+    peerDependencies:
+      babel-plugin-macros: ^3.1.0
+    peerDependenciesMeta:
+      babel-plugin-macros:
+        optional: true
+
   deep-eql@4.1.4:
     resolution: {integrity: sha512-SUwdGfqdKOwxCPeVYjwSyRpJ7Z+fhpwIAtmCUdZIWZ/YP5R9WAsyuSgpLVDi9bjWoN2LXHNss/dk3urXtdQxGg==}
     engines: {node: '>=6'}
@@ -1344,8 +1358,8 @@ packages:
   domutils@3.1.0:
     resolution: {integrity: sha512-H78uMmQtI2AhgDJjWeQmHwJJ2bLPD3GMmO7Zja/ZZh84wkm+4ut+IUnUdRa8uCGX88DiVx1j6FRe1XfxEgjEZA==}
 
-  dset@3.1.2:
-    resolution: {integrity: sha512-g/M9sqy3oHe477Ar4voQxWtaPIFw1jTdKZuomOjhCcBx9nHUNn0pu6NopuFFrTh/TRZIKEj+76vLWFu9BNKk+Q==}
+  dset@3.1.4:
+    resolution: {integrity: sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==}
     engines: {node: '>=4'}
 
   eastasianwidth@0.2.0:
@@ -1706,12 +1720,8 @@ packages:
     resolution: {integrity: sha512-mET5AIwl7MR2IAKYYoVBBpV0OnkKQ1xGj2IMMeEFIs42QAkEVjRtFZGWmQ28WeU7MP779iAgOaOy93Mn44mn6g==}
     hasBin: true
 
-  lilconfig@2.1.0:
-    resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}
-    engines: {node: '>=10'}
-
-  lilconfig@3.1.2:
-    resolution: {integrity: sha512-eop+wDAvpItUys0FWkHIKeC9ybYrTGbU41U5K7+bttZZeohvnY7M9dZ5kB21GNWiFT2q1OoPTvncPCgSOVO5ow==}
+  lilconfig@3.1.3:
+    resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
     engines: {node: '>=14'}
 
   line-column@1.0.2:
@@ -1789,6 +1799,10 @@ packages:
 
   micromatch@4.0.7:
     resolution: {integrity: sha512-LPP/3KorzCwBxfeUuZmaR6bG2kdeHSbe0P2tY3FLRU4vYrjYz5hI4QZwV0njUx3jeuKe67YukQ1LSPZBKDqO/Q==}
+    engines: {node: '>=8.6'}
+
+  micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
   mime@1.6.0:
@@ -1870,6 +1884,11 @@ packages:
 
   nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
+  nanoid@3.3.8:
+    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -2057,6 +2076,9 @@ packages:
   picocolors@1.0.1:
     resolution: {integrity: sha512-anP1Z8qwhkbmu7MFP5iTt+wQKXgwzf7zTyGlcdzabySa9vd0Xt392U0rVmz9poOaBj0uHJKyyo9/upk0HrEQew==}
 
+  picocolors@1.1.1:
+    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
+
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
@@ -2128,8 +2150,8 @@ packages:
     resolution: {integrity: sha512-36P2QR59jDTOAiIkqEprfJDsoNrvwFei3eCqKd1Y0tUsBimsq39BLp7RD+JWny3WgB1zGhJX8XVePwm9k4wdBg==}
     engines: {node: '>=4'}
 
-  postcss-selector-parser@6.1.1:
-    resolution: {integrity: sha512-b4dlw/9V8A71rLIDsSwVmak9z2DuBUB7CA1/wSdelNEzqsjoSPeADTWNO09lpH49Diy3/JIZ2bSPB1dI3LJCHg==}
+  postcss-selector-parser@6.1.2:
+    resolution: {integrity: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==}
     engines: {node: '>=4'}
 
   postcss-value-parser@4.2.0:
@@ -2141,6 +2163,10 @@ packages:
 
   postcss@8.4.41:
     resolution: {integrity: sha512-TesUflQ0WKZqAvg52PWL6kHgLKP6xB6heTOdoYM0Wt2UHyxNa4K25EZZMgKns3BH1RLVbZCREPpLY0rhnNoHVQ==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.5.1:
+    resolution: {integrity: sha512-6oz2beyjc5VMn/KV1pPw8fliQkhBXrVn1Z3TVyqZxU8kZpzEKhBdmCFqI6ZbmGtamQvQGuU1sgPTk8ZrXDD7jQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   prebuild-install@7.1.2:
@@ -2290,13 +2316,8 @@ packages:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
 
-  semver@7.5.2:
-    resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
-    engines: {node: '>=10'}
-    hasBin: true
-
-  semver@7.5.4:
-    resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
+  semver@7.7.1:
+    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -2337,6 +2358,10 @@ packages:
 
   source-map-js@1.2.0:
     resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
+    engines: {node: '>=0.10.0'}
+
+  source-map-js@1.2.1:
+    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
   spawn-command@0.0.2:
@@ -2435,10 +2460,13 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  tailwindcss@3.4.4:
-    resolution: {integrity: sha512-ZoyXOdJjISB7/BcLTR6SEsLgKtDStYyYZVLsUtWChO4Ps20CBad7lfJKVDiejocV4ME1hLmyY0WJE3hSDcmQ2A==}
+  tailwindcss@3.4.17:
+    resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
     engines: {node: '>=14.0.0'}
     hasBin: true
+
+  tailwindcss@4.0.0:
+    resolution: {integrity: sha512-ULRPI3A+e39T7pSaf1xoi58AqqJxVCLg8F/uM5A3FadUbnyDTgltVnXJvdkTjwCOGA6NazqHVcwPJC5h2vRYVQ==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -2998,7 +3026,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.4
+      semver: 7.7.1
       which: 4.0.0
     transitivePeerDependencies:
       - bluebird
@@ -3011,7 +3039,7 @@ snapshots:
       json-parse-even-better-errors: 3.0.0
       normalize-package-data: 6.0.0
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.7.1
     transitivePeerDependencies:
       - bluebird
 
@@ -3077,22 +3105,22 @@ snapshots:
 
   '@sinclair/typebox@0.27.8': {}
 
-  '@tailwindcss/aspect-ratio@0.4.2(tailwindcss@3.4.4)':
+  '@tailwindcss/aspect-ratio@0.4.2(tailwindcss@3.4.17)':
     dependencies:
-      tailwindcss: 3.4.4
+      tailwindcss: 3.4.17
 
-  '@tailwindcss/container-queries@0.1.0(tailwindcss@3.4.4)':
+  '@tailwindcss/container-queries@0.1.0(tailwindcss@3.4.17)':
     dependencies:
-      tailwindcss: 3.4.4
+      tailwindcss: 3.4.17
 
-  '@tailwindcss/forms@0.5.3(tailwindcss@3.4.4)':
+  '@tailwindcss/forms@0.5.3(tailwindcss@3.4.17)':
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.4.4
+      tailwindcss: 3.4.17
 
-  '@tailwindcss/line-clamp@0.4.2(tailwindcss@3.4.4)':
+  '@tailwindcss/line-clamp@0.4.2(tailwindcss@3.4.17)':
     dependencies:
-      tailwindcss: 3.4.4
+      tailwindcss: 3.4.17
 
   '@tailwindcss/oxide-android-arm64@4.0.0-alpha.19':
     optional: true
@@ -3137,13 +3165,13 @@ snapshots:
       '@tailwindcss/oxide-linux-x64-musl': 4.0.0-alpha.19
       '@tailwindcss/oxide-win32-x64-msvc': 4.0.0-alpha.19
 
-  '@tailwindcss/typography@0.5.7(tailwindcss@3.4.4)':
+  '@tailwindcss/typography@0.5.7(tailwindcss@3.4.17)':
     dependencies:
       lodash.castarray: 4.4.0
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.4.4
+      tailwindcss: 3.4.17
 
   '@types/braces@3.0.1': {}
 
@@ -3249,7 +3277,7 @@ snapshots:
       minimatch: 3.1.2
       parse-semver: 1.1.1
       read: 1.0.7
-      semver: 7.5.4
+      semver: 7.7.1
       tmp: 0.2.3
       typed-rest-client: 1.8.11
       url-join: 4.0.1
@@ -3353,7 +3381,7 @@ snapshots:
 
   builtins@5.0.1:
     dependencies:
-      semver: 7.5.4
+      semver: 7.7.1
 
   bun-types@1.1.21:
     dependencies:
@@ -3541,6 +3569,8 @@ snapshots:
       mimic-response: 3.1.0
     optional: true
 
+  dedent@1.5.3: {}
+
   deep-eql@4.1.4:
     dependencies:
       type-detect: 4.1.0
@@ -3590,7 +3620,7 @@ snapshots:
       domelementtype: 2.3.0
       domhandler: 5.0.3
 
-  dset@3.1.2: {}
+  dset@3.1.4: {}
 
   eastasianwidth@0.2.0: {}
 
@@ -3723,7 +3753,7 @@ snapshots:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.7
+      micromatch: 4.0.8
 
   fastq@1.17.1:
     dependencies:
@@ -3973,9 +4003,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  lilconfig@2.1.0: {}
-
-  lilconfig@3.1.2: {}
+  lilconfig@3.1.3: {}
 
   line-column@1.0.2:
     dependencies:
@@ -4062,6 +4090,11 @@ snapshots:
       braces: 3.0.3
       picomatch: 2.3.1
 
+  micromatch@4.0.8:
+    dependencies:
+      braces: 3.0.3
+      picomatch: 2.3.1
+
   mime@1.6.0: {}
 
   mimic-fn@4.0.0: {}
@@ -4134,12 +4167,14 @@ snapshots:
 
   nanoid@3.3.7: {}
 
+  nanoid@3.3.8: {}
+
   napi-build-utils@1.0.2:
     optional: true
 
   node-abi@3.65.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.7.1
     optional: true
 
   node-addon-api@3.2.1: {}
@@ -4167,21 +4202,21 @@ snapshots:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.13.0
-      semver: 7.5.4
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@6.0.0:
     dependencies:
       hosted-git-info: 7.0.1
       is-core-module: 2.13.0
-      semver: 7.5.4
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
 
   npm-install-checks@6.3.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.7.1
 
   npm-normalize-package-bin@1.0.1: {}
 
@@ -4191,7 +4226,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.1
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.7.1
       validate-npm-package-name: 5.0.0
 
   npm-pick-manifest@9.0.0:
@@ -4199,7 +4234,7 @@ snapshots:
       npm-install-checks: 6.3.0
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 11.0.1
-      semver: 7.5.4
+      semver: 7.7.1
 
   npm-run-path@5.3.0:
     dependencies:
@@ -4307,6 +4342,8 @@ snapshots:
 
   picocolors@1.0.1: {}
 
+  picocolors@1.1.1: {}
+
   picomatch@2.3.1: {}
 
   picomatch@4.0.2: {}
@@ -4325,9 +4362,9 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
-  postcss-import@15.1.0(postcss@8.4.31):
+  postcss-import@15.1.0(postcss@8.5.1):
     dependencies:
-      postcss: 8.4.31
+      postcss: 8.5.1
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
       resolve: 1.20.0
@@ -4339,27 +4376,27 @@ snapshots:
       read-cache: 1.0.0
       resolve: 1.20.0
 
-  postcss-js@4.0.1(postcss@8.4.31):
+  postcss-js@4.0.1(postcss@8.5.1):
     dependencies:
       camelcase-css: 2.0.1
-      postcss: 8.4.31
+      postcss: 8.5.1
 
   postcss-load-config@3.0.1:
     dependencies:
       cosmiconfig: 7.1.0
       import-cwd: 3.0.0
 
-  postcss-load-config@4.0.2(postcss@8.4.31):
+  postcss-load-config@4.0.2(postcss@8.5.1):
     dependencies:
-      lilconfig: 3.1.2
+      lilconfig: 3.1.3
       yaml: 2.5.0
     optionalDependencies:
-      postcss: 8.4.31
+      postcss: 8.5.1
 
-  postcss-nested@6.2.0(postcss@8.4.31):
+  postcss-nested@6.2.0(postcss@8.5.1):
     dependencies:
-      postcss: 8.4.31
-      postcss-selector-parser: 6.1.1
+      postcss: 8.5.1
+      postcss-selector-parser: 6.1.2
 
   postcss-selector-parser@6.0.10:
     dependencies:
@@ -4372,7 +4409,7 @@ snapshots:
       indexes-of: 1.0.1
       uniq: 1.0.1
 
-  postcss-selector-parser@6.1.1:
+  postcss-selector-parser@6.1.2:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
@@ -4390,6 +4427,12 @@ snapshots:
       nanoid: 3.3.7
       picocolors: 1.0.1
       source-map-js: 1.2.0
+
+  postcss@8.5.1:
+    dependencies:
+      nanoid: 3.3.8
+      picocolors: 1.1.1
+      source-map-js: 1.2.1
 
   prebuild-install@7.1.2:
     dependencies:
@@ -4574,13 +4617,7 @@ snapshots:
 
   semver@5.7.2: {}
 
-  semver@7.5.2:
-    dependencies:
-      lru-cache: 6.0.0
-
-  semver@7.5.4:
-    dependencies:
-      lru-cache: 6.0.0
+  semver@7.7.1: {}
 
   set-function-length@1.2.2:
     dependencies:
@@ -4623,6 +4660,8 @@ snapshots:
   slide@1.1.6: {}
 
   source-map-js@1.2.0: {}
+
+  source-map-js@1.2.1: {}
 
   spawn-command@0.0.2: {}
 
@@ -4730,7 +4769,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  tailwindcss@3.4.4:
+  tailwindcss@3.4.17:
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -4741,21 +4780,23 @@ snapshots:
       glob-parent: 6.0.2
       is-glob: 4.0.3
       jiti: 1.21.6
-      lilconfig: 2.1.0
-      micromatch: 4.0.7
+      lilconfig: 3.1.3
+      micromatch: 4.0.8
       normalize-path: 3.0.0
       object-hash: 3.0.0
-      picocolors: 1.0.1
-      postcss: 8.4.31
-      postcss-import: 15.1.0(postcss@8.4.31)
-      postcss-js: 4.0.1(postcss@8.4.31)
-      postcss-load-config: 4.0.2(postcss@8.4.31)
-      postcss-nested: 6.2.0(postcss@8.4.31)
-      postcss-selector-parser: 6.1.1
+      picocolors: 1.1.1
+      postcss: 8.5.1
+      postcss-import: 15.1.0(postcss@8.5.1)
+      postcss-js: 4.0.1(postcss@8.5.1)
+      postcss-load-config: 4.0.2(postcss@8.5.1)
+      postcss-nested: 6.2.0(postcss@8.5.1)
+      postcss-selector-parser: 6.1.2
       resolve: 1.22.8
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
+
+  tailwindcss@4.0.0: {}
 
   tapable@2.2.1: {}
 
@@ -4960,13 +5001,13 @@ snapshots:
   vscode-languageclient@8.0.2:
     dependencies:
       minimatch: 3.1.2
-      semver: 7.5.4
+      semver: 7.7.1
       vscode-languageserver-protocol: 3.17.2
 
   vscode-languageclient@8.1.0:
     dependencies:
       minimatch: 5.1.6
-      semver: 7.5.4
+      semver: 7.7.1
       vscode-languageserver-protocol: 3.17.3
 
   vscode-languageserver-protocol@3.17.2:

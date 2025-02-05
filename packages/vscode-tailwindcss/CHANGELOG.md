@@ -2,7 +2,15 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Allow v4.0 projects not installed with npm to use IntelliSense ([#1157](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1157))
+- Ignore preprocessor files when looking for v4 configs ([#1159](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1159))
+- Allow language service to be used in native ESM environments ([#1122](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1122))
+
+## 0.14.2
+
+- Don't suggest `--font-size-*` theme keys in v4.0 ([#1150](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1150))
+- Fix detection of Tailwind CSS version when using Yarn PnP ([#1151](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1151))
+- Add support for v4.x insiders builds ([#1123](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1123))
 
 ## 0.14.1
 

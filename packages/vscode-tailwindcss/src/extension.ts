@@ -158,6 +158,7 @@ async function activeTextEditorSupportsClassSorting(): Promise<boolean> {
   if (!project) {
     return false
   }
+  // TODO: Use feature detection instead of version checking
   return semver.gte(project.version, '3.0.0')
 }
 
@@ -586,7 +587,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    if (!await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [])) {
+    if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? []))) {
       return
     }
 

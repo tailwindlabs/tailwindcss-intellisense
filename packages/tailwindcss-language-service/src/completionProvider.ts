@@ -890,7 +890,7 @@ function provideThemeVariableCompletions(
       { kind: 'variable', name: '--spacing' },
       { kind: 'namespace', name: '--container' },
       { kind: 'namespace', name: '--font' },
-      { kind: 'namespace', name: '--font-size' },
+      { kind: 'namespace', name: '--text' },
       { kind: 'namespace', name: '--tracking' },
       { kind: 'namespace', name: '--leading' },
       { kind: 'namespace', name: '--ease' },
