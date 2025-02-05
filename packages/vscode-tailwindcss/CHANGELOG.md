@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Ensure hover information for `theme(…)` and other functions are shown when used in `@media` queries ([#1172](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1172))
 
 ## 0.14.3
 
