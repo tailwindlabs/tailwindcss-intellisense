@@ -355,6 +355,7 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@responsive(\s*){/g, replace())
     .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
+    .replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
     .replace(/@reference\s*([^;]{2,})/g, '@import    $1')
     .replace(
