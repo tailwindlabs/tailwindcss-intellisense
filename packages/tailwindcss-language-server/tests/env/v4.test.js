@@ -225,3 +225,122 @@ defineTest({
     expect(completion.items.length).toBe(12288)
   },
 })
+
+defineTest({
+  name: 'v4, uses npm, does not detect v3 config files as possible roots',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "4.0.1"
+        }
+      }
+    `,
+    // This file MUST be before the v4 CSS file when sorting alphabetically
+    '_globals.css': css`
+      @tailwind base;
+      @tailwind utilities;
+      @tailwind components;
+    `,
+    'app.css': css`
+      @import 'tailwindcss';
+
+      @theme {
+        --color-primary: #c0ffee;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let textDocument = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+    })
+
+    expect(c.project).toMatchObject({
+      tailwind: {
+        version: '4.0.1',
+        isDefaultVersion: false,
+      },
+    })
+
+    let hover = await c.sendRequest(HoverRequest.type, {
+      textDocument,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #c0ffee */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
+
+defineTest({
+  name: 'v4, uses fallback, does not detect v3 config files as possible roots',
+  fs: {
+    // This file MUST be before the v4 CSS file when sorting alphabetically
+    '_globals.css': css`
+      @tailwind base;
+      @tailwind utilities;
+      @tailwind components;
+    `,
+    'app.css': css`
+      @import 'tailwindcss';
+
+      @theme {
+        --color-primary: #c0ffee;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let textDocument = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+    })
+
+    expect(c.project).toMatchObject({
+      tailwind: {
+        version: '4.0.0',
+        isDefaultVersion: true,
+      },
+    })
+
+    let hover = await c.sendRequest(HoverRequest.type, {
+      textDocument,
+
+      // <div class="bg-primary">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #c0ffee */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
