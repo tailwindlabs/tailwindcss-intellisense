@@ -164,19 +164,24 @@ Enable the Node.js inspector agent for the language server and listen on the spe
 
 **Default: `null`**
 
-By default the extension scans your project for CSS files and determines your "root" CSS file when looking for a Tailwind CSS v4 project. Likewise, for v3 projects, the extension will automatically use the first `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file that it can find.
+This setting allows you to manually specify the CSS entrypoints (for v4 projects) or the Tailwind configuration file (for v3 projects). By default, the extension attempts to detect your project setup automatically:
 
-If IntelliSense is unable to detect your project you can use this setting to manually specify the CSS files (for v4) or config file(s) (for v3) yourself instead.
+- **For Tailwind CSS v4**: The extension scans your project for CSS files and determines the "root" CSS file.
+- **For Tailwind CSS v3 (and earlier)**: The extension automatically uses the first `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file it finds.
 
-#### v4.x
+If IntelliSense is unable to detect your project, you can use this setting to define your config files manually.
 
-If your project contains a single CSS entrypoint you can specify a string value:
+#### Tailwind CSS v4.x (CSS entrypoints)
+
+For v4 projects, specify the CSS file(s) that serve as your Tailwind entrypoints.
+
+If your project contains a single CSS entrypoint, set this option to a string:
 
 ```json
 "tailwindCSS.experimental.configFile": "src/styles/app.css"
 ```
 
-For projects with multiple CSS entrypoints use an object where each key is a file path and each value is a glob pattern (or array of glob patterns) representing the set of files that the file applies to:
+For projects with multiple CSS entrypoints, use an object where each key is a file path and each value is a glob pattern (or array of patterns) representing the files it applies to:
 
 ```json
 "tailwindCSS.experimental.configFile": {
@@ -185,15 +190,17 @@ For projects with multiple CSS entrypoints use an object where each key is a fil
 }
 ```
 
-#### v3.x and below
+#### Tailwind CSS v3.x and earlier (config files)
 
-If your project contains a single Tailwind config file you can specify a string value:
+For v3 projects and below, specify the Tailwind configuration file(s) instead.
+
+If your project contains a single Tailwind config, set this option to a string:
 
 ```json
 "tailwindCSS.experimental.configFile": ".config/tailwind.config.js"
 ```
 
-For projects with multiple config files use an object where each key is a config file path and each value is a glob pattern (or array of glob patterns) representing the set of files that the config file applies to:
+For projects with multiple config files, use an object where each key is a config file path and each value is a glob pattern (or array of patterns) representing the files it applies to:
 
 ```json
 "tailwindCSS.experimental.configFile": {
