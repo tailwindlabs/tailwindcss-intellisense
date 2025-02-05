@@ -10,6 +10,7 @@
 - Support style-rule like completions inside `@custom-variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
 - Support style-rule like completions inside `@variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
 - Make sure `@slot` isn't considered an unknown at-rule ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Fix equivalent calculation when using prefixes in v4 ([#1166](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1166))
 
 ## 0.14.2
 

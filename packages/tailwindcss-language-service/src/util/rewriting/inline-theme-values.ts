@@ -1,6 +1,7 @@
 import type { State, TailwindCssSettings } from '../state'
 
 import { evaluateExpression } from './calc'
+import { resolveVariableValue } from './lookup'
 import { replaceCssVars, replaceCssCalc } from './replacements'
 
 export function inlineThemeValues(css: string, state: State) {
@@ -10,7 +11,7 @@ export function inlineThemeValues(css: string, state: State) {
     let inlined = replaceCssVars(expr.value, ({ name, fallback }) => {
       if (!name.startsWith('--')) return null
 
-      let value = state.designSystem.resolveThemeValue?.(name) ?? null
+      let value = resolveVariableValue(state.designSystem, name)
       if (value === null) return fallback
 
       return value
@@ -22,7 +23,7 @@ export function inlineThemeValues(css: string, state: State) {
   css = replaceCssVars(css, ({ name, fallback }) => {
     if (!name.startsWith('--')) return null
 
-    let value = state.designSystem.resolveThemeValue?.(name) ?? null
+    let value = resolveVariableValue(state.designSystem, name)
     if (value === null) return fallback
 
     return value

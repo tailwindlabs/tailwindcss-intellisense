@@ -1,4 +1,5 @@
 import type { State } from '../state'
+import { resolveVariableValue } from './lookup'
 import { replaceCssVars } from './replacements'
 
 export function replaceCssVarsWithFallbacks(state: State, str: string): string {
@@ -7,7 +8,7 @@ export function replaceCssVarsWithFallbacks(state: State, str: string): string {
     // take precedences over other sources as that emulates the behavior of a
     // browser where the fallback is only used if the variable is defined.
     if (state.designSystem && name.startsWith('--')) {
-      let value = state.designSystem.resolveThemeValue?.(name) ?? null
+      let value = resolveVariableValue(state.designSystem, name)
       if (value !== null) return value
     }
 
