@@ -484,7 +484,7 @@ export async function createProjectService(
           loadConfig: { module: null },
           defaultExtractor: {
             module: require('tailwindcss/lib/lib/defaultExtractor').defaultExtractor,
-          }
+          },
         }
 
         return tryRebuild()
@@ -698,6 +698,9 @@ export async function createProjectService(
           postcss: { version: null, module: null },
           resolveConfig: { module: null },
           loadConfig: { module: null },
+          defaultExtractor: {
+            module: require('tailwindcss/lib/lib/defaultExtractor').defaultExtractor,
+          },
         }
 
         return tryRebuild()
@@ -740,7 +743,7 @@ export async function createProjectService(
       jit: jitModules,
       defaultExtractor: {
         module: require('tailwindcss/lib/lib/defaultExtractor').defaultExtractor,
-      }
+      },
     }
     state.browserslist = browserslist
     state.featureFlags = featureFlags
