@@ -11,6 +11,7 @@
 - Support style-rule like completions inside `@variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
 - Make sure `@slot` isn't considered an unknown at-rule ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
 - Fix equivalent calculation when using prefixes in v4 ([#1166](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1166))
+- Fix use of `tailwindCSS.experimental.configFile` option when using the bundled version of v4 ([#1167](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1167))
 
 ## 0.14.2
 

@@ -101,14 +101,23 @@ export class ProjectLocator {
     configPath: string,
     selectors: string[],
   ): Promise<ProjectConfig | null> {
-    let config: ConfigEntry = {
-      type: 'js',
-      path: configPath,
-      source: 'js',
-      entries: [],
-      content: [],
-      packageRoot: '',
-    }
+    let config: ConfigEntry = configPath.endsWith('.css')
+      ? {
+          type: 'css',
+          path: configPath,
+          source: 'css',
+          entries: [],
+          content: [],
+          packageRoot: '',
+        }
+      : {
+          type: 'js',
+          path: configPath,
+          source: 'js',
+          entries: [],
+          content: [],
+          packageRoot: '',
+        }
 
     let tailwind = await this.detectTailwindVersion(config)
 
