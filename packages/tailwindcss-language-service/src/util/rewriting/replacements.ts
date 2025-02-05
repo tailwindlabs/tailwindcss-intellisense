@@ -52,6 +52,8 @@ export function replaceCssVars(
         depth++
       } else if (str[j] === ')' && depth > 0) {
         depth--
+      } else if (str[j] === '\\') {
+        j++
       } else if (str[j] === ',' && depth === 0 && fallbackStart === null) {
         fallbackStart = j + 1
       } else if (str[j] === ')' && depth === 0) {

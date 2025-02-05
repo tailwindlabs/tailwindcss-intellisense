@@ -18,6 +18,8 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
     ['--circular-1', 'var(--circular-3)'],
     ['--circular-2', 'var(--circular-1)'],
     ['--circular-3', 'var(--circular-2)'],
+
+    ['--escaped\\,name', 'green'],
   ])
 
   let state: State = {
@@ -57,6 +59,9 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
 
   // Known theme keys are replaced with their values
   expect(replaceCssVarsWithFallbacks(state, 'var(--known)')).toBe('blue')
+
+  // Escaped commas are not treated as separators
+  expect(replaceCssVarsWithFallbacks(state, 'var(--escaped\\,name)')).toBe('green')
 
   // Values from the theme take precedence over fallbacks
   expect(replaceCssVarsWithFallbacks(state, 'var(--known, red)')).toBe('blue')
