@@ -272,6 +272,24 @@ withFixture('v4/basic', (c) => {
       end: { line: 2, character: 18 },
     },
   })
+
+  testHover('--theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 23 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '80rem /* 1280px */', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 23 },
+        end: { line: 0, character: 38 },
+      },
+    },
+  })
 })
 
 withFixture('v4/css-loading-js', (c) => {
