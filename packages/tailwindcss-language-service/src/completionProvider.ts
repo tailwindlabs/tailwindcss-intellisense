@@ -2003,6 +2003,17 @@ async function provideThemeDirectiveCompletions(
       sortText: '-000001',
     },
     {
+      label: 'static',
+      documentation: {
+        kind: 'markdown',
+        value:
+          directive === 'import'
+            ? `Always emit imported theme values into the CSS file instead of only when used.`
+            : `Always emit these theme values into the CSS file instead of only when used.`,
+      },
+      sortText: '-000001',
+    },
+    {
       label: 'default',
       documentation: {
         kind: 'markdown',
