@@ -12,6 +12,7 @@ import { isCssLanguage } from './css'
 export type LanguageBoundary = {
   type: 'html' | 'js' | 'jsx' | 'css' | (string & {})
   range: Range
+  span: [number, number]
   lang?: string
 }
 
@@ -177,7 +178,11 @@ export function getLanguageBoundaries(
 
   let type = defaultType
   let boundaries: LanguageBoundary[] = [
-    { type: defaultType, range: { start: { line: 0, character: 0 }, end: undefined } },
+    {
+      type: defaultType,
+      range: { start: { line: 0, character: 0 }, end: undefined },
+      span: [0, undefined],
+    },
   ]
   let offset = 0
 
@@ -189,12 +194,24 @@ export function getLanguageBoundaries(
           if (!boundaries[boundaries.length - 1].range.end) {
             boundaries[boundaries.length - 1].range.end = position
           }
+          if (!boundaries[boundaries.length - 1].span[1]) {
+            boundaries[boundaries.length - 1].span[1] = offset
+          }
           type = token.type.replace(/BlockStart$/, '')
-          boundaries.push({ type, range: { start: position, end: undefined } })
+          boundaries.push({
+            type,
+            range: { start: position, end: undefined },
+            span: [offset, undefined],
+          })
         } else if (token.type.endsWith('BlockEnd')) {
           let position = indexToPosition(text, offset)
+          boundaries[boundaries.length - 1].span[1] = offset
           boundaries[boundaries.length - 1].range.end = position
-          boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
+          boundaries.push({
+            type: defaultType,
+            range: { start: position, end: undefined },
+            span: [offset, undefined],
+          })
         } else if (token.type === 'lang') {
           boundaries[boundaries.length - 1].type = token.text
         } else if (token.type === 'type' && htmlScriptTypes.includes(token.text)) {
@@ -212,6 +229,10 @@ export function getLanguageBoundaries(
 
   if (!boundaries[boundaries.length - 1].range.end) {
     boundaries[boundaries.length - 1].range.end = indexToPosition(text, offset)
+  }
+
+  if (!boundaries[boundaries.length - 1].span[1]) {
+    boundaries[boundaries.length - 1].span[1] = offset
   }
 
   cache.set(cacheKey, boundaries)
