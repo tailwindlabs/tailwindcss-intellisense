@@ -1,8 +1,9 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import type { State } from '../util/state'
+import type { Span, State } from '../util/state'
 import { type Scope, Scopes } from './scope'
 import { getLanguageBoundaries, LanguageBoundary } from '../util/getLanguageBoundaries'
 import { findClassNamesInRange } from '../util/find'
+import { segment } from '../util/segment'
 
 export async function analyzeDocument(state: State, doc: TextDocument): Promise<Scopes> {
   let scopes: Scope[] = []
@@ -19,7 +20,13 @@ export async function analyzeDocument(state: State, doc: TextDocument): Promise<
   }
 
   for (let boundary of boundaries) {
+    let slice = doc.getText(boundary.range)
+
     for await (let scope of analyzeContexts(state, doc, boundary)) {
+      scopes.push(scope)
+    }
+
+    for (let scope of analyzeAtRules(boundary, slice)) {
       scopes.push(scope)
     }
 
@@ -99,6 +106,98 @@ async function* analyzeClassLists(
     yield {
       kind: 'class.name',
       span: className.span,
+    }
+  }
+}
+
+const AT_RULE = /(?<name>@[a-z-]+)\s*(?<params>[^;{]*)(?:[;{]|$)/dg
+
+interface AtRuleDescriptor {
+  name: Span
+  params: Span
+  body: Span | null
+}
+
+/**
+ * Find all class lists and classes within the given block of text
+ */
+function* analyzeAtRules(boundary: LanguageBoundary, slice: string): Iterable<Scope> {
+  if (boundary.type !== 'css') return
+
+  let rules: AtRuleDescriptor[] = []
+
+  // Look for at-rules like `@apply` and `@screen`
+  // These _may not be complete_ but that's okay
+  // We just want to know that they're there and where they are
+  for (let match of slice.matchAll(AT_RULE)) {
+    let rule: AtRuleDescriptor = {
+      name: match.indices.groups.name,
+      params: match.indices.groups.params,
+      body: null,
+    }
+
+    rule.name[0] += boundary.span[0]
+    rule.name[1] += boundary.span[0]
+
+    rule.params[0] += boundary.span[0]
+    rule.params[1] += boundary.span[0]
+
+    rules.push(rule)
+  }
+
+  for (let rule of rules) {
+    // Scan forward from each at-rule to find the body
+    // This is a bit naive but it's good enough for now
+    let depth = 0
+    for (let i = rule.params[1]; i < slice.length; ++i) {
+      if (depth === 0 && slice[i] === ';') {
+        break
+      }
+
+      //
+      else if (slice[i] === '{') {
+        depth += 1
+
+        if (depth === 1) {
+          rule.body = [i, i]
+        }
+      }
+
+      //
+      else if (slice[i] === '}') {
+        depth -= 1
+
+        if (depth === 0) {
+          rule.body[1] = i
+          break
+        }
+      }
+    }
+
+    for (let scope of analyzeAtRule(slice, rule)) {
+      yield scope
+    }
+  }
+}
+
+function* analyzeAtRule(slice: string, desc: AtRuleDescriptor): Iterable<Scope> {
+  let body = desc.body ? slice.slice(desc.body[0], desc.body[1]) : null
+
+  // Emit generic at-rule scopes
+  yield {
+    kind: 'css.at-rule.name',
+    span: desc.name,
+  }
+
+  yield {
+    kind: 'css.at-rule.params',
+    span: desc.params,
+  }
+
+  if (body) {
+    yield {
+      kind: 'css.at-rule.body',
+      span: desc.body,
     }
   }
 }

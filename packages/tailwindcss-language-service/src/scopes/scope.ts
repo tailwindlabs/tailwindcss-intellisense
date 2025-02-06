@@ -24,6 +24,21 @@ export type ScopeKind =
   //        ^^^^^^^^^^^ ^^^^^^^^^^
   | 'class.name'
 
+  // Marks the name of an at-rule
+  // @media (min-width: 600px) { ... }
+  // ^^^^^^
+  | 'css.at-rule.name'
+
+  // Marks the parameters of an at-rule
+  // @media (min-width: 600px) { ... }
+  //        ^^^^^^^^^^^^^^^^^^
+  | 'css.at-rule.params'
+
+  // Marks the body of an at-rule
+  // @media (min-width: 600px) { ... }
+  //                            ^^^^^
+  | 'css.at-rule.body'
+
 /**
  * Represents information about a span of text in a file
  */
