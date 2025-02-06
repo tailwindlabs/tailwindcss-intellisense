@@ -19,6 +19,13 @@ export type ClassNames = {
   classNames: ClassNamesTree
 }
 
+/**
+ * Indicates a contiguous range of text, inclusive
+ *
+ * Offsets are in UTF-16 code units (indexing into a JS string)
+ */
+export type Span = [start: number, end: number]
+
 export type EditorState = {
   connection: Connection
   folder: string
@@ -151,6 +158,7 @@ export interface State {
 export type DocumentClassList = {
   classList: string
   range: Range
+  span: Span
   important?: boolean
 }
 
@@ -158,6 +166,7 @@ export type DocumentClassName = {
   className: string
   range: Range
   relativeRange: Range
+  span: Span
   classList: DocumentClassList
 }
 
@@ -167,6 +176,10 @@ export type DocumentHelperFunction = {
   ranges: {
     full: Range
     path: Range
+  }
+  spans: {
+    full: Span
+    path: Span
   }
 }
 

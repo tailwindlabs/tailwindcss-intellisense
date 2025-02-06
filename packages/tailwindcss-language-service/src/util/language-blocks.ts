@@ -1,4 +1,4 @@
-import type { State } from '../util/state'
+import type { Span, State } from '../util/state'
 import type { TextDocument, Range } from 'vscode-languageserver-textdocument'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 import { isCssDoc } from '../util/css'
@@ -9,6 +9,7 @@ import { isJsDoc } from './js'
 export interface LanguageBlock {
   context: 'html' | 'js' | 'css' | 'other'
   range: Range | undefined
+  span: Span | undefined
   lang: string
   text: string
 }
@@ -36,6 +37,7 @@ export function getDocumentBlocks(state: State, doc: TextDocument): LanguageBloc
       return {
         context,
         range: boundary.range,
+        span: boundary.span,
         lang: boundary.lang ?? doc.languageId,
         text: context === 'other' ? text : getTextWithoutComments(text, context),
       }
@@ -62,6 +64,7 @@ export function getDocumentBlocks(state: State, doc: TextDocument): LanguageBloc
         start: doc.positionAt(0),
         end: doc.positionAt(text.length),
       },
+      span: [0, text.length],
       lang: doc.languageId,
       text: context === 'other' ? text : getTextWithoutComments(text, context),
     },

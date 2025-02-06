@@ -39,6 +39,7 @@ test('class regex works in astro', async ({ expect }) => {
   expect(classLists).toEqual([
     {
       classList: 'p-4 sm:p-2 $',
+      span: [10, 22],
       range: {
         start: { line: 0, character: 10 },
         end: { line: 0, character: 22 },
@@ -46,6 +47,7 @@ test('class regex works in astro', async ({ expect }) => {
     },
     {
       classList: 'underline',
+      span: [33, 42],
       range: {
         start: { line: 0, character: 33 },
         end: { line: 0, character: 42 },
@@ -53,6 +55,7 @@ test('class regex works in astro', async ({ expect }) => {
     },
     {
       classList: 'line-through',
+      span: [46, 58],
       range: {
         start: { line: 0, character: 46 },
         end: { line: 0, character: 58 },
@@ -111,6 +114,7 @@ test('find class lists in functions', async ({ expect }) => {
     // from clsx(…)
     {
       classList: 'flex p-4',
+      span: [45, 53],
       range: {
         start: { line: 2, character: 3 },
         end: { line: 2, character: 11 },
@@ -118,6 +122,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'block sm:p-0',
+      span: [59, 71],
       range: {
         start: { line: 3, character: 3 },
         end: { line: 3, character: 15 },
@@ -125,6 +130,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'text-white',
+      span: [96, 106],
       range: {
         start: { line: 4, character: 22 },
         end: { line: 4, character: 32 },
@@ -132,6 +138,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'text-black',
+      span: [111, 121],
       range: {
         start: { line: 4, character: 37 },
         end: { line: 4, character: 47 },
@@ -141,6 +148,7 @@ test('find class lists in functions', async ({ expect }) => {
     // from cva(…)
     {
       classList: 'flex p-4',
+      span: [171, 179],
       range: {
         start: { line: 9, character: 3 },
         end: { line: 9, character: 11 },
@@ -148,6 +156,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'block sm:p-0',
+      span: [185, 197],
       range: {
         start: { line: 10, character: 3 },
         end: { line: 10, character: 15 },
@@ -155,6 +164,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'text-white',
+      span: [222, 232],
       range: {
         start: { line: 11, character: 22 },
         end: { line: 11, character: 32 },
@@ -162,6 +172,7 @@ test('find class lists in functions', async ({ expect }) => {
     },
     {
       classList: 'text-black',
+      span: [237, 247],
       range: {
         start: { line: 11, character: 37 },
         end: { line: 11, character: 47 },
@@ -219,6 +230,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
   expect(classLists).toMatchObject([
     {
       classList: 'flex',
+      span: [193, 197],
       range: {
         start: { line: 3, character: 3 },
         end: { line: 3, character: 7 },
@@ -228,6 +240,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     // TODO: This should be ignored because they're inside cn(…)
     {
       classList: 'bg-red-500',
+      span: [212, 222],
       range: {
         start: { line: 5, character: 5 },
         end: { line: 5, character: 15 },
@@ -237,6 +250,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     // TODO: This should be ignored because they're inside cn(…)
     {
       classList: 'text-white',
+      span: [236, 246],
       range: {
         start: { line: 6, character: 5 },
         end: { line: 6, character: 15 },
@@ -245,6 +259,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
 
     {
       classList: 'fixed',
+      span: [286, 291],
       range: {
         start: { line: 9, character: 5 },
         end: { line: 9, character: 10 },
@@ -252,6 +267,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     },
     {
       classList: 'absolute inset-0',
+      span: [299, 315],
       range: {
         start: { line: 10, character: 5 },
         end: { line: 10, character: 21 },
@@ -259,6 +275,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     },
     {
       classList: 'bottom-0',
+      span: [335, 343],
       range: {
         start: { line: 13, character: 6 },
         end: { line: 13, character: 14 },
@@ -266,6 +283,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     },
     {
       classList: 'border',
+      span: [347, 353],
       range: {
         start: { line: 13, character: 18 },
         end: { line: 13, character: 24 },
@@ -273,6 +291,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     },
     {
       classList: 'bottom-0 left-0',
+      span: [419, 434],
       range: {
         start: { line: 17, character: 20 },
         end: { line: 17, character: 35 },
@@ -280,6 +299,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     },
     {
       classList: `inset-0\n            rounded-none\n          `,
+      span: [468, 500],
       range: {
         start: { line: 19, character: 12 },
         // TODO: Fix the range calculation. Its wrong on this one
@@ -321,6 +341,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
   expect(classLists).toMatchObject([
     {
       classList: 'fixed',
+      span: [228, 233],
       range: {
         start: { line: 9, character: 5 },
         end: { line: 9, character: 10 },
@@ -328,6 +349,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
     },
     {
       classList: 'absolute inset-0',
+      span: [241, 257],
       range: {
         start: { line: 10, character: 5 },
         end: { line: 10, character: 21 },
@@ -386,6 +408,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     // from clsx`…`
     {
       classList: 'flex p-4\n  block sm:p-0\n  $',
+      span: [44, 71],
       range: {
         start: { line: 2, character: 2 },
         end: { line: 4, character: 3 },
@@ -393,6 +416,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     },
     {
       classList: 'text-white',
+      span: [92, 102],
       range: {
         start: { line: 4, character: 24 },
         end: { line: 4, character: 34 },
@@ -400,6 +424,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     },
     {
       classList: 'text-black',
+      span: [107, 117],
       range: {
         start: { line: 4, character: 39 },
         end: { line: 4, character: 49 },
@@ -409,6 +434,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     // from cva`…`
     {
       classList: 'flex p-4\n  block sm:p-0\n  $',
+      span: [166, 193],
       range: {
         start: { line: 9, character: 2 },
         end: { line: 11, character: 3 },
@@ -416,6 +442,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     },
     {
       classList: 'text-white',
+      span: [214, 224],
       range: {
         start: { line: 11, character: 24 },
         end: { line: 11, character: 34 },
@@ -423,6 +450,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     },
     {
       classList: 'text-black',
+      span: [229, 239],
       range: {
         start: { line: 11, character: 39 },
         end: { line: 11, character: 49 },
@@ -467,6 +495,7 @@ test('classFunctions can be a regex', async ({ expect }) => {
   expect(classListsA).toEqual([
     {
       classList: 'flex p-4',
+      span: [22, 30],
       range: {
         start: { line: 0, character: 22 },
         end: { line: 0, character: 30 },
@@ -522,6 +551,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
   expect(classLists).toEqual([
     {
       classList: 'relative flex bg-red-500',
+      span: [28, 52],
       range: {
         start: { line: 1, character: 6 },
         end: { line: 1, character: 30 },
@@ -529,6 +559,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
     },
     {
       classList: 'relative flex bg-red-500',
+      span: [62, 86],
       range: {
         start: { line: 2, character: 6 },
         end: { line: 2, character: 30 },
@@ -536,6 +567,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
     },
     {
       classList: 'relative flex bg-red-500',
+      span: [96, 120],
       range: {
         start: { line: 3, character: 6 },
         end: { line: 3, character: 30 },
@@ -585,6 +617,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
   expect(classLists).toEqual([
     {
       classList: 'relative flex',
+      span: [74, 87],
       range: {
         start: { line: 3, character: 7 },
         end: { line: 3, character: 20 },
@@ -592,6 +625,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     },
     {
       classList: 'inset-0 md:h-[calc(100%-2rem)]',
+      span: [97, 127],
       range: {
         start: { line: 4, character: 7 },
         end: { line: 4, character: 37 },
@@ -599,6 +633,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     },
     {
       classList: 'rounded-none bg-blue-700',
+      span: [142, 166],
       range: {
         start: { line: 5, character: 12 },
         end: { line: 5, character: 36 },
@@ -606,6 +641,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     },
     {
       classList: 'relative flex',
+      span: [294, 307],
       range: {
         start: { line: 14, character: 7 },
         end: { line: 14, character: 20 },
@@ -613,6 +649,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     },
     {
       classList: 'inset-0 md:h-[calc(100%-2rem)]',
+      span: [317, 347],
       range: {
         start: { line: 15, character: 7 },
         end: { line: 15, character: 37 },
@@ -620,6 +657,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     },
     {
       classList: 'rounded-none bg-blue-700',
+      span: [362, 386],
       range: {
         start: { line: 16, character: 12 },
         end: { line: 16, character: 36 },
@@ -664,6 +702,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
   expect(classLists).toEqual([
     {
       classList: 'relative flex',
+      span: [130, 143],
       range: {
         start: { line: 5, character: 16 },
         end: { line: 5, character: 29 },
@@ -671,6 +710,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     },
     {
       classList: 'relative flex',
+      span: [162, 175],
       range: {
         start: { line: 6, character: 16 },
         end: { line: 6, character: 29 },
@@ -678,6 +718,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     },
     {
       classList: 'relative flex',
+      span: [325, 338],
       range: {
         start: { line: 14, character: 16 },
         end: { line: 14, character: 29 },
@@ -685,6 +726,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     },
     {
       classList: 'relative flex',
+      span: [357, 370],
       range: {
         start: { line: 15, character: 16 },
         end: { line: 15, character: 29 },
@@ -724,6 +766,7 @@ test('classAttributes find class lists inside variables in JS(X)/TS(X)', async (
   expect(classLists).toEqual([
     {
       classList: 'relative flex',
+      span: [24, 37],
       range: {
         start: { line: 1, character: 6 },
         end: { line: 1, character: 19 },
@@ -731,6 +774,7 @@ test('classAttributes find class lists inside variables in JS(X)/TS(X)', async (
     },
     {
       classList: 'relative flex',
+      span: [60, 73],
       range: {
         start: { line: 3, character: 8 },
         end: { line: 3, character: 21 },
@@ -738,6 +782,7 @@ test('classAttributes find class lists inside variables in JS(X)/TS(X)', async (
     },
     {
       classList: 'relative flex',
+      span: [102, 115],
       range: {
         start: { line: 6, character: 8 },
         end: { line: 6, character: 21 },
@@ -765,6 +810,7 @@ test('classAttributes find class lists inside pug', async ({ expect }) => {
   expect(classLists).toEqual([
     {
       classList: 'relative flex',
+      span: [15, 28],
       range: {
         start: { line: 0, character: 15 },
         end: { line: 0, character: 28 },
@@ -794,6 +840,7 @@ test('classAttributes find class lists inside Vue bindings', async ({ expect }) 
   expect(classLists).toEqual([
     {
       classList: 'relative flex',
+      span: [28, 41],
       range: {
         start: { line: 1, character: 17 },
         end: { line: 1, character: 30 },
