@@ -10,6 +10,20 @@ export type ScopeKind =
   | 'context.js'
   | 'context.css'
 
+  // Marks a span of text that may contain one or more classes in a space-separated list
+  // <div class="bg-blue-500 text-white">
+  //             ^^^^^^^^^^^^^^^^^^^^^^
+  // @apply bg-blue-500 text-white;
+  //        ^^^^^^^^^^^^^^^^^^^^^^
+  | 'class.list'
+
+  // Marks a span of text that represents a single class
+  // <div class="bg-blue-500 text-white">
+  //             ^^^^^^^^^^^ ^^^^^^^^^^
+  // @apply bg-blue-500 text-white;
+  //        ^^^^^^^^^^^ ^^^^^^^^^^
+  | 'class.name'
+
 /**
  * Represents information about a span of text in a file
  */
