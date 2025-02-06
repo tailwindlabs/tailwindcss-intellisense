@@ -197,6 +197,14 @@ export function getLanguageBoundaries(
           boundaries.push({ type: defaultType, range: { start: position, end: undefined } })
         } else if (token.type === 'lang') {
           boundaries[boundaries.length - 1].type = token.text
+
+          if (token.text === 'tsx') {
+            boundaries[boundaries.length - 1].type = 'jsx'
+            boundaries[boundaries.length - 1].lang = 'tsx'
+          } else if (token.text === 'ts') {
+            boundaries[boundaries.length - 1].type = 'js'
+            boundaries[boundaries.length - 1].lang = 'ts'
+          }
         } else if (token.type === 'type' && htmlScriptTypes.includes(token.text)) {
           boundaries[boundaries.length - 1].type = 'html'
         } else if (token.type === 'type' && jsxScriptTypes.includes(token.text)) {

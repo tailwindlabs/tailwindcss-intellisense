@@ -1,7 +1,7 @@
 import { expect } from 'vitest'
 import { init } from '../common'
 import { HoverRequest } from 'vscode-languageserver'
-import { css, defineTest, js, json } from '../../src/testing'
+import { css, defineTest, html, js, json } from '../../src/testing'
 import dedent from 'dedent'
 import { CompletionRequest } from 'vscode-languageserver-protocol'
 
@@ -525,6 +525,51 @@ defineTest({
       range: {
         start: { line: 0, character: 12 },
         end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
+
+defineTest({
+  name: 'script + lang=tsx is treated as containing JSX',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let document = await c.openDocument({
+      lang: 'vue',
+      text: html`
+        <script lang="tsx">
+          function App() {
+            return <div class="bg-black" />
+          }
+        </script>
+      `,
+    })
+
+    let hover = await c.sendRequest(HoverRequest.type, {
+      textDocument: document,
+
+      //    return <div class="bg-black" />
+      //                       ^
+      position: { line: 2, character: 24 },
+    })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-black {
+            background-color: var(--color-black) /* #000 = #000000 */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 2, character: 23 },
+        end: { line: 2, character: 31 },
       },
     })
   },
