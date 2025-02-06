@@ -30,6 +30,10 @@ export async function analyzeDocument(state: State, doc: TextDocument): Promise<
       scopes.push(scope)
     }
 
+    for (let scope of analyzeHelperFns(boundary, slice)) {
+      scopes.push(scope)
+    }
+
     for await (let scope of analyzeClassLists(state, doc, boundary)) {
       scopes.push(scope)
     }
@@ -333,5 +337,77 @@ function* analyzeAtRule(slice: string, desc: AtRuleDescriptor): Iterable<Scope> 
 
       start += length
     }
+  }
+}
+
+const HELPER_FN = /(?<name>config|theme|--theme|--spacing|--alpha)\s*\(/dg
+
+interface HelperFnDescriptor {
+  name: Span
+  params: Span
+}
+
+/**
+ * Find all class lists and classes within the given block of text
+ */
+function* analyzeHelperFns(boundary: LanguageBoundary, slice: string): Iterable<Scope> {
+  if (boundary.type !== 'css') return
+
+  let fns: HelperFnDescriptor[] = []
+
+  // Look for helper functions in CSS
+  for (let match of slice.matchAll(HELPER_FN)) {
+    let fn: HelperFnDescriptor = {
+      name: match.indices.groups.name,
+      params: [match.indices.groups.name[1], match.indices.groups.name[1]],
+    }
+
+    fn.name[0] += boundary.span[0]
+    fn.name[1] += boundary.span[0]
+
+    fn.params[0] += boundary.span[0]
+    fn.params[1] += boundary.span[0]
+
+    // Scan forward from each fn to find the end of the params
+    let depth = 0
+    for (let i = fn.name[1]; i < slice.length; ++i) {
+      if (depth === 0 && slice[i] === ';') {
+        break
+      } else if (slice[i] === '(') {
+        depth += 1
+
+        if (depth === 1) {
+          fn.params = [i + 1, i + 1]
+        }
+      } else if (slice[i] === ')') {
+        depth -= 1
+
+        if (depth === 0) {
+          fn.params[1] = i
+          break
+        }
+      }
+    }
+
+    fns.push(fn)
+  }
+
+  for (let fn of fns) {
+    for (let scope of analyzeHelperFn(slice, fn)) {
+      yield scope
+    }
+  }
+}
+
+function* analyzeHelperFn(slice: string, desc: HelperFnDescriptor): Iterable<Scope> {
+  // Emit generic scopes
+  yield {
+    kind: 'css.fn.name',
+    span: desc.name,
+  }
+
+  yield {
+    kind: 'css.fn.params',
+    span: desc.params,
   }
 }

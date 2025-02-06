@@ -98,6 +98,22 @@ export type ScopeKind =
   //               ^^
   | 'css.theme.prefix'
 
+  // Marks a CSS function's name
+  // Note: Only helper functions are marked with socpes
+  // color: theme(--color-red-500);
+  //        ^^^^^
+  // color: --alpha(var(--color-red-500));
+  //        ^^^^^^^
+  | 'css.fn.name'
+
+  // Marks a CSS function's parameters
+  // Note: Only helper functions are marked with socpes
+  // color: theme(--color-red-500);
+  //              ^^^^^^^^^^^^^^^
+  // color: --alpha(var(--color-red-500));
+  //                ^^^^^^^^^^^^^^^^^^^^
+  | 'css.fn.params'
+
 /**
  * Represents information about a span of text in a file
  */
