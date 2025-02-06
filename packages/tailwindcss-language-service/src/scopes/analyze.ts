@@ -226,4 +226,112 @@ function* analyzeAtRule(slice: string, desc: AtRuleDescriptor): Iterable<Scope> 
       }
     }
   }
+
+  // `@import` statements are special
+  else if (name === '@import') {
+    let start = 0
+
+    for (let part of parts) {
+      let offset = start
+      let length = part.length + 1
+      let type = null
+      let quotable = true
+
+      if (part.startsWith('url(')) {
+        type = 'url'
+        quotable = true
+        part = part.slice(4)
+        offset += 4
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      //
+      else if (part.startsWith('source(')) {
+        type = 'source-url'
+        quotable = true
+        part = part.slice(7)
+        offset += 7
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      //
+      else if (part.startsWith('theme(')) {
+        type = 'theme-options'
+        part = part.slice(6)
+        offset += 6
+        quotable = false
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      if (quotable && part.startsWith('"')) {
+        type ??= 'url'
+        part = part.slice(1)
+        offset += 1
+
+        if (part.endsWith('"')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      //
+      else if (quotable && part.startsWith("'")) {
+        type ??= 'url'
+        part = part.slice(1)
+        offset += 1
+
+        if (part.endsWith("'")) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      if (type === 'url') {
+        yield {
+          kind: 'css.import.url',
+          span: [desc.params[0] + offset, desc.params[0] + offset + part.length],
+        }
+      }
+
+      //
+      else if (type === 'source-url') {
+        yield {
+          kind: 'css.import.source-url',
+          span: [desc.params[0] + offset, desc.params[0] + offset + part.length],
+        }
+      }
+
+      //
+      else if (type === 'theme-options') {
+        yield {
+          kind: 'css.import.theme-option-list',
+          span: [desc.params[0] + offset, desc.params[0] + offset + part.length],
+        }
+
+        let options = segment(part, ' ')
+
+        let start = offset
+
+        for (let option of options) {
+          let offset = start
+
+          yield {
+            kind: 'css.import.theme-option',
+            span: [desc.params[0] + offset, desc.params[0] + offset + option.length],
+          }
+
+          start += option.length + 1
+        }
+      }
+
+      start += length
+    }
+  }
 }

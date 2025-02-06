@@ -56,6 +56,48 @@ export type ScopeKind =
   //                  ^^^^^
   | 'css.utility.functional'
 
+  // Marks the url of an import statement
+  // @import "./some-file.css";
+  //          ^^^^^^^^^^^^^^^
+  // @reference "./some-file.css";
+  //             ^^^^^^^^^^^^^^^
+  // @import url("./some-file.css");
+  //             ^^^^^^^^^^^^^^^^^
+  | 'css.import.url'
+
+  // Marks an import statement's source url
+  // @import "./some-file.css" source("./foo");
+  //                                   ^^^^^
+  // @import "./some-file.css" source(none);
+  //                                  ^^^^
+  | 'css.import.source-url'
+
+  // Marks an import statement's theme option list
+  // @import "./some-file.css" theme(inline reference default);
+  //                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  | 'css.import.theme-option-list'
+
+  // Marks an import statement's theme option(s)
+  // @import "./some-file.css" theme(inline);
+  //                                 ^^^^^^
+  // @import "./some-file.css" theme(default);
+  //                                 ^^^^^^^
+  // @import "./some-file.css" reference;
+  //                           ^^^^^^^^^
+  // @import "./some-file.css" prefix(tw);
+  //                           ^^^^^^^^^^
+  | 'css.import.theme-option'
+
+  // Marks an import statement's prefix
+  // @import "./some-file.css" prefix(tw);
+  //                                  ^^
+  | 'css.import.prefix'
+
+  // Marks a theme directive's prefix
+  // @theme prefix(tw);
+  //               ^^
+  | 'css.theme.prefix'
+
 /**
  * Represents information about a span of text in a file
  */
