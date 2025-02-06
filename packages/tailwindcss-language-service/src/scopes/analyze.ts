@@ -181,6 +181,10 @@ function* analyzeAtRules(boundary: LanguageBoundary, slice: string): Iterable<Sc
 }
 
 function* analyzeAtRule(slice: string, desc: AtRuleDescriptor): Iterable<Scope> {
+  let name = slice.slice(desc.name[0], desc.name[1])
+  let params = slice.slice(desc.params[0], desc.params[1]).trim()
+  let parts = segment(params, ' ')
+
   let body = desc.body ? slice.slice(desc.body[0], desc.body[1]) : null
 
   // Emit generic at-rule scopes
@@ -198,6 +202,28 @@ function* analyzeAtRule(slice: string, desc: AtRuleDescriptor): Iterable<Scope> 
     yield {
       kind: 'css.at-rule.body',
       span: desc.body,
+    }
+  }
+
+  // Emit generic scopes specific to certain at-rules
+  if (name === '@utility') {
+    let name = params
+    let functional = false
+    if (name.endsWith('-*')) {
+      functional = true
+      name = name.slice(0, -2)
+    }
+
+    yield {
+      kind: 'css.utility.name',
+      span: [desc.params[0], desc.params[0] + name.length],
+    }
+
+    if (body) {
+      yield {
+        kind: functional ? 'css.utility.functional' : 'css.utility.static',
+        span: desc.body,
+      }
     }
   }
 }

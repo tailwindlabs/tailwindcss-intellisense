@@ -39,6 +39,13 @@ export type ScopeKind =
   //                            ^^^^^
   | 'css.at-rule.body'
 
+  // Marks the name of a CSS `@utility` directive
+  // @utility hero { }
+  //          ^^^^
+  // @utility hero-* { }
+  //          ^^^^
+  | 'css.utility.name'
+
 /**
  * Represents information about a span of text in a file
  */
