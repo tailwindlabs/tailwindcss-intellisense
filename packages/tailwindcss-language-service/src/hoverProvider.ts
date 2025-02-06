@@ -19,6 +19,7 @@ import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
 import { getTextWithoutComments } from './util/doc'
 import braces from 'braces'
 import { absoluteRange } from './util/absoluteRange'
+import { segment } from './util/segment'
 
 export async function doHover(
   state: State,
@@ -27,6 +28,7 @@ export async function doHover(
 ): Promise<Hover> {
   return (
     (await provideClassNameHover(state, document, position)) ||
+    (await provideThemeDirectiveHover(state, document, position)) ||
     (await provideCssHelperHover(state, document, position)) ||
     (await provideSourceGlobHover(state, document, position))
   )
@@ -202,4 +204,98 @@ async function provideSourceGlobHover(
   }
 
   return null
+}
+
+// Provide completions for directives that take file paths
+const PATTERN_AT_THEME = /@(?<directive>theme)\s+(?<parts>[^{]+)\s*\{/dg
+const PATTERN_IMPORT_THEME = /@(?<directive>import)\s*[^;]+?theme\((?<parts>[^)]+)\)/dg
+
+async function provideThemeDirectiveHover(
+  state: State,
+  document: TextDocument,
+  position: Position,
+): Promise<Hover> {
+  if (!state.v4) return null
+
+  let range = {
+    start: { line: position.line, character: 0 },
+    end: { line: position.line + 1, character: 0 },
+  }
+
+  let text = getTextWithoutComments(document, 'css', range)
+
+  let matches = [...findAll(PATTERN_IMPORT_THEME, text), ...findAll(PATTERN_AT_THEME, text)]
+
+  for (let match of matches) {
+    let directive = match.groups.directive
+    let parts = match.groups.parts
+
+    // Find the option under the cursor
+    let options: { name: string; range: Range }[] = []
+
+    let offset = match.indices.groups.parts[0]
+
+    for (let part of segment(parts, ' ')) {
+      let length = part.length
+      part = part.trim()
+
+      if (part !== '') {
+        options.push({
+          name: part,
+          range: absoluteRange(
+            {
+              start: indexToPosition(text, offset),
+              end: indexToPosition(text, offset + part.length),
+            },
+            range,
+          ),
+        })
+      }
+
+      offset += length + 1
+    }
+
+    let option = options.find((option) => isWithinRange(position, option.range))
+    if (!option) return null
+
+    let markdown = getThemeMarkdown(directive, option.name)
+    if (!markdown) return null
+
+    return {
+      range: option.range,
+      contents: markdown,
+    }
+  }
+
+  return null
+}
+
+function getThemeMarkdown(directive: string, name: string) {
+  let options = {
+    reference: markdown([
+      directive === 'import'
+        ? `Don't emit CSS variables for imported theme values.`
+        : `Don't emit CSS variables for these theme values.`,
+    ]),
+
+    inline: markdown([
+      directive === 'import'
+        ? `Inline imported theme values into generated utilities instead of using \`var(…)\`.`
+        : `Inline these theme values into generated utilities instead of using \`var(…)\`.`,
+    ]),
+
+    static: markdown([
+      directive === 'import'
+        ? `Always emit imported theme values into the CSS file instead of only when used.`
+        : `Always emit these theme values into the CSS file instead of only when used.`,
+    ]),
+
+    default: markdown([
+      directive === 'import'
+        ? `Allow imported theme values to be overridden by JS configs and plugins.`
+        : `Allow these theme values to be overridden by JS configs and plugins.`,
+    ]),
+  }
+
+  return options[name]
 }
