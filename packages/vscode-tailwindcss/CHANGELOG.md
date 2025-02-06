@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Ensure hover information for `theme(…)` and other functions are shown when used in `@media` queries ([#1172](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1172))
+- Treat `<script lang=“tsx”>` as containing JSX ([#1175](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1175))
 
 ## 0.14.3
 
