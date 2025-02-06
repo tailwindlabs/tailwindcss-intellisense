@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Ensure hover information for `theme(…)` and other functions are shown when used in `@media` queries ([#1172](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1172))
+- Add support for `static` theme option ([#1176](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1176))
 
 ## 0.14.3
 
