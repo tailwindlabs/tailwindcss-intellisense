@@ -309,6 +309,9 @@ importers:
       '@types/stringify-object':
         specifier: ^4.0.5
         version: 4.0.5
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
       esbuild:
         specifier: ^0.25.0
         version: 0.25.0
