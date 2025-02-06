@@ -46,6 +46,16 @@ export type ScopeKind =
   //          ^^^^
   | 'css.utility.name'
 
+  // Marks the inside of a static utility definition
+  // @utility hero { ... }
+  //                ^^^^^
+  | 'css.utility.static'
+
+  // Marks the inside of a functional utility definition
+  // @utility hero-* { ... }
+  //                  ^^^^^
+  | 'css.utility.functional'
+
 /**
  * Represents information about a span of text in a file
  */
