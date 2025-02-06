@@ -33,7 +33,7 @@ export function findLast(re: RegExp, str: string): RegExpMatchArray {
 }
 
 export function getClassNamesInClassList(
-  { classList, range, important }: DocumentClassList,
+  { classList, span, range, important }: DocumentClassList,
   blocklist: State['blocklist'],
 ): DocumentClassName[] {
   const parts = classList.split(/(\s+)/)
@@ -41,13 +41,16 @@ export function getClassNamesInClassList(
   let index = 0
   for (let i = 0; i < parts.length; i++) {
     if (i % 2 === 0 && !blocklist.includes(parts[i])) {
+      const classNameSpan = [index, index + parts[i].length]
       const start = indexToPosition(classList, index)
       const end = indexToPosition(classList, index + parts[i].length)
       names.push({
         className: parts[i],
+        span: [span[0] + classNameSpan[0], span[0] + classNameSpan[1]],
         classList: {
           classList,
           range,
+          span,
           important,
         },
         relativeRange: {
@@ -107,11 +110,19 @@ export function findClassListsInCssRange(
   const matches = findAll(regex, text)
   const globalStart: Position = range ? range.start : { line: 0, character: 0 }
 
+  const rangeStartOffset = doc.offsetAt(globalStart)
+
   return matches.map((match) => {
-    const start = indexToPosition(text, match.index + match[1].length)
-    const end = indexToPosition(text, match.index + match[1].length + match.groups.classList.length)
+    let span = [
+      match.index + match[1].length,
+      match.index + match[1].length + match.groups.classList.length,
+    ] as [number, number]
+
+    const start = indexToPosition(text, span[0])
+    const end = indexToPosition(text, span[1])
     return {
       classList: match.groups.classList,
+      span: [rangeStartOffset + span[0], rangeStartOffset + span[1]],
       important: Boolean(match.groups.important),
       range: {
         start: {
@@ -143,6 +154,7 @@ async function findCustomClassLists(
     for (let match of customClassesIn({ text, filters: regexes })) {
       result.push({
         classList: match.classList,
+        span: match.range,
         range: {
           start: doc.positionAt(match.range[0]),
           end: doc.positionAt(match.range[1]),
@@ -225,6 +237,8 @@ export async function findClassListsInHtmlRange(
   const existingResultSet = new Set<string>()
   const results: DocumentClassList[] = []
 
+  const rangeStartOffset = doc.offsetAt(range?.start || { line: 0, character: 0 })
+
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
 
@@ -278,13 +292,16 @@ export async function findClassListsInHtmlRange(
       const after = value.match(/\s*$/)
       const afterOffset = after === null ? 0 : -after[0].length
 
-      const start = indexToPosition(text, match.index + match[0].length - 1 + offset + beforeOffset)
-      const end = indexToPosition(
-        text,
+      let span = [
+        match.index + match[0].length - 1 + offset + beforeOffset,
         match.index + match[0].length - 1 + offset + value.length + afterOffset,
-      )
+      ]
+
+      const start = indexToPosition(text, span[0])
+      const end = indexToPosition(text, span[1])
 
       const result: DocumentClassList = {
+        span: [rangeStartOffset + span[0], rangeStartOffset + span[1]] as [number, number],
         classList: value.substr(beforeOffset, value.length + afterOffset),
         range: {
           start: {
@@ -409,6 +426,8 @@ export function findHelperFunctionsInRange(
     text,
   )
 
+  let rangeStartOffset = range?.start ? doc.offsetAt(range.start) : 0
+
   // Eliminate matches that are on an `@import`
   matches = matches.filter((match) => {
     // Scan backwards to see if we're in an `@import` statement
@@ -476,6 +495,16 @@ export function findHelperFunctionsInRange(
           },
           range,
         ),
+      },
+      spans: {
+        full: [
+          rangeStartOffset + startIndex,
+          rangeStartOffset + startIndex + match.groups.path.length,
+        ],
+        path: [
+          rangeStartOffset + startIndex + quotesBefore.length,
+          rangeStartOffset + startIndex + quotesBefore.length + path.length,
+        ],
       },
     }
   })

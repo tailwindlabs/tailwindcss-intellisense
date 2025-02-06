@@ -14,7 +14,8 @@
               "range": {
                 "start": { "line": 0, "character": 12 },
                 "end": { "line": 0, "character": 31 }
-              }
+              },
+              "span": [12, 31]
             },
             "relativeRange": {
               "start": { "line": 0, "character": 0 },
@@ -23,7 +24,8 @@
             "range": {
               "start": { "line": 0, "character": 12 },
               "end": { "line": 0, "character": 21 }
-            }
+            },
+            "span": [12, 21]
           },
           "otherClassNames": [
             {
@@ -33,7 +35,8 @@
                 "range": {
                   "start": { "line": 0, "character": 12 },
                   "end": { "line": 0, "character": 31 }
-                }
+                },
+                "span": [12, 31]
               },
               "relativeRange": {
                 "start": { "line": 0, "character": 10 },
@@ -42,7 +45,8 @@
               "range": {
                 "start": { "line": 0, "character": 22 },
                 "end": { "line": 0, "character": 31 }
-              }
+              },
+              "span": [22, 31]
             }
           ],
           "range": {
@@ -92,7 +96,8 @@
               "range": {
                 "start": { "line": 0, "character": 12 },
                 "end": { "line": 0, "character": 31 }
-              }
+              },
+              "span": [12, 31]
             },
             "relativeRange": {
               "start": { "line": 0, "character": 10 },
@@ -101,7 +106,8 @@
             "range": {
               "start": { "line": 0, "character": 22 },
               "end": { "line": 0, "character": 31 }
-            }
+            },
+            "span": [22, 31]
           },
           "otherClassNames": [
             {
@@ -111,7 +117,8 @@
                 "range": {
                   "start": { "line": 0, "character": 12 },
                   "end": { "line": 0, "character": 31 }
-                }
+                },
+                "span": [12, 31]
               },
               "relativeRange": {
                 "start": { "line": 0, "character": 0 },
@@ -120,7 +127,8 @@
               "range": {
                 "start": { "line": 0, "character": 12 },
                 "end": { "line": 0, "character": 21 }
-              }
+              },
+              "span": [12, 21]
             }
           ],
           "range": {
