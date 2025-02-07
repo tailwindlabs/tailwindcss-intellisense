@@ -354,6 +354,10 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
     .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
+    .replace(/@custom-variant(\s+[^;]+);/g, (match: string) => {
+      let spaces = ' '.repeat(match.length - 11)
+      return `@media(p)${spaces}{}`
+    })
     .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
