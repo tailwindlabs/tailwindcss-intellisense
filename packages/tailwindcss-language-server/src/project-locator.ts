@@ -276,14 +276,10 @@ export class ProjectLocator {
 
   private async findConfigs(): Promise<ConfigEntry[]> {
     // Look for config files and CSS files
-    let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
-      cwd: this.base,
-      ignore: this.settings.tailwindCSS.files.exclude,
-      onlyFiles: true,
-      absolute: true,
-      suppressErrors: true,
-      dot: true,
-      concurrency: Math.max(os.cpus().length, 1),
+    let files = await this.glob({
+      base: this.base,
+      include: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
+      exclude: this.settings.tailwindCSS.files.exclude,
     })
 
     let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
@@ -515,6 +511,24 @@ export class ProjectLocator {
       features,
       isDefaultVersion: true,
     }
+  }
+
+  private async glob(options: {
+    base: string
+    include: string[]
+    exclude: string[]
+  }): Promise<string[]> {
+    let files = await glob(options.include, {
+      cwd: options.base,
+      ignore: options.exclude,
+      onlyFiles: true,
+      absolute: true,
+      suppressErrors: true,
+      dot: true,
+      concurrency: Math.max(os.cpus().length, 1),
+    })
+
+    return files
   }
 }
 
