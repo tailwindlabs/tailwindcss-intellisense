@@ -1,7 +1,5 @@
-import * as os from 'node:os'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import glob from 'fast-glob'
 import picomatch from 'picomatch'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
@@ -17,6 +15,7 @@ import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
 import * as oxide from './oxide'
 import { guessTailwindVersion, TailwindVersion } from './version-guesser'
+import { searchFiles } from './glob'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -276,8 +275,8 @@ export class ProjectLocator {
 
   private async findConfigs(): Promise<ConfigEntry[]> {
     // Look for config files and CSS files
-    let files = await this.glob({
-      base: this.base,
+    let files = await searchFiles({
+      root: this.base,
       include: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
       exclude: this.settings.tailwindCSS.files.exclude,
     })
@@ -511,24 +510,6 @@ export class ProjectLocator {
       features,
       isDefaultVersion: true,
     }
-  }
-
-  private async glob(options: {
-    base: string
-    include: string[]
-    exclude: string[]
-  }): Promise<string[]> {
-    let files = await glob(options.include, {
-      cwd: options.base,
-      ignore: options.exclude,
-      onlyFiles: true,
-      absolute: true,
-      suppressErrors: true,
-      dot: true,
-      concurrency: Math.max(os.cpus().length, 1),
-    })
-
-    return files
   }
 }
 
