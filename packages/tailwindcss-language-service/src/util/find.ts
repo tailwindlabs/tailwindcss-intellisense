@@ -454,8 +454,8 @@ export async function findClassNameAtPosition(
           return await findClassListsInHtmlRange(state, doc, 'html', range)
         }
 
-        if (type === 'jsx') {
-          return await findClassListsInHtmlRange(state, doc, 'jsx', range)
+        if (type === 'js' || type === 'jsx') {
+          return await findClassListsInRange(state, doc, range, 'jsx')
         }
 
         return []
