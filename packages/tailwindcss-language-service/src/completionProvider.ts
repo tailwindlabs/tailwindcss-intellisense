@@ -91,10 +91,11 @@ export function completionsFromClassList(
       let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
 
       let baseClassName = beforeSlash.slice(offset)
-      modifiers = state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
-        ?.modifiers
+      modifiers =
+        state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
+          ?.modifiers ?? []
 
-      if (modifiers) {
+      if (modifiers.length > 0) {
         return withDefaults(
           {
             isIncomplete: false,
