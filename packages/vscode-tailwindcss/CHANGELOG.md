@@ -7,6 +7,7 @@
 - Add support for `static` theme option ([#1176](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1176))
 - Add details about theme options when hovering ([#1176](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1176))
 - Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
+- Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
 
 ## 0.14.3
 
