@@ -5,6 +5,7 @@ import type {
   ScopeAtRule,
   ScopeClassList,
   ScopeClassName,
+  ScopeAtImport,
 } from './scope'
 import { ScopeTree } from './tree'
 import { getDocumentLanguages, LanguageBoundary } from '../util/getLanguageBoundaries'
@@ -233,6 +234,88 @@ function* analyzeAtRule(
         name: [paramsSpan[0], paramsSpan[0] + name.length],
       },
     })
+  }
+
+  // `@import` statements are special
+  else if (name === '@import') {
+    let importScope: ScopeAtImport = {
+      kind: 'css.at-rule.import',
+      children: [],
+      source: {
+        scope: overallSpan,
+        url: null,
+        sourceUrl: null,
+      },
+    }
+
+    scope.children.push(importScope)
+
+    let start = 0
+
+    for (let part of parts) {
+      let offset = start
+      let length = part.length + 1
+      let type: string | null = null
+      let quotable = true
+
+      if (part.startsWith('url(')) {
+        type = 'url'
+        quotable = true
+        part = part.slice(4)
+        offset += 4
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      //
+      else if (part.startsWith('source(')) {
+        type = 'source-url'
+        quotable = true
+        part = part.slice(7)
+        offset += 7
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      if (quotable && part.startsWith('"')) {
+        type ??= 'url'
+        part = part.slice(1)
+        offset += 1
+
+        if (part.endsWith('"')) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      //
+      else if (quotable && part.startsWith("'")) {
+        type ??= 'url'
+        part = part.slice(1)
+        offset += 1
+
+        if (part.endsWith("'")) {
+          part = part.slice(0, -1)
+        }
+      }
+
+      if (type === 'url') {
+        importScope.source.url = [paramsSpan[0] + offset, paramsSpan[0] + offset + part.length]
+      }
+
+      //
+      else if (type === 'source-url') {
+        importScope.source.sourceUrl = [
+          paramsSpan[0] + offset,
+          paramsSpan[0] + offset + part.length,
+        ]
+      }
+
+      start += length
+    }
   }
 
   yield scope

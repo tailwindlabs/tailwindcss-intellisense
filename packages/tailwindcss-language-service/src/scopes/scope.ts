@@ -233,6 +233,39 @@ export interface ScopeAtUtility {
   }
 }
 
+/**
+ * Text that represents a single class
+ *
+ * ```
+ * @import "./some-file.css";
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * ````
+ */
+export interface ScopeAtImport {
+  kind: 'css.at-rule.import'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+
+    // Marks the url of an import statement
+    // @import "./some-file.css";
+    //          ^^^^^^^^^^^^^^^
+    // @reference "./some-file.css";
+    //             ^^^^^^^^^^^^^^^
+    // @import url("./some-file.css");
+    //             ^^^^^^^^^^^^^^^^^
+    url: Span | null
+
+    // Marks an import statement's source url
+    // @import "./some-file.css" source("./foo");
+    //                                   ^^^^^
+    // @import "./some-file.css" source(none);
+    //                                  ^^^^
+    sourceUrl: Span | null
+  }
+}
+
 export type ScopeKind = keyof ScopeMap
 export type Scope<K extends ScopeKind> = ScopeMap[K]
 export type AnyScope = ScopeMap[ScopeKind]
@@ -245,4 +278,5 @@ type ScopeMap = {
   'class.name': ScopeClassName
   'css.at-rule': ScopeAtRule
   'css.at-rule.utility': ScopeAtUtility
+  'css.at-rule.import': ScopeAtImport
 }
