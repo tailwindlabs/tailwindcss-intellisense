@@ -6,10 +6,12 @@ import type {
   ScopeClassList,
   ScopeClassName,
   ScopeAtImport,
+  ScopeThemeOptionList,
 } from './scope'
 import { ScopeTree } from './tree'
 import { getLanguageBoundaries, LanguageBoundary } from '../util/getLanguageBoundaries'
 import { findClassListsInRange, getClassNamesInClassList } from '../util/find'
+import { segment } from '../util/segment'
 import { optimizeScopes } from './walk'
 
 export async function analyzeDocument(state: State, doc: TextDocument): Promise<ScopeTree> {
@@ -287,6 +289,18 @@ function* analyzeAtRule(
         }
       }
 
+      //
+      else if (part.startsWith('theme(')) {
+        type = 'theme-options'
+        part = part.slice(6)
+        offset += 6
+        quotable = false
+
+        if (part.endsWith(')')) {
+          part = part.slice(0, -1)
+        }
+      }
+
       if (quotable && part.startsWith('"')) {
         type ??= 'url'
         part = part.slice(1)
@@ -318,6 +332,37 @@ function* analyzeAtRule(
           paramsSpan[0] + offset,
           paramsSpan[0] + offset + part.length,
         ]
+      }
+
+      //
+      else if (type === 'theme-options') {
+        let optionListScope: ScopeThemeOptionList = {
+          kind: 'theme.option.list',
+          children: [],
+          source: {
+            scope: [paramsSpan[0] + offset, paramsSpan[0] + offset + part.length],
+          },
+        }
+
+        importScope.children.push(optionListScope)
+
+        let options = segment(part, ' ')
+
+        let start = offset
+
+        for (let option of options) {
+          let offset = start
+
+          optionListScope.children.push({
+            kind: 'theme.option.name',
+            children: [],
+            source: {
+              scope: [paramsSpan[0] + offset, paramsSpan[0] + offset + option.length],
+            },
+          })
+
+          start += option.length + 1
+        }
       }
 
       start += length

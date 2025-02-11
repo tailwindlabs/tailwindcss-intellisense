@@ -255,6 +255,72 @@ export interface ScopeAtImport {
   }
 }
 
+/**
+ * Text that represents an individual theme option
+ *
+ * ```
+ * Marks an import statement's theme option list
+ * @import "./some-file.css" theme(inline reference default);
+ *                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+ * @theme inline default { ... }
+ *        ^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeThemeOptionList {
+  kind: 'theme.option.list'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
+/**
+ * Text that represents an individual theme option
+ *
+ * ```
+ * @import "./some-file.css" theme(inline);
+ *                                 ^^^^^^
+ * @import "./some-file.css" theme(default);
+ *                                 ^^^^^^^
+ * @import "./some-file.css" reference;
+ *                           ^^^^^^^^^
+ * @import "./some-file.css" prefix(tw);
+ *                           ^^^^^^^^^^
+ * @theme inline default;
+ *        ^^^^^^ ^^^^^^^
+ * @theme prefix(tw);
+ *        ^^^^^^^^^^
+ * ```
+ */
+export interface ScopeThemeOptionName {
+  kind: 'theme.option.name'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
+/**
+ * Text that represents an individual theme option
+ *
+ * ```
+ * @import "./some-file.css" prefix(tw);
+ *                                  ^^
+ * @theme prefix(tw);
+ *               ^^
+ * ```
+ */
+export interface ScopeThemePrefix {
+  kind: 'theme.prefix'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
 export type AnyScope =
   | ScopeContext
   | ScopeComment
@@ -264,3 +330,6 @@ export type AnyScope =
   | ScopeAtRule
   | ScopeAtUtility
   | ScopeAtImport
+  | ScopeThemeOptionList
+  | ScopeThemeOptionName
+  | ScopeThemePrefix
