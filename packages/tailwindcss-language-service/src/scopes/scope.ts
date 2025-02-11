@@ -321,6 +321,50 @@ export interface ScopeThemePrefix {
   }
 }
 
+/**
+ * Represents a function in CSS
+ *
+ * Note: Only helper functions are marked with socpes currently
+ *
+ * ```
+ * color: theme(--color-red-500);
+ *        ^^^^^^^^^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeFn {
+  kind: 'css.fn'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+
+    /**
+     * Marks the function's name
+     *
+     * ```
+     * color: theme(--color-red-500);
+     *        ^^^^^
+     * color: --alpha(var(--color-red-500));
+     *        ^^^^^^^
+     * ```
+     */
+    name: Span
+
+    /**
+     * Marks the function's parameters
+     *
+     * ```
+     * Note: Only helper functions are marked with socpes
+     * color: theme(--color-red-500);
+     *              ^^^^^^^^^^^^^^^
+     * color: --alpha(var(--color-red-500));
+     *                ^^^^^^^^^^^^^^^^^^^^
+     * ```
+     */
+    params: Span
+  }
+}
+
 export type AnyScope =
   | ScopeContext
   | ScopeComment
@@ -333,3 +377,4 @@ export type AnyScope =
   | ScopeThemeOptionList
   | ScopeThemeOptionName
   | ScopeThemePrefix
+  | ScopeFn
