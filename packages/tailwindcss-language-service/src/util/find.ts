@@ -438,7 +438,7 @@ export async function findClassNameAtPosition(
   let classNames: DocumentClassName[] = []
   const positionOffset = doc.offsetAt(position)
   const searchRange: Range = {
-    start: doc.positionAt(Math.max(0, positionOffset - SEARCH_RANGE)),
+    start: doc.positionAt(0),
     end: doc.positionAt(positionOffset + SEARCH_RANGE),
   }
 
