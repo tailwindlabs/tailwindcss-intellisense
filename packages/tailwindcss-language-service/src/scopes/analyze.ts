@@ -3,6 +3,7 @@ import type { DocumentClassList, Span, State } from '../util/state'
 import type {
   ScopeContext,
   ScopeAtRule,
+  ScopeFn,
   ScopeClassList,
   ScopeClassName,
   ScopeAtImport,
@@ -364,4 +365,53 @@ function* analyzeAtRule(
   }
 
   yield scope
+}
+
+const HELPER_FN = /(?<name>config|theme|--theme|--spacing|--alpha)\s*\(/dg
+
+/**
+ * Find all class lists and classes within the given block of text
+ */
+function* analyzeHelperFns(boundary: LanguageBoundary, slice: string): Iterable<ScopeFn> {
+  if (boundary.type !== 'css') return
+
+  // Look for helper functions in CSS
+  for (let match of slice.matchAll(HELPER_FN)) {
+    let groups = match.indices!.groups!
+
+    let source: ScopeFn['source'] = {
+      scope: [groups.name[0], groups.name[1]],
+      name: [groups.name[0], groups.name[1]],
+      params: [groups.name[1], groups.name[1]],
+    }
+
+    // Scan forward from each fn to find the end of the params
+    let depth = 0
+    for (let i = source.name[1]; i < slice.length; ++i) {
+      if (depth === 0 && slice[i] === ';') {
+        break
+      } else if (slice[i] === '(') {
+        depth += 1
+
+        if (depth === 1) {
+          source.params = [i + 1, i + 1]
+        }
+      } else if (slice[i] === ')') {
+        depth -= 1
+
+        if (depth === 0) {
+          source.params[1] = i
+          break
+        }
+      }
+    }
+
+    source.scope[1] = source.params[1] + 1
+
+    yield {
+      kind: 'css.fn',
+      children: [],
+      source,
+    }
+  }
 }

@@ -332,6 +332,50 @@ export interface ScopeThemePrefix {
   }
 }
 
+/**
+ * Represents a function in CSS
+ *
+ * Note: Only helper functions are marked with socpes currently
+ *
+ * ```
+ * color: theme(--color-red-500);
+ *        ^^^^^^^^^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeFn {
+  kind: 'css.fn'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+
+    /**
+     * Marks the function's name
+     *
+     * ```
+     * color: theme(--color-red-500);
+     *        ^^^^^
+     * color: --alpha(var(--color-red-500));
+     *        ^^^^^^^
+     * ```
+     */
+    name: Span
+
+    /**
+     * Marks the function's parameters
+     *
+     * ```
+     * Note: Only helper functions are marked with socpes
+     * color: theme(--color-red-500);
+     *              ^^^^^^^^^^^^^^^
+     * color: --alpha(var(--color-red-500));
+     *                ^^^^^^^^^^^^^^^^^^^^
+     * ```
+     */
+    params: Span
+  }
+}
+
 export type ScopeKind = keyof ScopeMap
 export type Scope<K extends ScopeKind> = ScopeMap[K]
 export type AnyScope = ScopeMap[ScopeKind]
@@ -348,4 +392,5 @@ type ScopeMap = {
   'theme.option.list': ScopeThemeOptionList
   'theme.option.name': ScopeThemeOptionName
   'theme.prefix': ScopeThemePrefix
+  'css.fn': ScopeFn
 }
