@@ -66,6 +66,12 @@ function getPixelEquivalentsForMediaQuery(params: string, rootFontSize: number):
 }
 
 export function addPixelEquivalentsToMediaQuery(query: string, rootFontSize: number): string {
+  // Media queries in browsers are not affected by the font size on the `html` element but the
+  // initial value of font-size as provided by the browser. This is defaults to 16px universally
+  // so we'll show them *if* the root font size is 16px otherwise we'd be showing potentially
+  // incorrect values.
+  if (rootFontSize !== 16) return query
+
   return query.replace(/(?<=^\s*@media\s*).*?$/, (params) => {
     let comments = getPixelEquivalentsForMediaQuery(params, rootFontSize)
     return applyComments(params, comments)
