@@ -1,10 +1,13 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import type { Span, State } from '../util/state'
+import type { DocumentClassList, Span, State } from '../util/state'
 import type {
   ScopeContext,
+  ScopeClassList,
+  ScopeClassName,
 } from './scope'
 import { ScopeTree } from './tree'
 import { getDocumentLanguages, LanguageBoundary } from '../util/getLanguageBoundaries'
+import { findClassListsInRange, getClassNamesInClassList } from '../util/find'
 import { optimizeScopes } from './walk'
 import { isSemicolonlessCssLanguage } from '../util/languages'
 
@@ -63,5 +66,46 @@ export async function* analyzeBoundaries(
     }
 
     yield root
+  }
+}
+
+/**
+ * Find all class lists and classes within the given block of text
+ */
+async function* analyzeClassLists(
+  state: State,
+  doc: TextDocument,
+  boundary: LanguageBoundary,
+): AsyncIterable<ScopeClassList | ScopeClassName> {
+  let classLists: DocumentClassList[] = []
+
+  if (boundary.type === 'html') {
+    classLists = await findClassListsInRange(state, doc, boundary.range, 'html')
+  } else if (boundary.type === 'js') {
+    classLists = await findClassListsInRange(state, doc, boundary.range, 'jsx')
+  } else if (boundary.type === 'jsx') {
+    classLists = await findClassListsInRange(state, doc, boundary.range, 'jsx')
+  } else if (boundary.type === 'css') {
+    classLists = await findClassListsInRange(state, doc, boundary.range, 'css')
+  }
+
+  for (let classList of classLists) {
+    let listScope: ScopeClassList = {
+      kind: 'class.list',
+      children: [],
+      source: { scope: classList.span },
+    }
+
+    let classNames = getClassNamesInClassList(classList, state.blocklist)
+
+    for (let className of classNames) {
+      listScope.children.push({
+        kind: 'class.name',
+        children: [],
+        source: { scope: className.span },
+      })
+    }
+
+    yield listScope
   }
 }

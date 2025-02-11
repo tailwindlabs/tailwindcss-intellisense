@@ -75,10 +75,79 @@ export interface ScopeContext {
   }
 }
 
+/**
+ * Text that represents a class attribute
+ *
+ * This generally contains a single class list but may contain multiple if the
+ * attribute is being interpolated
+ *
+ * ```
+ * <div class="bg-blue-500 text-white">
+ *             ^^^^^^^^^^^^^^^^^^^^^^
+ * <div class={"bg-blue-500 text-white"}>
+ *             ^^^^^^^^^^^^^^^^^^^^^^^^
+ * <div class={clsx({"bg-blue-500 text-white":true})}>
+ *             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeClassAttribute {
+  kind: 'class.attr'
+  children: AnyScope[]
+
+  meta: {
+    static: boolean
+  }
+
+  source: {
+    scope: Span
+  }
+}
+
+/**
+ * Text that may contain one or more classes in a space-separated list
+ *
+ * ```
+ * <div class="bg-blue-500 text-white">
+ *             ^^^^^^^^^^^^^^^^^^^^^^
+ * @apply bg-blue-500 text-white;
+ *        ^^^^^^^^^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeClassList {
+  kind: 'class.list'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
+/**
+ * Text that represents a single class
+ *
+ * ```
+ * <div class="bg-blue-500 text-white">
+ *             ^^^^^^^^^^^ ^^^^^^^^^^
+ * @apply bg-blue-500 text-white;
+ *        ^^^^^^^^^^^ ^^^^^^^^^^
+ * ```
+ */
+export interface ScopeClassName {
+  kind: 'class.name'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
 export type ScopeKind = keyof ScopeMap
 export type Scope<K extends ScopeKind> = ScopeMap[K]
 export type AnyScope = ScopeMap[ScopeKind]
 
 type ScopeMap = {
   context: ScopeContext
+  'class.attr': ScopeClassAttribute
+  'class.list': ScopeClassList
+  'class.name': ScopeClassName
 }
