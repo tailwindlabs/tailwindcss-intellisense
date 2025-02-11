@@ -156,9 +156,44 @@ export interface ScopeClassName {
   }
 }
 
+/**
+ * Represents an at-rule in CSS
+ *
+ * ```
+ * @media (min-width: 600px) { ... }
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * @apply bg-blue-500 text-white;
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * ```
+ */
+export interface ScopeAtRule {
+  kind: 'css.at-rule'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+
+    // Marks the name of an at-rule
+    // @media (min-width: 600px) { ... }
+    // ^^^^^^
+    name: Span
+
+    // Marks the parameters of an at-rule
+    // @media (min-width: 600px) { ... }
+    //        ^^^^^^^^^^^^^^^^^^
+    params: Span
+
+    // Marks the body of an at-rule
+    // @media (min-width: 600px) { ... }
+    //                            ^^^^^
+    body: Span | null
+  }
+}
+
 export type AnyScope =
   | ScopeContext
   | ScopeComment
   | ScopeClassAttribute
   | ScopeClassList
   | ScopeClassName
+  | ScopeAtRule
