@@ -9,7 +9,7 @@
 - Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
 - Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
 - Fix suggestion of utilities with slashes in them in v4 ([#1182](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1182))
-- Hide pixel equivalents in media queries when rootFontSize is not 16px ([#1190](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1190))
+- Assume 16px font size for `1rem` in media queries ([#1190](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1190))
 
 ## 0.14.3
 
