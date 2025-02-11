@@ -190,6 +190,38 @@ export interface ScopeAtRule {
   }
 }
 
+/**
+ * Text that represents a single class
+ *
+ * ```
+ * @utility hero { ... }
+ * ````
+ */
+export interface ScopeAtUtility {
+  kind: 'css.at-rule.utility'
+  children: AnyScope[]
+
+  meta: {
+    kind: 'static' | 'functional'
+  }
+
+  source: {
+    scope: Span
+
+    /**
+     * The "root" of the utility
+     *
+     * ```
+     * @utility hero { ... }
+     *          ^^^^
+     * @utility hero-* { ... }
+     *          ^^^^
+     * ````
+     */
+    name: Span
+  }
+}
+
 export type AnyScope =
   | ScopeContext
   | ScopeComment
@@ -197,3 +229,4 @@ export type AnyScope =
   | ScopeClassList
   | ScopeClassName
   | ScopeAtRule
+  | ScopeAtUtility
