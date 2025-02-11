@@ -9,6 +9,7 @@
 - Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
 - Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
 - Fix suggestion of utilities with slashes in them in v4 ([#1182](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1182))
+- Show warning when loading a config in v3 fails ([#1191](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1191))
 
 ## 0.14.3
 
