@@ -222,6 +222,39 @@ export interface ScopeAtUtility {
   }
 }
 
+/**
+ * Text that represents a single class
+ *
+ * ```
+ * @import "./some-file.css";
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ * ````
+ */
+export interface ScopeAtImport {
+  kind: 'css.at-rule.import'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+
+    // Marks the url of an import statement
+    // @import "./some-file.css";
+    //          ^^^^^^^^^^^^^^^
+    // @reference "./some-file.css";
+    //             ^^^^^^^^^^^^^^^
+    // @import url("./some-file.css");
+    //             ^^^^^^^^^^^^^^^^^
+    url: Span | null
+
+    // Marks an import statement's source url
+    // @import "./some-file.css" source("./foo");
+    //                                   ^^^^^
+    // @import "./some-file.css" source(none);
+    //                                  ^^^^
+    sourceUrl: Span | null
+  }
+}
+
 export type AnyScope =
   | ScopeContext
   | ScopeComment
@@ -230,3 +263,4 @@ export type AnyScope =
   | ScopeClassName
   | ScopeAtRule
   | ScopeAtUtility
+  | ScopeAtImport
