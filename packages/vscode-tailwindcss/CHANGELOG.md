@@ -9,6 +9,7 @@
 - Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
 - Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
 - Fix suggestion of utilities with slashes in them in v4 ([#1182](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1182))
+- Add support for Astro’s template literal attributes ([#1193](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1193))
 
 ## 0.14.3
 
