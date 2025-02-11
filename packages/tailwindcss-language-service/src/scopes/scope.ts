@@ -201,6 +201,38 @@ export interface ScopeAtRule {
   }
 }
 
+/**
+ * Text that represents a single class
+ *
+ * ```
+ * @utility hero { ... }
+ * ````
+ */
+export interface ScopeAtUtility {
+  kind: 'css.at-rule.utility'
+  children: AnyScope[]
+
+  meta: {
+    kind: 'static' | 'functional'
+  }
+
+  source: {
+    scope: Span
+
+    /**
+     * The "root" of the utility
+     *
+     * ```
+     * @utility hero { ... }
+     *          ^^^^
+     * @utility hero-* { ... }
+     *          ^^^^
+     * ````
+     */
+    name: Span
+  }
+}
+
 export type ScopeKind = keyof ScopeMap
 export type Scope<K extends ScopeKind> = ScopeMap[K]
 export type AnyScope = ScopeMap[ScopeKind]
@@ -212,4 +244,5 @@ type ScopeMap = {
   'class.list': ScopeClassList
   'class.name': ScopeClassName
   'css.at-rule': ScopeAtRule
+  'css.at-rule.utility': ScopeAtUtility
 }

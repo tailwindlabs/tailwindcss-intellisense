@@ -213,5 +213,27 @@ function* analyzeAtRule(
     },
   }
 
+  // Emit generic scopes specific to certain at-rules
+  if (name === '@utility') {
+    let name = params
+    let functional = false
+    if (name.endsWith('-*')) {
+      functional = true
+      name = name.slice(0, -2)
+    }
+
+    scope.children.push({
+      kind: 'css.at-rule.utility',
+      children: [],
+      meta: {
+        kind: functional ? 'functional' : 'static',
+      },
+      source: {
+        scope: overallSpan,
+        name: [paramsSpan[0], paramsSpan[0] + name.length],
+      },
+    })
+  }
+
   yield scope
 }
