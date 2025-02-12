@@ -32,6 +32,16 @@ export function showError(
   // }
 }
 
+export function showWarning(
+  connection: Connection,
+  message: string = 'Tailwind CSS',
+  err: any,
+): void {
+  connection.sendNotification('@/tailwindCSS/warn', {
+    message: formatError(message, err, false),
+  })
+}
+
 export function SilentError(message: string) {
   this.name = 'SilentError'
   this.message = message
