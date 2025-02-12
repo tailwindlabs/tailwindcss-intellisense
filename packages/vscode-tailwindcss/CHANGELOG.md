@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Show light color swatch from light-dark() functions ([#1199](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1199))
 
 ## 0.14.4
 
