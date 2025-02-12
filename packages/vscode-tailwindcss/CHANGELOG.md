@@ -9,6 +9,9 @@
 - Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
 - Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
 - Fix suggestion of utilities with slashes in them in v4 ([#1182](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1182))
+- Assume 16px font size for `1rem` in media queries ([#1190](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1190))
+- Show warning when loading a config in v3 fails ([#1191](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1191))
+- Better handle really long class lists in attributes and custom regexes ([#1192](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1192))
 - Add support for Astro’s template literal attributes ([#1193](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1193))
 
 ## 0.14.3
