@@ -218,7 +218,7 @@ export function completionsFromClassList(
           variantItem({
             label: `${variant.name}${sep}`,
             detail: selectors
-              .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+              .map((selector) => addPixelEquivalentsToMediaQuery(selector))
               .join(', '),
             textEditText: resultingVariants[resultingVariants.length - 1] + sep,
             additionalTextEdits:
@@ -490,7 +490,7 @@ export function completionsFromClassList(
               label: `${variant.name}${sep}`,
               detail: variant
                 .selectors()
-                .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+                .map((selector) => addPixelEquivalentsToMediaQuery(selector))
                 .join(', '),
               textEditText: resultingVariants[resultingVariants.length - 1] + sep,
               additionalTextEdits:
