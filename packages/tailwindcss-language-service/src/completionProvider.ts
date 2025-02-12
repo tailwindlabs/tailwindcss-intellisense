@@ -42,9 +42,9 @@ import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
 import { findFileDirective } from './completions/file-paths'
 import type { ThemeEntry } from './util/v4'
-import { posix } from 'node:path/win32'
 import { segment } from './util/segment'
 import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/theme-keys'
+import { SEARCH_RANGE } from './util/constants'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -729,7 +729,7 @@ async function provideClassAttributeCompletions(
   context?: CompletionContext,
 ): Promise<CompletionList> {
   let str = document.getText({
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - 2000)),
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - SEARCH_RANGE)),
     end: position,
   })
 
@@ -796,7 +796,7 @@ async function provideCustomClassNameCompletions(
 
   let text = document.getText({
     start: document.positionAt(0),
-    end: document.positionAt(cursor + 2000),
+    end: document.positionAt(cursor + SEARCH_RANGE),
   })
 
   // Get completions from the first matching regex or regex pair

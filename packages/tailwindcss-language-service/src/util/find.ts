@@ -13,6 +13,7 @@ import { resolveRange } from './resolveRange'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 import { customClassesIn } from './classes'
+import { SEARCH_RANGE } from './constants'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -437,8 +438,8 @@ export async function findClassNameAtPosition(
   let classNames: DocumentClassName[] = []
   const positionOffset = doc.offsetAt(position)
   const searchRange: Range = {
-    start: doc.positionAt(Math.max(0, positionOffset - 2000)),
-    end: doc.positionAt(positionOffset + 2000),
+    start: doc.positionAt(0),
+    end: doc.positionAt(positionOffset + SEARCH_RANGE),
   }
 
   if (isVueDoc(doc)) {
