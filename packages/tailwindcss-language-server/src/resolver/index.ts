@@ -143,7 +143,8 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
   let esmResolver = ResolverFactory.createResolver({
     fileSystem,
-    extensions: ['.mts', '.mjs', '.ts', '.js'],
+    // .json is omitted since Node does not support await import('foo.json')
+    extensions: ['.mjs', '.js', '.node', '.mts', '.ts'],
     mainFields: ['module'],
     conditionNames: ['node', 'import'],
     pnpApi,
@@ -151,7 +152,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
   let cjsResolver = ResolverFactory.createResolver({
     fileSystem,
-    extensions: ['.cts', '.cjs', '.ts', '.js'],
+    extensions: ['.cjs', '.js', '.json', '.node', '.cts', '.ts'],
     mainFields: ['main'],
     conditionNames: ['node', 'require'],
     pnpApi,
