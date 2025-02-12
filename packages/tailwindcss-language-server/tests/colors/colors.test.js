@@ -353,3 +353,38 @@ defineTest({
     ])
   },
 })
+
+defineTest({
+  name: 'colors that use light-dark() resolve to their light color',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: light-dark(#ff0000, #0000ff);
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let textDocument = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+    })
+
+    expect(c.project).toMatchObject({
+      tailwind: {
+        version: '4.0.0',
+        isDefaultVersion: true,
+      },
+    })
+
+    let colors = await c.sendRequest(DocumentColorRequest.type, {
+      textDocument,
+    })
+
+    expect(colors).toEqual([
+      //
+      { range: range(0, 12, 0, 22), color: color(1, 0, 0, 1) },
+    ])
+  },
+})
