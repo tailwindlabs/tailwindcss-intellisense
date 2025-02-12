@@ -14,6 +14,7 @@
 - Better handle really long class lists in attributes and custom regexes ([#1192](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1192))
 - Add support for Astro’s template literal attributes ([#1193](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1193))
 - Match custom class regex in Vue templates ([#1194](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1194))
+- Support directory imports in plugins for `index.{ts,cts,mts}` ([#1198](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1198))
 
 ## 0.14.3
 
