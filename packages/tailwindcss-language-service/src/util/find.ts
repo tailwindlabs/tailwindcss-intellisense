@@ -270,10 +270,11 @@ export async function findClassListsInRange(
   range?: Range,
   mode?: 'html' | 'css' | 'jsx',
   includeCustom: boolean = true,
+  lang?: string,
 ): Promise<DocumentClassList[]> {
   let classLists: DocumentClassList[] = []
   if (mode === 'css') {
-    classLists = findClassListsInCssRange(state, doc, range)
+    classLists = findClassListsInCssRange(state, doc, range, lang)
   } else if (mode === 'html' || mode === 'jsx') {
     classLists = await findClassListsInHtmlRange(state, doc, mode, range)
   }
@@ -448,11 +449,11 @@ export async function findClassNameAtPosition(
     let groups = await Promise.all(
       boundaries.map(async ({ type, range, lang }) => {
         if (type === 'css') {
-          return findClassListsInCssRange(state, doc, range, lang)
+          return await findClassListsInRange(state, doc, range, 'css', true, lang)
         }
 
         if (type === 'html') {
-          return await findClassListsInHtmlRange(state, doc, 'html', range)
+          return await findClassListsInRange(state, doc, range, 'html')
         }
 
         if (type === 'js' || type === 'jsx') {
