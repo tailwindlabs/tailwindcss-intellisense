@@ -13,7 +13,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
 import { formatColor, getColor, getColorFromValue } from './util/color'
-import { isHtmlContext } from './util/html'
+import { isHtmlContext, isHtmlDoc, isVueDoc } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
@@ -728,10 +728,20 @@ async function provideClassAttributeCompletions(
   position: Position,
   context?: CompletionContext,
 ): Promise<CompletionList> {
-  let str = document.getText({
+  let range: Range = {
     start: document.positionAt(Math.max(0, document.offsetAt(position) - SEARCH_RANGE)),
     end: position,
-  })
+  }
+
+  let str: string
+
+  if (isJsDoc(state, document)) {
+    str = getTextWithoutComments(document, 'js', range)
+  } else if (isHtmlDoc(state, document)) {
+    str = getTextWithoutComments(document, 'html', range)
+  } else {
+    str = document.getText(range)
+  }
 
   let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
 
