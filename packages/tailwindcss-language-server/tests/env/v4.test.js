@@ -574,3 +574,50 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  options: {
+    only: true,
+  },
+  name: 'what',
+  fs: {
+    'buttons.css': css`
+      .foo {
+        @apply bg-black;
+      }
+    `,
+    'styles.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let document = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-black">',
+    })
+
+    let hover = await c.sendRequest(HoverRequest.type, {
+      textDocument: document,
+
+      // <div class="bg-black">
+      //             ^
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-black {
+            background-color: var(--color-black) /* #000 = #000000 */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 20 },
+      },
+    })
+  },
+})
