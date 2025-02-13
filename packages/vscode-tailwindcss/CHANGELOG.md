@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Show light color swatch from light-dark() functions ([#1199](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1199))
+- Ignore comments when matching class attributes ([#1202](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1202))
 
 ## 0.14.4
 
