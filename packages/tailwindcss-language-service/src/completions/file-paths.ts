@@ -7,7 +7,7 @@ const PATTERN_CUSTOM_V3 = /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
 // @import … source('…')
 // @tailwind utilities source('…')
 const PATTERN_IMPORT_SOURCE =
-  /@(?<directive>(?:import|reference))\s*(?<path>'[^']*'|"[^"]*")\s*source\((?<partial>'[^']*|"[^"]*)$/
+  /@(?<directive>(?:import|reference))\s*(?<path>'[^']*'|"[^"]*")\s*(layer\([^)]+\)\s*)?source\((?<partial>'[^']*|"[^"]*)$/
 const PATTERN_UTIL_SOURCE =
   /@(?<directive>tailwind)\s+utilities\s+source\((?<partial>'[^']*|"[^"]*)?$/
 
