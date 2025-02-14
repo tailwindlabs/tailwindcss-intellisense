@@ -6,6 +6,7 @@
 - Ignore comments when matching class attributes ([#1202](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1202))
 - Show source diagnostics when imports contain a layer ([#1204](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1204))
 - Only detect project roots in v4 when using certain CSS features ([#1205](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1205))
+- Update Tailwind CSS v4 version to v4.0.6 ([#1207](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1207))
 
 ## 0.14.4
 
