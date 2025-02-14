@@ -16,7 +16,7 @@ import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
 import * as oxide from './oxide'
-import { analyzeStylesheet, TailwindStylesheet, TailwindVersion } from './version-guesser'
+import { analyzeStylesheet, TailwindStylesheet } from './version-guesser'
 
 export interface ProjectConfig {
   /** The folder that contains the project */

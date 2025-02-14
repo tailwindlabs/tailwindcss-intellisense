@@ -21,7 +21,7 @@ defineTest({
 
     expect(c.project).toMatchObject({
       tailwind: {
-        version: '4.0.0',
+        version: '4.0.6',
         isDefaultVersion: true,
       },
     })
@@ -58,7 +58,7 @@ defineTest({
       },
     })
 
-    expect(completion.items.length).toBe(12286)
+    expect(completion.items.length).toBe(12288)
   },
 })
 
@@ -109,7 +109,7 @@ defineTest({
 
     expect(c.project).toMatchObject({
       tailwind: {
-        version: '4.0.0',
+        version: '4.0.6',
         isDefaultVersion: true,
       },
     })
@@ -315,7 +315,7 @@ defineTest({
 
     expect(c.project).toMatchObject({
       tailwind: {
-        version: '4.0.0',
+        version: '4.0.6',
         isDefaultVersion: true,
       },
     })
