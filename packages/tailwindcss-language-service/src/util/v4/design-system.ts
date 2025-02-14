@@ -10,6 +10,15 @@ export interface Theme {
 
 export interface ClassMetadata {
   modifiers: string[]
+  deprecated?: boolean
+}
+
+export interface VariantMetadata {
+  deprecated?: boolean
+}
+
+export interface ThemeMetadata {
+  deprecated?: boolean
 }
 
 export type ClassEntry = [string, ClassMetadata]
@@ -40,6 +49,9 @@ export interface DesignSystem {
 
   // Optional because it did not exist in earlier v4 alpha versions
   resolveThemeValue?(path: string): string | undefined
+  classMetadata?(classes: string[]): (ClassMetadata | null)[]
+  variantMetadata?(variants: string[]): (VariantMetadata | null)[]
+  themeMetadata?(keys: string[]): (ThemeMetadata | null)[]
 }
 
 export interface DesignSystem {

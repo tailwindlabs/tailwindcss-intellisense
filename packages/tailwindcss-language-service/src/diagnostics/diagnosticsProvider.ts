@@ -9,11 +9,13 @@ import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnosti
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
 import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
+import { getDeprecatedClassDiagnostics } from './getDeprecatedClassDiagnostics'
 
 export async function doValidate(
   state: State,
   document: TextDocument,
   only: DiagnosticKind[] = [
+    DiagnosticKind.Deprecation,
     DiagnosticKind.CssConflict,
     DiagnosticKind.InvalidApply,
     DiagnosticKind.InvalidScreen,
@@ -28,6 +30,9 @@ export async function doValidate(
 
   return settings.tailwindCSS.validate
     ? [
+        ...(only.includes(DiagnosticKind.Deprecation)
+          ? await getDeprecatedClassDiagnostics(state, document, settings)
+          : []),
         ...(only.includes(DiagnosticKind.CssConflict)
           ? await getCssConflictDiagnostics(state, document, settings)
           : []),

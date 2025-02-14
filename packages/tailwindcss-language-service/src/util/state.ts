@@ -54,6 +54,7 @@ export type TailwindCssSettings = {
   colorDecorators: boolean
   lint: {
     cssConflict: DiagnosticSeveritySetting
+    deprecatedClass: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
     invalidVariant: DiagnosticSeveritySetting
@@ -92,6 +93,7 @@ export interface Variant {
 export interface ClassMetadata {
   color: culori.Color | KeywordColor | null
   modifiers?: string[]
+  deprecated?: boolean
 }
 
 export type ClassEntry = [string, ClassMetadata]

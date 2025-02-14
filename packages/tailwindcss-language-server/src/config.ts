@@ -22,6 +22,7 @@ function getDefaultSettings(): Settings {
       rootFontSize: 16,
       lint: {
         cssConflict: 'warning',
+        deprecatedClass: 'warning',
         invalidApply: 'error',
         invalidScreen: 'error',
         invalidVariant: 'error',

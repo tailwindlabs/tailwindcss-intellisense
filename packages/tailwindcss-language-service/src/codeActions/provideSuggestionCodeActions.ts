@@ -1,6 +1,7 @@
 import type { State } from '../util/state'
 import type { CodeActionParams, CodeAction } from 'vscode-languageserver'
 import type {
+  DeprecatedClassDiagnostic,
   InvalidConfigPathDiagnostic,
   InvalidTailwindDirectiveDiagnostic,
   InvalidScreenDiagnostic,
@@ -12,6 +13,7 @@ export function provideSuggestionCodeActions(
   _state: State,
   params: CodeActionParams,
   diagnostic:
+    | DeprecatedClassDiagnostic
     | InvalidConfigPathDiagnostic
     | InvalidTailwindDirectiveDiagnostic
     | InvalidScreenDiagnostic
