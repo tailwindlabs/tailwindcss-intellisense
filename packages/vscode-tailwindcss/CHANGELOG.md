@@ -5,6 +5,7 @@
 - Show light color swatch from light-dark() functions ([#1199](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1199))
 - Ignore comments when matching class attributes ([#1202](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1202))
 - Show source diagnostics when imports contain a layer ([#1204](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1204))
+- Only detect project roots in v4 when using certain CSS features ([#1205](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1205))
 
 ## 0.14.4
 

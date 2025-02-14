@@ -16,7 +16,7 @@ import { extractSourceDirectives, resolveCssImports } from './css'
 import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
 import * as oxide from './oxide'
-import { guessTailwindVersion, TailwindVersion } from './version-guesser'
+import { analyzeStylesheet, TailwindStylesheet, TailwindVersion } from './version-guesser'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -140,7 +140,7 @@ export class ProjectLocator {
   private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
-    let possibleVersions = config.entries.flatMap((entry) => entry.versions)
+    let possibleVersions = config.entries.flatMap((entry) => entry.meta?.versions ?? [])
 
     console.log(
       JSON.stringify({
@@ -354,10 +354,11 @@ export class ProjectLocator {
     for (let file of css) {
       // If the CSS file couldn't be read for some reason, skip it
       if (!file.content) continue
+      if (!file.meta) continue
 
       // This file doesn't appear to use Tailwind CSS nor any imports
       // so we can skip it
-      if (file.versions.length === 0) continue
+      if (file.meta.versions.length === 0) continue
 
       // Find `@config` directives in CSS files and resolve them to the actual
       // config file that they point to. This is only relevant for v3 which
@@ -427,6 +428,11 @@ export class ProjectLocator {
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
     for (let root of graph.roots()) {
+      if (!root.meta) continue
+
+      // This file is not eligible to act as a root of the CSS graph
+      if (root.meta.root === false) continue
+
       let config: ConfigEntry = configs.remember(root.path, () => ({
         source: 'css',
         type: 'css',
@@ -667,7 +673,7 @@ class FileEntry {
   deps: FileEntry[] = []
   realpath: string | null
   sources: string[] = []
-  versions: TailwindVersion[] = []
+  meta: TailwindStylesheet | null = null
 
   constructor(
     public type: 'js' | 'css',
@@ -739,7 +745,7 @@ class FileEntry {
    * Determine which Tailwind versions this file might be using
    */
   async resolvePossibleVersions() {
-    this.versions = this.content ? guessTailwindVersion(this.content) : []
+    this.meta = this.content ? analyzeStylesheet(this.content) : null
   }
 
   /**
