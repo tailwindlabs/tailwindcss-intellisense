@@ -386,14 +386,6 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     )
     .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
-    .replace(/--value\(\[(\s?)\*\]\)/g, (_match, space) => {
-      // In this case, space represents a single character space.
-      // From what I can tell spaces aren't intended, so I limited this to a single matcher.
-      // This is because Prettier likes to add a space before the `*`.
-      // FIXME: This is probably unintentional behavior. Consider fixing.
-      return `--value([${space}_])`
-    })
-
   return TextDocument.create(
     textDocument.uri,
     textDocument.languageId,
