@@ -354,12 +354,10 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
     .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
-    /* This matcher appears to be redundant, and I'm not sure of its purpose.
-       I kept it in case it has an actual use. The one below matches the same @-rule.
-    .replace(/@custom-variant(\s+[^;]+);/g, (match: string) => {
+    .replace(/@custom-variant(\s+[^;{]+);/g, (match: string) => {
       let spaces = ' '.repeat(match.length - 11)
       return `@media(p)${spaces}{}`
-    }) */
+    })
     .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
