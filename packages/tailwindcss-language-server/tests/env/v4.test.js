@@ -576,10 +576,7 @@ defineTest({
 })
 
 defineTest({
-  options: {
-    only: true,
-  },
-  name: 'what',
+  name: 'v4, multiple files, only one root',
   fs: {
     'buttons.css': css`
       .foo {
