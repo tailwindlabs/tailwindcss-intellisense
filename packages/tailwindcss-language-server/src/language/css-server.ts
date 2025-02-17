@@ -18,6 +18,7 @@ import { Utils, URI } from 'vscode-uri'
 import { getLanguageModelCache } from './languageModelCache'
 import { Stylesheet } from 'vscode-css-languageservice'
 import dlv from 'dlv'
+import { rewriteCss } from './rewriting'
 
 export class CssServer {
   private documents: TextDocuments<TextDocument>
@@ -332,61 +333,8 @@ export class CssServer {
       }, validationDelayMs)
     }
 
-    function replace(delta = 0) {
-      return (_match: string, p1: string) => {
-        let lines = p1.split('\n')
-        if (lines.length > 1) {
-          return `@media(${MEDIA_MARKER})${'\n'.repeat(lines.length - 1)}${' '.repeat(
-            lines[lines.length - 1].length,
-          )}{`
-        }
-        return `@media(${MEDIA_MARKER})${' '.repeat(p1.length + delta)}{`
-      }
-    }
-    function replaceWithStyleRule(delta = 0) {
-      return (_match: string, p1: string) => {
-        let spaces = ' '.repeat(p1.length + delta)
-        return `.placeholder${spaces}{`
-      }
-    }
-
     function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
-      let content = textDocument
-        .getText()
-
-        // Remove inline `@layer` directives
-        // TODO: This should be unnecessary once we have updated the bundled CSS
-        // language service
-        .replace(/@layer\s+[^;{]+(;|$)/g, '')
-
-        .replace(/@screen(\s+[^{]+){/g, replace(-2))
-        .replace(/@variants(\s+[^{]+){/g, replace())
-        .replace(/@responsive(\s*){/g, replace())
-        .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
-        .replace(/@custom-variant(\s+[^;{]+);/g, (match: string) => {
-          let spaces = ' '.repeat(match.length - 11)
-          return `@media (${MEDIA_MARKER})${spaces}{}`
-        })
-        .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
-        .replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
-        .replace(/@layer(\s+[^{]{2,}){/g, replace(-3))
-        .replace(/@reference\s*([^;]{2,})/g, '@import    $1')
-        .replace(
-          /@media(\s+screen\s*\([^)]+\))/g,
-          (_match, screen) => `@media (${MEDIA_MARKER})${' '.repeat(screen.length - 4)}`,
-        )
-        .replace(
-          /@import(\s*)("(?:[^"]+)"|'(?:[^']+)')\s*(.*?)(?=;|$)/g,
-          (_match, spaces, url, other) => {
-            // Remove`source(…)`, `theme(…)`, and `prefix(…)` from `@import`s
-            // otherwise we'll show syntax-error diagnostics which we don't want
-            other = other.replace(/((source|theme|prefix)\([^)]+\)\s*)+?/g, '')
-
-            // We have to add the spaces here so the character positions line up
-            return `@import${spaces}"${url.slice(1, -1)}" ${other}`
-          },
-        )
-        .replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
+      let content = rewriteCss(textDocument.getText())
 
       return TextDocument.create(
         textDocument.uri,
