@@ -401,23 +401,6 @@ export class CssServer {
 
       let settings = await getDocumentSettings(textDocument)
 
-      // let stylesheet = cssLanguageService.parseStylesheet(textDocument) as any
-      // stylesheet.acceptVisitor({
-      //   visitNode(node) {
-      //     if (node instanceof nodes.UnknownAtRule) {
-      //       console.log(
-      //         node.accept((node) => {
-      //           console.log(node)
-      //         })
-      //       )
-      //     }
-      //     if (node.getText().includes('base')) {
-      //       // console.log(node)
-      //     }
-      //     return true
-      //   },
-      // })
-
       let diagnostics = cssLanguageService
         .doValidation(textDocument, cssLanguageService.parseStylesheet(textDocument), settings)
         .filter((diagnostic) => {
