@@ -215,9 +215,16 @@ connection.onDocumentSymbol(({ textDocument }) =>
       if (symbol.name === `@media (${MEDIA_MARKER})`) {
         let doc = documents.get(symbol.location.uri)
         let text = doc.getText(symbol.location.range)
-        let match = text.trim().match(/^(@[^\s]+)([^{]+){/)
+        let match = text.trim().match(/^(@[^\s]+)(?:([^{]+)[{]|([^;{]+);)/)
         if (match) {
-          symbol.name = `${match[1]} ${match[2].trim()}`
+          symbol.name = `${match[1]} ${match[2]?.trim() ?? match[3]?.trim()}`
+        }
+      } else if (symbol.name === `.placeholder`) {
+        let doc = documents.get(symbol.location.uri)
+        let text = doc.getText(symbol.location.range)
+        let match = text.trim().match(/^(@[^\s]+)(?:([^{]+)[{]|([^;{]+);)/)
+        if (match) {
+          symbol.name = `${match[1]} ${match[2]?.trim() ?? match[3]?.trim()}`
         }
       }
       return symbol
@@ -337,7 +344,7 @@ function replace(delta = 0) {
 function replaceWithStyleRule(delta = 0) {
   return (_match: string, p1: string) => {
     let spaces = ' '.repeat(p1.length + delta)
-    return `.foo${spaces}{`
+    return `.placeholder${spaces}{`
   }
 }
 
@@ -354,9 +361,9 @@ function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
     .replace(/@variants(\s+[^{]+){/g, replace())
     .replace(/@responsive(\s*){/g, replace())
     .replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
-    .replace(/@custom-variant(\s+[^;]+);/g, (match: string) => {
+    .replace(/@custom-variant(\s+[^;{]+);/g, (match: string) => {
       let spaces = ' '.repeat(match.length - 11)
-      return `@media(p)${spaces}{}`
+      return `@media (${MEDIA_MARKER})${spaces}{}`
     })
     .replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
     .replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
