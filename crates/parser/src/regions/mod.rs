@@ -3,3 +3,4 @@ mod html;
 mod lang;
 mod span;
 mod find;
+mod poi;

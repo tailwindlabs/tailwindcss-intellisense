@@ -1,92 +1,37 @@
-use std::simd::{cmp::SimdPartialEq, num::SimdUint, u8x16};
-
-/// Iterate over the HTML tags in a byte slice
+/// Scan an HTML document for HTML tags
 ///
-/// Every element is a slice that starts at the tag name
-/// For an end tag, the slice starts at the `/`
-pub struct FindTagMarkers<'a> {
-  input: &'a [u8],
-  pos: usize,
-}
+/// This is implemented as a three-step process each having its own iterator:
+/// - Find the start of each tag using a high-performance algorithm
+/// - Find the range of each tag name, attribute name, and attribute value
+/// - Extract the tag names and attributes
 
-impl<'a> FindTagMarkers<'a> {
-  #[inline(always)]
-  pub fn new(input: &'a [u8]) -> Self {
-    Self { input, pos: 0 }
-  }
-}
-
-impl<'a> Iterator for FindTagMarkers<'a> {
-  type Item = usize;
-
-  #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
-    const STRIDE: usize = u8x16::LEN;
-
-    let input = self.input;
-    let mut pos = self.pos;
-
-    // Vectorized search
-    while pos + STRIDE <= input.len() {
-      // For every chunk of 16 bytes
-      let data = u8x16::from_slice(&input[pos..pos + STRIDE]);
-
-      // Look for `<` and `>`
-      let matches =
-        data.simd_eq(const { u8x16::from_array([b'<'; 16]) }) |
-        data.simd_eq(const { u8x16::from_array([b'>'; 16]) })
-      ;
-
-      // And find the first match
-      let match_indexes = matches.select(
-        const {
-          u8x16::from_array([16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1])
-        },
-        const {
-          u8x16::from_array([0; 16])
-        }
-      );
-
-      let first_match = match_indexes.reduce_max() as usize;
-      if first_match != 0 {
-        pos += 16 - first_match + 1;
-        self.pos = pos;
-        return Some(pos);
-      }
-
-      pos += STRIDE;
-    }
-
-    // Scalar search for remaining bytes
-    while pos < input.len() {
-      let c = input[pos];
-      pos += 1;
-
-      if c == b'<' {
-        self.pos = pos;
-        return Some(pos);
-      }
-    }
-
-    None
-  }
-}
+use std::fmt::Debug;
+use super::poi::PointsOfInterest;
 
 /// Finds HTML tags and their attributes in a byte slice
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Tag<'a> {
   pub name: &'a [u8],
   pub attrs: Option<&'a [u8]>,
 }
 
+impl<'a> Debug for Tag<'a> {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("Tag")
+      .field("name", &std::str::from_utf8(self.name).unwrap())
+      .field("attrs", &self.attrs.map(|attrs| std::str::from_utf8(attrs).unwrap()))
+      .finish()
+  }
+}
+
 pub struct FindTags<'a> {
   input: &'a [u8],
-  markers: FindTagMarkers<'a>,
+  points: PointsOfInterest<'a>,
 }
 
 impl<'a> FindTags<'a> {
   pub fn new(input: &'a [u8]) -> Self {
-    Self { input, markers: FindTagMarkers::new(input) }
+    Self { input, points: PointsOfInterest::new(input) }
   }
 }
 
@@ -94,11 +39,62 @@ impl<'a> Iterator for FindTags<'a> {
   type Item = Tag<'a>;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let pos = self.markers.next()?;
-    let name = &self.input[pos + 1..];
-    let attrs = &self.input[pos + 1..];
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum Cases {
+      // >
+      TagEnd,
+      // ` `, \n, \t,
+      Whitespace,
+      // Everything else
+      Other,
+    }
 
-    Some(Tag { name, attrs: Some(attrs) })
+    let table: [Cases; 256] = const {
+      let mut table = [Cases::Other; 256];
+      table[b'>' as usize] = Cases::TagEnd;
+      table[b'\t' as usize] = Cases::Whitespace;
+      table[b'\n' as usize] = Cases::Whitespace;
+      table[b'\x0C' as usize] = Cases::Whitespace;
+      table[b'\r' as usize] = Cases::Whitespace;
+      table[b' ' as usize] = Cases::Whitespace;
+      table
+    };
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum State {
+      FindingName,
+      FindingAttrs,
+    }
+
+    let pos = self.points.next()?;
+    let mut state = State::FindingName;
+    let mut name = &self.input[pos..];
+    let mut attrs_start = None;
+    for i in pos..self.input.len() {
+      match table[self.input[i] as usize] {
+        Cases::Whitespace => match state {
+          State::FindingName => {
+            name = &self.input[pos..i];
+            attrs_start = Some(i + 1);
+            state = State::FindingAttrs;
+          },
+          State::FindingAttrs => {},
+        },
+        Cases::TagEnd => match state {
+          State::FindingName => return Some(Tag {
+            name: &self.input[pos..i],
+            attrs: None,
+          }),
+          State::FindingAttrs => return Some(Tag {
+            name,
+            attrs: attrs_start.map(|start| &self.input[start..i])
+          }),
+        },
+        Cases::Other => {},
+      }
+    }
+
+    None
   }
 }
 
@@ -112,29 +108,52 @@ mod tests {
   #[test]
   fn test_find_tags() {
     let input = b"I have none";
+
+    let points = PointsOfInterest::new(input).count();
+    assert_eq!(points, 0);
+
     let mut tags = FindTags::new(input);
     assert_eq!(tags.next(), None);
 
     let input = b"Hello<World";
+
+    let points = PointsOfInterest::new(input).count();
+    assert_eq!(points, 1);
+
     let mut tags = FindTags::new(input);
-    assert_eq!(tags.next(), Some(Tag {
-      name: &input[6..],
-      attrs: Some(&input[6..]),
-    }));
     assert_eq!(tags.next(), None);
 
     let input = b"<div><span>Hello</span></div>";
-    let mut tags = FindTags::new(input);
 
-    assert_eq!(tags.next(), Some(Tag { name: &input[1..], attrs: Some(&input[1..]) }));
-    assert_eq!(tags.next(), Some(Tag { name: &input[6..], attrs: Some(&input[6..]) }));
-    assert_eq!(tags.next(), Some(Tag { name: &input[17..], attrs: Some(&input[17..]) }));
-    assert_eq!(tags.next(), Some(Tag { name: &input[24..], attrs: Some(&input[24..]) }));
+    let points = PointsOfInterest::new(input).count();
+    assert_eq!(points, 4);
+
+    let mut tags = FindTags::new(input);
+    assert_eq!(tags.next(), Some(Tag { name: &input[1..4], attrs: None }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[6..10], attrs: None }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[17..22], attrs: None }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[24..28], attrs: None }));
     assert_eq!(tags.next(), None);
+
+    let input = b"<div><script lang=\"jsx\">Hello</script></div>";
+    let mut tags = FindTags::new(input);
+    assert_eq!(tags.next(), Some(Tag { name: &input[1..4], attrs: None }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[6..12], attrs: Some(&input[13..23]) }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[30..37], attrs: None }));
+    assert_eq!(tags.next(), Some(Tag { name: &input[39..43], attrs: None }));
+    assert_eq!(tags.next(), None);
+
+    let input = include_bytes!("../../fixtures/input.html");
+
+    let points = PointsOfInterest::new(input).count();
+    assert_eq!(points, 241);
+
+    let tags = FindTags::new(input).count();
+    assert_eq!(tags, 241);
   }
 
   #[test]
-  fn test_throughput_find_tags() {
+  fn bench_find_tags() {
     let input = include_bytes!("../../fixtures/input.html");
 
     let result = Throughput::compute(100_000, input.len(), || {
@@ -144,7 +163,6 @@ mod tests {
     });
 
     eprintln!("{}", result);
-
     assert!(false);
   }
 }
