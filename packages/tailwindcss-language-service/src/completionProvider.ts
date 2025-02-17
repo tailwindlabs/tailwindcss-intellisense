@@ -2473,10 +2473,5 @@ async function knownUtilityFunctionArguments(state: State, fn: UtilityFn): Promi
     description: "Support arbitrary URL functions, e.g. `{utility}-['url(…)']`",
   })
 
-  args.push({
-    name: '[*]',
-    description: 'Support arbitrary values, e.g. `{utility}-[abc]`',
-  })
-
   return args
 }
