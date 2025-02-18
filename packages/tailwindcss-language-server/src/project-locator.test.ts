@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest'
+import { expect, test, TestOptions } from 'vitest'
 import * as path from 'node:path'
 import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
@@ -328,16 +328,19 @@ function testLocator({
   fs,
   expected,
   settings,
+  options,
 }: {
   name: string
   fs: Storage
   settings?: Partial<Settings>
   expected: any[]
+  options?: TestOptions
 }) {
   defineTest({
     name,
     fs,
     prepare,
+    options,
     async handle({ search }) {
       let projects = await search(settings)
 
