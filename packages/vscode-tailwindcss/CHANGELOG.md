@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.14.6
+
 - Fix detection when project contains stylesheets that import the "main" stylesheet ([#1218](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1218))
 
 ## 0.14.5
