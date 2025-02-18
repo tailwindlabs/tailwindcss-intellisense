@@ -1,33 +1,21 @@
 import * as path from 'node:path'
 import { beforeAll, describe } from 'vitest'
-import { connect, launch } from './connection'
-import {
-  CompletionRequest,
-  ConfigurationRequest,
-  DidChangeConfigurationNotification,
-  DidChangeTextDocumentNotification,
-  DidOpenTextDocumentNotification,
-  InitializeRequest,
-  InitializedNotification,
-  RegistrationRequest,
-  InitializeParams,
-  DidOpenTextDocumentParams,
-  MessageType,
-} from 'vscode-languageserver-protocol'
-import type { ClientCapabilities, ProtocolConnection } from 'vscode-languageclient'
+import { DidChangeTextDocumentNotification } from 'vscode-languageserver'
+import type { ProtocolConnection } from 'vscode-languageclient'
 import type { Feature } from '@tailwindcss/language-service/src/features'
-import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/util/getLanguageBoundaries'
-import { CacheMap } from '../src/cache-map'
+import { URI } from 'vscode-uri'
+import { Client, createClient } from './utils/client'
 
 type Settings = any
 
 interface FixtureContext
   extends Pick<ProtocolConnection, 'sendRequest' | 'sendNotification' | 'onNotification'> {
-  client: ProtocolConnection
+  client: Client
   openDocument: (params: {
     text: string
     lang?: string
     dir?: string
+    name?: string | null
     settings?: Settings
   }) => Promise<{ uri: string; updateSettings: (settings: Settings) => Promise<void> }>
   updateSettings: (settings: Settings) => Promise<void>
@@ -57,117 +45,22 @@ export interface InitOptions {
    * Extra initialization options to pass to the LSP
    */
   options?: Record<string, any>
+
+  /**
+   * Settings to provide the server immediately when it starts
+   */
+  settings?: Settings
 }
 
 export async function init(
   fixture: string | string[],
   opts: InitOptions = {},
 ): Promise<FixtureContext> {
-  let settings = {}
-  let docSettings = new Map<string, Settings>()
+  let workspaces: Record<string, string> = {}
+  let fixtures = Array.isArray(fixture) ? fixture : [fixture]
 
-  const { client } = opts?.mode === 'spawn' ? await launch() : await connect()
-
-  if (opts?.mode === 'spawn') {
-    client.onNotification('window/logMessage', ({ message, type }) => {
-      if (type === MessageType.Error) {
-        console.error(message)
-      } else if (type === MessageType.Warning) {
-        console.warn(message)
-      } else if (type === MessageType.Info) {
-        console.info(message)
-      } else if (type === MessageType.Log) {
-        console.log(message)
-      } else if (type === MessageType.Debug) {
-        console.debug(message)
-      }
-    })
-  }
-
-  const capabilities: ClientCapabilities = {
-    textDocument: {
-      codeAction: { dynamicRegistration: true },
-      codeLens: { dynamicRegistration: true },
-      colorProvider: { dynamicRegistration: true },
-      completion: {
-        completionItem: {
-          commitCharactersSupport: true,
-          documentationFormat: ['markdown', 'plaintext'],
-          snippetSupport: true,
-        },
-        completionItemKind: {
-          valueSet: [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-            25,
-          ],
-        },
-        contextSupport: true,
-        dynamicRegistration: true,
-      },
-      definition: { dynamicRegistration: true },
-      documentHighlight: { dynamicRegistration: true },
-      documentLink: { dynamicRegistration: true },
-      documentSymbol: {
-        dynamicRegistration: true,
-        symbolKind: {
-          valueSet: [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-            25, 26,
-          ],
-        },
-      },
-      formatting: { dynamicRegistration: true },
-      hover: {
-        contentFormat: ['markdown', 'plaintext'],
-        dynamicRegistration: true,
-      },
-      implementation: { dynamicRegistration: true },
-      onTypeFormatting: { dynamicRegistration: true },
-      publishDiagnostics: { relatedInformation: true },
-      rangeFormatting: { dynamicRegistration: true },
-      references: { dynamicRegistration: true },
-      rename: { dynamicRegistration: true },
-      signatureHelp: {
-        dynamicRegistration: true,
-        signatureInformation: { documentationFormat: ['markdown', 'plaintext'] },
-      },
-      synchronization: {
-        didSave: true,
-        dynamicRegistration: true,
-        willSave: true,
-        willSaveWaitUntil: true,
-      },
-      typeDefinition: { dynamicRegistration: true },
-    },
-    workspace: {
-      applyEdit: true,
-      configuration: true,
-      didChangeConfiguration: { dynamicRegistration: true },
-      didChangeWatchedFiles: { dynamicRegistration: true },
-      executeCommand: { dynamicRegistration: true },
-      symbol: {
-        dynamicRegistration: true,
-        symbolKind: {
-          valueSet: [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-            25, 26,
-          ],
-        },
-      },
-      workspaceEdit: { documentChanges: true },
-      workspaceFolders: true,
-    },
-    experimental: {
-      tailwind: {
-        projectDetails: true,
-      },
-    },
-  }
-
-  const fixtures = Array.isArray(fixture) ? fixture : [fixture]
-
-  function fixtureUri(fixture: string) {
-    return `file://${path.resolve('./tests/fixtures', fixture)}`
+  function fixturePath(fixture: string) {
+    return path.resolve('./tests/fixtures', fixture)
   }
 
   function resolveUri(...parts: string[]) {
@@ -176,86 +69,44 @@ export async function init(
         ? path.resolve('./tests/fixtures', ...parts)
         : path.resolve('./tests/fixtures', fixtures[0], ...parts)
 
-    return `file://${filepath}`
+    return URI.file(filepath).toString()
   }
 
-  const workspaceFolders = fixtures.map((fixture) => ({
-    name: `Fixture ${fixture}`,
-    uri: fixtureUri(fixture),
-  }))
-
-  const rootUri = fixtures.length > 1 ? null : workspaceFolders[0].uri
-
-  await client.sendRequest(InitializeRequest.type, {
-    processId: -1,
-    rootUri,
-    capabilities,
-    trace: 'off',
-    workspaceFolders,
-    initializationOptions: {
-      testMode: true,
-      ...(opts.options ?? {}),
-    },
-  } as InitializeParams)
-
-  await client.sendNotification(InitializedNotification.type)
-
-  client.onRequest(ConfigurationRequest.type, (params) => {
-    return params.items.map((item) => {
-      if (docSettings.has(item.scopeUri!)) {
-        return docSettings.get(item.scopeUri!)[item.section!] ?? {}
-      }
-      return settings[item.section!] ?? {}
-    })
-  })
-
-  let initPromise = new Promise<void>((resolve) => {
-    client.onRequest(RegistrationRequest.type, ({ registrations }) => {
-      if (registrations.some((r) => r.method === CompletionRequest.method)) {
-        resolve()
-      }
-
-      return null
-    })
-  })
-
-  interface PromiseWithResolvers<T> extends Promise<T> {
-    resolve: (value?: T | PromiseLike<T>) => void
-    reject: (reason?: any) => void
+  for (let [idx, fixture] of fixtures.entries()) {
+    workspaces[`Fixture ${idx}`] = fixturePath(fixture)
   }
 
-  let openingDocuments = new CacheMap<string, PromiseWithResolvers<void>>()
-  let projectDetails: any = null
-
-  client.onNotification('@/tailwindCSS/projectDetails', (params) => {
-    console.log('[TEST] Project detailed changed')
-    projectDetails = params
+  let client = await createClient({
+    server: 'tailwindcss',
+    mode: opts.mode,
+    options: opts.options,
+    root: workspaces,
+    settings: opts.settings,
   })
-
-  client.onNotification('@/tailwindCSS/documentReady', (params) => {
-    console.log('[TEST] Document ready', params.uri)
-    openingDocuments.get(params.uri)?.resolve()
-  })
-
-  // This is a global cache that must be reset between tests for accurate results
-  clearLanguageBoundariesCache()
 
   let counter = 0
+  let projectDetails: any = null
+
+  client.project().then((project) => {
+    projectDetails = project
+  })
 
   return {
     client,
-    fixtureUri,
+    fixtureUri(fixture: string) {
+      return URI.file(fixturePath(fixture)).toString()
+    },
     get project() {
       return projectDetails
     },
     sendRequest(type: any, params: any) {
-      return client.sendRequest(type, params)
+      return client.conn.sendRequest(type, params)
     },
     sendNotification(type: any, params?: any) {
-      return client.sendNotification(type, params)
+      return client.conn.sendNotification(type, params)
     },
     onNotification(type: any, callback: any) {
-      return client.onNotification(type, callback)
+      return client.conn.onNotification(type, callback)
     },
     async openDocument({
       text,
@@ -267,59 +118,35 @@ export async function init(
       text: string
       lang?: string
       dir?: string
-      name?: string
+      name?: string | null
       settings?: Settings
     }) {
       let uri = resolveUri(dir, name ?? `file-${counter++}`)
-      docSettings.set(uri, settings)
 
-      let openPromise = openingDocuments.remember(uri, () => {
-        let resolve = () => {}
-        let reject = () => {}
-
-        let p = new Promise<void>((_resolve, _reject) => {
-          resolve = _resolve
-          reject = _reject
-        })
-
-        return Object.assign(p, {
-          resolve,
-          reject,
-        })
+      let doc = await client.open({
+        lang,
+        text,
+        uri,
+        settings,
       })
 
-      await client.sendNotification(DidOpenTextDocumentNotification.type, {
-        textDocument: {
-          uri,
-          languageId: lang,
-          version: 1,
-          text,
-        },
-      } as DidOpenTextDocumentParams)
-
-      // If opening a document stalls then it's probably because this promise is not being resolved
-      // This can happen if a document is not covered by one of the selectors because of it's URI
-      await initPromise
-      await openPromise
-
       return {
-        uri,
+        get uri() {
+          return doc.uri.toString()
+        },
         async updateSettings(settings: Settings) {
-          docSettings.set(uri, settings)
-          await client.sendNotification(DidChangeConfigurationNotification.type)
+          await doc.update({ settings })
         },
       }
     },
 
     async updateSettings(newSettings: Settings) {
-      settings = newSettings
-      await client.sendNotification(DidChangeConfigurationNotification.type)
+      await client.updateSettings(newSettings)
     },
 
     async updateFile(file: string, text: string) {
       let uri = resolveUri(file)
-
-      await client.sendNotification(DidChangeTextDocumentNotification.type, {
+      await client.conn.sendNotification(DidChangeTextDocumentNotification.type, {
         textDocument: { uri, version: counter++ },
         contentChanges: [{ text }],
       })
@@ -337,7 +164,7 @@ export function withFixture(fixture: string, callback: (c: FixtureContext) => vo
       // to the connection object without having to resort to using a Proxy
       Object.setPrototypeOf(c, await init(fixture))
 
-      return () => c.client.dispose()
+      return () => c.client.conn.dispose()
     })
 
     callback(c)
@@ -360,7 +187,7 @@ export function withWorkspace({
       // to the connection object without having to resort to using a Proxy
       Object.setPrototypeOf(c, await init(fixtures))
 
-      return () => c.client.dispose()
+      return () => c.client.conn.dispose()
     })
 
     run(c)

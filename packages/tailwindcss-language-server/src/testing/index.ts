@@ -1,4 +1,4 @@
-import { afterAll, onTestFinished, test, TestOptions } from 'vitest'
+import { onTestFinished, test, TestOptions } from 'vitest'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
@@ -16,7 +16,7 @@ export interface Storage {
 
 export interface TestConfig<Extras extends {}> {
   name: string
-  fs: Storage
+  fs?: Storage
   prepare?(utils: TestUtils): Promise<Extras>
   handle(utils: TestUtils & Extras): void | Promise<void>
 
@@ -43,8 +43,10 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
   await fs.mkdir(baseDir, { recursive: true })
 
-  await prepareFileSystem(baseDir, config.fs)
-  await installDependencies(baseDir, config.fs)
+  if (config.fs) {
+    await prepareFileSystem(baseDir, config.fs)
+    await installDependencies(baseDir, config.fs)
+  }
 
   onTestFinished(async (result) => {
     // Once done, move all the files to a new location

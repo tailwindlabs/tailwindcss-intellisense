@@ -664,6 +664,11 @@ export class TW {
         }),
       )
     }
+
+    // TODO: This is a hack and shouldn't be necessary
+    if (isTestMode) {
+      await this.connection.sendNotification('@/tailwindCSS/serverReady')
+    }
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
