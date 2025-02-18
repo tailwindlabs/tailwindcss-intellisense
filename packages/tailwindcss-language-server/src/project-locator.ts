@@ -427,11 +427,18 @@ export class ProjectLocator {
     if (indexPath && themePath) graph.connect(indexPath, themePath)
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
-    for (let root of graph.roots()) {
-      if (!root.meta) continue
+    // Sort the graph so potential "roots" appear first
+    // The entire concept of roots needs to be rethought because it's not always
+    // clear what the root of a project is. Even when imports are present a file
+    // may import a file that is the actual "root" of the project.
+    let roots = Array.from(graph.roots())
 
-      // This file is not eligible to act as a root of the CSS graph
-      if (root.meta.root === false) continue
+    roots.sort((a, b) => {
+      return a.meta.root === b.meta.root ? 0 : a.meta.root ? -1 : 1
+    })
+
+    for (let root of roots) {
+      if (!root.meta) continue
 
       let config: ConfigEntry = configs.remember(root.path, () => ({
         source: 'css',
