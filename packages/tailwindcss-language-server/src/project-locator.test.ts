@@ -279,6 +279,48 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'Roots are detected when they indirectly use Tailwind features',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "4.0.6"
+        }
+      }
+    `,
+    // TODO: This is marked as the root which is… maybe fine but not sure
+    // The intention in this example is that src/globals.css is the real root
+    // but if src/articles.css suddenly gained `@theme` blocks then maybe it'd
+    // need to be the root instead.
+    'src/articles/articles.css': css`
+      @reference "../globals.css";
+      .article-title {
+        @apply text-primary;
+      }
+    `,
+    'src/articles/layout.js': js`
+      import "./articles.css";
+      export default function Layout(children) {
+        return children;
+      }
+    `,
+    'src/globals.css': scss`
+      @import "tailwindcss";
+      @theme {
+        --color-primary: #3490dc;
+      }
+    `,
+  },
+  expected: [
+    {
+      version: '4.0.6',
+      config: '/src/articles/articles.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({
