@@ -3,6 +3,7 @@ import { createConnection } from 'vscode-languageserver/node'
 import type { ProtocolConnection } from 'vscode-languageclient/node'
 import { Duplex, type Readable, type Writable } from 'node:stream'
 import { TW } from '../../src/tw'
+import { CssServer } from '../../src/language/css-server'
 
 class TestStream extends Duplex {
   _write(chunk: string, _encoding: string, done: () => void) {
@@ -17,6 +18,10 @@ const SERVERS = {
   tailwindcss: {
     ServerClass: TW,
     binaryPath: './bin/tailwindcss-language-server',
+  },
+  css: {
+    ServerClass: CssServer,
+    binaryPath: './bin/css-language-server',
   },
 }
 

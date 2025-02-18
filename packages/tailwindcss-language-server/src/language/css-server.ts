@@ -40,6 +40,11 @@ export class CssServer {
     const stylesheets = getLanguageModelCache<Stylesheet>(10, 60, (document) =>
       cssLanguageService.parseStylesheet(document),
     )
+    documents.onDidOpen(({ document }) => {
+      connection.sendNotification('@/tailwindCSS/documentReady', {
+        uri: document.uri,
+      })
+    })
     documents.onDidClose(({ document }) => {
       stylesheets.onDocumentRemoved(document)
     })
