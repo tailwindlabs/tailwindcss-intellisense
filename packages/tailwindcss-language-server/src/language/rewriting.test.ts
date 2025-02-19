@@ -65,6 +65,30 @@ test('@utility', () => {
   expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
 })
 
+test('@theme', () => {
+  let input = [
+    //
+    '@theme {',
+    '  color: red;',
+    '}',
+    '@theme inline reference static default {',
+    '  color: red;',
+    '}',
+  ]
+
+  let output = [
+    //
+    '.placeholder {', // wrong
+    '  color: red;',
+    '}',
+    '.placeholder                                 {', // wrong
+    '  color: red;',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
 test('@custom-variant', () => {
   let input = [
     //
