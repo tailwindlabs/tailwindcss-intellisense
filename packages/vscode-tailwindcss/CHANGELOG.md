@@ -5,6 +5,8 @@
 - LSP: Declare capability for handling workspace folder change notifications ([#1223](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1223))
 - Don't throw when resolving paths containing a `#` character ([#1225](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1225))
 - Show `@theme` in symbol list in CSS language mode ([#1227](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1227))
+- Don't show syntax error when `*` appear inside `—value(…)` and `--modifier(…)`  ([#1226](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1226))
+- Don't show syntax error for theme namespaces inside `@theme` ([#1226](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1226))
 
 ## 0.14.6
 
