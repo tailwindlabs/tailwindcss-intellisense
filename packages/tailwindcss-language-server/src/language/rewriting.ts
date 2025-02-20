@@ -68,5 +68,10 @@ export function rewriteCss(css: string) {
 
   css = css.replace(/(?<=\b(?:theme|config)\([^)]*)[.[\]]/g, '_')
 
+  // Ignore `*` in in --value and --modifier functions
+  css = css.replace(/--(value|modifier)\((.*?)\)/g, (match) => {
+    return match.replace(/[*]/g, '_')
+  })
+
   return css
 }

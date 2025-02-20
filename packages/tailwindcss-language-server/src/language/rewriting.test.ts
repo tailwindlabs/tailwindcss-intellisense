@@ -177,6 +177,30 @@ test('@import', () => {
   expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
 })
 
+test('--value(namespace) / --modifier(namespace)', () => {
+  let input = [
+    //
+    '.foo {',
+    '  color: --value(--color-*)',
+    '  background: --modifier(--color-*)',
+    '  z-index: --value([*])',
+    '  z-index: --modifier([*])',
+    '}',
+  ]
+
+  let output = [
+    //
+    '.foo {',
+    '  color: --value(--color-_)',
+    '  background: --modifier(--color-_)',
+    '  z-index: --value([_])',
+    '  z-index: --modifier([_])',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
 describe('v3', () => {
   test('@screen', () => {
     let input = [

@@ -351,6 +351,31 @@ defineTest({
   },
 })
 
+defineTest({
+  name: '--value(namespace) + --modifier(namespace)',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        .foo {
+          width: --value(--spacing-*);
+          height: --modifier(--spacing-*);
+          height: --modifier([*]);
+        }
+      `,
+    })
+
+    expect(await doc.diagnostics()).toEqual([])
+  },
+})
+
 // Legacy
 defineTest({
   name: '@screen',
