@@ -3,6 +3,7 @@
 ## Prerelease
 
 - LSP: Declare capability for handling workspace folder change notifications ([#1223](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1223))
+- Don't throw when resolving paths containing a `#` character ([#1225](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1225))
 
 ## 0.14.6
 
