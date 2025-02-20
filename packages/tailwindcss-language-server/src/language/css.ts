@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createConnection, ProposedFeatures } from 'vscode-languageserver/node'
 import { interceptLogs } from '../util/logs'
-import { CssServer } from './cssServer'
+import { CssServer } from './css-server'
 
 let connection = createConnection(ProposedFeatures.all)
 
