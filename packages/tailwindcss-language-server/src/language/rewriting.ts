@@ -73,5 +73,8 @@ export function rewriteCss(css: string) {
     return match.replace(/[*]/g, '_')
   })
 
+  // Replace `--some-var-*` with `--some-var_`
+  css = css.replace(/--([a-zA-Z0-9]+)-[*]/g, '--$1_')
+
   return css
 }

@@ -218,6 +218,7 @@ defineTest({
         @import 'tailwindcss';
         @theme {
           --color-primary: #333;
+          --leading-*: initial;
         }
       `,
     })
@@ -234,7 +235,7 @@ defineTest({
           uri: '{workspace:default}/file-1.css',
           range: {
             start: { line: 1, character: 0 },
-            end: { line: 3, character: 1 },
+            end: { line: 4, character: 1 },
           },
         },
       },
