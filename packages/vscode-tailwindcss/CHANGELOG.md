@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- LSP: Declare capability for handling workspace folder change notifications ([#1223](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1223))
 
 ## 0.14.6
 
