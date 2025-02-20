@@ -618,3 +618,51 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  name: 'Plugins with a `#` in the name are loadable',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @plugin './a#b.js';
+    `,
+    'a#b.js': js`
+      export default function ({ addUtilities }) {
+        addUtilities({
+          '.example': {
+            color: 'red',
+          },
+        })
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let document = await c.openDocument({
+      lang: 'html',
+      text: '<div class="example">',
+    })
+
+    // <div class="example">
+    //             ^
+    let hover = await c.sendRequest(HoverRequest.type, {
+      textDocument: document,
+      position: { line: 0, character: 13 },
+    })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .example {
+            color: red;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 19 },
+      },
+    })
+  },
+})
