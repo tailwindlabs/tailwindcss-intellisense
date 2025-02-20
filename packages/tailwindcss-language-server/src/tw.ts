@@ -936,6 +936,11 @@ export class TW {
         return {
           capabilities: {
             textDocumentSync: TextDocumentSyncKind.Full,
+            workspace: {
+              workspaceFolders: {
+                changeNotifications: true,
+              },
+            },
           },
         }
       }
@@ -952,6 +957,11 @@ export class TW {
           completionProvider: {
             resolveProvider: true,
             triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
+          },
+          workspace: {
+            workspaceFolders: {
+              changeNotifications: true,
+            },
           },
         },
       }
