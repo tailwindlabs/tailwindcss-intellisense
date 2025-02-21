@@ -68,7 +68,7 @@
     "esbuild": "^0.25.0",
     "fast-glob": "3.2.4",
     "find-up": "5.0.0",
-    "jiti": "^2.3.3",
+    "jiti": "^2.4.2",
     "klona": "2.0.4",
     "license-checker": "25.0.1",
     "minimist": "^1.2.8",
