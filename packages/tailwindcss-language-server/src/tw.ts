@@ -553,6 +553,7 @@ export class TW {
           configTailwindVersionMap.get(projectConfig.configPath),
           userLanguages,
           resolver,
+          baseUri,
         ),
       ),
     )
@@ -663,6 +664,11 @@ export class TW {
         }),
       )
     }
+
+    // TODO: This is a hack and shouldn't be necessary
+    if (isTestMode) {
+      await this.connection.sendNotification('@/tailwindCSS/serverReady')
+    }
   }
 
   private filterNewWatchPatterns(patterns: string[]) {
@@ -684,6 +690,7 @@ export class TW {
     tailwindVersion: string,
     userLanguages: Record<string, string>,
     resolver: Resolver,
+    baseUri: URI,
   ): Promise<void> {
     let key = String(this.projectCounter++)
     const project = await createProjectService(
@@ -717,6 +724,7 @@ export class TW {
     }
 
     this.connection.sendNotification('@/tailwindCSS/projectDetails', {
+      uri: baseUri.toString(),
       config: projectConfig.configPath,
       tailwind: projectConfig.tailwind,
     })

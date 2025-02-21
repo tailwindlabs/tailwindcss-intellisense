@@ -29,6 +29,7 @@ withFixture('basic', (c) => {
 
   testHover('disabled', {
     text: '<div class="bg-red-500">',
+    position: { line: 0, character: 13 },
     settings: {
       tailwindCSS: { hovers: false },
     },
@@ -202,6 +203,7 @@ withFixture('v4/basic', (c) => {
 
   testHover('disabled', {
     text: '<div class="bg-red-500">',
+    position: { line: 0, character: 13 },
     settings: {
       tailwindCSS: { hovers: false },
     },

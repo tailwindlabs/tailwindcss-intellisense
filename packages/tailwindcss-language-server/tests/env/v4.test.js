@@ -1,9 +1,9 @@
+// @ts-check
+
 import { expect } from 'vitest'
-import { init } from '../common'
-import { HoverRequest } from 'vscode-languageserver'
 import { css, defineTest, html, js, json } from '../../src/testing'
 import dedent from 'dedent'
-import { CompletionRequest } from 'vscode-languageserver-protocol'
+import { createClient } from '../utils/client'
 
 defineTest({
   name: 'v4, no npm, uses fallback',
@@ -12,36 +12,27 @@ defineTest({
       @import 'tailwindcss';
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let textDocument = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
       lang: 'html',
       text: '<div class="bg-[#000]/25 hover:">',
     })
 
-    expect(c.project).toMatchObject({
+    expect(await client.project()).toMatchObject({
       tailwind: {
         version: '4.0.6',
         isDefaultVersion: true,
       },
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument,
+    // <div class="bg-[#000]/25 hover:
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
 
-      // <div class="bg-[#000]/25 hover:
-      //             ^
-      position: { line: 0, character: 13 },
-    })
-
-    let completion = await c.sendRequest(CompletionRequest.type, {
-      textDocument,
-      context: { triggerKind: 1 },
-
-      // <div class="bg-[#000]/25 hover:
-      //                               ^
-      position: { line: 0, character: 31 },
-    })
+    // <div class="bg-[#000]/25 hover:
+    //                               ^
+    let completion = await doc.completions({ line: 0, character: 31 })
 
     expect(hover).toEqual({
       contents: {
@@ -58,7 +49,7 @@ defineTest({
       },
     })
 
-    expect(completion.items.length).toBe(12288)
+    expect(completion?.items.length).toBe(12288)
   },
 })
 
@@ -97,30 +88,24 @@ defineTest({
   // Note this test MUST run in spawn mode because Vitest hooks into import,
   // require, etc… already and we need to test that any hooks are working
   // without outside interference.
-  prepare: async ({ root }) => ({
-    c: await init(root, { mode: 'spawn' }),
-  }),
+  prepare: async ({ root }) => ({ client: await createClient({ root, mode: 'spawn' }) }),
 
-  handle: async ({ c }) => {
-    let textDocument = await c.openDocument({
+  handle: async ({ client }) => {
+    let doc = await client.open({
       lang: 'html',
       text: '<div class="underline example">',
     })
 
-    expect(c.project).toMatchObject({
+    expect(await client.project()).toMatchObject({
       tailwind: {
         version: '4.0.6',
         isDefaultVersion: true,
       },
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument,
-
-      // <div class="underline example">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="underline example">
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {
@@ -137,13 +122,9 @@ defineTest({
       },
     })
 
-    let hoverFromPlugin = await c.sendRequest(HoverRequest.type, {
-      textDocument,
-
-      // <div class="underline example">
-      //                       ^
-      position: { line: 0, character: 23 },
-    })
+    // <div class="underline example">
+    //                       ^
+    let hoverFromPlugin = await doc.hover({ line: 0, character: 23 })
 
     expect(hoverFromPlugin).toEqual({
       contents: {
@@ -176,36 +157,27 @@ defineTest({
       @import 'tailwindcss';
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let textDocument = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
       lang: 'html',
       text: '<div class="bg-[#000]/25 hover:">',
     })
 
-    expect(c.project).toMatchObject({
+    expect(await client.project()).toMatchObject({
       tailwind: {
         version: '4.0.1',
         isDefaultVersion: false,
       },
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument,
+    // <div class="bg-[#000]/25 hover:">
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
 
-      // <div class="bg-[#000]/25 hover:
-      //             ^
-      position: { line: 0, character: 13 },
-    })
-
-    let completion = await c.sendRequest(CompletionRequest.type, {
-      textDocument,
-      context: { triggerKind: 1 },
-
-      // <div class="bg-[#000]/25 hover:
-      //                               ^
-      position: { line: 0, character: 31 },
-    })
+    // <div class="bg-[#000]/25 hover:">
+    //                               ^
+    let completion = await doc.completions({ line: 0, character: 31 })
 
     expect(hover).toEqual({
       contents: {
@@ -222,7 +194,7 @@ defineTest({
       },
     })
 
-    expect(completion.items.length).toBe(12288)
+    expect(completion?.items.length).toBe(12288)
   },
 })
 
@@ -250,27 +222,23 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let textDocument = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
     })
 
-    expect(c.project).toMatchObject({
+    expect(await client.project()).toMatchObject({
       tailwind: {
         version: '4.0.1',
         isDefaultVersion: false,
       },
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument,
-
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="bg-primary">
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {
@@ -306,27 +274,23 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let textDocument = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
     })
 
-    expect(c.project).toMatchObject({
+    expect(await client.project()).toMatchObject({
       tailwind: {
         version: '4.0.6',
         isDefaultVersion: true,
       },
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument,
-
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="bg-primary">
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {
@@ -368,46 +332,41 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    await c.updateSettings({
-      tailwindCSS: {
-        experimental: {
-          configFile: {
-            'a/app.css': 'c/a/**',
-            'b/app.css': 'c/b/**',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      settings: {
+        tailwindCSS: {
+          experimental: {
+            configFile: {
+              'a/app.css': 'c/a/**',
+              'b/app.css': 'c/b/**',
+            },
           },
         },
       },
-    })
-
-    let documentA = await c.openDocument({
+    }),
+  }),
+  handle: async ({ client }) => {
+    let documentA = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
       name: 'c/a/index.html',
     })
 
-    let documentB = await c.openDocument({
+    let documentB = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
       name: 'c/b/index.html',
     })
 
-    let hoverA = await c.sendRequest(HoverRequest.type, {
-      textDocument: documentA,
+    // <div class="bg-primary">
+    //             ^
+    let hoverA = await documentA.hover({ line: 0, character: 13 })
 
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
-
-    let hoverB = await c.sendRequest(HoverRequest.type, {
-      textDocument: documentB,
-
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="bg-primary">
+    //             ^
+    let hoverB = await documentB.hover({ line: 0, character: 13 })
 
     expect(hoverA).toEqual({
       contents: {
@@ -457,46 +416,41 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    await c.updateSettings({
-      tailwindCSS: {
-        experimental: {
-          configFile: {
-            'a/app.css': 'c/a/**',
-            'b/app.css': 'c/b/**',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      settings: {
+        tailwindCSS: {
+          experimental: {
+            configFile: {
+              'a/app.css': 'c/a/**',
+              'b/app.css': 'c/b/**',
+            },
           },
         },
       },
-    })
-
-    let documentA = await c.openDocument({
+    }),
+  }),
+  handle: async ({ client }) => {
+    let documentA = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
       name: 'c/a/index.html',
     })
 
-    let documentB = await c.openDocument({
+    let documentB = await client.open({
       lang: 'html',
       text: '<div class="bg-primary">',
       name: 'c/b/index.html',
     })
 
-    let hoverA = await c.sendRequest(HoverRequest.type, {
-      textDocument: documentA,
+    // <div class="bg-primary">
+    //             ^
+    let hoverA = await documentA.hover({ line: 0, character: 13 })
 
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
-
-    let hoverB = await c.sendRequest(HoverRequest.type, {
-      textDocument: documentB,
-
-      // <div class="bg-primary">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="bg-primary">
+    //             ^
+    let hoverB = await documentB.hover({ line: 0, character: 13 })
 
     expect(hoverA).toEqual({
       contents: {
@@ -537,9 +491,9 @@ defineTest({
       @import 'tailwindcss';
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let document = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
       lang: 'vue',
       text: html`
         <script lang="tsx">
@@ -550,13 +504,9 @@ defineTest({
       `,
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument: document,
-
-      //    return <div class="bg-black" />
-      //                       ^
-      position: { line: 2, character: 24 },
-    })
+    //    return <div class="bg-black" />
+    //                       ^
+    let hover = await document.hover({ line: 2, character: 24 })
 
     expect(hover).toEqual({
       contents: {
@@ -587,20 +537,16 @@ defineTest({
       @import 'tailwindcss';
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let document = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
       lang: 'html',
       text: '<div class="bg-black">',
     })
 
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument: document,
-
-      // <div class="bg-black">
-      //             ^
-      position: { line: 0, character: 13 },
-    })
+    // <div class="bg-black">
+    //             ^
+    let hover = await document.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {
@@ -636,19 +582,16 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let document = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
       lang: 'html',
       text: '<div class="example">',
     })
 
     // <div class="example">
     //             ^
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument: document,
-      position: { line: 0, character: 13 },
-    })
+    let hover = await document.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {
@@ -696,19 +639,16 @@ defineTest({
       }
     `,
   },
-  prepare: async ({ root }) => ({ c: await init(root) }),
-  handle: async ({ c }) => {
-    let document = await c.openDocument({
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
       lang: 'html',
       text: '<div class="example">',
     })
 
     // <div class="example">
     //             ^
-    let hover = await c.sendRequest(HoverRequest.type, {
-      textDocument: document,
-      position: { line: 0, character: 13 },
-    })
+    let hover = await document.hover({ line: 0, character: 13 })
 
     expect(hover).toEqual({
       contents: {

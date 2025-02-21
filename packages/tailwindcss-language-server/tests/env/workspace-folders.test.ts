@@ -1,5 +1,4 @@
 import { test } from 'vitest'
-import * as path from 'node:path'
 import { withWorkspace } from '../common'
 import { DidChangeWorkspaceFoldersNotification, HoverRequest } from 'vscode-languageserver'
 
