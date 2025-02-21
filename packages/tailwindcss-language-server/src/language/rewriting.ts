@@ -37,6 +37,7 @@ export function rewriteCss(css: string) {
   css = css.replace(/@variants(\s+[^{]+){/g, replaceWithAtRule())
   css = css.replace(/@responsive(\s*){/g, replaceWithAtRule())
   css = css.replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
+  css = css.replace(/@theme(\s+[^{]*){/g, replaceWithStyleRule())
 
   css = css.replace(/@custom-variant(\s+[^;{]+);/g, (match: string) => {
     let spaces = ' '.repeat(match.length - 11)

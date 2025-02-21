@@ -203,6 +203,46 @@ defineTest({
 })
 
 defineTest({
+  name: '@theme',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        @import 'tailwindcss';
+        @theme {
+          --color-primary: #333;
+        }
+      `,
+    })
+
+    // No errors
+    expect(await doc.diagnostics()).toEqual([])
+
+    // Symbols show up for @theme
+    expect(await doc.symbols()).toMatchObject([
+      {
+        kind: SymbolKind.Class,
+        name: '@theme ',
+        location: {
+          uri: '{workspace:default}/file-1.css',
+          range: {
+            start: { line: 1, character: 0 },
+            end: { line: 3, character: 1 },
+          },
+        },
+      },
+    ])
+  },
+})
+
+defineTest({
   name: '@layer statement',
   prepare: async ({ root }) => ({
     client: await createClient({
