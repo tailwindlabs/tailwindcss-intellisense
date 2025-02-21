@@ -218,6 +218,7 @@ defineTest({
         @import 'tailwindcss';
         @theme {
           --color-primary: #333;
+          --leading-*: initial;
         }
       `,
     })
@@ -234,7 +235,7 @@ defineTest({
           uri: '{workspace:default}/file-1.css',
           range: {
             start: { line: 1, character: 0 },
-            end: { line: 3, character: 1 },
+            end: { line: 4, character: 1 },
           },
         },
       },
@@ -348,6 +349,31 @@ defineTest({
         },
       },
     ])
+  },
+})
+
+defineTest({
+  name: '--value(namespace) + --modifier(namespace)',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        .foo {
+          width: --value(--spacing-*);
+          height: --modifier(--spacing-*);
+          height: --modifier([*]);
+        }
+      `,
+    })
+
+    expect(await doc.diagnostics()).toEqual([])
   },
 })
 
