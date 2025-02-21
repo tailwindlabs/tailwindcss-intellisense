@@ -225,7 +225,7 @@ defineTest({
     // No errors
     expect(await doc.diagnostics()).toEqual([])
 
-    // Symbols show up for @custom-variant
+    // Symbols show up for @theme
     expect(await doc.symbols()).toMatchObject([
       {
         kind: SymbolKind.Class,
