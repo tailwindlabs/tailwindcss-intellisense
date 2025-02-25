@@ -1135,8 +1135,19 @@ export async function createProjectService(
         ]
       })
 
+      let customClassList: ClassEntry[] = designSystem.getCustomClassList().map((className) => {
+        return [
+          className[0],
+          {
+            ...className[1],
+            color: getColor(state, className[0]),
+          },
+        ]
+      })
+
       state.designSystem = designSystem
       state.classList = classList
+      state.customClassList = customClassList
       state.variants = getVariants(state)
 
       let deps = designSystem.dependencies()
