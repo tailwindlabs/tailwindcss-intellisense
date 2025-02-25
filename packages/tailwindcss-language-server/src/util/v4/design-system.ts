@@ -1,4 +1,4 @@
-import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
+import type { ClassEntry, DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
 import { createJiti } from 'jiti'
@@ -75,6 +75,11 @@ function createLoader<T>({
   }
 }
 
+interface Source {
+  filepath: string
+  content: string
+}
+
 export async function loadDesignSystem(
   resolver: Resolver,
   tailwindcss: any,
@@ -114,6 +119,8 @@ export async function loadDesignSystem(
     fsCache: false,
   })
 
+  let sources: Source[] = [{ filepath: '', content: css }]
+
   // Step 3: Take the resolved CSS and pass it to v4's `loadDesignSystem`
   let design: DesignSystem = await tailwindcss.__unstable__loadDesignSystem(css, {
     base: path.dirname(filepath),
@@ -149,6 +156,8 @@ export async function loadDesignSystem(
         dependencies.add(resolved)
 
         let content = await fs.readFile(resolved, 'utf-8')
+
+        sources.push({ filepath: resolved, content })
 
         return {
           base: path.dirname(resolved),
@@ -194,7 +203,10 @@ export async function loadDesignSystem(
     }),
   })
 
-  // Step 4: Augment the design system with some additional APIs that the LSP needs
+  // Step 4: Collect custom classes from the AST
+  let customClasses = collectCustomClasses(sources)
+
+  // Step 5: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
     dependencies: () => dependencies,
 
@@ -225,7 +237,27 @@ export async function loadDesignSystem(
         ? postcss.root({ nodes }).toString().trim()
         : nodes.toString().trim()
     },
+
+    getCustomClassList: () => customClasses,
   })
 
   return design
+}
+
+import selectorParser from 'postcss-selector-parser'
+
+function collectCustomClasses(sources: Source[]): ClassEntry[] {
+  let parser = selectorParser()
+  let customClasses = new Set<string>()
+
+  for (let source of sources) {
+    postcss.parse(source.content).walkRules((rule) => {
+      parser.astSync(rule.selector).walk((node) => {
+        if (node.type !== 'class') return
+        customClasses.add(node.value)
+      })
+    })
+  }
+
+  return Array.from(customClasses, (name) => [name, { modifiers: [] }])
 }

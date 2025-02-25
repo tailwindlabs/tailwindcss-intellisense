@@ -975,6 +975,18 @@ export async function createProjectService(
             },
           ]
         })
+
+        let customClassList = state.designSystem.getCustomClassList()
+
+        state.customClassList = customClassList.map((className) => {
+          return [
+            className[0],
+            {
+              ...className[1],
+              color: getColor(state, className[0]),
+            },
+          ]
+        })
       } else if (state.jit) {
         state.jitContext = state.modules.jit.createContext.module(state)
         state.jitContext.tailwindConfig.separator = state.config.separator

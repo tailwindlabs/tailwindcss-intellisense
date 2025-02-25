@@ -137,6 +137,7 @@ export interface State {
   jit?: boolean
   jitContext?: any
   classList?: ClassEntry[]
+  customClassList?: ClassEntry[]
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
