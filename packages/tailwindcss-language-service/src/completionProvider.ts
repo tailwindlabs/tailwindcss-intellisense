@@ -317,27 +317,32 @@ export function completionsFromClassList(
       {
         isIncomplete: false,
         items: items.concat(
-          state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
-            if (state.blocklist?.includes([...existingVariants, className].join(state.separator))) {
+          [...state.classList, ...state.customClassList].reduce<CompletionItem[]>(
+            (items, [className, { color }], index) => {
+              if (
+                state.blocklist?.includes([...existingVariants, className].join(state.separator))
+              ) {
+                return items
+              }
+
+              let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
+              let documentation: string | undefined
+
+              if (color && typeof color !== 'string') {
+                documentation = formatColor(color)
+              }
+
+              items.push({
+                label: className,
+                kind,
+                ...(documentation ? { documentation } : {}),
+                sortText: naturalExpand(index, state.classList.length),
+              })
+
               return items
-            }
-
-            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
-            let documentation: string | undefined
-
-            if (color && typeof color !== 'string') {
-              documentation = formatColor(color)
-            }
-
-            items.push({
-              label: className,
-              kind,
-              ...(documentation ? { documentation } : {}),
-              sortText: naturalExpand(index, state.classList.length),
-            })
-
-            return items
-          }, [] as CompletionItem[]),
+            },
+            [] as CompletionItem[],
+          ),
         ),
       },
       {

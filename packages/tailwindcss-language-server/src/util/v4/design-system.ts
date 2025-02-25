@@ -1,4 +1,8 @@
-import type { ClassEntry, DesignSystem } from '@tailwindcss/language-service/src/util/v4'
+import type {
+  ClassEntry,
+  ClassMetadata,
+  DesignSystem,
+} from '@tailwindcss/language-service/src/util/v4'
 
 import postcss from 'postcss'
 import { createJiti } from 'jiti'
@@ -214,8 +218,19 @@ export async function loadDesignSystem(
       let css = design.candidatesToCss(classes)
       let errors: any[] = []
 
-      let roots = css.map((str) => {
-        if (str === null) return postcss.root()
+      let roots = css.map((str, idx) => {
+        if (str === null) {
+          let className = classes[idx]
+
+          for (let customClass of customClasses) {
+            if (customClass[0] === className) {
+              // @ts-ignore
+              return customClass[1].root
+            }
+          }
+
+          return postcss.root()
+        }
 
         try {
           return postcss.parse(str.trimEnd())
@@ -248,16 +263,57 @@ import selectorParser from 'postcss-selector-parser'
 
 function collectCustomClasses(sources: Source[]): ClassEntry[] {
   let parser = selectorParser()
-  let customClasses = new Set<string>()
+
+  let customClasses: Record<string, Set<postcss.Root>> = {}
 
   for (let source of sources) {
     postcss.parse(source.content).walkRules((rule) => {
+      let root: postcss.Root | null = null
+
       parser.astSync(rule.selector).walk((node) => {
         if (node.type !== 'class') return
-        customClasses.add(node.value)
+
+        root ??= isolate(rule)
+        if (!root) return
+
+        customClasses[node.value] ??= new Set()
+        customClasses[node.value].add(root)
       })
     })
   }
 
-  return Array.from(customClasses, (name) => [name, { modifiers: [] }])
+  let entries: ClassEntry[] = []
+
+  for (let [className, roots] of Object.entries(customClasses)) {
+    entries.push([
+      className,
+      {
+        modifiers: [],
+        // @ts-ignore
+        root: postcss.root({
+          nodes: Array.from(roots, (root) => root.clone().nodes).flat(),
+        }),
+      },
+    ])
+  }
+
+  return entries
+}
+
+function isolate(node: postcss.Node): postcss.Root | null {
+  let current = node
+  let tmp = node.clone()
+
+  while (current.type !== 'root' && current.parent) {
+    tmp = current.parent.clone({
+      nodes: [tmp as any],
+      raws: {},
+    })
+
+    current = current.parent
+  }
+
+  if (tmp.type !== 'root') return null
+
+  return tmp as postcss.Root
 }
