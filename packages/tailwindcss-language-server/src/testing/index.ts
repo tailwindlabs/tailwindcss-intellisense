@@ -17,6 +17,7 @@ export interface Storage {
 export interface TestConfig<Extras extends {}> {
   name: string
   fs?: Storage
+  debug?: boolean
   prepare?(utils: TestUtils): Promise<Extras>
   handle(utils: TestUtils & Extras): void | Promise<void>
 
@@ -55,6 +56,8 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
     if (result.state === 'fail') return
 
     if (path.sep === '\\') return
+
+    if (config.debug) return
 
     // Remove the directory on *nix systems. Recursive removal on Windows will
     // randomly fail b/c its slow and buggy.
