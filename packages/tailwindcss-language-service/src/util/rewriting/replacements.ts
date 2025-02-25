@@ -42,12 +42,21 @@ export function replaceCssVars(
   let seen = new Set<string>()
 
   for (let i = 0; i < str.length; ++i) {
-    if (!str.startsWith('var(', i)) continue
+    let startsWithVar = str.startsWith('var(', i)
+    let startsWithTheme = str.startsWith('theme(', i)
+
+    if (!startsWithVar && !startsWithTheme) continue
 
     let depth = 0
     let fallbackStart = null
+    let varStart = i
+    if (startsWithVar) {
+      varStart += 4
+    } else if (startsWithTheme) {
+      varStart += 6
+    }
 
-    for (let j = i + 4; i < str.length; ++j) {
+    for (let j = varStart; i < str.length; ++j) {
       if (str[j] === '(') {
         depth++
       } else if (str[j] === ')' && depth > 0) {
@@ -61,10 +70,10 @@ export function replaceCssVars(
         let fallback: string | null
 
         if (fallbackStart === null) {
-          varName = str.slice(i + 4, j)
+          varName = str.slice(varStart, j)
           fallback = null
         } else {
-          varName = str.slice(i + 4, fallbackStart - 1)
+          varName = str.slice(varStart, fallbackStart - 1)
           fallback = str.slice(fallbackStart, j)
         }
 

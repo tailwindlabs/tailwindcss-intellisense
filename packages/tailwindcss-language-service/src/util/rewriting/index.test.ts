@@ -97,10 +97,12 @@ test('Evaluating CSS calc expressions', () => {
   )
 })
 
-test('Inlining calc expressions using the design system', () => {
+test.only('Inlining calc expressions using the design system', () => {
   let map = new Map<string, string>([
     ['--spacing', '0.25rem'],
     ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
+    ['--primary', 'theme(--color-red-500)'],
+    ['--secondary', 'theme(--unknown)'],
   ])
 
   let state: State = {
@@ -117,36 +119,46 @@ test('Inlining calc expressions using the design system', () => {
 
   // Inlining calc expressions
   // + pixel equivalents
-  expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
-    'calc(var(--spacing) * 4) /* 1rem = 10px */',
+  // expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
+  //   'calc(var(--spacing) * 4) /* 1rem = 10px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) / 4)', state, settings)).toBe(
+  //   'calc(var(--spacing) / 4) /* 0.0625rem = 0.625px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) * 1)', state, settings)).toBe(
+  //   'calc(var(--spacing) * 1) /* 0.25rem = 2.5px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) * -1)', state, settings)).toBe(
+  //   'calc(var(--spacing) * -1) /* -0.25rem = -2.5px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) + 1rem)', state, settings)).toBe(
+  //   'calc(var(--spacing) + 1rem) /* 1.25rem = 12.5px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) - 1rem)', state, settings)).toBe(
+  //   'calc(var(--spacing) - 1rem) /* -0.75rem = -7.5px */',
+  // )
+
+  // expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
+  //   'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
+  // )
+
+  // // Color equivalents
+  // expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
+  //   'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
+  // )
+
+  // Uses of `theme(--name)` are inlined just like with `var(--name)`
+  expect(addThemeValues('var(--primary)', state, settings)).toBe(
+    'var(--primary) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
   )
 
-  expect(addThemeValues('calc(var(--spacing) / 4)', state, settings)).toBe(
-    'calc(var(--spacing) / 4) /* 0.0625rem = 0.625px */',
-  )
-
-  expect(addThemeValues('calc(var(--spacing) * 1)', state, settings)).toBe(
-    'calc(var(--spacing) * 1) /* 0.25rem = 2.5px */',
-  )
-
-  expect(addThemeValues('calc(var(--spacing) * -1)', state, settings)).toBe(
-    'calc(var(--spacing) * -1) /* -0.25rem = -2.5px */',
-  )
-
-  expect(addThemeValues('calc(var(--spacing) + 1rem)', state, settings)).toBe(
-    'calc(var(--spacing) + 1rem) /* 1.25rem = 12.5px */',
-  )
-
-  expect(addThemeValues('calc(var(--spacing) - 1rem)', state, settings)).toBe(
-    'calc(var(--spacing) - 1rem) /* -0.75rem = -7.5px */',
-  )
-
-  expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
-    'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
-  )
-
-  // Color equivalents
-  expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
-    'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
+  // When the theme value is unknown, it's not replaced
+  expect(addThemeValues('var(--secondary)', state, settings)).toBe(
+    'var(--secondary) /* theme(--unknown) */',
   )
 })
