@@ -11,7 +11,7 @@ export interface TestUtils {
 
 export interface Storage {
   /** A list of files and their content */
-  [filePath: string]: string | Uint8Array
+  [filePath: string]: string | Uint8Array | { [IS_A_SYMLINK]: true; filepath: string }
 }
 
 export interface TestConfig<Extras extends {}> {
@@ -69,6 +69,14 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
   }
 }
 
+const IS_A_SYMLINK = Symbol('is-a-symlink')
+export const symlinkTo = function (filepath: string) {
+  return {
+    [IS_A_SYMLINK]: true as const,
+    filepath,
+  }
+}
+
 async function prepareFileSystem(base: string, storage: Storage) {
   // Create a temporary directory to store the test files
   await fs.mkdir(base, { recursive: true })
@@ -77,6 +85,13 @@ async function prepareFileSystem(base: string, storage: Storage) {
   for (let [filepath, content] of Object.entries(storage)) {
     let fullPath = path.resolve(base, filepath)
     await fs.mkdir(path.dirname(fullPath), { recursive: true })
+
+    if (typeof content === 'object' && IS_A_SYMLINK in content) {
+      let target = path.resolve(base, content.filepath)
+      await fs.symlink(target, fullPath)
+      continue
+    }
+
     await fs.writeFile(fullPath, content, { encoding: 'utf-8' })
   }
 }
