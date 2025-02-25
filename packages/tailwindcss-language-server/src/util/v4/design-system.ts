@@ -148,9 +148,11 @@ export async function loadDesignSystem(
 
         dependencies.add(resolved)
 
+        let content = await fs.readFile(resolved, 'utf-8')
+
         return {
           base: path.dirname(resolved),
-          content: await fs.readFile(resolved, 'utf-8'),
+          content,
         }
       } catch (err) {
         if (isFallback && id in assets) {
