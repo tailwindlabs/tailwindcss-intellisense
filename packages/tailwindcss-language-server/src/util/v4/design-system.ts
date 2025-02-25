@@ -208,7 +208,10 @@ export async function loadDesignSystem(
   })
 
   // Step 4: Collect custom classes from the AST
+  let start = process.hrtime.bigint()
   let customClasses = collectCustomClasses(sources)
+  let elapsed = process.hrtime.bigint() - start
+  console.log(`Collected custom classes in ${Number(elapsed) / 1e6}ms`)
 
   // Step 5: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
