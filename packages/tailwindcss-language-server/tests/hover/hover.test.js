@@ -6,7 +6,7 @@ withFixture('basic', (c) => {
     name,
     { text, lang, position, exact = false, expected, expectedRange, settings },
   ) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -180,7 +180,7 @@ withFixture('v4/basic', (c) => {
     name,
     { text, exact = false, lang, position, expected, expectedRange, settings },
   ) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -314,7 +314,7 @@ withFixture('v4/basic', (c) => {
 
 withFixture('v4/css-loading-js', (c) => {
   async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -398,7 +398,7 @@ withFixture('v4/css-loading-js', (c) => {
 
 withFixture('v4/path-mappings', (c) => {
   async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
