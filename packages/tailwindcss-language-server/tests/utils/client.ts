@@ -45,7 +45,6 @@ import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/
 import { DefaultMap } from '../../src/util/default-map'
 import { connect, ConnectOptions } from './connection'
 import type { DeepPartial } from './types'
-import { styleText } from 'node:util'
 
 export interface DocumentDescriptor {
   /**
@@ -237,7 +236,8 @@ export interface ClientWorkspace {
 
 function trace(msg: string, ...args: any[]) {
   console.log(
-    `${styleText(['bold', 'blue', 'inverse'], ' TEST ')} ${styleText('dim', msg)}`,
+    // `${styleText(['bold', 'blue', 'inverse'], ' TEST ')} ${styleText('dim', msg)}`,
+    ` TEST ${msg}`,
     ...args,
   )
 }
