@@ -33,13 +33,17 @@ pub enum LanguageSyntax {
   Js,
 
   /// Unknown or otherwise unspecified language syntax
+  ///
+  /// Languages that do not fit into the above categories are mostly ignored
+  /// by the language server and treated as plain text. Detecting classes in a
+  /// language like this only works for custom patterns.
   Other,
 }
 
 /// Represents a region of a document that is written in a specific language
 #[derive(Clone)]
 pub struct LanguageRegion<'a> {
-  /// A region of a document that is written in an HTML-like language
+  /// The syntax that the language uses
   pub syntax: LanguageSyntax,
 
   /// The language that the region is written in

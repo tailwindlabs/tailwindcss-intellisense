@@ -121,44 +121,40 @@ impl<'a> Iterator for PointsOfInterest<'a> {
 #[cfg(test)]
 mod tests {
   use std::hint::black_box;
-
   use crate::throughput::Throughput;
   use super::*;
+
+  const FIXTURE: &'static [u8] = include_bytes!("../../../fixtures/input.html");
 
   #[test]
   fn test_points_of_interest() {
     let input = b"I have none";
-
     let points = PointsOfInterest::new(input).count();
     assert_eq!(points, 0);
 
     let input = b"Hello<World";
-
     let points = PointsOfInterest::new(input).count();
     assert_eq!(points, 1);
 
     let input = b"<div><span>Hello</span></div>";
-
     let points = PointsOfInterest::new(input).count();
     assert_eq!(points, 4);
 
     let input = b"<div><script lang=\"jsx\">Hello</script></div>";
-
     let points = PointsOfInterest::new(input).count();
     assert_eq!(points, 4);
 
-    let input = include_bytes!("../../fixtures/input.html");
-
+    let input = FIXTURE;
     let points = PointsOfInterest::new(input).count();
     assert_eq!(points, 241);
   }
 
   #[test]
   fn bench_points_of_interest() {
-    let input = include_bytes!("../../fixtures/input.html");
+    let input = FIXTURE;
 
     let result = Throughput::compute(450_000, input.len(), || {
-      for pos in PointsOfInterest::new(input) {
+      for pos in PointsOfInterest::new(black_box(input)) {
         black_box(pos);
       }
     });

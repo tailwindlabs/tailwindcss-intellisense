@@ -1,6 +1,8 @@
 use std::{ops::BitAnd, simd::{cmp::SimdPartialEq, num::SimdUint}};
 
-use super::{find::FindTags, lang::{LanguageRegion, LanguageSyntax}, span::Span};
+use htmlparser::ElementEnd;
+
+use super::{lang::{LanguageRegion, LanguageSyntax}, span::Span};
 
 #[derive(PartialEq)]
 enum CurrentTag {
@@ -25,6 +27,59 @@ enum State {
   AttrInCurly,
   TagEnd,
   BlockOpen,
+}
+
+pub fn regions_in_html(input: &[u8], regions: &mut Vec<LanguageRegion>) {
+  use htmlparser::Tokenizer;
+
+  let mut current: LanguageRegion = LanguageRegion::html(Span::new(0, 0));
+
+  for token in Tokenizer::from(unsafe { std::str::from_utf8_unchecked(input) }) {
+    let Ok(token) = token else {
+      println!("{:?}", token.unwrap_err());
+      break;
+    };
+
+    eprintln!("{:?}", token);
+
+    match token {
+      htmlparser::Token::ElementStart{local, span, ..} => {
+        match local.as_str() {
+          "script" => current = LanguageRegion::js(Span::new(span.end(), 0)),
+          "style" => current = LanguageRegion::css(Span::new(span.end(), 0)),
+          _ => {}
+        }
+      },
+      htmlparser::Token::ElementEnd{end, span, ..} => {
+        match end {
+          ElementEnd::Close(_, local) => {
+            match local.as_str() {
+              "script" => {
+                if let LanguageSyntax::Js = current.syntax {
+                  current.span.end = span.start();
+                  regions.push(current);
+                  current = LanguageRegion::html(Span::new(span.start(), 0));
+                }
+              },
+              "style" => {
+                if let LanguageSyntax::Css = current.syntax {
+                  current.span.end = span.start();
+                  regions.push(current);
+                  current = LanguageRegion::html(Span::new(span.start(), 0));
+                }
+              },
+              _ => {}
+            }
+          },
+          ElementEnd::Open => {},
+          ElementEnd::Empty => {}
+        }
+      },
+      _ => {}
+    }
+
+    println!("{:?}", token);
+  }
 }
 
 pub fn scan_html(input: &[u8], regions: &mut Vec<LanguageRegion>) {
@@ -162,60 +217,60 @@ pub fn scan_html(input: &[u8], regions: &mut Vec<LanguageRegion>) {
   regions.push(current);
 }
 
-pub fn scan_html_fast(input: &[u8], regions: &mut Vec<LanguageRegion>) {
-  let mut current_tag: Option<CurrentTag> = None;
-  let mut current_region = LanguageRegion::html(Span::new(0, 0));
+// pub fn scan_html_fast(input: &[u8], regions: &mut Vec<LanguageRegion>) {
+//   let mut current_tag: Option<CurrentTag> = None;
+//   let mut current_region = LanguageRegion::html(Span::new(0, 0));
 
-  let start_pos = input.as_ptr().addr();
+//   let start_pos = input.as_ptr().addr();
 
-  for tag in FindTags::new(input) {
-    match current_tag {
-      Some(CurrentTag::Script) => {
-        if tag.name == b"/script" {
-          current_tag = None;
+//   for tag in FindTags::new(input) {
+//     match current_tag {
+//       Some(CurrentTag::Script) => {
+//         if tag.name == b"/script" {
+//           current_tag = None;
 
-          // </script>
+//           // </script>
 
-          let end_pos = input.as_ptr().addr() + 7;
-          current_region.span.end = end_pos - start_pos;
-          // Add an HTML region that ends when the script tag ends
-          regions.push(current_region);
-          current_region = LanguageRegion::js(Span::new(0, 0));
-          current_region.span.start = end_pos + 1;
-        }
-      },
-      Some(CurrentTag::Style) => {
-        if tag.name == b"/style" {
-          current_tag = None;
-        }
-      },
-      None => {
-        if tag.name == b"script" {
-          current_tag = Some(CurrentTag::Script);
-          let end_pos = input.as_ptr().addr() + 7;
-          current_region.span.end = end_pos - start_pos;
+//           let end_pos = input.as_ptr().addr() + 7;
+//           current_region.span.end = end_pos - start_pos;
+//           // Add an HTML region that ends when the script tag ends
+//           regions.push(current_region);
+//           current_region = LanguageRegion::js(Span::new(0, 0));
+//           current_region.span.start = end_pos + 1;
+//         }
+//       },
+//       Some(CurrentTag::Style) => {
+//         if tag.name == b"/style" {
+//           current_tag = None;
+//         }
+//       },
+//       None => {
+//         if tag.name == b"script" {
+//           current_tag = Some(CurrentTag::Script);
+//           let end_pos = input.as_ptr().addr() + 7;
+//           current_region.span.end = end_pos - start_pos;
 
-          // Add an HTML region that ends when the script tag ends
-          regions.push(current_region);
+//           // Add an HTML region that ends when the script tag ends
+//           regions.push(current_region);
 
-          current_region = LanguageRegion::js(Span::new(0, 0));
-          current_region.span.start = end_pos + 1;
-        } else if tag.name == b"style" {
-          current_tag = Some(CurrentTag::Style);
+//           current_region = LanguageRegion::js(Span::new(0, 0));
+//           current_region.span.start = end_pos + 1;
+//         } else if tag.name == b"style" {
+//           current_tag = Some(CurrentTag::Style);
 
-          let end_pos = input.as_ptr().addr() + 7;
-          current_region.span.end = end_pos - start_pos;
+//           let end_pos = input.as_ptr().addr() + 7;
+//           current_region.span.end = end_pos - start_pos;
 
-          // Add an HTML region that ends when the script tag ends
-          regions.push(current_region);
+//           // Add an HTML region that ends when the script tag ends
+//           regions.push(current_region);
 
-          current_region = LanguageRegion::css(Span::new(0, 0));
-          current_region.span.start = end_pos + 1;
-        }
-      }
-    }
-  }
-}
+//           current_region = LanguageRegion::css(Span::new(0, 0));
+//           current_region.span.start = end_pos + 1;
+//         }
+//       }
+//     }
+//   }
+// }
 
 
 #[cfg(test)]
@@ -223,6 +278,11 @@ mod test {
   use super::*;
   use crate::throughput::Throughput;
 
+  #[test]
+  fn test_wip() {
+    regions_in_html(b"<script lang=\"jsx\"/></script>", &mut Vec::new());
+    assert!(false);
+  }
 
   #[test]
   fn test_scan_html() {
@@ -246,17 +306,17 @@ mod test {
     assert!(false);
   }
 
-  #[test]
-  fn test_throughput_fast() {
-    let input = include_bytes!("../../fixtures/input.html");
+  // #[test]
+  // fn test_throughput_fast() {
+  //   let input = include_bytes!("../../fixtures/input.html");
 
-    let result = Throughput::compute(100_000, input.len(), || {
-      let mut regions = Vec::new();
-      scan_html_fast(input, &mut regions);
-    });
+  //   let result = Throughput::compute(100_000, input.len(), || {
+  //     let mut regions = Vec::new();
+  //     scan_html_fast(input, &mut regions);
+  //   });
 
-    eprintln!("{}", result);
+  //   eprintln!("{}", result);
 
-    assert!(false);
-  }
+  //   assert!(false);
+  // }
 }
