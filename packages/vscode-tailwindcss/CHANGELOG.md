@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix syntax error when resetting multi-word theme key namespaces ([#1237](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1237))
 
 # 0.14.7
 
