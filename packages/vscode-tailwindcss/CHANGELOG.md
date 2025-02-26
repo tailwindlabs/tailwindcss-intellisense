@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+# 0.14.8
+
 - Don't throw when requiring() packages that resolve to a path containing a `#` character ([#1235](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1235))
 - Fix syntax error when resetting multi-word theme key namespaces ([#1237](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1237))
 
