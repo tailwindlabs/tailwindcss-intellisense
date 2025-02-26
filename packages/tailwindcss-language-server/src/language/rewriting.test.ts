@@ -69,20 +69,28 @@ test('@theme', () => {
   let input = [
     //
     '@theme {',
-    '  color: red;',
+    '  --color: red;',
+    '  --font-*: initial;',
+    '  --font-weight-*: initial;',
     '}',
     '@theme inline reference static default {',
-    '  color: red;',
+    '  --color: red;',
+    '  --font-*: initial;',
+    '  --font-weight-*: initial;',
     '}',
   ]
 
   let output = [
     //
     '.placeholder {', // wrong
-    '  color: red;',
+    '  --color: red;',
+    '  --font-_: initial;',
+    '  --font-weight-_: initial;',
     '}',
     '.placeholder                                 {', // wrong
-    '  color: red;',
+    '  --color: red;',
+    '  --font-_: initial;',
+    '  --font-weight-_: initial;',
     '}',
   ]
 
