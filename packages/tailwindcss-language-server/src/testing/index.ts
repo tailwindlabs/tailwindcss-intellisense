@@ -11,12 +11,13 @@ export interface TestUtils {
 
 export interface Storage {
   /** A list of files and their content */
-  [filePath: string]: string | Uint8Array
+  [filePath: string]: string | Uint8Array | { [IS_A_SYMLINK]: true; filepath: string }
 }
 
 export interface TestConfig<Extras extends {}> {
   name: string
   fs?: Storage
+  debug?: boolean
   prepare?(utils: TestUtils): Promise<Extras>
   handle(utils: TestUtils & Extras): void | Promise<void>
 
@@ -56,6 +57,8 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
     if (path.sep === '\\') return
 
+    if (config.debug) return
+
     // Remove the directory on *nix systems. Recursive removal on Windows will
     // randomly fail b/c its slow and buggy.
     await fs.rm(doneDir, { recursive: true })
@@ -63,6 +66,14 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
   return {
     root: baseDir,
+  }
+}
+
+const IS_A_SYMLINK = Symbol('is-a-symlink')
+export const symlinkTo = function (filepath: string) {
+  return {
+    [IS_A_SYMLINK]: true as const,
+    filepath,
   }
 }
 
@@ -74,6 +85,13 @@ async function prepareFileSystem(base: string, storage: Storage) {
   for (let [filepath, content] of Object.entries(storage)) {
     let fullPath = path.resolve(base, filepath)
     await fs.mkdir(path.dirname(fullPath), { recursive: true })
+
+    if (typeof content === 'object' && IS_A_SYMLINK in content) {
+      let target = path.resolve(base, content.filepath)
+      await fs.symlink(target, fullPath)
+      continue
+    }
+
     await fs.writeFile(fullPath, content, { encoding: 'utf-8' })
   }
 }
