@@ -1,7 +1,7 @@
 // @ts-check
 
 import { expect } from 'vitest'
-import { css, defineTest, html, js, json } from '../../src/testing'
+import { css, defineTest, html, js, json, symlinkTo } from '../../src/testing'
 import dedent from 'dedent'
 import { createClient } from '../utils/client'
 
@@ -640,6 +640,92 @@ defineTest({
     `,
   },
   prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="example">',
+    })
+
+    // <div class="example">
+    //             ^
+    let hover = await document.hover({ line: 0, character: 13 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .example {
+            color: red;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 19 },
+      },
+    })
+  },
+})
+
+defineTest({
+  // This test *always* passes inside Vitest because our custom version of
+  // `Module._resolveFilename` is not called. Our custom implementation is
+  // using enhanced-resolve under the hood which is affected by the `#`
+  // character issue being considered a fragment identifier.
+  //
+  // This most commonly happens when dealing with PNPM packages that point
+  // to a specific commit hash of a git repository.
+  //
+  // To simulate this, we need to:
+  // - Add a local package to package.json
+  // - Symlink that local package to a directory with `#` in the name
+  // - Then run the test in a separate process (`spawn` mode)
+  //
+  // We can't use `file:./a#b` because NPM considers `#` to be a fragment
+  // identifier and will not resolve the path the way we need it to.
+  name: 'v3: require() works when path is resolved to contain a `#`',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "3.4.17",
+          "some-pkg": "file:./packages/some-pkg"
+        }
+      }
+    `,
+    'tailwind.config.js': js`
+      module.exports = {
+        presets: [require('some-pkg/config/tailwind.config.js').default]
+      }
+    `,
+    'packages/some-pkg': symlinkTo('packages/some-pkg#c3f1e'),
+    'packages/some-pkg#c3f1e/package.json': json`
+      {
+        "name": "some-pkg",
+        "version": "1.0.0",
+        "main": "index.js"
+      }
+    `,
+    'packages/some-pkg#c3f1e/config/tailwind.config.js': js`
+      export default {
+        plugins: [
+          function ({ addUtilities }) {
+            addUtilities({
+              '.example': {
+                color: 'red',
+              },
+            })
+          }
+        ]
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      mode: 'spawn',
+    }),
+  }),
   handle: async ({ client }) => {
     let document = await client.open({
       lang: 'html',
