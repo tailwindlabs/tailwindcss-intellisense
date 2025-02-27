@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- v4: Support loading bundled versions of some first-party plugins ([#1240](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1240))
 
 # 0.14.8
 
