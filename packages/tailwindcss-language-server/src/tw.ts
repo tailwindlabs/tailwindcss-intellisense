@@ -47,7 +47,6 @@ import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
-import { retry } from './util/retry'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -200,7 +199,13 @@ export class TW {
       ? path.dirname(this.initializeParams.initializationOptions.workspaceFile)
       : base
 
-    function getExplicitConfigFiles(settings: TailwindCssSettings) {
+    type ExplicitConfigs =
+      // Any valid tailwindCSS.experimental.configFile value
+      | { kind: 'valid'; entries: [string, string[]][] }
+      // Any otherwise invalid value
+      | null
+
+    function getExplicitConfigFiles(settings: TailwindCssSettings): ExplicitConfigs {
       function resolvePathForConfig(filepath: string) {
         return normalizeDriveLetter(normalizePath(path.resolve(userDefinedConfigBase, filepath)))
       }
@@ -214,7 +219,8 @@ export class TW {
 
         configs[configFile] = docSelectors
       } else if (isObject(configFileOrFiles)) {
-        for (let [configFile, selectors] of Object.entries(configFileOrFiles)) {
+        let entries = Object.entries(configFileOrFiles)
+        for (let [configFile, selectors] of entries) {
           if (typeof configFile !== 'string') return null
           configFile = resolvePathForConfig(configFile)
 
@@ -234,7 +240,10 @@ export class TW {
         return null
       }
 
-      return Object.entries(configs)
+      return {
+        kind: 'valid',
+        entries: Object.entries(configs),
+      }
     }
 
     let configs = getExplicitConfigFiles(globalSettings.tailwindCSS)
@@ -252,10 +261,10 @@ export class TW {
 
     let locator = new ProjectLocator(base, globalSettings, resolver)
 
-    if (configs.length > 0) {
+    if (configs.entries.length > 0) {
       console.log('Loading Tailwind CSS projects from the workspace settings.')
 
-      workspaceFolders = await locator.loadAllFromWorkspace(configs)
+      workspaceFolders = await locator.loadAllFromWorkspace(configs.entries)
     } else {
       console.log("Searching for Tailwind CSS projects in the workspace's folders.")
 
