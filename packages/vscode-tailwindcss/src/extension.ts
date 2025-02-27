@@ -584,6 +584,16 @@ export async function activate(context: ExtensionContext) {
     }
 
     let source: CancellationTokenSource | null = new CancellationTokenSource()
+    source.token.onCancellationRequested(() => {
+      source?.dispose()
+      source = null
+      outputChannel.appendLine(
+        'Server was not started. Search for Tailwind CSS-related files was taking too long.',
+      )
+    })
+
+    // Cancel the search after roughly 15 seconds
+    setTimeout(() => source?.cancel(), 15_000)
 
     if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [], source!.token))) {
       source?.dispose()
