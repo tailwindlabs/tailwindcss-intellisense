@@ -74,7 +74,9 @@ function createLoader<T>({
         if (match) {
           let [_, importee] = match
           if (importee in plugins) {
-            console.log('Loading plugins inside configs or plugins is not currently supported')
+            console.log(
+              `[error] Cannot load '${id}' plugins inside configs or plugins is not currently supported`,
+            )
           }
         }
       }
