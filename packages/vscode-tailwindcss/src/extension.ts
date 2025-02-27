@@ -602,7 +602,13 @@ export async function activate(context: ExtensionContext) {
 
   async function folderNeedsLanguageServer(folder: WorkspaceFolder): Promise<boolean> {
     let settings = Workspace.getConfiguration('tailwindCSS', folder)
-    if (settings.get('experimental.configFile') !== null) {
+    let configFile = settings.get('experimental.configFile')
+    if (configFile !== null) {
+      // Explicitly skip initialization if the tailwindCSS.experimental.configFile setting is set to `{}`
+      if (typeof configFile === 'object' && Object.entries(configFile).length === 0) {
+        return false
+      }
+
       return true
     }
 
