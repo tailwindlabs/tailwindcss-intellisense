@@ -6,6 +6,7 @@ import type {
   ConfigurationScope,
   WorkspaceConfiguration,
   Selection,
+  CancellationToken,
 } from 'vscode'
 import {
   workspace as Workspace,
@@ -16,6 +17,7 @@ import {
   Position,
   Range,
   RelativePattern,
+  CancellationTokenSource,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -581,18 +583,24 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? []))) {
+    let source: CancellationTokenSource | null = new CancellationTokenSource()
+
+    if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [], source!.token))) {
+      source?.dispose()
       return
     }
+
+    source?.dispose()
 
     await bootWorkspaceClient()
   }
 
   async function anyFolderNeedsLanguageServer(
     folders: readonly WorkspaceFolder[],
+    token: CancellationToken,
   ): Promise<boolean> {
     for (let folder of folders) {
-      if (await folderNeedsLanguageServer(folder)) {
+      if (await folderNeedsLanguageServer(folder, token)) {
         return true
       }
     }
@@ -600,7 +608,10 @@ export async function activate(context: ExtensionContext) {
     return false
   }
 
-  async function folderNeedsLanguageServer(folder: WorkspaceFolder): Promise<boolean> {
+  async function folderNeedsLanguageServer(
+    folder: WorkspaceFolder,
+    token: CancellationToken,
+  ): Promise<boolean> {
     let settings = Workspace.getConfiguration('tailwindCSS', folder)
     if (settings.get('experimental.configFile') !== null) {
       return true
@@ -616,13 +627,19 @@ export async function activate(context: ExtensionContext) {
       new RelativePattern(folder, `**/${CONFIG_GLOB}`),
       exclude,
       1,
+      token,
     )
 
     for (let file of configFiles) {
       return true
     }
 
-    let cssFiles = await Workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude)
+    let cssFiles = await Workspace.findFiles(
+      new RelativePattern(folder, `**/${CSS_GLOB}`),
+      exclude,
+      undefined,
+      token,
+    )
 
     for (let file of cssFiles) {
       outputChannel.appendLine(`Checking if ${file.fsPath} may be Tailwind-related…`)
