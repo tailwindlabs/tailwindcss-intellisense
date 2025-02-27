@@ -202,6 +202,9 @@ export class TW {
     type ExplicitConfigs =
       // Any valid tailwindCSS.experimental.configFile value
       | { kind: 'valid'; entries: [string, string[]][] }
+      // A special value used to ignore tailwindCSS in this workspace
+      // This is set by using "tailwindCSS.experimental.configFile": {},
+      | { kind: 'ignore' }
       // Any otherwise invalid value
       | null
 
@@ -211,6 +214,7 @@ export class TW {
       }
 
       let configFileOrFiles = settings.experimental.configFile
+
       let configs: Record<string, string[]> = {}
 
       if (typeof configFileOrFiles === 'string') {
@@ -220,6 +224,10 @@ export class TW {
         configs[configFile] = docSelectors
       } else if (isObject(configFileOrFiles)) {
         let entries = Object.entries(configFileOrFiles)
+        if (entries.length === 0) {
+          return { kind: 'ignore' }
+        }
+
         for (let [configFile, selectors] of entries) {
           if (typeof configFile !== 'string') return null
           configFile = resolvePathForConfig(configFile)
@@ -250,6 +258,9 @@ export class TW {
 
     if (configs === null) {
       console.error('Invalid `experimental.configFile` configuration, not initializing.')
+      return
+    } else if (configs.kind === 'ignore') {
+      console.log('Ignoring Tailwind CSS in this workspace.')
       return
     }
 
