@@ -54,6 +54,45 @@ defineTest({
 })
 
 defineTest({
+  name: 'v4, no npm, bundled plugins',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @plugin "@tailwindcss/aspect-ratio";
+      @plugin "@tailwindcss/forms";
+      @plugin "@tailwindcss/typography";
+    `,
+  },
+
+  // Note this test MUST run in spawn mode because Vitest hooks into import,
+  // require, etc… already and we need to test that any hooks are working
+  // without outside interference.
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="prose-slate form-select aspect-w-2"></div>',
+    })
+
+    // <div class="prose-slate form-select aspect-w-2"></div>
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
+    expect(hover).not.toEqual(null)
+
+    // <div class="prose-slate form-select aspect-w-2"></div>
+    //                         ^
+    hover = await doc.hover({ line: 0, character: 25 })
+    expect(hover).not.toEqual(null)
+
+    // <div class="prose-slate form-select aspect-w-2"></div>
+    //                                     ^
+    hover = await doc.hover({ line: 0, character: 37 })
+    expect(hover).not.toEqual(null)
+  },
+})
+
+defineTest({
   /**
    * Plugins and configs that import stuff from the `tailwindcss` package do
    * not work because we need to register ESM loader hooks as well as hooking
