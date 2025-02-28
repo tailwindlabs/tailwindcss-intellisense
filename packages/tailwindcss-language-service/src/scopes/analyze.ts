@@ -70,6 +70,19 @@ export async function* analyzeBoundaries(
       meta.lang = boundary.lang ?? boundary.type
     }
 
+    for await (let scope of analyzeClassLists(state, doc, boundary)) {
+      root.children.push(scope)
+    }
+
+    let slice = doc.getText(boundary.range)
+    for (let scope of analyzeAtRules(boundary, slice)) {
+      root.children.push(scope)
+    }
+
+    for (let scope of analyzeHelperFns(boundary, slice)) {
+      root.children.push(scope)
+    }
+
     yield root
   }
 }
