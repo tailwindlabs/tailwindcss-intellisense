@@ -16,6 +16,7 @@ import {
   Position,
   Range,
   RelativePattern,
+  DecorationRangeBehavior,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -356,6 +357,13 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push(colorDecorationType)
 
+    let underlineDecorationType = Window.createTextEditorDecorationType({
+      textDecoration: 'none; border-bottom: 1px dashed currentColor',
+      rangeBehavior: DecorationRangeBehavior.ClosedClosed,
+    })
+
+    context.subscriptions.push(underlineDecorationType)
+
     /**
      * Clear all decorated colors from all visible text editors
      */
@@ -537,6 +545,11 @@ export async function activate(context: ExtensionContext) {
     client.onNotification('@/tailwindCSS/projectInitialized', updateActiveTextEditorContext)
     client.onNotification('@/tailwindCSS/projectReset', updateActiveTextEditorContext)
     client.onNotification('@/tailwindCSS/projectsDestroyed', resetActiveTextEditorContext)
+    client.onRequest('@/tailwindCSS/annotations', ({ uri, annotations }) => {
+      Window.visibleTextEditors
+        .find((editor) => editor.document.uri.toString() === uri)
+        ?.setDecorations(underlineDecorationType, annotations)
+    })
     client.onRequest('@/tailwindCSS/getDocumentSymbols', showSymbols)
 
     interface ErrorNotification {
