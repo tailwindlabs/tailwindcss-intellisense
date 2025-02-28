@@ -48,6 +48,7 @@
     "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
+    "mitata": "^1.0.34",
     "tslib": "2.2.0",
     "typescript": "^5.3.3",
     "vitest": "^1.6.1"
