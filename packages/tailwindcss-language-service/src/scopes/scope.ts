@@ -65,6 +65,32 @@ export interface ScopeContext {
 }
 
 /**
+ * Text that should be treated as a comment whether single line or multi-line
+ *
+ * Examples:
+ * ```css
+ * /* This is a comment * /
+ * ```
+ *
+ * ```html
+ * <!-- This is a comment -->
+ * ```
+ *
+ * ```js
+ * // This is a comment
+ * /* This is a comment * /
+ * ```
+ */
+export interface ScopeComment {
+  kind: 'comment'
+  children: AnyScope[]
+
+  source: {
+    scope: Span
+  }
+}
+
+/**
  * Text that represents a class attribute
  *
  * This generally contains a single class list but may contain multiple if the
@@ -132,6 +158,7 @@ export interface ScopeClassName {
 
 export type AnyScope =
   | ScopeContext
+  | ScopeComment
   | ScopeClassAttribute
   | ScopeClassList
   | ScopeClassName
