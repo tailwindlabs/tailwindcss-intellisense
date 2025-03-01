@@ -48,6 +48,8 @@ import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
 import { retry } from './util/retry'
+import { analyzeDocument } from '@tailwindcss/language-service/src/scopes/analyze'
+import type { AnyScope } from '@tailwindcss/language-service/src/scopes/scope'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -764,12 +766,17 @@ export class TW {
   private onRequest(
     method: '@/tailwindCSS/sortSelection',
     params: { uri: string; classLists: string[] },
-  ): { error: string } | { classLists: string[] }
+  ): Promise<{ error: string } | { classLists: string[] }>
   private onRequest(
     method: '@/tailwindCSS/getProject',
     params: { uri: string },
-  ): { version: string } | null
-  private onRequest(method: string, params: any): any {
+  ): Promise<{ version: string } | null>
+  private onRequest(
+    method: '@/tailwindCSS/scopes/get',
+    params: { uri: string },
+  ): Promise<{ scopes: AnyScope[] } | null>
+
+  private async onRequest(method: string, params: any): Promise<any> {
     if (method === '@/tailwindCSS/sortSelection') {
       let project = this.getProject({ uri: params.uri })
       if (!project) {
@@ -789,6 +796,24 @@ export class TW {
       }
       return {
         version: project.state.version,
+      }
+    }
+
+    if (method === '@/tailwindCSS/scopes/get') {
+      console.log('Get scopes plz')
+
+      let doc = this.documentService.getDocument(params.uri)
+      if (!doc) return { scopes: [] }
+
+      let project = this.getProject({ uri: params.uri })
+      if (!project) return { scopes: [] }
+      if (!project.enabled()) return { scopes: [] }
+      if (!project.state.enabled) return { scopes: [] }
+
+      let tree = await analyzeDocument(project.state, doc)
+
+      return {
+        scopes: tree.all(),
       }
     }
   }

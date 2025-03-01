@@ -334,6 +334,14 @@
           "description": "Traces the communication between VS Code and the Tailwind CSS Language Server."
         }
       }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "scopes",
+          "name": "Tailwind CSS Scopes"
+        }
+      ]
     }
   },
   "scripts": {

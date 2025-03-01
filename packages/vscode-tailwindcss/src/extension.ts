@@ -37,6 +37,7 @@ import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/cons
 import braces from 'braces'
 import normalizePath from 'normalize-path'
 import * as servers from './servers/index'
+import { registerScopeProvider } from './scopes'
 
 const colorNames = Object.keys(namedColors)
 
@@ -185,6 +186,12 @@ export async function activate(context: ExtensionContext) {
   )
 
   await commands.executeCommand('setContext', 'tailwindCSS.hasOutputChannel', true)
+
+  registerScopeProvider({
+    get client() {
+      return currentClient
+    },
+  })
 
   outputChannel.appendLine(`Locating server…`)
 
