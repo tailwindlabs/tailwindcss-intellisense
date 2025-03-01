@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2018",
+    "target": "ES2022",
     "lib": ["ES2022"],
     "rootDir": "..",
     "sourceMap": true,
