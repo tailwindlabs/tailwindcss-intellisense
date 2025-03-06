@@ -14,9 +14,10 @@ function replaceWithAtRule(delta = 0) {
 }
 
 function replaceWithStyleRule(delta = 0) {
-  return (_match: string, p1: string) => {
+  return (_match: string, name: string, p1: string) => {
+    let className = '_'.repeat(name.length)
     let spaces = ' '.repeat(p1.length + delta)
-    return `.placeholder${spaces}{`
+    return `.${className}${spaces}{`
   }
 }
 
@@ -36,16 +37,16 @@ export function rewriteCss(css: string) {
   css = css.replace(/@screen(\s+[^{]+){/g, replaceWithAtRule(-2))
   css = css.replace(/@variants(\s+[^{]+){/g, replaceWithAtRule())
   css = css.replace(/@responsive(\s*){/g, replaceWithAtRule())
-  css = css.replace(/@utility(\s+[^{]+){/g, replaceWithStyleRule())
-  css = css.replace(/@theme(\s+[^{]*){/g, replaceWithStyleRule())
+  css = css.replace(/@(utility)(\s+[^{]+){/g, replaceWithStyleRule())
+  css = css.replace(/@(theme)(\s+[^{]*){/g, replaceWithStyleRule())
 
-  css = css.replace(/@custom-variant(\s+[^;{]+);/g, (match: string) => {
-    let spaces = ' '.repeat(match.length - 11)
-    return `@media (${MEDIA_MARKER})${spaces}{}`
+  css = css.replace(/@(custom-variant)(\s+[^;{]+);/g, (match: string, name: string) => {
+    let spaces = ' '.repeat(match.length - name.length + 3)
+    return `@media(${MEDIA_MARKER})${spaces}{}`
   })
 
-  css = css.replace(/@custom-variant(\s+[^{]+){/g, replaceWithStyleRule())
-  css = css.replace(/@variant(\s+[^{]+){/g, replaceWithStyleRule())
+  css = css.replace(/@(custom-variant)(\s+[^{]+){/g, replaceWithStyleRule())
+  css = css.replace(/@(variant)(\s+[^{]+){/g, replaceWithStyleRule())
   css = css.replace(/@layer(\s+[^{]{2,}){/g, replaceWithAtRule(-3))
   css = css.replace(/@reference\s*([^;]{2,})/g, '@import    $1')
 

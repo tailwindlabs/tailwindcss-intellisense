@@ -57,13 +57,13 @@ test('@utility', () => {
 
   let output = [
     //
-    '.placeholder     {', // wrong
+    '._______     {',
     '  color: red;',
     '}',
-    '.placeholder       {', // wrong
+    '._______       {',
     '  color: red;',
     '}',
-    '.placeholder       {', // wrong
+    '._______       {',
     '  color: --value(--font-_-line-height);',
     '}',
   ]
@@ -92,14 +92,14 @@ test('@theme', () => {
 
   let output = [
     //
-    '.placeholder {', // wrong
+    '._____ {',
     '  --color: red;',
     '  --_: initial;',
     '  --text_: initial;',
     '  --font-_: initial;',
     '  --font-weight-_: initial;',
     '}',
-    '.placeholder                                 {', // wrong
+    '._____                                 {',
     '  --color: red;',
     '  --_: initial;',
     '  --text_: initial;',
@@ -124,8 +124,8 @@ test('@custom-variant', () => {
 
   let output = [
     //
-    '@media (℘)                   {}', // wrong
-    '.placeholder     {', // wrong
+    '@media(℘)                   {}',
+    '.______________     {',
     '  &:hover {',
     '    @slot;',
     '  }',
@@ -147,7 +147,7 @@ test('@variant', () => {
 
   let output = [
     //
-    '.placeholder     {', // wrong
+    '._______     {',
     '  &:hover {',
     '    @slot;',
     '  }',
