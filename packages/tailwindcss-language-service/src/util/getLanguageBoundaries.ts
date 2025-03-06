@@ -7,7 +7,7 @@ import { isJsDoc } from './js'
 import moo, { Rules } from 'moo'
 import Cache from 'tmp-cache'
 import { getTextWithoutComments } from './doc'
-import { isCssLanguage } from './css'
+import { isCssDoc, isCssLanguage } from './css'
 
 export type LanguageBoundary = {
   type: 'html' | 'js' | 'jsx' | 'css' | (string & {})
@@ -144,6 +144,36 @@ let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000
 
 export function clearLanguageBoundariesCache() {
   cache.clear()
+}
+
+/**
+ * @deprecated
+ */
+export function getDocumentLanguages(state: State, doc: TextDocument): LanguageBoundary[] {
+  let boundaries = getLanguageBoundaries(state, doc)
+  if (boundaries) return boundaries
+
+  // If we get here we most likely have non-HTML document in a single language
+  let type = doc.languageId
+
+  if (isCssDoc(state, doc)) {
+    type = 'css'
+  } else if (isHtmlDoc(state, doc)) {
+    type = 'html'
+  } else if (isJsDoc(state, doc)) {
+    type = 'js'
+  }
+
+  let text = doc.getText()
+
+  return [
+    {
+      type,
+      lang: doc.languageId,
+      span: [0, text.length],
+      range: { start: doc.positionAt(0), end: doc.positionAt(text.length) },
+    },
+  ]
 }
 
 export function getLanguageBoundaries(
