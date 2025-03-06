@@ -225,7 +225,7 @@ export class CssServer {
               if (match) {
                 symbol.name = `${match[1]} ${match[2]?.trim() ?? match[3]?.trim()}`
               }
-            } else if (symbol.name === `.placeholder`) {
+            } else if (/^\._+$/.test(symbol.name)) {
               let doc = documents.get(symbol.location.uri)
               let text = doc.getText(symbol.location.range)
               let match = text.trim().match(/^(@[^\s]+)(?:([^{]+)[{]|([^;{]+);)/)
