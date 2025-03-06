@@ -15,7 +15,7 @@ import removeMeta from './util/removeMeta'
 import { formatColor, getColor, getColorFromValue } from './util/color'
 import { isHtmlContext, isHtmlDoc, isVueDoc } from './util/html'
 import { isCssContext } from './util/css'
-import { findLast, matchClassAttributes } from './util/find'
+import { findLast, matchClassAttributes, matchClassFunctions } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
@@ -746,6 +746,10 @@ async function provideClassAttributeCompletions(
   let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
 
   let matches = matchClassAttributes(str, settings.classAttributes)
+
+  if (settings.experimental.classFunctions.length > 0) {
+    matches.push(...matchClassFunctions(str, settings.experimental.classFunctions))
+  }
 
   if (matches.length === 0) {
     return null

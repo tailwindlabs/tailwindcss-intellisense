@@ -66,6 +66,7 @@ export type TailwindCssSettings = {
   experimental: {
     classRegex: string[]
     configFile: string | Record<string, string | string[]> | null
+    classFunctions: string[]
   }
   files: {
     exclude: string[]

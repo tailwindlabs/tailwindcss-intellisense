@@ -164,6 +164,12 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
+export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
+  const names = fnNames.filter((x) => typeof x === 'string')
+  const re = /\b(F_NAMES)\(/
+  return findAll(new RegExp(re.source.replace('F_NAMES', names.join('|')), 'gi'), text)
+}
+
 export async function findClassListsInHtmlRange(
   state: State,
   doc: TextDocument,
@@ -172,10 +178,12 @@ export async function findClassListsInHtmlRange(
 ): Promise<DocumentClassList[]> {
   const text = getTextWithoutComments(doc, type, range)
 
-  const matches = matchClassAttributes(
-    text,
-    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes,
-  )
+  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
+  const matches = matchClassAttributes(text, settings.classAttributes)
+
+  if (settings.experimental.classFunctions.length > 0) {
+    matches.push(...matchClassFunctions(text, settings.experimental.classFunctions))
+  }
 
   const result: DocumentClassList[] = []
 
