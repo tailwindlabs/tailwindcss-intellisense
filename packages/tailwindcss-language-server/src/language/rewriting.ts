@@ -73,8 +73,13 @@ export function rewriteCss(css: string) {
     return match.replace(/[*]/g, '_')
   })
 
+  // Replace `--*` with `--_`
+  // Replace `--some-var*` with `--some-var_`
   // Replace `--some-var-*` with `--some-var-_`
-  css = css.replace(/--([a-zA-Z0-9-]+)-[*]/g, '--$1-_')
+  // Replace `--text-*-line-height` with `--text-_-line-height`
+  css = css.replace(/--([a-zA-Z0-9-*]*)/g, (match) => {
+    return match.replace(/[*]/g, '_')
+  })
 
   return css
 }
