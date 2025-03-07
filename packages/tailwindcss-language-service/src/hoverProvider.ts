@@ -170,6 +170,7 @@ async function provideSourceGlobHover(
 
   let patterns = [
     /@source(?:\s+not)?\s*(?<glob>'[^']+'|"[^"]+")/dg,
+    /@source(?:\s+not)?\s*inline\((?<glob>'[^']+'|"[^"]+")/dg,
   ]
 
   let matches = patterns.flatMap((pattern) => findAll(pattern, text))

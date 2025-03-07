@@ -61,3 +61,12 @@ test('Detecting v4 directives that point to files', async () => {
     suggest: 'directory',
   })
 })
+
+test('@source inline is ignored', async () => {
+  function find(text: string) {
+    return findFileDirective({ enabled: true, v4: true }, text)
+  }
+
+  await expect(find('@source inline("')).resolves.toEqual(null)
+  await expect(find('@source not inline("')).resolves.toEqual(null)
+})

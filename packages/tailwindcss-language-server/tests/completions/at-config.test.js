@@ -368,6 +368,32 @@ withFixture('v4/dependencies', (c) => {
     })
   })
 
+  test.concurrent('@source inline(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@source inline("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 16,
+      },
+    })
+
+    expect(result).toEqual(null)
+  })
+
+  test.concurrent('@source not inline(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@source not inline("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 20,
+      },
+    })
+
+    expect(result).toEqual(null)
+  })
+
   test.concurrent('@import "…" source(…)', async ({ expect }) => {
     let result = await completion({
       text: '@import "tailwindcss" source("',

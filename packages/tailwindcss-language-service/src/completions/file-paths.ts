@@ -1,6 +1,8 @@
 import type { State } from '../util/state'
 
 // @config, @plugin, @source
+// - @source inline("…") is *not* a file directive
+// - @source not inline("…") is *not* a file directive
 const PATTERN_CUSTOM_V4 =
   /@(?<directive>config|plugin|source)(?<not>\s+not)?\s*(?<partial>'[^']*|"[^"]*)$/
 const PATTERN_CUSTOM_V3 = /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
