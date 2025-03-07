@@ -173,7 +173,7 @@ export type ClassNameMeta = {
   context: string[]
 }
 
-export function getDefaultTailwindSettings(): Settings {
+export function getDefaultTailwindSettings() {
   return {
     editor: { tabSize: 2 },
     tailwindCSS: {
@@ -205,5 +205,6 @@ export function getDefaultTailwindSettings(): Settings {
         classFunctions: [],
       },
     },
-  }
+    // Return this as const object that satisfies Settings to be able to see the exact default values we specify
+  } as const satisfies Settings
 }
