@@ -1,4 +1,9 @@
-import type { DocumentClassList, State } from './state'
+import {
+  getDefaultTailwindSettings,
+  type DocumentClassList,
+  type EditorState,
+  type State,
+} from './state'
 import { test } from 'vitest'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassListsInHtmlRange } from './find'
@@ -12,26 +17,27 @@ test('test astro', async ({ expect }) => {
   ].join('\n')
 
   let doc = TextDocument.create('file://file.astro', 'astro', 1, content)
+  let defaultSettings = getDefaultTailwindSettings()
   let state: State = {
     blocklist: [],
+    enabled: true,
     editor: {
       userLanguages: {},
       getConfiguration: async () => ({
-        editor: {
-          tabSize: 1,
-        },
+        ...defaultSettings,
         tailwindCSS: {
-          classAttributes: ['class'],
+          ...defaultSettings.tailwindCSS,
           experimental: {
+            ...defaultSettings.tailwindCSS.experimental,
             classRegex: [
               ['cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
               ['cn\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
             ],
           },
-        } as any,
+        },
       }),
-    } as any,
-  } as any
+    } as EditorState,
+  }
 
   let classLists = await findClassListsInHtmlRange(state, doc, 'html')
 
@@ -81,24 +87,7 @@ test('test astro', async ({ expect }) => {
 })
 
 test('test simple classFunctions', async ({ expect }) => {
-  const state: State = {
-    blocklist: [],
-    editor: {
-      userLanguages: {},
-      getConfiguration: async () => ({
-        editor: {
-          tabSize: 1,
-        },
-        tailwindCSS: {
-          classAttributes: ['class'],
-          experimental: {
-            classFunctions: ['cva', 'cn'],
-          },
-        },
-      }),
-    },
-  } as any
-
+  const state = getTailwindSettingsForClassFunctions()
   const classList = `'pointer-events-auto relative flex bg-red-500',
       'items-center justify-between overflow-hidden',
       'md:min-w-[20rem] md:max-w-[37.5rem] md:py-sm py-xs pl-md pr-xs gap-sm w-full',
@@ -195,24 +184,7 @@ test('test simple classFunctions', async ({ expect }) => {
 })
 
 test('test nested classFunctions', async ({ expect }) => {
-  const state: State = {
-    blocklist: [],
-    editor: {
-      userLanguages: {},
-      getConfiguration: async () => ({
-        editor: {
-          tabSize: 1,
-        },
-        tailwindCSS: {
-          classAttributes: ['class'],
-          experimental: {
-            classFunctions: ['cva', 'cn'],
-          },
-        },
-      }),
-    },
-  } as any
-
+  const state = getTailwindSettingsForClassFunctions()
   const expectedResult: DocumentClassList[] = [
     {
       classList: 'fixed flex',
@@ -310,3 +282,24 @@ test('test nested classFunctions', async ({ expect }) => {
 
   expect(classLists).toMatchObject(expectedResult)
 })
+
+function getTailwindSettingsForClassFunctions(): State {
+  const defaultSettings = getDefaultTailwindSettings()
+  return {
+    blocklist: [],
+    enabled: true,
+    editor: {
+      userLanguages: {},
+      getConfiguration: async () => ({
+        ...defaultSettings,
+        tailwindCSS: {
+          ...defaultSettings.tailwindCSS,
+          experimental: {
+            ...defaultSettings.tailwindCSS.experimental,
+            classFunctions: ['cva', 'cn'],
+          },
+        },
+      }),
+    } as EditorState,
+  }
+}
