@@ -157,6 +157,18 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
+  testDocumentLinks('@source inline(…)', {
+    text: '@source inline("m-{1,2,3}");',
+    lang: 'css',
+    expected: [],
+  })
+
+  testDocumentLinks('@source not inline(…)', {
+    text: '@source not inline("m-{1,2,3}");',
+    lang: 'css',
+    expected: [],
+  })
+
   testDocumentLinks('Directories in source(…) show links', {
     text: `
       @import "tailwindcss" source("../../");
