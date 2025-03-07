@@ -487,7 +487,7 @@ withFixture('v4/basic', (c) => {
     })
 
     // Make sure `@slot` is NOT suggested by default
-    expect(result.items.length).toBe(7)
+    expect(result.items.length).toBe(8)
     expect(result.items).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),

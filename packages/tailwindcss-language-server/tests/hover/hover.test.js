@@ -293,6 +293,33 @@ withFixture('v4/basic', (c) => {
     },
   })
 
+  testHover('css @source not glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source not "../{app,components}/**/*.jsx"`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- ../app/**/*.jsx',
+          '- ../components/**/*.jsx',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 42 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
   testHover('--theme() works inside @media queries', {
     lang: 'tailwindcss',
     text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,
