@@ -164,18 +164,28 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
+export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
+  const names = fnNames.filter((x) => typeof x === 'string')
+  const re = /\b(F_NAMES)(\(|`)/
+  return findAll(new RegExp(re.source.replace('F_NAMES', names.join('|')), 'gi'), text)
+}
+
 export async function findClassListsInHtmlRange(
-  state: State,
+  // PickDeep from 'type-fest' package cannot be used here due to a circular reference issue in the package
+  // Fixes are underway (see: https://github.com/sindresorhus/type-fest/pull/1079)
+  state: { editor?: Pick<NonNullable<State['editor']>, 'getConfiguration'> },
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx',
   range?: Range,
 ): Promise<DocumentClassList[]> {
   const text = getTextWithoutComments(doc, type, range)
 
-  const matches = matchClassAttributes(
-    text,
-    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes,
-  )
+  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
+  const matches = matchClassAttributes(text, settings.classAttributes)
+
+  if (settings.classFunctions?.length) {
+    matches.push(...matchClassFunctions(text, settings.classFunctions))
+  }
 
   const result: DocumentClassList[] = []
 
