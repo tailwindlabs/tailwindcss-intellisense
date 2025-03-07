@@ -14,7 +14,7 @@ const PATTERN_UTIL_SOURCE =
 
 // @source …
 const PATTERN_AT_SOURCE =
-  /(?:\s|^)@(?<directive>source)\s*(?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
+  /(?:\s|^)@(?<directive>source)\s*(?<not>not)?\s*(?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
 
 const HAS_DRIVE_LETTER = /^[A-Z]:/
 

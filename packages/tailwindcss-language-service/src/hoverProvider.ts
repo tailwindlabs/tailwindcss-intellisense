@@ -168,7 +168,7 @@ async function provideSourceGlobHover(
 
   let text = getTextWithoutComments(document, 'css', range)
 
-  let pattern = /@source\s*(?<path>'[^']+'|"[^"]+")/dg
+  let pattern = /@source(?:\s+not)?\s*(?<path>'[^']+'|"[^"]+")/dg
 
   for (let match of findAll(pattern, text)) {
     let path = match.groups.path.slice(1, -1)
