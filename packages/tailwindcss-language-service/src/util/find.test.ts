@@ -276,6 +276,57 @@ test('test nested classFunctions', async ({ expect }) => {
   expect(classLists).toMatchObject(expectedResult)
 })
 
+test('test classFunctions with tagged template literals', async ({ expect }) => {
+  const state = getTailwindSettingsForClassFunctions()
+  const classList = `pointer-events-auto relative flex bg-red-500
+    items-center justify-between overflow-hidden
+    md:min-w-[20rem] md:max-w-[37.5rem] md:py-sm pl-md py-xs pr-xs gap-sm w-full
+    data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]
+    md:h-[calc(100%-2rem)]
+    data-[swipe=move]:transition-none`
+
+  const expectedResult: DocumentClassList[] = [
+    {
+      classList,
+      range: {
+        start: { line: 2, character: 6 },
+        end: { line: 7, character: 37 },
+      },
+    },
+  ]
+
+  const cnContent = `
+    const tagged = cn\`
+      ${classList}\`
+  `
+  const cnDoc = TextDocument.create('file://file.html', 'html', 1, cnContent)
+  const cnClassLists = await findClassListsInHtmlRange(state, cnDoc, 'html')
+
+  console.log('cnClassLists', JSON.stringify(cnClassLists, null, 2))
+
+  expect(cnClassLists).toMatchObject(expectedResult)
+
+  const cvaContent = `
+    const tagged = cva\`
+      ${classList}\`
+  `
+  const cvaDoc = TextDocument.create('file://file.html', 'html', 1, cvaContent)
+  const cvaClassLists = await findClassListsInHtmlRange(state, cvaDoc, 'html')
+
+  expect(cvaClassLists).toMatchObject(expectedResult)
+
+  // Ensure another tag name with the same layout doesn't match
+  const cmaContent = `
+    const tagged = cma\`
+      ${classList}\`
+  `
+
+  const cmaDoc = TextDocument.create('file://file.html', 'html', 1, cmaContent)
+  const cmaClassLists = await findClassListsInHtmlRange(state, cmaDoc, 'html')
+
+  expect(cmaClassLists).toMatchObject([])
+})
+
 function getTailwindSettingsForClassFunctions(): Parameters<typeof findClassListsInHtmlRange>[0] {
   const defaultSettings = getDefaultTailwindSettings()
   return {

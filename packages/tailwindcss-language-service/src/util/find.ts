@@ -166,7 +166,7 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
 
 export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
   const names = fnNames.filter((x) => typeof x === 'string')
-  const re = /\b(F_NAMES)\(/
+  const re = /\b(F_NAMES)(\(|`)/
   return findAll(new RegExp(re.source.replace('F_NAMES', names.join('|')), 'gi'), text)
 }
 

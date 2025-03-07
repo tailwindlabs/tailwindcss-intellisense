@@ -190,7 +190,7 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "The function names for which to provide class completions, hover previews, linting etc."
+          "markdownDescription": "The function or tagged template literal names for which to provide class completions, hover previews, linting etc."
         },
         "tailwindCSS.suggestions": {
           "type": "boolean",
