@@ -184,6 +184,14 @@
           ],
           "markdownDescription": "The HTML attributes for which to provide class completions, hover previews, linting etc."
         },
+        "tailwindCSS.classFunctions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "The function names for which to provide class completions, hover previews, linting etc."
+        },
         "tailwindCSS.suggestions": {
           "type": "boolean",
           "default": true,
@@ -303,14 +311,6 @@
           ],
           "default": null,
           "markdownDescription": "Manually specify the Tailwind config file or files that should be read to provide IntelliSense features. Can either be a single string value, or an object where each key is a config file path and each value is a glob or array of globs representing the set of files that the config file applies to."
-        },
-        "tailwindCSS.experimental.classFunctions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "The function names for which to provide class completions, hover previews, linting etc."
         },
         "tailwindCSS.showPixelEquivalents": {
           "type": "boolean",

@@ -747,8 +747,8 @@ async function provideClassAttributeCompletions(
 
   let matches = matchClassAttributes(str, settings.classAttributes)
 
-  if (settings.experimental.classFunctions?.length) {
-    matches.push(...matchClassFunctions(str, settings.experimental.classFunctions))
+  if (settings.classFunctions?.length) {
+    matches.push(...matchClassFunctions(str, settings.classFunctions))
   }
 
   if (matches.length === 0) {

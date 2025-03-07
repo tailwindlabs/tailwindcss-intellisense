@@ -284,10 +284,7 @@ function getTailwindSettingsForClassFunctions(): Parameters<typeof findClassList
         ...defaultSettings,
         tailwindCSS: {
           ...defaultSettings.tailwindCSS,
-          experimental: {
-            ...defaultSettings.tailwindCSS.experimental,
-            classFunctions: ['cva', 'cn'],
-          },
+          classFunctions: ['cva', 'cn'],
         },
       }),
     },

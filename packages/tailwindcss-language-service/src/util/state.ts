@@ -46,6 +46,7 @@ export type TailwindCssSettings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   classAttributes: string[]
+  classFunctions: string[]
   suggestions: boolean
   hovers: boolean
   codeActions: boolean
@@ -66,7 +67,6 @@ export type TailwindCssSettings = {
   experimental: {
     classRegex: string[] | [string, string][]
     configFile: string | Record<string, string | string[]> | null
-    classFunctions: string[]
   }
   files: {
     exclude: string[]
@@ -180,6 +180,7 @@ export function getDefaultTailwindSettings() {
       inspectPort: null,
       emmetCompletions: false,
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
+      classFunctions: [],
       codeActions: true,
       hovers: true,
       suggestions: true,
@@ -202,7 +203,6 @@ export function getDefaultTailwindSettings() {
       experimental: {
         classRegex: [],
         configFile: null,
-        classFunctions: [],
       },
     },
     // Return this as const object that satisfies Settings to be able to see the exact default values we specify

@@ -183,8 +183,8 @@ export async function findClassListsInHtmlRange(
   const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
   const matches = matchClassAttributes(text, settings.classAttributes)
 
-  if (settings.experimental.classFunctions?.length) {
-    matches.push(...matchClassFunctions(text, settings.experimental.classFunctions))
+  if (settings.classFunctions?.length) {
+    matches.push(...matchClassFunctions(text, settings.classFunctions))
   }
 
   const result: DocumentClassList[] = []
