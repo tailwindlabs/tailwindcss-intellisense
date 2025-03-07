@@ -172,3 +172,38 @@ export type ClassNameMeta = {
   scope: string[]
   context: string[]
 }
+
+export function getDefaultTailwindSettings(): Settings {
+  return {
+    editor: { tabSize: 2 },
+    tailwindCSS: {
+      inspectPort: null,
+      emmetCompletions: false,
+      classAttributes: ['class', 'className', 'ngClass', 'class:list'],
+      codeActions: true,
+      hovers: true,
+      suggestions: true,
+      validate: true,
+      colorDecorators: true,
+      rootFontSize: 16,
+      lint: {
+        cssConflict: 'warning',
+        invalidApply: 'error',
+        invalidScreen: 'error',
+        invalidVariant: 'error',
+        invalidConfigPath: 'error',
+        invalidTailwindDirective: 'error',
+        invalidSourceDirective: 'error',
+        recommendedVariantOrder: 'warning',
+      },
+      showPixelEquivalents: true,
+      includeLanguages: {},
+      files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+      experimental: {
+        classRegex: [],
+        configFile: null,
+        classFunctions: [],
+      },
+    },
+  }
+}
