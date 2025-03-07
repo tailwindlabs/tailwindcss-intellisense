@@ -1,9 +1,4 @@
-import {
-  getDefaultTailwindSettings,
-  type DocumentClassList,
-  type EditorState,
-  type State,
-} from './state'
+import { getDefaultTailwindSettings, type DocumentClassList } from './state'
 import { test } from 'vitest'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassListsInHtmlRange } from './find'
@@ -18,15 +13,13 @@ test('test astro', async ({ expect }) => {
 
   let doc = TextDocument.create('file://file.astro', 'astro', 1, content)
   let defaultSettings = getDefaultTailwindSettings()
-  let state: State = {
-    blocklist: [],
-    enabled: true,
+  let state: Parameters<typeof findClassListsInHtmlRange>[0] = {
     editor: {
-      userLanguages: {},
       getConfiguration: async () => ({
         ...defaultSettings,
         tailwindCSS: {
           ...defaultSettings.tailwindCSS,
+          classAttributes: ['class'],
           experimental: {
             ...defaultSettings.tailwindCSS.experimental,
             classRegex: [
@@ -36,7 +29,7 @@ test('test astro', async ({ expect }) => {
           },
         },
       }),
-    } as EditorState,
+    },
   }
 
   let classLists = await findClassListsInHtmlRange(state, doc, 'html')
@@ -180,7 +173,7 @@ test('test simple classFunctions', async ({ expect }) => {
   const cmaDoc = TextDocument.create('file://file.html', 'html', 1, cmaContent)
   const cmaClassLists = await findClassListsInHtmlRange(state, cmaDoc, 'html')
 
-  expect(cmaClassLists).not.toMatchObject(expectedResult)
+  expect(cmaClassLists).toMatchObject([])
 })
 
 test('test nested classFunctions', async ({ expect }) => {
@@ -283,13 +276,10 @@ test('test nested classFunctions', async ({ expect }) => {
   expect(classLists).toMatchObject(expectedResult)
 })
 
-function getTailwindSettingsForClassFunctions(): State {
+function getTailwindSettingsForClassFunctions(): Parameters<typeof findClassListsInHtmlRange>[0] {
   const defaultSettings = getDefaultTailwindSettings()
   return {
-    blocklist: [],
-    enabled: true,
     editor: {
-      userLanguages: {},
       getConfiguration: async () => ({
         ...defaultSettings,
         tailwindCSS: {
@@ -300,6 +290,6 @@ function getTailwindSettingsForClassFunctions(): State {
           },
         },
       }),
-    } as EditorState,
+    },
   }
 }
