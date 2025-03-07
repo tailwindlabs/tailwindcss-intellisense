@@ -18,7 +18,7 @@ export function getDocumentLinks(
   if (state.v4) {
     patterns.push(
       /@plugin\s*(?<path>'[^']+'|"[^"]+")/g,
-      /@source\s*(?<path>'[^']+'|"[^"]+")/g,
+      /@source(?:\s+not)?\s*(?<path>'[^']+'|"[^"]+")/g,
       /@import\s*('[^']*'|"[^"]*")\s*(layer\([^)]+\)\s*)?source\((?<path>'[^']*'?|"[^"]*"?)/g,
       /@reference\s*('[^']*'|"[^"]*")\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
       /@tailwind\s*utilities\s*source\((?<path>'[^']*'?|"[^"]*"?)/g,
