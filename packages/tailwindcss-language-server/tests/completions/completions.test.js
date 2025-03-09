@@ -514,12 +514,13 @@ withFixture('v4/basic', (c) => {
       position: { line: 0, character: 7 },
     })
 
-    expect(result.items.length).toBe(3)
+    expect(result.items.length).toBe(4)
     expect(result.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: 'reference' }),
         expect.objectContaining({ label: 'inline' }),
         expect.objectContaining({ label: 'default' }),
+        expect.objectContaining({ label: 'static' }),
       ]),
     )
   })
@@ -531,12 +532,13 @@ withFixture('v4/basic', (c) => {
       position: { line: 0, character: 34 },
     })
 
-    expect(result.items.length).toBe(3)
+    expect(result.items.length).toBe(4)
     expect(result.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: 'reference' }),
         expect.objectContaining({ label: 'inline' }),
         expect.objectContaining({ label: 'default' }),
+        expect.objectContaining({ label: 'static' }),
       ]),
     )
   })

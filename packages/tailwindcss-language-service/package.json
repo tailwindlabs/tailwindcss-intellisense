@@ -1,6 +1,6 @@
 {
   "name": "@tailwindcss/language-service",
-  "version": "0.14.2",
+  "version": "0.14.8",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -44,11 +44,11 @@
     "@types/line-column": "^1.0.2",
     "@types/node": "^18.19.33",
     "@types/stringify-object": "^4.0.5",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
     "tslib": "2.2.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.1.2"
+    "vitest": "^1.6.1"
   }
 }

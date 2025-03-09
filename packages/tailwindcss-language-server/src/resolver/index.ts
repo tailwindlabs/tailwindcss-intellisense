@@ -143,7 +143,8 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
   let esmResolver = ResolverFactory.createResolver({
     fileSystem,
-    extensions: ['.mjs', '.js'],
+    // .json is omitted since Node does not support await import('foo.json')
+    extensions: ['.mjs', '.js', '.node', '.mts', '.ts'],
     mainFields: ['module'],
     conditionNames: ['node', 'import'],
     pnpApi,
@@ -151,7 +152,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
 
   let cjsResolver = ResolverFactory.createResolver({
     fileSystem,
-    extensions: ['.cjs', '.js'],
+    extensions: ['.cjs', '.js', '.json', '.node', '.cts', '.ts'],
     mainFields: ['main'],
     conditionNames: ['node', 'require'],
     pnpApi,
@@ -195,7 +196,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     id = normalizeYarnPnPDriveLetter(id)
     base = normalizeYarnPnPDriveLetter(base)
 
-    return new Promise((resolve, reject) => {
+    let result = await new Promise<string | false>((resolve, reject) => {
       resolver.resolve({}, base, id, {}, (err, res) => {
         if (err) {
           reject(err)
@@ -204,6 +205,21 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
         }
       })
     })
+
+    if (!result) return false
+
+    // The `enhanced-resolve` package supports resolving paths with fragment
+    // identifiers. For example, it can resolve `foo/bar#baz` to `foo/bar.js`
+    // However, it's also possible that a path contains a `#` character as part
+    // of the path itself. For example, `foo#bar` might point to a file named
+    // `foo#bar.js`. The resolver distinguishes between these two cases by
+    // escaping the `#` character with a NUL byte when it's part of the path.
+    //
+    // Since the real path doesn't actually contain NUL bytes, we need to remove
+    // them to get the correct path otherwise readFileSync will throw an error.
+    result = result.replace(/\0(.)/g, '$1')
+
+    return result
   }
 
   async function resolveJsId(id: string, base: string): Promise<string> {

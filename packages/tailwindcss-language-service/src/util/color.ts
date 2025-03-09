@@ -66,6 +66,7 @@ function getColorsInString(state: State, str: string): (culori.Color | KeywordCo
 
   str = replaceCssVarsWithFallbacks(state, str)
   str = removeColorMixWherePossible(str)
+  str = resolveLightDark(str)
 
   let possibleColors = str.matchAll(colorRegex)
 
@@ -279,4 +280,10 @@ function removeColorMixWherePossible(str: string) {
 
     return culori.formatRgb({ ...parsed, alpha })
   })
+}
+
+const LIGHT_DARK_REGEX = /light-dark\(\s*(.*?)\s*,\s*.*?\s*\)/g
+
+function resolveLightDark(str: string) {
+  return str.replace(LIGHT_DARK_REGEX, (_, lightColor) => lightColor)
 }

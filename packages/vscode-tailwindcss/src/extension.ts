@@ -540,6 +540,7 @@ export async function activate(context: ExtensionContext) {
     let client = new LanguageClient(CLIENT_ID, CLIENT_NAME, serverOptions, clientOptions)
 
     client.onNotification('@/tailwindCSS/error', showError)
+    client.onNotification('@/tailwindCSS/warn', showWarning)
     client.onNotification('@/tailwindCSS/clearColors', clearColors)
     client.onNotification('@/tailwindCSS/projectInitialized', updateActiveTextEditorContext)
     client.onNotification('@/tailwindCSS/projectReset', updateActiveTextEditorContext)
@@ -557,6 +558,12 @@ export async function activate(context: ExtensionContext) {
 
     async function showError({ message }: ErrorNotification) {
       let action = await Window.showErrorMessage(message, 'Go to output')
+      if (action !== 'Go to output') return
+      commands.executeCommand('tailwindCSS.showOutput')
+    }
+
+    async function showWarning({ message }: ErrorNotification) {
+      let action = await Window.showWarningMessage(message, 'Go to output')
       if (action !== 'Go to output') return
       commands.executeCommand('tailwindCSS.showOutput')
     }

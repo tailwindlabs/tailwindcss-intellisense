@@ -12,6 +12,7 @@ function getDefaultSettings(): Settings {
   return {
     editor: { tabSize: 2 },
     tailwindCSS: {
+      inspectPort: null,
       emmetCompletions: false,
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
       codeActions: true,

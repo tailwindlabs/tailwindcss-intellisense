@@ -13,7 +13,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import dlv from 'dlv'
 import removeMeta from './util/removeMeta'
 import { formatColor, getColor, getColorFromValue } from './util/color'
-import { isHtmlContext } from './util/html'
+import { isHtmlContext, isHtmlDoc, isVueDoc } from './util/html'
 import { isCssContext } from './util/css'
 import { findLast, matchClassAttributes } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
@@ -42,9 +42,9 @@ import { IS_SCRIPT_SOURCE, IS_TEMPLATE_SOURCE } from './metadata/extensions'
 import * as postcss from 'postcss'
 import { findFileDirective } from './completions/file-paths'
 import type { ThemeEntry } from './util/v4'
-import { posix } from 'node:path/win32'
 import { segment } from './util/segment'
 import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/theme-keys'
+import { SEARCH_RANGE } from './util/constants'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -91,10 +91,11 @@ export function completionsFromClassList(
       let beforeSlash = partialClassName.split('/').slice(0, -1).join('/')
 
       let baseClassName = beforeSlash.slice(offset)
-      modifiers = state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
-        ?.modifiers
+      modifiers =
+        state.classList.find((cls) => Array.isArray(cls) && cls[0] === baseClassName)?.[1]
+          ?.modifiers ?? []
 
-      if (modifiers) {
+      if (modifiers.length > 0) {
         return withDefaults(
           {
             isIncomplete: false,
@@ -217,7 +218,7 @@ export function completionsFromClassList(
           variantItem({
             label: `${variant.name}${sep}`,
             detail: selectors
-              .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+              .map((selector) => addPixelEquivalentsToMediaQuery(selector))
               .join(', '),
             textEditText: resultingVariants[resultingVariants.length - 1] + sep,
             additionalTextEdits:
@@ -489,7 +490,7 @@ export function completionsFromClassList(
               label: `${variant.name}${sep}`,
               detail: variant
                 .selectors()
-                .map((selector) => addPixelEquivalentsToMediaQuery(selector, rootFontSize))
+                .map((selector) => addPixelEquivalentsToMediaQuery(selector))
                 .join(', '),
               textEditText: resultingVariants[resultingVariants.length - 1] + sep,
               additionalTextEdits:
@@ -727,10 +728,20 @@ async function provideClassAttributeCompletions(
   position: Position,
   context?: CompletionContext,
 ): Promise<CompletionList> {
-  let str = document.getText({
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - 2000)),
+  let range: Range = {
+    start: document.positionAt(Math.max(0, document.offsetAt(position) - SEARCH_RANGE)),
     end: position,
-  })
+  }
+
+  let str: string
+
+  if (isJsDoc(state, document)) {
+    str = getTextWithoutComments(document, 'js', range)
+  } else if (isHtmlDoc(state, document)) {
+    str = getTextWithoutComments(document, 'html', range)
+  } else {
+    str = document.getText(range)
+  }
 
   let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
 
@@ -795,7 +806,7 @@ async function provideCustomClassNameCompletions(
 
   let text = document.getText({
     start: document.positionAt(0),
-    end: document.positionAt(cursor + 2000),
+    end: document.positionAt(cursor + SEARCH_RANGE),
   })
 
   // Get completions from the first matching regex or regex pair
@@ -1999,6 +2010,17 @@ async function provideThemeDirectiveCompletions(
           directive === 'import'
             ? `Inline imported theme values into generated utilities instead of using \`var(…)\`.`
             : `Inline these theme values into generated utilities instead of using \`var(…)\`.`,
+      },
+      sortText: '-000001',
+    },
+    {
+      label: 'static',
+      documentation: {
+        kind: 'markdown',
+        value:
+          directive === 'import'
+            ? `Always emit imported theme values into the CSS file instead of only when used.`
+            : `Always emit these theme values into the CSS file instead of only when used.`,
       },
       sortText: '-000001',
     },

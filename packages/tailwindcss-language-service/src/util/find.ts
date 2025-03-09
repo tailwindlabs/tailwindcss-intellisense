@@ -13,6 +13,7 @@ import { resolveRange } from './resolveRange'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 import { customClassesIn } from './classes'
+import { SEARCH_RANGE } from './constants'
 
 export function findAll(re: RegExp, str: string): RegExpMatchArray[] {
   let match: RegExpMatchArray
@@ -269,10 +270,11 @@ export async function findClassListsInRange(
   range?: Range,
   mode?: 'html' | 'css' | 'jsx',
   includeCustom: boolean = true,
+  lang?: string,
 ): Promise<DocumentClassList[]> {
   let classLists: DocumentClassList[] = []
   if (mode === 'css') {
-    classLists = findClassListsInCssRange(state, doc, range)
+    classLists = findClassListsInCssRange(state, doc, range, lang)
   } else if (mode === 'html' || mode === 'jsx') {
     classLists = await findClassListsInHtmlRange(state, doc, mode, range)
   }
@@ -350,7 +352,7 @@ export function findHelperFunctionsInRange(
 ): DocumentHelperFunction[] {
   const text = getTextWithoutComments(doc, 'css', range)
   let matches = findAll(
-    /(?<prefix>[\s:;/*(){}])(?<helper>config|theme|--theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
+    /(?<prefix>[\W])(?<helper>config|theme|--theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
     text,
   )
 
@@ -437,8 +439,8 @@ export async function findClassNameAtPosition(
   let classNames: DocumentClassName[] = []
   const positionOffset = doc.offsetAt(position)
   const searchRange: Range = {
-    start: doc.positionAt(Math.max(0, positionOffset - 2000)),
-    end: doc.positionAt(positionOffset + 2000),
+    start: doc.positionAt(0),
+    end: doc.positionAt(positionOffset + SEARCH_RANGE),
   }
 
   if (isVueDoc(doc)) {
@@ -447,15 +449,15 @@ export async function findClassNameAtPosition(
     let groups = await Promise.all(
       boundaries.map(async ({ type, range, lang }) => {
         if (type === 'css') {
-          return findClassListsInCssRange(state, doc, range, lang)
+          return await findClassListsInRange(state, doc, range, 'css', true, lang)
         }
 
         if (type === 'html') {
-          return await findClassListsInHtmlRange(state, doc, 'html', range)
+          return await findClassListsInRange(state, doc, range, 'html')
         }
 
-        if (type === 'jsx') {
-          return await findClassListsInHtmlRange(state, doc, 'jsx', range)
+        if (type === 'js' || type === 'jsx') {
+          return await findClassListsInRange(state, doc, range, 'jsx')
         }
 
         return []

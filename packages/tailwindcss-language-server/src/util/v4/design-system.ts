@@ -9,6 +9,7 @@ import { Resolver } from '../../resolver'
 import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
 import { assets } from './assets'
+import { plugins } from './plugins'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -58,6 +59,28 @@ function createLoader<T>({
 
       return await jiti.import(url.href, { default: true })
     } catch (err) {
+      // If the request was to load a first-party plugin and we can't resolve it
+      // locally, then fall back to the built-in plugins that we know about.
+      if (resourceType === 'plugin' && id in plugins) {
+        console.log('Loading bundled plugin for: ', id)
+        return await plugins[id]()
+      }
+
+      // This checks for an error thrown by enhanced-resolve
+      if (err && typeof err.details === 'string') {
+        let details: string = err.details
+        let pattern = /^resolve '([^']+)'/
+        let match = details.match(pattern)
+        if (match) {
+          let [_, importee] = match
+          if (importee in plugins) {
+            console.log(
+              `[error] Cannot load '${id}' plugins inside configs or plugins is not currently supported`,
+            )
+          }
+        }
+      }
+
       return onError(id, err, resourceType)
     }
   }

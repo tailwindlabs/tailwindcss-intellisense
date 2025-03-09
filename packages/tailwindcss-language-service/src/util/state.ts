@@ -42,6 +42,7 @@ export type EditorSettings = {
 }
 
 export type TailwindCssSettings = {
+  inspectPort: number | null
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   classAttributes: string[]
@@ -65,7 +66,7 @@ export type TailwindCssSettings = {
   }
   experimental: {
     classRegex: string[]
-    configFile: string | Record<string, string | string[]>
+    configFile: string | Record<string, string | string[]> | null
   }
   files: {
     exclude: string[]

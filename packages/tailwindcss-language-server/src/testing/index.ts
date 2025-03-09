@@ -1,4 +1,4 @@
-import { afterAll, onTestFinished, test, TestOptions } from 'vitest'
+import { onTestFinished, test, TestOptions } from 'vitest'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
@@ -11,12 +11,13 @@ export interface TestUtils {
 
 export interface Storage {
   /** A list of files and their content */
-  [filePath: string]: string | Uint8Array
+  [filePath: string]: string | Uint8Array | { [IS_A_SYMLINK]: true; filepath: string }
 }
 
 export interface TestConfig<Extras extends {}> {
   name: string
-  fs: Storage
+  fs?: Storage
+  debug?: boolean
   prepare?(utils: TestUtils): Promise<Extras>
   handle(utils: TestUtils & Extras): void | Promise<void>
 
@@ -43,8 +44,10 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
   await fs.mkdir(baseDir, { recursive: true })
 
-  await prepareFileSystem(baseDir, config.fs)
-  await installDependencies(baseDir, config.fs)
+  if (config.fs) {
+    await prepareFileSystem(baseDir, config.fs)
+    await installDependencies(baseDir, config.fs)
+  }
 
   onTestFinished(async (result) => {
     // Once done, move all the files to a new location
@@ -53,6 +56,8 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
     if (result.state === 'fail') return
 
     if (path.sep === '\\') return
+
+    if (config.debug) return
 
     // Remove the directory on *nix systems. Recursive removal on Windows will
     // randomly fail b/c its slow and buggy.
@@ -64,6 +69,14 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
   }
 }
 
+const IS_A_SYMLINK = Symbol('is-a-symlink')
+export const symlinkTo = function (filepath: string) {
+  return {
+    [IS_A_SYMLINK]: true as const,
+    filepath,
+  }
+}
+
 async function prepareFileSystem(base: string, storage: Storage) {
   // Create a temporary directory to store the test files
   await fs.mkdir(base, { recursive: true })
@@ -72,6 +85,13 @@ async function prepareFileSystem(base: string, storage: Storage) {
   for (let [filepath, content] of Object.entries(storage)) {
     let fullPath = path.resolve(base, filepath)
     await fs.mkdir(path.dirname(fullPath), { recursive: true })
+
+    if (typeof content === 'object' && IS_A_SYMLINK in content) {
+      let target = path.resolve(base, content.filepath)
+      await fs.symlink(target, fullPath)
+      continue
+    }
+
     await fs.writeFile(fullPath, content, { encoding: 'utf-8' })
   }
 }

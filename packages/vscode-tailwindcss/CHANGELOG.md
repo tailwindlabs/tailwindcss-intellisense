@@ -2,9 +2,66 @@
 
 ## Prerelease
 
+- v4: Support loading bundled versions of some first-party plugins ([#1240](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1240))
+
+# 0.14.8
+
+- Don't throw when requiring() packages that resolve to a path containing a `#` character ([#1235](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1235))
+- Fix syntax error when resetting multi-word theme key namespaces ([#1237](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1237))
+
+# 0.14.7
+
+- LSP: Declare capability for handling workspace folder change notifications ([#1223](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1223))
+- Don't throw when resolving paths containing a `#` character ([#1225](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1225))
+- Show `@theme` in symbol list in CSS language mode ([#1227](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1227))
+- Don't show syntax error when `*` appear inside `—value(…)` and `--modifier(…)`  ([#1226](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1226))
+- Don't show syntax error for theme namespaces inside `@theme` ([#1226](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1226))
+
+## 0.14.6
+
+- Fix detection when project contains stylesheets that import the "main" stylesheet ([#1218](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1218))
+
+## 0.14.5
+
+- Show light color swatch from light-dark() functions ([#1199](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1199))
+- Ignore comments when matching class attributes ([#1202](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1202))
+- Show source diagnostics when imports contain a layer ([#1204](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1204))
+- Only detect project roots in v4 when using certain CSS features ([#1205](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1205))
+- Update Tailwind CSS v4 version to v4.0.6 ([#1207](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1207))
+- Fix parsing of `@custom-variant` block syntax containg declarations and/or `@slot` ([#1212](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1212))
+- Fix display of custom at-rules in symbol listing ([#1212](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1212))
+
+## 0.14.4
+
+- Ensure hover information for `theme(…)` and other functions are shown when used in `@media` queries ([#1172](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1172))
+- Treat `<script lang=“tsx”>` as containing JSX ([#1175](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1175))
+- Add support for `static` theme option ([#1176](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1176))
+- Add details about theme options when hovering ([#1176](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1176))
+- Fix parsing of `@custom-variant` shorthand in Tailwind CSS language mode ([#1183](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1183))
+- Make sure custom regexes apply in Vue `<script>` blocks  ([#1177](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1177))
+- Fix suggestion of utilities with slashes in them in v4 ([#1182](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1182))
+- Assume 16px font size for `1rem` in media queries ([#1190](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1190))
+- Show warning when loading a config in v3 fails ([#1191](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1191))
+- Better handle really long class lists in attributes and custom regexes ([#1192](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1192))
+- Add support for Astro’s template literal attributes ([#1193](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1193))
+- Match custom class regex in Vue templates ([#1194](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1194))
+- Support directory imports in plugins for `index.{ts,cts,mts}` ([#1198](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1198))
+
+## 0.14.3
+
 - Allow v4.0 projects not installed with npm to use IntelliSense ([#1157](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1157))
 - Ignore preprocessor files when looking for v4 configs ([#1159](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1159))
 - Allow language service to be used in native ESM environments ([#1122](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1122))
+- Don't create v4 projects for CSS files that don't look like v4 configs [#1164](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1164)
+- Support property and variable completions inside `@utility` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Support style-rule like completions inside `@custom-variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Support style-rule like completions inside `@variant` ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Make sure `@slot` isn't considered an unknown at-rule ([#1165](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1165))
+- Fix equivalent calculation when using prefixes in v4 ([#1166](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1166))
+- Fix use of `tailwindCSS.experimental.configFile` option when using the bundled version of v4 ([#1167](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1167))
+- Recursively resolve values from the theme ([#1168](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1168))
+- Handle theme keys containing escaped commas ([#1168](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1168))
+- Show colors for utilities when they point to CSS variables contained in the theme ([#1168](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1168))
 
 ## 0.14.2
 

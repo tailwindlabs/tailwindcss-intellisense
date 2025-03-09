@@ -1,5 +1,13 @@
 import { test, expect } from 'vitest'
-import { withFixture } from '../common'
+import { init, withFixture } from '../common'
+import { css, defineTest } from '../../src/testing'
+import { DocumentColorRequest } from 'vscode-languageserver'
+
+const color = (red, green, blue, alpha) => ({ red, green, blue, alpha })
+const range = (startLine, startCol, endLine, endCol) => ({
+  start: { line: startLine, character: startCol },
+  end: { line: endLine, character: endCol },
+})
 
 withFixture('basic', (c) => {
   async function testColors(name, { text, expected }) {
@@ -299,4 +307,84 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+})
+
+defineTest({
+  name: 'v4: colors are recursively resolved from the theme',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-*: initial;
+        --color-primary: #ff0000;
+        --color-level-1: var(--color-primary);
+        --color-level-2: var(--color-level-1);
+        --color-level-3: var(--color-level-2);
+        --color-level-4: var(--color-level-3);
+        --color-level-5: var(--color-level-4);
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let textDocument = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary bg-level-1 bg-level-2 bg-level-3 bg-level-4 bg-level-5">',
+    })
+
+    expect(c.project).toMatchObject({
+      tailwind: {
+        version: '4.0.6',
+        isDefaultVersion: true,
+      },
+    })
+
+    let colors = await c.sendRequest(DocumentColorRequest.type, {
+      textDocument,
+    })
+
+    expect(colors).toEqual([
+      { range: range(0, 12, 0, 22), color: color(1, 0, 0, 1) },
+      { range: range(0, 23, 0, 33), color: color(1, 0, 0, 1) },
+      { range: range(0, 34, 0, 44), color: color(1, 0, 0, 1) },
+      { range: range(0, 45, 0, 55), color: color(1, 0, 0, 1) },
+      { range: range(0, 56, 0, 66), color: color(1, 0, 0, 1) },
+      { range: range(0, 67, 0, 77), color: color(1, 0, 0, 1) },
+    ])
+  },
+})
+
+defineTest({
+  name: 'colors that use light-dark() resolve to their light color',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @theme {
+        --color-primary: light-dark(#ff0000, #0000ff);
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ c: await init(root) }),
+  handle: async ({ c }) => {
+    let textDocument = await c.openDocument({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+    })
+
+    expect(c.project).toMatchObject({
+      tailwind: {
+        version: '4.0.6',
+        isDefaultVersion: true,
+      },
+    })
+
+    let colors = await c.sendRequest(DocumentColorRequest.type, {
+      textDocument,
+    })
+
+    expect(colors).toEqual([
+      //
+      { range: range(0, 12, 0, 22), color: color(1, 0, 0, 1) },
+    ])
+  },
 })

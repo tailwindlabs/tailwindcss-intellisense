@@ -19,7 +19,7 @@ import type {
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { Range, TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import { showError, SilentError } from './util/error'
+import { showError, showWarning, SilentError } from './util/error'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import findUp from 'find-up'
@@ -849,6 +849,15 @@ export async function createProjectService(
         originalConfig = await loadConfig.module(state.configPath)
         originalConfig = originalConfig.default ?? originalConfig
         state.jit = true
+      } catch (err) {
+        // The user's config failed to load in v3 so we need to fallback
+        originalConfig = await resolveConfig.module({})
+        state.jit = true
+
+        // And warn the user
+        console.error(`Unable to load config file at: ${state.configPath}`)
+        console.error(err)
+        showWarning(connection, 'Tailwind CSS is unable to load your config file', err)
       } finally {
         hook.unhook()
       }

@@ -6,7 +6,7 @@ withFixture('basic', (c) => {
     name,
     { text, lang, position, exact = false, expected, expectedRange, settings },
   ) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -29,6 +29,7 @@ withFixture('basic', (c) => {
 
   testHover('disabled', {
     text: '<div class="bg-red-500">',
+    position: { line: 0, character: 13 },
     settings: {
       tailwindCSS: { hovers: false },
     },
@@ -154,6 +155,24 @@ withFixture('basic', (c) => {
       },
     },
   })
+
+  testHover('theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=theme(screens.xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 21 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '1280px', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 21 },
+        end: { line: 0, character: 31 },
+      },
+    },
+  })
 })
 
 withFixture('v4/basic', (c) => {
@@ -161,7 +180,7 @@ withFixture('v4/basic', (c) => {
     name,
     { text, exact = false, lang, position, expected, expectedRange, settings },
   ) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -184,6 +203,7 @@ withFixture('v4/basic', (c) => {
 
   testHover('disabled', {
     text: '<div class="bg-red-500">',
+    position: { line: 0, character: 13 },
     settings: {
       tailwindCSS: { hovers: false },
     },
@@ -272,11 +292,29 @@ withFixture('v4/basic', (c) => {
       end: { line: 2, character: 18 },
     },
   })
+
+  testHover('--theme() works inside @media queries', {
+    lang: 'tailwindcss',
+    text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,
+    position: { line: 0, character: 23 },
+
+    exact: true,
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: ['```plaintext', '80rem /* 1280px */', '```'].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 23 },
+        end: { line: 0, character: 38 },
+      },
+    },
+  })
 })
 
 withFixture('v4/css-loading-js', (c) => {
   async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
@@ -360,7 +398,7 @@ withFixture('v4/css-loading-js', (c) => {
 
 withFixture('v4/path-mappings', (c) => {
   async function testHover(name, { text, lang, position, expected, expectedRange, settings }) {
-    test.concurrent(name, async ({ expect }) => {
+    test(name, async ({ expect }) => {
       let textDocument = await c.openDocument({ text, lang, settings })
       let res = await c.sendRequest('textDocument/hover', {
         textDocument,
