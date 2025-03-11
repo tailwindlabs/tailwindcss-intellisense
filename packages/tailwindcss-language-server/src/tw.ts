@@ -19,6 +19,8 @@ import type {
   DocumentLink,
   InitializeResult,
   WorkspaceFolder,
+  CodeLensParams,
+  CodeLens,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -30,6 +32,7 @@ import {
   FileChangeType,
   DocumentLinkRequest,
   TextDocumentSyncKind,
+  CodeLensRequest,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
@@ -757,6 +760,7 @@ export class TW {
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onCodeLens(this.onCodeLens.bind(this))
     this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
     this.connection.onRequest(this.onRequest.bind(this))
   }
@@ -809,6 +813,7 @@ export class TW {
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    capabilities.add(CodeLensRequest.type, { documentSelector: null })
     capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
 
     capabilities.add(CompletionRequest.type, {
@@ -931,6 +936,11 @@ export class TW {
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
+  async onCodeLens(params: CodeLensParams): Promise<CodeLens[]> {
+    await this.init()
+    return this.getProject(params.textDocument)?.onCodeLens(params) ?? null
+  }
+
   async onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
     await this.init()
     return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
@@ -961,6 +971,9 @@ export class TW {
           hoverProvider: true,
           colorProvider: true,
           codeActionProvider: true,
+          codeLensProvider: {
+            resolveProvider: false,
+          },
           documentLinkProvider: {},
           completionProvider: {
             resolveProvider: true,

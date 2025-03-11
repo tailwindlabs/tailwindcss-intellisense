@@ -388,7 +388,6 @@ export async function activate(context: ExtensionContext) {
       await Workspace.fs.stat(Uri.joinPath(context.extensionUri, prod))
       module = context.asAbsolutePath(prod)
     } catch (_) {}
-
     let workspaceFile =
       Workspace.workspaceFile?.scheme === 'file' ? Workspace.workspaceFile : undefined
     let inspectPort =
