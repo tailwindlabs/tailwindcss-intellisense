@@ -8,11 +8,23 @@ import type { CodeLens } from 'vscode-languageserver'
 import braces from 'braces'
 import { findAll, indexToPosition } from '../util/find'
 import { absoluteRange } from '../util/absoluteRange'
+import { segment } from '../util/segment'
 
 const PATTERN = /@source(?:\s+not)?\s*inline\((?<glob>'[^']+'|"[^"]+")/dg
 
 export async function provideCodeLens(state: State, doc: TextDocument): Promise<CodeLens[]> {
   let text = doc.getText()
+
+  let countFormatter = new Intl.NumberFormat('en', {
+    maximumFractionDigits: 2,
+  })
+
+  let byteFormatter = new Intl.NumberFormat('en', {
+    notation: 'compact',
+    style: 'unit',
+    unit: 'byte',
+    unitDisplay: 'narrow',
+  })
 
   let lenses: CodeLens[] = []
 
@@ -28,14 +40,73 @@ export async function provideCodeLens(state: State, doc: TextDocument): Promise<
       end: indexToPosition(text, match.indices.groups.glob[1]),
     })
 
+    let size = 0
+    for (let className of expanded) {
+      size += approximateByteSize(className)
+    }
+
     lenses.push({
       range: slice,
       command: {
-        title: `Generates ${expanded.size} classes`,
+        title: `Generates ${countFormatter.format(expanded.size)} classes`,
         command: '',
       },
     })
+
+    if (size >= 1_000_000) {
+      lenses.push({
+        range: slice,
+        command: {
+          title: `At least ${byteFormatter.format(size)} of CSS`,
+          command: '',
+        },
+      })
+
+      lenses.push({
+        range: slice,
+        command: {
+          title: `This may slow down your bundler/browser`,
+          command: '',
+        },
+      })
+    }
   }
 
   return lenses
+}
+
+/**
+ * Calculates the approximate size of a generated class
+ *
+ * This is meant to be a lower bound, as the actual size of a class can vary
+ * depending on the actual CSS properties and values, configured theme, etc…
+ */
+function approximateByteSize(className: string) {
+  let size = 0
+
+  // We estimate the size using the following structure which gives a reasonable
+  // lower bound on the size of the generated CSS:
+  //
+  // .class-name {
+  //   &:variant-1 {
+  //     &:variant-2 {
+  //       /* properties */
+  //     }
+  //   }
+  // }
+
+  // Class name
+  size += 1 + className.length + 3
+  size += 2
+
+  // Variants + nesting
+  for (let [depth, variantName] of segment(className, ':').entries()) {
+    size += (depth + 1) * 2 + 2 + variantName.length + 3
+    size += (depth + 1) * 2 + 2
+  }
+
+  // Properties comment
+  size += 16
+
+  return size
 }
