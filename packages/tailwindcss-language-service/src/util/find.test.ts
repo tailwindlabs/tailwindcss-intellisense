@@ -1,4 +1,4 @@
-import { getDefaultTailwindSettings, type DocumentClassList } from './state'
+import { createState, getDefaultTailwindSettings, type DocumentClassList } from './state'
 import { test } from 'vitest'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassListsInHtmlRange } from './find'
@@ -13,7 +13,7 @@ test('test astro', async ({ expect }) => {
 
   let doc = TextDocument.create('file://file.astro', 'astro', 1, content)
   let defaultSettings = getDefaultTailwindSettings()
-  let state: Parameters<typeof findClassListsInHtmlRange>[0] = {
+  let state = createState({
     editor: {
       getConfiguration: async () => ({
         ...defaultSettings,
@@ -30,7 +30,7 @@ test('test astro', async ({ expect }) => {
         },
       }),
     },
-  }
+  })
 
   let classLists = await findClassListsInHtmlRange(state, doc, 'html')
 

@@ -173,7 +173,7 @@ export type ClassNameMeta = {
   context: string[]
 }
 
-export function getDefaultTailwindSettings() {
+export function getDefaultTailwindSettings(): Settings {
   return {
     editor: { tabSize: 2 },
     tailwindCSS: {
@@ -205,6 +205,34 @@ export function getDefaultTailwindSettings() {
         configFile: null,
       },
     },
-    // Return this as const object that satisfies Settings to be able to see the exact default values we specify
-  } as const satisfies Settings
+  }
+}
+
+export function createState(
+  partial: Omit<Partial<State>, 'editor'> & {
+    editor?: Partial<EditorState>
+  },
+): State {
+  return {
+    enabled: true,
+    ...partial,
+    editor: {
+      get connection(): Connection {
+        throw new Error('Not implemented')
+      },
+      folder: '/',
+      userLanguages: {},
+      capabilities: {
+        configuration: true,
+        diagnosticRelatedInformation: true,
+        itemDefaults: [],
+      },
+      getConfiguration: () => {
+        throw new Error('Not implemented')
+      },
+      getDocumentSymbols: async () => [],
+      readDirectory: async () => [],
+      ...partial.editor,
+    },
+  }
 }
