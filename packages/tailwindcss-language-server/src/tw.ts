@@ -1024,10 +1024,10 @@ export class TW {
 
 function supportsDynamicRegistration(params: InitializeParams): boolean {
   return (
-    params.capabilities.textDocument.hover?.dynamicRegistration &&
-    params.capabilities.textDocument.colorProvider?.dynamicRegistration &&
-    params.capabilities.textDocument.codeAction?.dynamicRegistration &&
-    params.capabilities.textDocument.completion?.dynamicRegistration &&
-    params.capabilities.textDocument.documentLink?.dynamicRegistration
+    params.capabilities.textDocument?.hover?.dynamicRegistration &&
+    params.capabilities.textDocument?.colorProvider?.dynamicRegistration &&
+    params.capabilities.textDocument?.codeAction?.dynamicRegistration &&
+    params.capabilities.textDocument?.completion?.dynamicRegistration &&
+    params.capabilities.textDocument?.documentLink?.dynamicRegistration
   )
 }
