@@ -50,15 +50,21 @@ test('@utility', () => {
     '@utility foo-* {',
     '  color: red;',
     '}',
+    '@utility bar-* {',
+    '  color: --value(--font-*-line-height);',
+    '}',
   ]
 
   let output = [
     //
-    '.placeholder     {', // wrong
+    '._______     {',
     '  color: red;',
     '}',
-    '.placeholder       {', // wrong
+    '._______       {',
     '  color: red;',
+    '}',
+    '._______       {',
+    '  color: --value(--font-_-line-height);',
     '}',
   ]
 
@@ -70,11 +76,15 @@ test('@theme', () => {
     //
     '@theme {',
     '  --color: red;',
+    '  --*: initial;',
+    '  --text*: initial;',
     '  --font-*: initial;',
     '  --font-weight-*: initial;',
     '}',
     '@theme inline reference static default {',
     '  --color: red;',
+    '  --*: initial;',
+    '  --text*: initial;',
     '  --font-*: initial;',
     '  --font-weight-*: initial;',
     '}',
@@ -82,13 +92,17 @@ test('@theme', () => {
 
   let output = [
     //
-    '.placeholder {', // wrong
+    '._____ {',
     '  --color: red;',
+    '  --_: initial;',
+    '  --text_: initial;',
     '  --font-_: initial;',
     '  --font-weight-_: initial;',
     '}',
-    '.placeholder                                 {', // wrong
+    '._____                                 {',
     '  --color: red;',
+    '  --_: initial;',
+    '  --text_: initial;',
     '  --font-_: initial;',
     '  --font-weight-_: initial;',
     '}',
@@ -110,8 +124,8 @@ test('@custom-variant', () => {
 
   let output = [
     //
-    '@media (℘)                   {}', // wrong
-    '.placeholder     {', // wrong
+    '@media(℘)                   {}',
+    '.______________     {',
     '  &:hover {',
     '    @slot;',
     '  }',
@@ -133,7 +147,7 @@ test('@variant', () => {
 
   let output = [
     //
-    '.placeholder     {', // wrong
+    '._______     {',
     '  &:hover {',
     '    @slot;',
     '  }',

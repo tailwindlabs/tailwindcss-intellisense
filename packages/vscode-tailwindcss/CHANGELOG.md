@@ -5,6 +5,7 @@
 - v4: Support loading bundled versions of some first-party plugins ([#1240](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1240))
 - Cancel initial file search if it takes too long ([#1242](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1242))
 - LSP: Don’t throw when the client does not provide `textDocument` in capabilities ([#1252](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1252))
+- v4: Allow `*` anywhere in a CSS variable name ([#1256](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1256))
 
 # 0.14.8
 

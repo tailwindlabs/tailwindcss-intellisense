@@ -38,7 +38,7 @@ defineTest({
           uri: '{workspace:default}/file-1.css',
           range: {
             start: { line: 1, character: 0 },
-            end: { line: 1, character: 31 },
+            end: { line: 1, character: 30 },
           },
         },
       },
