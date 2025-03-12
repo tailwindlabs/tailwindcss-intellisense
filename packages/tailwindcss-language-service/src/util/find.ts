@@ -192,13 +192,13 @@ export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatc
 }
 
 export async function findClassListsInHtmlRange(
-  // PickDeep from 'type-fest' package cannot be used here due to a circular reference issue in the package
-  // Fixes are underway (see: https://github.com/sindresorhus/type-fest/pull/1079)
-  state: { editor?: Pick<NonNullable<State['editor']>, 'getConfiguration'> },
+  state: State,
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx',
   range?: Range,
 ): Promise<DocumentClassList[]> {
+  if (!state.editor) return []
+
   const text = getTextWithoutComments(doc, type, range)
 
   const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
