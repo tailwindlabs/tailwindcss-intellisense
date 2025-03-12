@@ -165,9 +165,27 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
 }
 
 export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
-  const names = fnNames.filter((x) => typeof x === 'string')
-  const re = /\b(F_NAMES)(\(|`)/
-  return findAll(new RegExp(re.source.replace('F_NAMES', names.join('|')), 'gi'), text)
+  // 1. Validate the list of function name patterns provided by the user
+  let names = fnNames.filter((x) => typeof x === 'string')
+  if (names.length === 0) return []
+
+  // 2. Extract function names in the document
+  // This is intentionally scoped to JS syntax for now but should be extended to
+  // other languages in the future
+  //
+  // This regex the JS pattern for an identifier + function call with some
+  // additional constraints:
+  //
+  // - It needs to be in an expression position — so it must be preceded by
+  // whitespace, parens, curlies, commas, whitespace, etc…
+  // - It must look like a fn call or a tagged template literal
+  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgu
+  let foundFns = findAll(FN_NAMES, text)
+
+  // 3. Match against the function names in the document
+  let re = /^(NAMES)$/
+  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'dgi')
+  return foundFns.filter((fn) => isClassFn.test(fn[1]))
 }
 
 export async function findClassListsInHtmlRange(
