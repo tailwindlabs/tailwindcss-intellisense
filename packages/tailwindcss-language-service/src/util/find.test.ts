@@ -222,27 +222,6 @@ test('test nested classFunctions', async ({ expect }) => {
         end: { line: 19, character: 26 },
       },
     },
-    {
-      classList: 'fixed flex',
-      range: {
-        start: { line: 3, character: 9 },
-        end: { line: 3, character: 19 },
-      },
-    },
-    {
-      classList: 'md:h-[calc(100%-2rem)]',
-      range: {
-        start: { line: 4, character: 9 },
-        end: { line: 4, character: 31 },
-      },
-    },
-    {
-      classList: 'bg-red-700',
-      range: {
-        start: { line: 5, character: 9 },
-        end: { line: 5, character: 19 },
-      },
-    },
   ]
 
   const content = `

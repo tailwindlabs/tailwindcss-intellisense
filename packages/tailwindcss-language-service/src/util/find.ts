@@ -179,13 +179,16 @@ export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatc
   // - It needs to be in an expression position — so it must be preceded by
   // whitespace, parens, curlies, commas, whitespace, etc…
   // - It must look like a fn call or a tagged template literal
-  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgu
+  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgiu
   let foundFns = findAll(FN_NAMES, text)
 
   // 3. Match against the function names in the document
   let re = /^(NAMES)$/
   let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'dgi')
-  return foundFns.filter((fn) => isClassFn.test(fn[1]))
+
+  let matches = foundFns.filter((fn) => isClassFn.test(fn[1]))
+
+  return matches
 }
 
 export async function findClassListsInHtmlRange(
