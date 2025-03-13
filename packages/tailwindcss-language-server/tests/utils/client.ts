@@ -44,7 +44,7 @@ import { createConfiguration, Configuration } from './configuration'
 import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/util/getLanguageBoundaries'
 import { DefaultMap } from '../../src/util/default-map'
 import { connect, ConnectOptions } from './connection'
-import type { DeepPartial } from './types'
+import type { DeepPartial } from '@tailwindcss/language-service/src/types'
 
 export interface DocumentDescriptor {
   /**

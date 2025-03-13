@@ -164,18 +164,49 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
+export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
+  // 1. Validate the list of function name patterns provided by the user
+  let names = fnNames.filter((x) => typeof x === 'string')
+  if (names.length === 0) return []
+
+  // 2. Extract function names in the document
+  // This is intentionally scoped to JS syntax for now but should be extended to
+  // other languages in the future
+  //
+  // This regex the JS pattern for an identifier + function call with some
+  // additional constraints:
+  //
+  // - It needs to be in an expression position — so it must be preceded by
+  // whitespace, parens, curlies, commas, whitespace, etc…
+  // - It must look like a fn call or a tagged template literal
+  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgiu
+  let foundFns = findAll(FN_NAMES, text)
+
+  // 3. Match against the function names in the document
+  let re = /^(NAMES)$/
+  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'dgi')
+
+  let matches = foundFns.filter((fn) => isClassFn.test(fn[1]))
+
+  return matches
+}
+
 export async function findClassListsInHtmlRange(
   state: State,
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx',
   range?: Range,
 ): Promise<DocumentClassList[]> {
+  if (!state.editor) return []
+
   const text = getTextWithoutComments(doc, type, range)
 
-  const matches = matchClassAttributes(
-    text,
-    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes,
-  )
+  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
+  const matches = matchClassAttributes(text, settings.classAttributes)
+
+  if (settings.classFunctions?.length) {
+    matches.push(...matchClassFunctions(text, settings.classFunctions))
+  }
 
   const result: DocumentClassList[] = []
 
