@@ -1,322 +1,500 @@
-import { createState, getDefaultTailwindSettings, type DocumentClassList } from './state'
+import { createState, getDefaultTailwindSettings, Settings, type DocumentClassList } from './state'
 import { test } from 'vitest'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassListsInHtmlRange } from './find'
+import type { DeepPartial } from '../types'
+import dedent from 'dedent'
 
-test('test astro', async ({ expect }) => {
-  let content = [
-    //
-    '<a class=`p-4 sm:p-2 ${active ? "underline": "line-through"}`>',
-    '  <slot />',
-    '</a>',
-  ].join('\n')
+const js = dedent
 
-  let doc = TextDocument.create('file://file.astro', 'astro', 1, content)
-  let defaultSettings = getDefaultTailwindSettings()
-  let state = createState({
-    editor: {
-      getConfiguration: async () => ({
-        ...defaultSettings,
-        tailwindCSS: {
-          ...defaultSettings.tailwindCSS,
-          classAttributes: ['class'],
-          experimental: {
-            ...defaultSettings.tailwindCSS.experimental,
-            classRegex: [
-              ['cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
-              ['cn\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
-            ],
-          },
+test('class regex works in astro', async ({ expect }) => {
+  let { doc, state } = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['class'],
+        experimental: {
+          classRegex: [
+            ['cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
+            ['cn\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
+          ],
         },
-      }),
+      },
     },
+    content: [
+      '<a class=`p-4 sm:p-2 ${active ? "underline": "line-through"}`>',
+      '  <slot />',
+      '</a>',
+    ],
   })
 
   let classLists = await findClassListsInHtmlRange(state, doc, 'html')
 
-  expect(classLists).toMatchInlineSnapshot(`
-    [
-      {
-        "classList": "p-4 sm:p-2 $",
-        "range": {
-          "end": {
-            "character": 22,
-            "line": 0,
-          },
-          "start": {
-            "character": 10,
-            "line": 0,
-          },
-        },
+  expect(classLists).toEqual([
+    {
+      classList: 'p-4 sm:p-2 $',
+      range: {
+        start: { line: 0, character: 10 },
+        end: { line: 0, character: 22 },
       },
-      {
-        "classList": "underline",
-        "range": {
-          "end": {
-            "character": 42,
-            "line": 0,
-          },
-          "start": {
-            "character": 33,
-            "line": 0,
-          },
-        },
+    },
+    {
+      classList: 'underline',
+      range: {
+        start: { line: 0, character: 33 },
+        end: { line: 0, character: 42 },
       },
-      {
-        "classList": "line-through",
-        "range": {
-          "end": {
-            "character": 58,
-            "line": 0,
-          },
-          "start": {
-            "character": 46,
-            "line": 0,
-          },
-        },
+    },
+    {
+      classList: 'line-through',
+      range: {
+        start: { line: 0, character: 46 },
+        end: { line: 0, character: 58 },
       },
-    ]
-  `)
+    },
+  ])
 })
 
-test('test simple classFunctions', async ({ expect }) => {
-  const state = getTailwindSettingsForClassFunctions()
-  const classList = `'pointer-events-auto relative flex bg-red-500',
-      'items-center justify-between overflow-hidden',
-      'md:min-w-[20rem] md:max-w-[37.5rem] md:py-sm py-xs pl-md pr-xs gap-sm w-full',
-      'data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]',
-      Date.now() > 15000 ? 'text-red-200' : 'text-red-700',
-      'data-[swipe=move]:transition-none',
-  `
+test('find class lists in functions', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+    content: js`
+      // These should match
+      let classes = clsx(
+        'flex p-4',
+        'block sm:p-0',
+        Date.now() > 100 ? 'text-white' : 'text-black',
+      )
 
-  const expectedResult: DocumentClassList[] = [
+      // These should match
+      let classes = cva(
+        'flex p-4',
+        'block sm:p-0',
+        Date.now() > 100 ? 'text-white' : 'text-black',
+      )
+    `,
+  })
+
+  let fileB = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+    content: js`
+      let classes = cn(
+        'flex p-4',
+        'block sm:p-0',
+        Date.now() > 100 ? 'text-white' : 'text-black',
+      )
+    `,
+  })
+
+  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+  let classListsB = await findClassListsInHtmlRange(fileB.state, fileB.doc, 'js')
+
+  expect(classListsA).toEqual([
+    // from clsx(…)
     {
-      classList: 'pointer-events-auto relative flex bg-red-500',
+      classList: 'flex p-4',
       range: {
-        start: { character: 7, line: 2 },
-        end: { character: 51, line: 2 },
+        start: { line: 2, character: 3 },
+        end: { line: 2, character: 11 },
       },
     },
     {
-      classList: 'items-center justify-between overflow-hidden',
+      classList: 'block sm:p-0',
       range: {
-        start: { character: 7, line: 3 },
-        end: { character: 51, line: 3 },
+        start: { line: 3, character: 3 },
+        end: { line: 3, character: 15 },
       },
     },
     {
-      classList: 'md:min-w-[20rem] md:max-w-[37.5rem] md:py-sm py-xs pl-md pr-xs gap-sm w-full',
+      classList: 'text-white',
       range: {
-        start: { character: 7, line: 4 },
-        end: { character: 83, line: 4 },
+        start: { line: 4, character: 22 },
+        end: { line: 4, character: 32 },
       },
     },
     {
-      classList: 'data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]',
+      classList: 'text-black',
       range: {
-        start: { line: 5, character: 7 },
-        end: { line: 5, character: 68 },
+        start: { line: 4, character: 37 },
+        end: { line: 4, character: 47 },
+      },
+    },
+
+    // from cva(…)
+    {
+      classList: 'flex p-4',
+      range: {
+        start: { line: 9, character: 3 },
+        end: { line: 9, character: 11 },
       },
     },
     {
-      classList: 'text-red-200',
+      classList: 'block sm:p-0',
       range: {
-        start: { line: 6, character: 28 },
-        end: { line: 6, character: 40 },
+        start: { line: 10, character: 3 },
+        end: { line: 10, character: 15 },
       },
     },
     {
-      classList: 'text-red-700',
+      classList: 'text-white',
       range: {
-        start: { line: 6, character: 45 },
-        end: { line: 6, character: 57 },
+        start: { line: 11, character: 22 },
+        end: { line: 11, character: 32 },
       },
     },
     {
-      classList: 'data-[swipe=move]:transition-none',
+      classList: 'text-black',
       range: {
-        start: { line: 7, character: 7 },
-        end: { line: 7, character: 40 },
+        start: { line: 11, character: 37 },
+        end: { line: 11, character: 47 },
       },
     },
-  ]
+  ])
 
-  const cnContent = `
-    const classes = cn(
-      ${classList}
-    )
-  `
-
-  const cnDoc = TextDocument.create('file://file.html', 'html', 1, cnContent)
-  const cnClassLists = await findClassListsInHtmlRange(state, cnDoc, 'html')
-
-  expect(cnClassLists).toMatchObject(expectedResult)
-
-  const cvaContent = `
-    const classes = cva(
-      ${classList}
-    )
-  `
-
-  const cvaDoc = TextDocument.create('file://file.html', 'html', 1, cvaContent)
-  const cvaClassLists = await findClassListsInHtmlRange(state, cvaDoc, 'html')
-
-  expect(cvaClassLists).toMatchObject(expectedResult)
-
-  // Ensure another function name with the same layout doesn't match
-  const cmaContent = `
-    const classes = cma(
-      ${classList}
-    )
-  `
-
-  const cmaDoc = TextDocument.create('file://file.html', 'html', 1, cmaContent)
-  const cmaClassLists = await findClassListsInHtmlRange(state, cmaDoc, 'html')
-
-  expect(cmaClassLists).toMatchObject([])
+  // none from cn(…) since it's not in the list of class functions
+  expect(classListsB).toEqual([])
 })
 
-test('test nested classFunctions', async ({ expect }) => {
-  const state = getTailwindSettingsForClassFunctions()
-  const expectedResult: DocumentClassList[] = [
+test('find class lists in nested fn calls', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+
+    content: js`
+      // NOTE: All strings inside a matched class function will be treated as class lists
+      // TODO: Nested calls tha are *not* class functions should have their content ignored
+      let classes = clsx(
+        'flex',
+        cn({
+          'bg-red-500': true,
+          'text-white': Date.now() > 100,
+        }),
+        clsx(
+          'fixed',
+          'absolute inset-0'
+        ),
+        cva(
+          ['bottom-0', 'border'],
+          {
+            variants: {
+              mobile: {
+                default: 'bottom-0 left-0',
+                large: \`
+                  inset-0
+                  rounded-none
+                \`,
+              },
+            }
+          }
+        )
+      )
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'html')
+
+  expect(classLists).toMatchObject([
     {
-      classList: 'fixed flex',
+      classList: 'flex',
       range: {
-        start: { line: 3, character: 9 },
-        end: { line: 3, character: 19 },
+        start: { line: 3, character: 3 },
+        end: { line: 3, character: 7 },
+      },
+    },
+
+    // TODO: This should be ignored because they're inside cn(…)
+    {
+      classList: 'bg-red-500',
+      range: {
+        start: { line: 5, character: 5 },
+        end: { line: 5, character: 15 },
+      },
+    },
+
+    // TODO: This should be ignored because they're inside cn(…)
+    {
+      classList: 'text-white',
+      range: {
+        start: { line: 6, character: 5 },
+        end: { line: 6, character: 15 },
+      },
+    },
+
+    {
+      classList: 'fixed',
+      range: {
+        start: { line: 9, character: 5 },
+        end: { line: 9, character: 10 },
       },
     },
     {
-      classList: 'md:h-[calc(100%-2rem)]',
+      classList: 'absolute inset-0',
       range: {
-        start: { line: 4, character: 9 },
-        end: { line: 4, character: 31 },
+        start: { line: 10, character: 5 },
+        end: { line: 10, character: 21 },
       },
     },
     {
-      classList: 'bg-red-700',
+      classList: 'bottom-0',
       range: {
-        start: { line: 5, character: 9 },
-        end: { line: 5, character: 19 },
+        start: { line: 13, character: 6 },
+        end: { line: 13, character: 14 },
+      },
+    },
+    {
+      classList: 'border',
+      range: {
+        start: { line: 13, character: 18 },
+        end: { line: 13, character: 24 },
       },
     },
     {
       classList: 'bottom-0 left-0',
       range: {
-        start: { line: 10, character: 22 },
-        end: { line: 10, character: 37 },
+        start: { line: 17, character: 20 },
+        end: { line: 17, character: 35 },
       },
     },
     {
-      classList:
-        'inset-0\n              md:h-[calc(100%-2rem)]\n              rounded-none\n            ',
+      classList: `inset-0\n            rounded-none\n          `,
       range: {
-        start: { line: 12, character: 14 },
-        end: { line: 14, character: 26 },
+        start: { line: 19, character: 12 },
+        // TODO: Fix the range calculation. Its wrong on this one
+        end: { line: 20, character: 24 },
       },
     },
-    {
-      classList: 'default',
-      range: {
-        start: { line: 19, character: 19 },
-        end: { line: 19, character: 26 },
-      },
-    },
-  ]
 
-  const content = `
-    const variants = cva(
-      cn(
-        'fixed flex',
-        'md:h-[calc(100%-2rem)]',
-        'bg-red-700',
-      ),
-      {
-        variants: {
-          mobile: {
-            default: 'bottom-0 left-0',
-            fullScreen: \`
-              inset-0
-              md:h-[calc(100%-2rem)]
-              rounded-none
-            \`,
+    // TODO: These duplicates are from matching nested clsx(…) and should be ignored
+    {
+      classList: 'fixed',
+      range: {
+        start: { line: 9, character: 5 },
+        end: { line: 9, character: 10 },
+      },
+    },
+    {
+      classList: 'absolute inset-0',
+      range: {
+        start: { line: 10, character: 5 },
+        end: { line: 10, character: 21 },
+      },
+    },
+  ])
+})
+
+test('find class lists in nested fn calls (only nested matches)', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+
+    content: js`
+      let classes = cn(
+        'flex',
+        cn({
+          'bg-red-500': true,
+          'text-white': Date.now() > 100,
+        }),
+        // NOTE: The only class lists appear inside this function because cn is
+        // not in the list of class functions
+        clsx(
+          'fixed',
+          'absolute inset-0'
+        ),
+      )
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'html')
+
+  expect(classLists).toMatchObject([
+    {
+      classList: 'fixed',
+      range: {
+        start: { line: 9, character: 5 },
+        end: { line: 9, character: 10 },
+      },
+    },
+    {
+      classList: 'absolute inset-0',
+      range: {
+        start: { line: 10, character: 5 },
+        end: { line: 10, character: 21 },
+      },
+    },
+  ])
+})
+
+test('find class lists in tagged template literals', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+    content: js`
+      // These should match
+      let classes = clsx\`
+        flex p-4
+        block sm:p-0
+        \${Date.now() > 100 ? 'text-white' : 'text-black'}
+      \`
+
+      // These should match
+      let classes = cva\`
+        flex p-4
+        block sm:p-0
+        \${Date.now() > 100 ? 'text-white' : 'text-black'}
+      \`
+    `,
+  })
+
+  let fileB = createDocument({
+    name: 'file.jsx',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+    content: js`
+      let classes = cn\`
+        flex p-4
+        block sm:p-0
+        \${Date.now() > 100 ? 'text-white' : 'text-black'}
+      \`
+    `,
+  })
+
+  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+  let classListsB = await findClassListsInHtmlRange(fileB.state, fileB.doc, 'js')
+
+  expect(classListsA).toEqual([
+    // from clsx`…`
+    {
+      classList: 'flex p-4\n  block sm:p-0\n  $',
+      range: {
+        start: { line: 2, character: 2 },
+        end: { line: 4, character: 3 },
+      },
+    },
+    {
+      classList: 'text-white',
+      range: {
+        start: { line: 4, character: 24 },
+        end: { line: 4, character: 34 },
+      },
+    },
+    {
+      classList: 'text-black',
+      range: {
+        start: { line: 4, character: 39 },
+        end: { line: 4, character: 49 },
+      },
+    },
+
+    // from cva`…`
+    {
+      classList: 'flex p-4\n  block sm:p-0\n  $',
+      range: {
+        start: { line: 9, character: 2 },
+        end: { line: 11, character: 3 },
+      },
+    },
+    {
+      classList: 'text-white',
+      range: {
+        start: { line: 11, character: 24 },
+        end: { line: 11, character: 34 },
+      },
+    },
+    {
+      classList: 'text-black',
+      range: {
+        start: { line: 11, character: 39 },
+        end: { line: 11, character: 49 },
+      },
+    },
+  ])
+
+  // none from cn`…` since it's not in the list of class functions
+  expect(classListsB).toEqual([])
+})
+
+function createDocument({
+  name,
+  lang,
+  content,
+  settings,
+}: {
+  name: string
+  lang: string
+  content: string | string[]
+  settings: DeepPartial<Settings>
+}) {
+  let doc = TextDocument.create(
+    `file://${name}`,
+    lang,
+    1,
+    typeof content === 'string' ? content : content.join('\n'),
+  )
+  let defaults = getDefaultTailwindSettings()
+  let state = createState({
+    editor: {
+      // @ts-ignore
+      getConfiguration: async () => ({
+        ...defaults,
+        ...settings,
+        tailwindCSS: {
+          ...defaults.tailwindCSS,
+          ...settings.tailwindCSS,
+          lint: {
+            ...defaults.tailwindCSS.lint,
+            ...(settings.tailwindCSS?.lint ?? {}),
+          },
+          experimental: {
+            ...defaults.tailwindCSS.experimental,
+            ...(settings.tailwindCSS?.experimental ?? {}),
+          },
+          files: {
+            ...defaults.tailwindCSS.files,
+            ...(settings.tailwindCSS?.files ?? {}),
           },
         },
-        defaultVariants: {
-          mobile: 'default',
-        },
-      },
-    )
-  `
-
-  const cnDoc = TextDocument.create('file://file.html', 'html', 1, content)
-  const classLists = await findClassListsInHtmlRange(state, cnDoc, 'html')
-
-  expect(classLists).toMatchObject(expectedResult)
-})
-
-test('test classFunctions with tagged template literals', async ({ expect }) => {
-  const state = getTailwindSettingsForClassFunctions()
-  const classList = `pointer-events-auto relative flex bg-red-500
-    items-center justify-between overflow-hidden
-    md:min-w-[20rem] md:max-w-[37.5rem] md:py-sm pl-md py-xs pr-xs gap-sm w-full
-    data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]
-    md:h-[calc(100%-2rem)]
-    data-[swipe=move]:transition-none`
-
-  const expectedResult: DocumentClassList[] = [
-    {
-      classList,
-      range: {
-        start: { line: 2, character: 6 },
-        end: { line: 7, character: 37 },
-      },
-    },
-  ]
-
-  const cnContent = `
-    const tagged = cn\`
-      ${classList}\`
-  `
-  const cnDoc = TextDocument.create('file://file.html', 'html', 1, cnContent)
-  const cnClassLists = await findClassListsInHtmlRange(state, cnDoc, 'html')
-
-  console.log('cnClassLists', JSON.stringify(cnClassLists, null, 2))
-
-  expect(cnClassLists).toMatchObject(expectedResult)
-
-  const cvaContent = `
-    const tagged = cva\`
-      ${classList}\`
-  `
-  const cvaDoc = TextDocument.create('file://file.html', 'html', 1, cvaContent)
-  const cvaClassLists = await findClassListsInHtmlRange(state, cvaDoc, 'html')
-
-  expect(cvaClassLists).toMatchObject(expectedResult)
-
-  // Ensure another tag name with the same layout doesn't match
-  const cmaContent = `
-    const tagged = cma\`
-      ${classList}\`
-  `
-
-  const cmaDoc = TextDocument.create('file://file.html', 'html', 1, cmaContent)
-  const cmaClassLists = await findClassListsInHtmlRange(state, cmaDoc, 'html')
-
-  expect(cmaClassLists).toMatchObject([])
-})
-
-function getTailwindSettingsForClassFunctions(): Parameters<typeof findClassListsInHtmlRange>[0] {
-  const defaultSettings = getDefaultTailwindSettings()
-  return {
-    editor: {
-      getConfiguration: async () => ({
-        ...defaultSettings,
-        tailwindCSS: {
-          ...defaultSettings.tailwindCSS,
-          classFunctions: ['cva', 'cn'],
+        editor: {
+          ...defaults.editor,
+          ...settings.editor,
         },
       }),
     },
+  })
+
+  return {
+    doc,
+    state,
   }
 }
