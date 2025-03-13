@@ -59,7 +59,7 @@ test('class regex works in astro', async ({ expect }) => {
 test('find class lists in functions', async ({ expect }) => {
   let fileA = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -84,7 +84,7 @@ test('find class lists in functions', async ({ expect }) => {
 
   let fileB = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -171,7 +171,7 @@ test('find class lists in functions', async ({ expect }) => {
 test('find class lists in nested fn calls', async ({ expect }) => {
   let fileA = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -303,7 +303,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
 test('find class lists in nested fn calls (only nested matches)', async ({ expect }) => {
   let fileA = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -350,7 +350,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
 test('find class lists in tagged template literals', async ({ expect }) => {
   let fileA = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -375,7 +375,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
 
   let fileB = createDocument({
     name: 'file.jsx',
-    lang: 'javascript',
+    lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
         classFunctions: ['clsx', 'cva'],
@@ -443,6 +443,71 @@ test('find class lists in tagged template literals', async ({ expect }) => {
 
   // none from cn`…` since it's not in the list of class functions
   expect(classListsB).toEqual([])
+})
+
+test('classFunctions can be a regex', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascriptreact',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['tw\\.[a-z]+'],
+      },
+    },
+    content: js`
+      let classes = tw.div('flex p-4')
+    `,
+  })
+
+  let fileB = createDocument({
+    name: 'file.jsx',
+    lang: 'javascriptreact',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['tw\\.[a-z]+'],
+      },
+    },
+    content: js`
+      let classes = tw.div.foo('flex p-4')
+    `,
+  })
+
+  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+  let classListsB = await findClassListsInHtmlRange(fileB.state, fileB.doc, 'js')
+
+  expect(classListsA).toEqual([
+    {
+      classList: 'flex p-4',
+      range: {
+        start: { line: 0, character: 22 },
+        end: { line: 0, character: 30 },
+      },
+    },
+  ])
+
+  // none from tw.div.foo(`…`) since it does not match a class function
+  expect(classListsB).toEqual([])
+})
+
+test('classFunctions regexes only match on function names', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascriptreact',
+    settings: {
+      tailwindCSS: {
+        // A function name itself cannot contain a `:`
+        classFunctions: [':\\s*tw\\.[a-z]+'],
+      },
+    },
+    content: js`
+      let classes = tw.div('flex p-4')
+      let classes = { foo: tw.div('flex p-4') }
+    `,
+  })
+
+  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+
+  expect(classListsA).toEqual([])
 })
 
 function createDocument({
