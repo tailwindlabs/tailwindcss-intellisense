@@ -9,7 +9,7 @@ import { isJsxContext } from './js'
 import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
-import { resolveRange } from './resolveRange'
+import { absoluteRange } from './absoluteRange'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 import { customClassesIn } from './classes'
@@ -446,14 +446,14 @@ export function findHelperFunctionsInRange(
       helper,
       path,
       ranges: {
-        full: resolveRange(
+        full: absoluteRange(
           {
             start: indexToPosition(text, startIndex),
             end: indexToPosition(text, startIndex + match.groups.path.length),
           },
           range,
         ),
-        path: resolveRange(
+        path: absoluteRange(
           {
             start: indexToPosition(text, startIndex + quotesBefore.length),
             end: indexToPosition(text, startIndex + quotesBefore.length + path.length),
