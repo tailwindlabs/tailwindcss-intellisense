@@ -173,6 +173,9 @@ export type ClassNameMeta = {
   context: string[]
 }
 
+/**
+ * @internal
+ */
 export function getDefaultTailwindSettings(): Settings {
   return {
     editor: { tabSize: 2 },
