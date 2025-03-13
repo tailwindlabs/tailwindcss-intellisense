@@ -211,6 +211,9 @@ export function getDefaultTailwindSettings(): Settings {
   }
 }
 
+/**
+ *  @internal
+ */
 export function createState(
   partial: Omit<Partial<State>, 'editor'> & {
     editor?: Partial<EditorState>
