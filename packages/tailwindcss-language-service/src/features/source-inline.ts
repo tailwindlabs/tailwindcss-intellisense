@@ -19,20 +19,13 @@ export async function provideCodeLens(state: State, doc: TextDocument): Promise<
     maximumFractionDigits: 2,
   })
 
-  let byteFormatter = new Intl.NumberFormat('en', {
-    notation: 'compact',
-    style: 'unit',
-    unit: 'byte',
-    unitDisplay: 'narrow',
-  })
-
   let lenses: CodeLens[] = []
 
   for (let match of findAll(PATTERN, text)) {
     let glob = match.groups.glob.slice(1, -1)
 
     // Perform brace expansion
-    let expanded = new Set(braces.expand(glob))
+    let expanded = new Set<string>(braces.expand(glob))
     if (expanded.size < 2) continue
 
     let slice: Range = absoluteRange({
@@ -57,7 +50,7 @@ export async function provideCodeLens(state: State, doc: TextDocument): Promise<
       lenses.push({
         range: slice,
         command: {
-          title: `At least ${byteFormatter.format(size)} of CSS`,
+          title: `At least ${formatBytes(size)} of CSS`,
           command: '',
         },
       })
@@ -90,7 +83,7 @@ function approximateByteSize(className: string) {
   // .class-name {
   //   &:variant-1 {
   //     &:variant-2 {
-  //       /* properties */
+  //       …
   //     }
   //   }
   // }
@@ -105,8 +98,17 @@ function approximateByteSize(className: string) {
     size += (depth + 1) * 2 + 2
   }
 
-  // Properties comment
-  size += 16
+  // ~1.95x is a rough growth factor due to the actual properties being present
+  return size * 1.95
+}
 
-  return size
+const UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte', 'petabyte']
+function formatBytes(n: number) {
+  let i = n == 0 ? 0 : Math.floor(Math.log(n) / Math.log(1000))
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    style: 'unit',
+    unit: UNITS[i],
+    unitDisplay: 'narrow',
+  }).format(n / 1000 ** i)
 }
