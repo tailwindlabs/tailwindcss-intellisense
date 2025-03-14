@@ -10,6 +10,8 @@
 - Cancel initial file search if it takes too long ([#1242](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1242))
 - LSP: Don’t throw when the client does not provide `textDocument` in capabilities ([#1252](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1252))
 - v4: Allow `*` anywhere in a CSS variable name ([#1256](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1256))
+- v4: Add support for `@source not` ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
+- v4: Add support for `@source inline(…)` ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
 
 # 0.14.8
 

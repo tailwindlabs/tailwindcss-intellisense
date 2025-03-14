@@ -16,6 +16,7 @@ function getDefaultSettings(): Settings {
       emmetCompletions: false,
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
       codeActions: true,
+      codeLens: true,
       hovers: true,
       suggestions: true,
       validate: true,

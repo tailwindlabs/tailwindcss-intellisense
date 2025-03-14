@@ -14,7 +14,7 @@ const PATTERN_UTIL_SOURCE =
 
 // @source …
 const PATTERN_AT_SOURCE =
-  /(?:\s|^)@(?<directive>source)\s*(?<source>'[^']*'?|"[^"]*"?|[a-z]*|\)|;)/dg
+  /(?:\s|^)@(?<directive>source)\s*(?<not>not)?\s*(?<source>'[^']*'?|"[^"]*"?|[a-z]*(?:\([^)]+\))?|\)|;)/dg
 
 const HAS_DRIVE_LETTER = /^[A-Z]:/
 
@@ -133,6 +133,11 @@ export function getInvalidSourceDiagnostics(
             '`@source none;` is not valid. Did you mean to use `source(none)` on an `@import`?',
           range: absoluteRange(range, block.range),
         })
+      }
+
+      // `@source inline(…)` is fine
+      else if (directive === 'source' && source.startsWith('inline(')) {
+        //
       }
 
       // - `@import "tailwindcss" source(no)`
