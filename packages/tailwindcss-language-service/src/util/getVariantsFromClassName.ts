@@ -29,6 +29,19 @@ export function getVariantsFromClassName(
 
     let className = `${part}${state.separator}[color:red]`
 
+    if (state.v4) {
+      // NOTE: This should never happen
+      if (!state.designSystem) return false
+
+      // We don't use `compile()` so there's no overhead from PostCSS
+      let compiled = state.designSystem.candidatesToCss([className])
+
+      // NOTE: This should never happen
+      if (compiled.length !== 1) return false
+
+      return compiled[0] !== null
+    }
+
     if (state.jit) {
       if ((part.includes('[') && part.endsWith(']')) || part.includes('/')) {
         return jit.generateRules(state, [className]).rules.length > 0
