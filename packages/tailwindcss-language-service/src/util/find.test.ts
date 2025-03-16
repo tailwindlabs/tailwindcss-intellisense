@@ -281,22 +281,6 @@ test('find class lists in nested fn calls', async ({ expect }) => {
         end: { line: 20, character: 24 },
       },
     },
-
-    // TODO: These duplicates are from matching nested clsx(…) and should be ignored
-    {
-      classList: 'fixed',
-      range: {
-        start: { line: 9, character: 5 },
-        end: { line: 9, character: 10 },
-      },
-    },
-    {
-      classList: 'absolute inset-0',
-      range: {
-        start: { line: 10, character: 5 },
-        end: { line: 10, character: 21 },
-      },
-    },
   ])
 })
 
@@ -508,6 +492,57 @@ test('classFunctions regexes only match on function names', async ({ expect }) =
   let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
 
   expect(classListsA).toEqual([])
+})
+
+test('classFunctions & classProperties should not duplicate matches', async ({ expect }) => {
+  let fileA = createDocument({
+    name: 'file.jsx',
+    lang: 'javascriptreact',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['cva', 'clsx'],
+      },
+    },
+    content: js`
+      const Component = ({ className }) => (
+        <div
+          className={clsx(
+            'relative flex',
+            'inset-0 md:h-[calc(100%-2rem)]',
+            clsx('rounded-none bg-blue-700', className),
+          )}
+        >
+          CONTENT
+        </div>
+      )
+    `,
+  })
+
+  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+
+  expect(classListsA).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 3, character: 7 },
+        end: { line: 3, character: 20 },
+      },
+    },
+    {
+      classList: 'inset-0 md:h-[calc(100%-2rem)]',
+      range: {
+        start: { line: 4, character: 7 },
+        end: { line: 4, character: 37 },
+      },
+    },
+    {
+      classList: 'rounded-none bg-blue-700',
+      range: {
+        start: { line: 5, character: 12 },
+        end: { line: 5, character: 36 },
+      },
+    },
+  ])
 })
 
 function createDocument({

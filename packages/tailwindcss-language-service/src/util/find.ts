@@ -208,7 +208,8 @@ export async function findClassListsInHtmlRange(
     matches.push(...matchClassFunctions(text, settings.classFunctions))
   }
 
-  const result: DocumentClassList[] = []
+  const existingResultSet = new Set<string>()
+  const results: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
@@ -253,46 +254,53 @@ export async function findClassListsInHtmlRange(
       })
     }
 
-    result.push(
-      ...classLists
-        .map(({ value, offset }) => {
-          if (value.trim() === '') {
-            return null
-          }
+    classLists.forEach(({ value, offset }) => {
+      if (value.trim() === '') {
+        return null
+      }
 
-          const before = value.match(/^\s*/)
-          const beforeOffset = before === null ? 0 : before[0].length
-          const after = value.match(/\s*$/)
-          const afterOffset = after === null ? 0 : -after[0].length
+      const before = value.match(/^\s*/)
+      const beforeOffset = before === null ? 0 : before[0].length
+      const after = value.match(/\s*$/)
+      const afterOffset = after === null ? 0 : -after[0].length
 
-          const start = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + beforeOffset,
-          )
-          const end = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + value.length + afterOffset,
-          )
+      const start = indexToPosition(text, match.index + match[0].length - 1 + offset + beforeOffset)
+      const end = indexToPosition(
+        text,
+        match.index + match[0].length - 1 + offset + value.length + afterOffset,
+      )
 
-          return {
-            classList: value.substr(beforeOffset, value.length + afterOffset),
-            range: {
-              start: {
-                line: (range?.start.line || 0) + start.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
-              },
-              end: {
-                line: (range?.start.line || 0) + end.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
-              },
-            },
-          }
-        })
-        .filter((x) => x !== null),
-    )
+      const result: DocumentClassList = {
+        classList: value.substr(beforeOffset, value.length + afterOffset),
+        range: {
+          start: {
+            line: (range?.start.line || 0) + start.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
+          },
+          end: {
+            line: (range?.start.line || 0) + end.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
+          },
+        },
+      }
+
+      const resultKey = [
+        result.classList,
+        result.range.start.line,
+        result.range.start.character,
+        result.range.end.line,
+        result.range.end.character,
+      ].join(':')
+
+      // No need to add the result if it was already matched
+      if (!existingResultSet.has(resultKey)) {
+        existingResultSet.add(resultKey)
+        results.push(result)
+      }
+    })
   })
 
-  return result
+  return results
 }
 
 export async function findClassListsInRange(
