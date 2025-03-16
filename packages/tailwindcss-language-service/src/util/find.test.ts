@@ -8,7 +8,7 @@ import dedent from 'dedent'
 const js = dedent
 
 test('class regex works in astro', async ({ expect }) => {
-  let { doc, state } = createDocument({
+  let file = createDocument({
     name: 'file.astro',
     lang: 'astro',
     settings: {
@@ -29,7 +29,7 @@ test('class regex works in astro', async ({ expect }) => {
     ],
   })
 
-  let classLists = await findClassListsInHtmlRange(state, doc, 'html')
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'html')
 
   expect(classLists).toEqual([
     {
@@ -169,7 +169,7 @@ test('find class lists in functions', async ({ expect }) => {
 })
 
 test('find class lists in nested fn calls', async ({ expect }) => {
-  let fileA = createDocument({
+  let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
     settings: {
@@ -209,7 +209,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     `,
   })
 
-  let classLists = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'html')
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'html')
 
   expect(classLists).toMatchObject([
     {
@@ -285,7 +285,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
 })
 
 test('find class lists in nested fn calls (only nested matches)', async ({ expect }) => {
-  let fileA = createDocument({
+  let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
     settings: {
@@ -311,7 +311,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
     `,
   })
 
-  let classLists = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'html')
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'html')
 
   expect(classLists).toMatchObject([
     {
@@ -474,7 +474,7 @@ test('classFunctions can be a regex', async ({ expect }) => {
 })
 
 test('classFunctions regexes only match on function names', async ({ expect }) => {
-  let fileA = createDocument({
+  let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
     settings: {
@@ -489,9 +489,9 @@ test('classFunctions regexes only match on function names', async ({ expect }) =
     `,
   })
 
-  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
 
-  expect(classListsA).toEqual([])
+  expect(classLists).toEqual([])
 })
 
 test('Finds consecutive instances of a class function', async ({ expect }) => {
@@ -540,7 +540,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
 })
 
 test('classFunctions & classProperties should not duplicate matches', async ({ expect }) => {
-  let fileA = createDocument({
+  let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
     settings: {
@@ -575,9 +575,9 @@ test('classFunctions & classProperties should not duplicate matches', async ({ e
     `,
   })
 
-  let classListsA = await findClassListsInHtmlRange(fileA.state, fileA.doc, 'js')
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
 
-  expect(classListsA).toEqual([
+  expect(classLists).toEqual([
     {
       classList: 'relative flex',
       range: {
