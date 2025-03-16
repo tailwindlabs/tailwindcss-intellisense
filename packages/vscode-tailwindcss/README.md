@@ -6,7 +6,7 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation).
 
 ## Features
 
@@ -213,7 +213,6 @@ For projects with multiple config files, use an object where each key is a confi
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
-- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.{js,cjs,mjs,ts,cts,mts}`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/configuration#creating-your-configuration-file).
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
 - Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
