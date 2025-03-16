@@ -500,11 +500,23 @@ test('classFunctions & classProperties should not duplicate matches', async ({ e
     lang: 'javascriptreact',
     settings: {
       tailwindCSS: {
+        classAttributes: ['className'],
         classFunctions: ['cva', 'clsx'],
       },
     },
     content: js`
       const Component = ({ className }) => (
+        <div
+          className={clsx(
+            'relative flex',
+            'inset-0 md:h-[calc(100%-2rem)]',
+            clsx('rounded-none bg-blue-700', className),
+          )}
+        >
+          CONTENT
+        </div>
+      )
+      const OtherComponent = ({ className }) => (
         <div
           className={clsx(
             'relative flex',
@@ -540,6 +552,27 @@ test('classFunctions & classProperties should not duplicate matches', async ({ e
       range: {
         start: { line: 5, character: 12 },
         end: { line: 5, character: 36 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 14, character: 7 },
+        end: { line: 14, character: 20 },
+      },
+    },
+    {
+      classList: 'inset-0 md:h-[calc(100%-2rem)]',
+      range: {
+        start: { line: 15, character: 7 },
+        end: { line: 15, character: 37 },
+      },
+    },
+    {
+      classList: 'rounded-none bg-blue-700',
+      range: {
+        start: { line: 16, character: 12 },
+        end: { line: 16, character: 36 },
       },
     },
   ])
