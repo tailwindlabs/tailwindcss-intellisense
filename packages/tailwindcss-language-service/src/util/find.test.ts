@@ -530,7 +530,6 @@ function createDocument({
   let defaults = getDefaultTailwindSettings()
   let state = createState({
     editor: {
-      // @ts-ignore
       getConfiguration: async () => ({
         ...defaults,
         ...settings,

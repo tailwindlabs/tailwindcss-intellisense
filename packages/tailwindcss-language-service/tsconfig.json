@@ -1,6 +1,5 @@
 {
   "include": ["src", "../../types"],
-  "exclude": ["src/**/*.test.ts"],
   "compilerOptions": {
     "module": "NodeNext",
     "lib": ["ES2022"],
@@ -15,6 +14,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
     "jsx": "react",
     "esModuleInterop": true
   }

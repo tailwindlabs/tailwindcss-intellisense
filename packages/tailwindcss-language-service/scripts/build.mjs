@@ -27,14 +27,20 @@ let build = await esbuild.context({
       name: 'generate-types',
       async setup(build) {
         build.onEnd(async (result) => {
+          const distPath = path.resolve(__dirname, '../dist')
+
           // Call the tsc command to generate the types
           spawnSync(
             'tsc',
-            ['--emitDeclarationOnly', '--outDir', path.resolve(__dirname, '../dist')],
+            ['--emitDeclarationOnly', '--outDir', distPath],
             {
               stdio: 'inherit',
             },
           )
+          // Remove all .test.d.ts file definitions
+          spawnSync('find', [distPath, '-name', '*.test.d.ts', '-delete'], {
+            stdio: 'inherit',
+          })
         })
       },
     },
