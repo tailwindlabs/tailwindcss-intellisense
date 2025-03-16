@@ -184,7 +184,7 @@ export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatc
 
   // 3. Match against the function names in the document
   let re = /^(NAMES)$/
-  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'dgi')
+  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'i')
 
   let matches = foundFns.filter((fn) => isClassFn.test(fn[1]))
 
