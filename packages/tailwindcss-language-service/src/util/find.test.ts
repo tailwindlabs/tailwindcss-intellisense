@@ -494,6 +494,51 @@ test('classFunctions regexes only match on function names', async ({ expect }) =
   expect(classListsA).toEqual([])
 })
 
+test('Finds consecutive instances of a class function', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.js',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['cn'],
+      },
+    },
+    content: js`
+      export const list = [
+        cn('relative flex bg-red-500'),
+        cn('relative flex bg-red-500'),
+        cn('relative flex bg-red-500'),
+      ]
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex bg-red-500',
+      range: {
+        start: { line: 1, character: 6 },
+        end: { line: 1, character: 30 },
+      },
+    },
+    {
+      classList: 'relative flex bg-red-500',
+      range: {
+        start: { line: 2, character: 6 },
+        end: { line: 2, character: 30 },
+      },
+    },
+    {
+      classList: 'relative flex bg-red-500',
+      range: {
+        start: { line: 3, character: 6 },
+        end: { line: 3, character: 30 },
+      },
+    },
+  ])
+})
+
 test('classFunctions & classProperties should not duplicate matches', async ({ expect }) => {
   let fileA = createDocument({
     name: 'file.jsx',
