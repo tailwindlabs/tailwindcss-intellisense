@@ -13,21 +13,24 @@ const uv = (process.versions.uv || '').split('.')[0]
 
 const prebuilds = {
   'darwin-arm64': {
-    'node.napi.glibc.node': () =>
-      require('@parcel/watcher/prebuilds/darwin-arm64/node.napi.glibc.node'),
+    'node.napi.glibc.node': () => require('@parcel/watcher-darwin-arm64/watcher.node'),
   },
   'darwin-x64': {
-    'node.napi.glibc.node': () =>
-      require('@parcel/watcher/prebuilds/darwin-x64/node.napi.glibc.node'),
+    'node.napi.glibc.node': () => require('@parcel/watcher-darwin-x64/watcher.node'),
   },
   'linux-x64': {
-    'node.napi.glibc.node': () =>
-      require('@parcel/watcher/prebuilds/linux-x64/node.napi.glibc.node'),
-    'node.napi.musl.node': () => require('@parcel/watcher/prebuilds/linux-x64/node.napi.musl.node'),
+    'node.napi.glibc.node': () => require('@parcel/watcher-linux-x64-glibc/watcher.node'),
+    'node.napi.musl.node': () => require('@parcel/watcher-linux-x64-musl/watcher.node'),
+  },
+  'linux-arm64': {
+    'node.napi.glibc.node': () => require('@parcel/watcher-linux-arm64-glibc/watcher.node'),
+    'node.napi.musl.node': () => require('@parcel/watcher-linux-arm64-musl/watcher.node'),
   },
   'win32-x64': {
-    'node.napi.glibc.node': () =>
-      require('@parcel/watcher/prebuilds/win32-x64/node.napi.glibc.node'),
+    'node.napi.glibc.node': () => require('@parcel/watcher-win32-x64/watcher.node'),
+  },
+  'win32-arm64': {
+    'node.napi.glibc.node': () => require('@parcel/watcher-win32-arm64/watcher.node'),
   },
 }
 
