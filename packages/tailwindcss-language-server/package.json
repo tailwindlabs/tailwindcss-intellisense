@@ -34,7 +34,15 @@
     "access": "public"
   },
   "devDependencies": {
-    "@parcel/watcher": "2.0.3",
+    "@parcel/watcher": "2.5.1",
+    "@parcel/watcher-darwin-x64": "2.5.1",
+    "@parcel/watcher-darwin-arm64": "2.5.1",
+    "@parcel/watcher-win32-x64": "2.5.1",
+    "@parcel/watcher-win32-arm64": "2.5.1",
+    "@parcel/watcher-linux-x64-glibc": "2.5.1",
+    "@parcel/watcher-linux-x64-musl": "2.5.1",
+    "@parcel/watcher-linux-arm64-glibc": "2.5.1",
+    "@parcel/watcher-linux-arm64-musl": "2.5.1",
     "@tailwindcss/aspect-ratio": "0.4.2",
     "@tailwindcss/container-queries": "0.1.0",
     "@tailwindcss/forms": "0.5.3",
