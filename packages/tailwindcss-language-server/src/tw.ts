@@ -521,6 +521,10 @@ export class TW {
         }
       }
     } else if (parcel.getBinding()) {
+      console.log(
+        '[Global] Your LSP client does not support watching files on behalf of the server',
+      )
+      console.log('[Global] Using bundled file watcher: @parcel/watcher')
       let typeMap = {
         create: FileChangeType.Created,
         update: FileChangeType.Changed,
@@ -547,6 +551,10 @@ export class TW {
         },
       })
     } else {
+      console.log(
+        '[Global] Your LSP client does not support watching files on behalf of the server',
+      )
+      console.log('[Global] Using bundled file watcher: chokidar')
       let watch: typeof chokidar.watch = require('chokidar').watch
       let chokidarWatcher = watch(
         [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`, `**/${TSCONFIG_GLOB}`],
