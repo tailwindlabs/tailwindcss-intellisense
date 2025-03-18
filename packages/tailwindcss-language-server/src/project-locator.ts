@@ -279,6 +279,9 @@ export class ProjectLocator {
       root: this.base,
       include: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
       exclude: this.settings.tailwindCSS.files.exclude,
+
+      // If searching takes more than 15 seconds, abort the search
+      timeout: 15,
     })
 
     let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))

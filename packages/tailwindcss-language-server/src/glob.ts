@@ -5,6 +5,9 @@ interface SearchFilesOptions {
   /** The directory to search in */
   root: string
 
+  /** The maximum time to wait for the search to complete */
+  timeout: number
+
   /** A list of patterns to include */
   include: string[]
 
@@ -26,7 +29,13 @@ export async function searchFiles(opts: SearchFilesOptions) {
     { dot: true },
   )
 
+  let controller = new AbortController()
+  let timer = setTimeout(() => controller.abort(), opts.timeout)
+
   let crawler = new fdir({
+    // Let us cancel the search if it takes too long
+    signal: controller.signal,
+
     // onlyFiles: true
     includeDirs: false,
     excludeFiles: false,
@@ -58,6 +67,8 @@ export async function searchFiles(opts: SearchFilesOptions) {
   crawler = crawler.globWithOptions(opts.include, { dot: true })
 
   let results = await crawler.crawl(opts.root).withPromise()
+
+  clearTimeout(timer)
 
   return results
 }
