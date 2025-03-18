@@ -68,6 +68,7 @@
     "enhanced-resolve": "^5.16.1",
     "esbuild": "^0.25.0",
     "fast-glob": "3.2.4",
+    "fdir": "^6.4.3",
     "find-up": "5.0.0",
     "jiti": "^2.3.3",
     "klona": "2.0.4",
