@@ -4,7 +4,7 @@ import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
-import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
+import { css, defineTest, js, json, scss, Storage, symlinkTo, TestUtils } from './testing'
 import { normalizePath } from './utils'
 
 let settings: Settings = {
@@ -312,6 +312,41 @@ testLocator({
     {
       version: '4.0.6',
       config: '/src/articles/articles.css',
+      content: [],
+    },
+  ],
+})
+
+testLocator({
+  // options: { skip: true },
+  name: 'Recursive symlinks do not cause infinite traversal loops',
+  fs: {
+    'src/a/b/c/index.css': css`
+      @import 'tailwindcss';
+    `,
+    'src/a/b/c/z': symlinkTo('src'),
+    'src/a/b/x': symlinkTo('src'),
+    'src/a/b/y': symlinkTo('src'),
+    'src/a/b/z': symlinkTo('src'),
+    'src/a/x': symlinkTo('src'),
+
+    'src/b/c/d/z': symlinkTo('src'),
+    'src/b/c/d/index.css': css``,
+    'src/b/c/x': symlinkTo('src'),
+    'src/b/c/y': symlinkTo('src'),
+    'src/b/c/z': symlinkTo('src'),
+    'src/b/x': symlinkTo('src'),
+
+    'src/c/d/e/z': symlinkTo('src'),
+    'src/c/d/x': symlinkTo('src'),
+    'src/c/d/y': symlinkTo('src'),
+    'src/c/d/z': symlinkTo('src'),
+    'src/c/x': symlinkTo('src'),
+  },
+  expected: [
+    {
+      version: '4.0.6 (bundled)',
+      config: '/src/a/b/c/index.css',
       content: [],
     },
   ],
