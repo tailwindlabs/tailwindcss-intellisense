@@ -4,6 +4,8 @@ import type { CodeLens } from 'vscode-languageserver'
 import braces from 'braces'
 import { findAll, indexToPosition } from './util/find'
 import { absoluteRange } from './util/absoluteRange'
+import { formatBytes } from './util/format-bytes'
+import { estimatedClassSize } from './util/estimated-class-size'
 
 export async function getCodeLens(state: State, doc: TextDocument): Promise<CodeLens[]> {
   if (!state.enabled) return []
@@ -38,6 +40,11 @@ async function sourceInlineCodeLens(state: State, doc: TextDocument): Promise<Co
       end: indexToPosition(text, match.indices.groups.glob[1]),
     })
 
+    let size = 0
+    for (let className of expanded) {
+      size += estimatedClassSize(className)
+    }
+
     lenses.push({
       range: slice,
       command: {
@@ -45,6 +52,24 @@ async function sourceInlineCodeLens(state: State, doc: TextDocument): Promise<Co
         command: '',
       },
     })
+
+    if (size >= 1_000_000) {
+      lenses.push({
+        range: slice,
+        command: {
+          title: `At least ${formatBytes(size)} of CSS`,
+          command: '',
+        },
+      })
+
+      lenses.push({
+        range: slice,
+        command: {
+          title: `This may slow down your bundler/browser`,
+          command: '',
+        },
+      })
+    }
   }
 
   return lenses
