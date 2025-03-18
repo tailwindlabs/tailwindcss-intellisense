@@ -189,15 +189,7 @@ export function completionsFromClassList(
           }),
         )
       } else {
-        let shouldSortVariants = !semver.gte(state.version, '2.99.0')
         let resultingVariants = [...existingVariants, variant.name]
-
-        if (shouldSortVariants) {
-          let allVariants = state.variants.map(({ name }) => name)
-          resultingVariants = resultingVariants.sort(
-            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a),
-          )
-        }
 
         let selectors: string[] = []
 
@@ -223,25 +215,6 @@ export function completionsFromClassList(
               .map((selector) => addPixelEquivalentsToMediaQuery(selector))
               .join(', '),
             textEditText: resultingVariants[resultingVariants.length - 1] + sep,
-            additionalTextEdits:
-              shouldSortVariants && resultingVariants.length > 1
-                ? [
-                    {
-                      newText:
-                        resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
-                      range: {
-                        start: {
-                          ...classListRange.start,
-                          character: classListRange.end.character - partialClassName.length,
-                        },
-                        end: {
-                          ...replacementRange.start,
-                          character: replacementRange.start.character,
-                        },
-                      },
-                    },
-                  ]
-                : [],
           }),
         )
       }
