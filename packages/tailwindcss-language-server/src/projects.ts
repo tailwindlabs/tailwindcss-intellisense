@@ -15,6 +15,8 @@ import type {
   Disposable,
   DocumentLinkParams,
   DocumentLink,
+  CodeLensParams,
+  CodeLens,
 } from 'vscode-languageserver/node'
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -35,6 +37,7 @@ import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
 import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
+import { getCodeLens } from '@tailwindcss/language-service/src/codeLensProvider'
 import { Resolver } from './resolver'
 import {
   doComplete,
@@ -110,6 +113,7 @@ export interface ProjectService {
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
   onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
+  onCodeLens(params: CodeLensParams): Promise<CodeLens[]>
   sortClassLists(classLists: string[]): string[]
 
   dependencies(): Iterable<string>
@@ -1175,6 +1179,17 @@ export async function createProjectService(
         if (!settings.tailwindCSS.hovers) return null
         if (await isExcluded(state, document)) return null
         return doHover(state, document, params.position)
+      }, null)
+    },
+    async onCodeLens(params: CodeLensParams): Promise<CodeLens[]> {
+      return withFallback(async () => {
+        if (!state.enabled) return null
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return null
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.codeLens) return null
+        if (await isExcluded(state, document)) return null
+        return getCodeLens(state, document)
       }, null)
     },
     async onCompletion(params: CompletionParams): Promise<CompletionList> {

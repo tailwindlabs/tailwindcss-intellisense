@@ -1,6 +1,8 @@
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import {
   ClientCapabilities,
+  CodeLens,
+  CodeLensRequest,
   CompletionList,
   CompletionParams,
   Diagnostic,
@@ -93,6 +95,11 @@ export interface ClientDocument {
    * You may not open a document that is already open
    */
   reopen(): Promise<void>
+
+  /**
+   * Code lenses in the document
+   */
+  codeLenses(): Promise<CodeLens[] | null>
 
   /**
    * The diagnostics for the current version of this document
@@ -677,6 +684,14 @@ export async function createClientWorkspace({
       return results
     }
 
+    async function codeLenses() {
+      return await conn.sendRequest(CodeLensRequest.type, {
+        textDocument: {
+          uri: uri.toString(),
+        },
+      })
+    }
+
     return {
       uri,
       reopen,
@@ -687,6 +702,7 @@ export async function createClientWorkspace({
       symbols,
       completions,
       diagnostics,
+      codeLenses,
     }
   }
 

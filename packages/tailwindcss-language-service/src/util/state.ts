@@ -49,6 +49,7 @@ export type TailwindCssSettings = {
   classFunctions: string[]
   suggestions: boolean
   hovers: boolean
+  codeLens: boolean
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean
@@ -185,6 +186,7 @@ export function getDefaultTailwindSettings(): Settings {
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
       classFunctions: [],
       codeActions: true,
+      codeLens: true,
       hovers: true,
       suggestions: true,
       validate: true,
