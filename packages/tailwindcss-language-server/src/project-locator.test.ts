@@ -422,6 +422,40 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'Recursive symlinks do not cause infinite traversal loops',
+  fs: {
+    'src/a/b/c/index.css': css`
+      @import 'tailwindcss';
+    `,
+    'src/a/b/c/z': symlinkTo('src'),
+    'src/a/b/x': symlinkTo('src'),
+    'src/a/b/y': symlinkTo('src'),
+    'src/a/b/z': symlinkTo('src'),
+    'src/a/x': symlinkTo('src'),
+
+    'src/b/c/d/z': symlinkTo('src'),
+    'src/b/c/d/index.css': css``,
+    'src/b/c/x': symlinkTo('src'),
+    'src/b/c/y': symlinkTo('src'),
+    'src/b/c/z': symlinkTo('src'),
+    'src/b/x': symlinkTo('src'),
+
+    'src/c/d/e/z': symlinkTo('src'),
+    'src/c/d/x': symlinkTo('src'),
+    'src/c/d/y': symlinkTo('src'),
+    'src/c/d/z': symlinkTo('src'),
+    'src/c/x': symlinkTo('src'),
+  },
+  expected: [
+    {
+      version: '4.0.6 (bundled)',
+      config: '/src/a/b/c/index.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({
