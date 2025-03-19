@@ -42,12 +42,14 @@ export function supportedFeatures(version: string, mod?: unknown): Feature[] {
     return ['css-at-theme', 'layer:base', 'content-list']
   }
 
-  if (!isInsidersV3 && semver.gte(version, '4.0.0-alpha.1')) {
-    return ['css-at-theme', 'layer:base', 'content-list']
-  }
+  if (!isInsidersV3) {
+    if (semver.gte(version, '4.0.0-alpha.1')) {
+      return ['css-at-theme', 'layer:base', 'content-list']
+    }
 
-  if (!isInsidersV3 && version.startsWith('0.0.0-oxide')) {
-    return ['css-at-theme', 'layer:base', 'content-list']
+    if (version.startsWith('0.0.0-oxide')) {
+      return ['css-at-theme', 'layer:base', 'content-list']
+    }
   }
 
   if (semver.gte(version, '0.99.0')) {
