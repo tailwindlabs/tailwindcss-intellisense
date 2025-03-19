@@ -1,5 +1,7 @@
-import { test } from 'vitest'
+import { test, expect, describe } from 'vitest'
 import { withFixture } from '../common'
+import { css, defineTest } from '../../src/testing'
+import { createClient } from '../utils/client'
 
 function buildCompletion(c) {
   return async function completion({
@@ -669,4 +671,70 @@ withFixture('v4/workspaces', (c) => {
       documentation: '#8e3b46',
     })
   })
+})
+
+defineTest({
+  name: 'v4: Completions show after a variant arbitrary value',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="data-[foo]:">',
+    })
+
+    // <div class="data-[foo]:">
+    //                       ^
+    let completion = await document.completions({ line: 0, character: 23 })
+
+    expect(completion?.items.length).toBe(12289)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show after an arbitrary variant',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="[&:hover]:">',
+    })
+
+    // <div class="[&:hover]:">
+    //                      ^
+    let completion = await document.completions({ line: 0, character: 22 })
+
+    expect(completion?.items.length).toBe(12289)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show after a variant with a bare value',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="supports-not-hover:">',
+    })
+
+    // <div class="supports-not-hover:">
+    //                               ^
+    let completion = await document.completions({ line: 0, character: 31 })
+
+    expect(completion?.items.length).toBe(12289)
+  },
 })

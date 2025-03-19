@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Detect classes in JS/TS functions and tagged template literals with the `tailwindCSS.classFunctions` setting ([#1258](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1258))
+- v4: Make sure completions show after variants using arbitrary and bare values ([#1263](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1263))
 
 # 0.14.9
 
