@@ -36,13 +36,8 @@ import pkgUp from 'pkg-up'
 import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
-import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
-import { getCodeLens } from '@tailwindcss/language-service/src/codeLensProvider'
+import { createLanguageService } from '@tailwindcss/language-service/src/service'
 import { Resolver } from './resolver'
-import {
-  doComplete,
-  resolveCompletionItem,
-} from '@tailwindcss/language-service/src/completionProvider'
 import type {
   State,
   FeatureFlags,
@@ -52,17 +47,12 @@ import type {
   ClassEntry,
 } from '@tailwindcss/language-service/src/util/state'
 import { provideDiagnostics } from './lsp/diagnosticsProvider'
-import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
-import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
-import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
 import { bigSign } from '@tailwindcss/language-service/src/util/jit'
 import { getColor } from '@tailwindcss/language-service/src/util/color'
-import * as culori from 'culori'
-import namedColors from 'color-name'
 import tailwindPlugins from './lib/plugins'
 import isExcluded from './util/isExcluded'
 import { getFileFsPath } from './util/uri'
@@ -72,7 +62,6 @@ import {
   firstOptional,
   withoutLogs,
   clearRequireCache,
-  withFallback,
   isObject,
   pathToFileURL,
   changeAffectsFile,
@@ -85,8 +74,7 @@ import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
-
-const colorNames = Object.keys(namedColors)
+import type { File, FileType } from '@tailwindcss/language-service/src/fs'
 
 function getConfigId(configPath: string, configDependencies: string[]): string {
   return JSON.stringify(
@@ -234,36 +222,71 @@ export async function createProjectService(
       getDocumentSymbols: (uri: string) => {
         return connection.sendRequest('@/tailwindCSS/getDocumentSymbols', { uri })
       },
-      async readDirectory(document, directory) {
+      async readDirectory() {
+        // NOTE: This is overwritten in `createLanguageDocument`
+        throw new Error('Not implemented')
+      },
+    },
+  }
+
+  let service = createLanguageService({
+    state: () => state,
+    fs: {
+      async document(uri: string) {
+        return documentService.getDocument(uri)
+      },
+      async resolve(document: TextDocument, relativePath: string): Promise<string | null> {
+        let documentPath = URI.parse(document.uri).fsPath
+        let baseDir = path.dirname(documentPath)
+
+        let resolved = await resolver.substituteId(relativePath, baseDir)
+        resolved ??= relativePath
+
+        return URI.file(path.resolve(baseDir, resolved)).toString()
+      },
+
+      async readDirectory(document: TextDocument, filepath: string): Promise<File[]> {
         try {
           let baseDir = path.dirname(getFileFsPath(document.uri))
-          directory = await resolver.substituteId(`${directory}/`, baseDir)
-          directory = path.resolve(baseDir, directory)
+          filepath = await resolver.substituteId(`${filepath}/`, baseDir)
+          filepath = path.resolve(baseDir, filepath)
 
-          let dirents = await fs.promises.readdir(directory, { withFileTypes: true })
+          let dirents = await fs.promises.readdir(filepath, { withFileTypes: true })
 
-          let result: Array<[string, { isDirectory: boolean }] | null> = await Promise.all(
-            dirents.map(async (dirent) => {
-              let isDirectory = dirent.isDirectory()
-              let shouldRemove = await isExcluded(
-                state,
-                document,
-                path.join(directory, dirent.name, isDirectory ? '/' : ''),
-              )
+          let results: File[] = []
 
-              if (shouldRemove) return null
+          for (let dirent of dirents) {
+            let isDirectory = dirent.isDirectory()
+            let shouldRemove = await isExcluded(
+              state,
+              document,
+              path.join(filepath, dirent.name, isDirectory ? '/' : ''),
+            )
+            if (shouldRemove) continue
 
-              return [dirent.name, { isDirectory }]
-            }),
-          )
+            let type: FileType = 'unknown'
 
-          return result.filter((item) => item !== null)
+            if (dirent.isFile()) {
+              type = 'file'
+            } else if (dirent.isDirectory()) {
+              type = 'directory'
+            } else if (dirent.isSymbolicLink()) {
+              type = 'symbolic-link'
+            }
+
+            results.push({
+              name: dirent.name,
+              type,
+            })
+          }
+
+          return results
         } catch {
           return []
         }
       },
     },
-  }
+  })
 
   if (projectConfig.configPath && projectConfig.config.source === 'js') {
     let deps = []
@@ -1193,139 +1216,79 @@ export async function createProjectService(
     },
     onFileEvents,
     async onHover(params: TextDocumentPositionParams): Promise<Hover> {
-      return withFallback(async () => {
-        if (!state.enabled) return null
-        let document = documentService.getDocument(params.textDocument.uri)
-        if (!document) return null
-        let settings = await state.editor.getConfiguration(document.uri)
-        if (!settings.tailwindCSS.hovers) return null
-        if (await isExcluded(state, document)) return null
-        return doHover(state, document, params.position)
-      }, null)
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.hover(params.position)
+      } catch {
+        return null
+      }
     },
     async onCodeLens(params: CodeLensParams): Promise<CodeLens[]> {
-      return withFallback(async () => {
-        if (!state.enabled) return null
-        let document = documentService.getDocument(params.textDocument.uri)
-        if (!document) return null
-        let settings = await state.editor.getConfiguration(document.uri)
-        if (!settings.tailwindCSS.codeLens) return null
-        if (await isExcluded(state, document)) return null
-        return getCodeLens(state, document)
-      }, null)
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.codeLenses()
+      } catch {
+        return []
+      }
     },
     async onCompletion(params: CompletionParams): Promise<CompletionList> {
-      return withFallback(async () => {
-        if (!state.enabled) return null
-        let document = documentService.getDocument(params.textDocument.uri)
-        if (!document) return null
-        let settings = await state.editor.getConfiguration(document.uri)
-        if (!settings.tailwindCSS.suggestions) return null
-        if (await isExcluded(state, document)) return null
-        return doComplete(state, document, params.position, params.context)
-      }, null)
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.completions(params.position)
+      } catch {
+        return null
+      }
     },
-    onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
-      return withFallback(() => {
-        if (!state.enabled) return null
-        return resolveCompletionItem(state, item)
-      }, null)
+    async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
+      try {
+        return await service.resolveCompletion(item)
+      } catch {
+        return null
+      }
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
-      return withFallback(async () => {
-        if (!state.enabled) return null
-        let document = documentService.getDocument(params.textDocument.uri)
-        if (!document) return null
-        let settings = await state.editor.getConfiguration(document.uri)
-        if (!settings.tailwindCSS.codeActions) return null
-        return doCodeActions(state, params, document)
-      }, null)
-    },
-    onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
-      if (!state.enabled) return null
-      let document = documentService.getDocument(params.textDocument.uri)
-      if (!document) return null
-
-      let documentPath = URI.parse(document.uri).fsPath
-      let baseDir = path.dirname(documentPath)
-
-      async function resolveTarget(linkPath: string) {
-        linkPath = (await resolver.substituteId(linkPath, baseDir)) ?? linkPath
-
-        return URI.file(path.resolve(baseDir, linkPath)).toString()
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.codeActions(params.range, params.context)
+      } catch {
+        return []
       }
-
-      return getDocumentLinks(state, document, resolveTarget)
+    },
+    async onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.documentLinks()
+      } catch {
+        return []
+      }
     },
     provideDiagnostics: debounce(
-      (document: TextDocument) => {
-        if (!state.enabled) return
-        provideDiagnostics(state, document)
-      },
+      (document) => provideDiagnostics(service, state, document),
       params.initializationOptions?.testMode ? 0 : 500,
     ),
-    provideDiagnosticsForce: (document: TextDocument) => {
-      if (!state.enabled) return
-      provideDiagnostics(state, document)
-    },
+    provideDiagnosticsForce: (document) => provideDiagnostics(service, state, document),
     async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
-      return withFallback(async () => {
-        if (!state.enabled) return []
-        let document = documentService.getDocument(params.textDocument.uri)
-        if (!document) return []
-        if (await isExcluded(state, document)) return null
-        return getDocumentColors(state, document)
-      }, null)
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.documentColors()
+      } catch {
+        return []
+      }
     },
     async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
-      let document = documentService.getDocument(params.textDocument.uri)
-      if (!document) return []
-      let className = document.getText(params.range)
-      let match = className.match(
-        new RegExp(`-\\[(${colorNames.join('|')}|(?:(?:#|rgba?\\(|hsla?\\())[^\\]]+)\\]$`, 'i'),
-      )
-      // let match = className.match(/-\[((?:#|rgba?\(|hsla?\()[^\]]+)\]$/i)
-      if (match === null) return []
-
-      let currentColor = match[1]
-
-      let isNamedColor = colorNames.includes(currentColor)
-
-      let color: culori.Color = {
-        mode: 'rgb',
-        r: params.color.red,
-        g: params.color.green,
-        b: params.color.blue,
-        alpha: params.color.alpha,
+      try {
+        let doc = await service.open(params.textDocument.uri)
+        if (!doc) return null
+        return doc.colorPresentation(params.color, params.range)
+      } catch {
+        return []
       }
-
-      let hexValue = culori.formatHex8(color)
-
-      if (!isNamedColor && (currentColor.length === 4 || currentColor.length === 5)) {
-        let [, ...chars] =
-          hexValue.match(/^#([a-f\d])\1([a-f\d])\2([a-f\d])\3(?:([a-f\d])\4)?$/i) ?? []
-        if (chars.length) {
-          hexValue = `#${chars.filter(Boolean).join('')}`
-        }
-      }
-
-      if (hexValue.length === 5) {
-        hexValue = hexValue.replace(/f$/, '')
-      } else if (hexValue.length === 9) {
-        hexValue = hexValue.replace(/ff$/, '')
-      }
-
-      let prefix = className.substr(0, match.index)
-
-      return [
-        hexValue,
-        culori.formatRgb(color).replace(/ /g, ''),
-        culori
-          .formatHsl(color)
-          .replace(/ /g, '')
-          // round numbers
-          .replace(/\d+\.\d+(%?)/g, (value, suffix) => `${Math.round(parseFloat(value))}${suffix}`),
-      ].map((value) => ({ label: `${prefix}-[${value}]` }))
     },
     sortClassLists(classLists: string[]): string[] {
       if (!state.jit) {

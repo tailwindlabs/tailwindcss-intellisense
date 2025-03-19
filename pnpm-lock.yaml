@@ -345,6 +345,9 @@ importers:
       '@types/node':
         specifier: ^18.19.33
         version: 18.19.43
+      '@types/picomatch':
+        specifier: ^2.3.3
+        version: 2.3.4
       '@types/stringify-object':
         specifier: ^4.0.5
         version: 4.0.5
@@ -360,6 +363,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      picomatch:
+        specifier: ^4.0.1
+        version: 4.0.2
       tslib:
         specifier: 2.2.0
         version: 2.2.0
