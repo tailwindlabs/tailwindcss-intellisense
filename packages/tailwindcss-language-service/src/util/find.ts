@@ -204,8 +204,22 @@ export async function findClassListsInHtmlRange(
   const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
   const matches = matchClassAttributes(text, settings.classAttributes)
 
-  if (settings.classFunctions?.length) {
-    matches.push(...matchClassFunctions(text, settings.classFunctions))
+  let boundaries = getLanguageBoundaries(state, doc)
+
+  for (let boundary of boundaries ?? []) {
+    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
+    if (!isJsContext) continue
+    if (!settings.classFunctions?.length) continue
+
+    let str = doc.getText(boundary.range)
+    let offset = doc.offsetAt(boundary.range.start)
+    let fnMatches = matchClassFunctions(str, settings.classFunctions)
+
+    fnMatches.forEach((match) => {
+      if (match.index) match.index += offset
+    })
+
+    matches.push(...fnMatches)
   }
 
   const existingResultSet = new Set<string>()

@@ -6,6 +6,7 @@ import type { DeepPartial } from '../types'
 import dedent from 'dedent'
 
 const js = dedent
+const html = dedent
 
 test('class regex works in astro', async ({ expect }) => {
   let file = createDocument({
@@ -618,6 +619,71 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
       range: {
         start: { line: 16, character: 12 },
         end: { line: 16, character: 36 },
+      },
+    },
+  ])
+})
+
+test('classFunctions should only match in JS-like contexts', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.html',
+    lang: 'html',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['className'],
+        classFunctions: ['clsx'],
+      },
+    },
+    content: html`
+      <!-- These should not match -->
+      clsx('relative flex') clsx('relative flex')
+
+      <!-- These should match -->
+      <script>
+        let x = clsx('relative flex')
+        let y = clsx('relative flex')
+      </script>
+
+      <!-- These still should not match -->
+      clsx('relative flex') clsx('relative flex')
+
+      <!-- These should match -->
+      <script>
+        let z = clsx('relative flex')
+        let w = clsx('relative flex')
+      </script>
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 5, character: 16 },
+        end: { line: 5, character: 29 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 6, character: 16 },
+        end: { line: 6, character: 29 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 14, character: 16 },
+        end: { line: 14, character: 29 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 15, character: 16 },
+        end: { line: 15, character: 29 },
       },
     },
   ])

@@ -45,6 +45,8 @@ import type { ThemeEntry } from './util/v4'
 import { segment } from './util/segment'
 import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/theme-keys'
 import { SEARCH_RANGE } from './util/constants'
+import { getLanguageBoundaries } from './util/getLanguageBoundaries'
+import { isWithinRange } from './util/isWithinRange'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -747,8 +749,23 @@ async function provideClassAttributeCompletions(
 
   let matches = matchClassAttributes(str, settings.classAttributes)
 
-  if (settings.classFunctions?.length) {
-    matches.push(...matchClassFunctions(str, settings.classFunctions))
+  let boundaries = getLanguageBoundaries(state, document)
+
+  for (let boundary of boundaries ?? []) {
+    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
+    if (!isJsContext) continue
+    if (!settings.classFunctions?.length) continue
+    if (!isWithinRange(position, boundary.range)) continue
+
+    let str = document.getText(boundary.range)
+    let offset = document.offsetAt(boundary.range.start)
+    let fnMatches = matchClassFunctions(str, settings.classFunctions)
+
+    fnMatches.forEach((match) => {
+      if (match.index) match.index += offset
+    })
+
+    matches.push(...fnMatches)
   }
 
   if (matches.length === 0) {
