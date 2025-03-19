@@ -1181,11 +1181,9 @@ export async function createProjectService(
       if (state.enabled) {
         refreshDiagnostics()
       }
-      if (settings.editor?.colorDecorators) {
-        updateCapabilities()
-      } else {
-        connection.sendNotification('@/tailwindCSS/clearColors')
-      }
+
+      updateCapabilities()
+      connection.sendNotification('@/tailwindCSS/clearColors')
     },
     onFileEvents,
     async onHover(params: TextDocumentPositionParams): Promise<Hover> {

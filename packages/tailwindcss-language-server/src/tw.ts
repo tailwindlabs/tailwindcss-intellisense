@@ -33,6 +33,7 @@ import {
   DocumentLinkRequest,
   TextDocumentSyncKind,
   CodeLensRequest,
+  DidChangeConfigurationNotification,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
@@ -799,6 +800,7 @@ export class TW {
 
   private updateCapabilities() {
     if (!supportsDynamicRegistration(this.initializeParams)) {
+      this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
       return
     }
 
@@ -815,6 +817,7 @@ export class TW {
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
     capabilities.add(CodeLensRequest.type, { documentSelector: null })
     capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    capabilities.add(DidChangeConfigurationNotification.type, undefined)
 
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
