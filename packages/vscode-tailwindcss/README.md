@@ -90,6 +90,26 @@ Enable completions when using [Emmet](https://emmet.io/)-style syntax, for examp
 
 The HTML attributes for which to provide class completions, hover previews, linting etc. **Default: `class`, `className`, `ngClass`, `class:list`**
 
+### `tailwindCSS.classFunctions`
+
+Functions in which to provide completions, hover previews, linting etc. Currently, this works for both function calls and tagged template literals in JavaScript / TypeScript.
+
+Example:
+
+```json
+{
+  "tailwindCSS.classFunctions": ["tw", "clsx"]
+}
+```
+
+```javascript
+let classes = tw`flex bg-red-500`
+let classes2 = clsx([
+  "flex bg-red-500",
+  { "text-red-500": true }
+])
+```
+
 ### `tailwindCSS.colorDecorators`
 
 Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions. **Default: `true`**
