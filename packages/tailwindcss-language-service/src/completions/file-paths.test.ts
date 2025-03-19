@@ -15,6 +15,7 @@ test('Detecting v3 directives that point to files', async () => {
   // The following are not supported in v3
   await expect(find('@plugin "./')).resolves.toEqual(null)
   await expect(find('@source "./')).resolves.toEqual(null)
+  await expect(find('@source not "./')).resolves.toEqual(null)
   await expect(find('@import "tailwindcss" source("./')).resolves.toEqual(null)
   await expect(find('@tailwind utilities source("./')).resolves.toEqual(null)
 })
@@ -42,6 +43,12 @@ test('Detecting v4 directives that point to files', async () => {
     suggest: 'source',
   })
 
+  await expect(find('@source not "./')).resolves.toEqual({
+    directive: 'source',
+    partial: './',
+    suggest: 'source',
+  })
+
   await expect(find('@import "tailwindcss" source("./')).resolves.toEqual({
     directive: 'import',
     partial: './',
@@ -53,4 +60,13 @@ test('Detecting v4 directives that point to files', async () => {
     partial: './',
     suggest: 'directory',
   })
+})
+
+test('@source inline is ignored', async () => {
+  function find(text: string) {
+    return findFileDirective({ enabled: true, v4: true }, text)
+  }
+
+  await expect(find('@source inline("')).resolves.toEqual(null)
+  await expect(find('@source not inline("')).resolves.toEqual(null)
 })

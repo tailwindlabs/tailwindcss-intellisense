@@ -15,6 +15,8 @@ export type Feature =
   | 'jit'
   | 'separator:root'
   | 'separator:options'
+  | 'source-not'
+  | 'source-inline'
 
 /**
  * Determine a list of features that are supported by the given Tailwind CSS version
@@ -39,15 +41,21 @@ export function supportedFeatures(version: string, mod?: unknown): Feature[] {
   }
 
   if (isInsidersV4) {
-    return ['css-at-theme', 'layer:base', 'content-list']
+    return ['css-at-theme', 'layer:base', 'content-list', 'source-inline', 'source-not']
   }
 
-  if (!isInsidersV3 && semver.gte(version, '4.0.0-alpha.1')) {
-    return ['css-at-theme', 'layer:base', 'content-list']
-  }
+  if (!isInsidersV3) {
+    if (semver.gte(version, '4.1.0')) {
+      return ['css-at-theme', 'layer:base', 'content-list', 'source-inline', 'source-not']
+    }
 
-  if (!isInsidersV3 && version.startsWith('0.0.0-oxide')) {
-    return ['css-at-theme', 'layer:base', 'content-list']
+    if (semver.gte(version, '4.0.0-alpha.1')) {
+      return ['css-at-theme', 'layer:base', 'content-list']
+    }
+
+    if (version.startsWith('0.0.0-oxide')) {
+      return ['css-at-theme', 'layer:base', 'content-list']
+    }
   }
 
   if (semver.gte(version, '0.99.0')) {

@@ -210,6 +210,12 @@
           "markdownDescription": "Enable code actions.",
           "scope": "language-overridable"
         },
+        "tailwindCSS.codeLens": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable code lens.",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.colorDecorators": {
           "type": "boolean",
           "default": true,

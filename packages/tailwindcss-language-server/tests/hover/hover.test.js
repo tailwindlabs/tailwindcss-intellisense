@@ -293,6 +293,101 @@ withFixture('v4/basic', (c) => {
     },
   })
 
+  testHover('css @source not glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source not "../{app,components}/**/*.jsx"`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- ../app/**/*.jsx',
+          '- ../components/**/*.jsx',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 42 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
+  testHover('css @source inline glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source inline("{hover:,active:,}m-{1,2,3}")`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- hover:m-1',
+          '- hover:m-2',
+          '- hover:m-3',
+          '- active:m-1',
+          '- active:m-2',
+          '- active:m-3',
+          '- m-1',
+          '- m-2',
+          '- m-3',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 15 },
+        end: { line: 0, character: 43 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 15 },
+    },
+  })
+
+  testHover('css @source not inline glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source not inline("{hover:,active:,}m-{1,2,3}")`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- hover:m-1',
+          '- hover:m-2',
+          '- hover:m-3',
+          '- active:m-1',
+          '- active:m-2',
+          '- active:m-3',
+          '- m-1',
+          '- m-2',
+          '- m-3',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 19 },
+        end: { line: 0, character: 47 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
   testHover('--theme() works inside @media queries', {
     lang: 'tailwindcss',
     text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,

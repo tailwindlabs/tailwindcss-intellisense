@@ -1,7 +1,10 @@
 import type { State } from '../util/state'
 
 // @config, @plugin, @source
-const PATTERN_CUSTOM_V4 = /@(?<directive>config|plugin|source)\s*(?<partial>'[^']*|"[^"]*)$/
+// - @source inline("…") is *not* a file directive
+// - @source not inline("…") is *not* a file directive
+const PATTERN_CUSTOM_V4 =
+  /@(?<directive>config|plugin|source)(?<not>\s+not)?\s*(?<partial>'[^']*|"[^"]*)$/
 const PATTERN_CUSTOM_V3 = /@(?<directive>config)\s*(?<partial>'[^']*|"[^"]*)$/
 
 // @import … source('…')
@@ -26,6 +29,7 @@ export async function findFileDirective(state: State, text: string): Promise<Fil
 
     if (!match) return null
 
+    let isNot = match.groups.not !== undefined && match.groups.not.length > 0
     let directive = match.groups.directive
     let partial = match.groups.partial?.slice(1) ?? '' // remove leading quote
 
@@ -40,6 +44,7 @@ export async function findFileDirective(state: State, text: string): Promise<Fil
     // If we're looking at @import … source('…') or @tailwind … source('…') then
     // we want to list directories instead of files
     else if (directive === 'import' || directive === 'tailwind') {
+      if (isNot) return null
       suggest = 'directory'
     }
 
@@ -48,6 +53,9 @@ export async function findFileDirective(state: State, text: string): Promise<Fil
 
   let match = text.match(PATTERN_CUSTOM_V3)
   if (!match) return null
+
+  let isNot = match.groups.not !== undefined && match.groups.not.length > 0
+  if (isNot) return null
 
   let directive = match.groups.directive
   let partial = match.groups.partial.slice(1) // remove leading quote

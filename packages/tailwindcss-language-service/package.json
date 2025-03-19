@@ -40,6 +40,7 @@
     "vscode-languageserver-textdocument": "1.0.11"
   },
   "devDependencies": {
+    "@types/braces": "3.0.1",
     "@types/css.escape": "^1.5.2",
     "@types/dedent": "^0.7.2",
     "@types/line-column": "^1.0.2",

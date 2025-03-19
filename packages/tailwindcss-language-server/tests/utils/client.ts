@@ -1,6 +1,8 @@
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import {
   ClientCapabilities,
+  CodeLens,
+  CodeLensRequest,
   CompletionList,
   CompletionParams,
   Diagnostic,
@@ -45,6 +47,7 @@ import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/
 import { DefaultMap } from '../../src/util/default-map'
 import { connect, ConnectOptions } from './connection'
 import type { DeepPartial } from '@tailwindcss/language-service/src/types'
+import type { Feature } from '@tailwindcss/language-service/src/features'
 
 export interface DocumentDescriptor {
   /**
@@ -93,6 +96,11 @@ export interface ClientDocument {
    * You may not open a document that is already open
    */
   reopen(): Promise<void>
+
+  /**
+   * Code lenses in the document
+   */
+  codeLenses(): Promise<CodeLens[] | null>
 
   /**
    * The diagnostics for the current version of this document
@@ -163,6 +171,14 @@ export interface ClientOptions extends ConnectOptions {
    * Settings to provide the server immediately when it starts
    */
   settings?: DeepPartial<Settings>
+
+  /**
+   * Additional features to force-enable
+   *
+   * These should normally be enabled by the server based on the project
+   * and the Tailwind CSS version it detects
+   */
+  features?: Feature[]
 }
 
 export interface Client extends ClientWorkspace {
@@ -387,6 +403,7 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     workspaceFolders,
     initializationOptions: {
       testMode: true,
+      additionalFeatures: opts.features,
       ...opts.options,
     },
   })
@@ -677,6 +694,14 @@ export async function createClientWorkspace({
       return results
     }
 
+    async function codeLenses() {
+      return await conn.sendRequest(CodeLensRequest.type, {
+        textDocument: {
+          uri: uri.toString(),
+        },
+      })
+    }
+
     return {
       uri,
       reopen,
@@ -687,6 +712,7 @@ export async function createClientWorkspace({
       symbols,
       completions,
       diagnostics,
+      codeLenses,
     }
   }
 

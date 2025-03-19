@@ -4,6 +4,7 @@ import type { Postcss } from 'postcss'
 import type { KeywordColor } from './color'
 import type * as culori from 'culori'
 import type { DesignSystem } from './v4'
+import type { Feature } from '../features'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -49,6 +50,7 @@ export type TailwindCssSettings = {
   classFunctions: string[]
   suggestions: boolean
   hovers: boolean
+  codeLens: boolean
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean
@@ -141,6 +143,7 @@ export interface State {
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
+  features: Feature[]
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 
@@ -185,6 +188,7 @@ export function getDefaultTailwindSettings(): Settings {
       classAttributes: ['class', 'className', 'ngClass', 'class:list'],
       classFunctions: [],
       codeActions: true,
+      codeLens: true,
       hovers: true,
       suggestions: true,
       validate: true,
@@ -221,6 +225,7 @@ export function createState(
 ): State {
   return {
     enabled: true,
+    features: [],
     ...partial,
     editor: {
       get connection(): Connection {
