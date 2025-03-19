@@ -1,6 +1,6 @@
-import { test, expect, describe } from 'vitest'
+import { test, expect } from 'vitest'
 import { withFixture } from '../common'
-import { css, defineTest } from '../../src/testing'
+import { css, defineTest, html, js } from '../../src/testing'
 import { createClient } from '../utils/client'
 
 function buildCompletion(c) {
@@ -734,6 +734,66 @@ defineTest({
     // <div class="supports-not-hover:">
     //                               ^
     let completion = await document.completions({ line: 0, character: 31 })
+
+    expect(completion?.items.length).toBe(12289)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show inside class functions in JS/TS files',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'javascript',
+      text: js`
+        let classes = clsx('');
+      `,
+    })
+
+    // let classes = clsx('');
+    //                    ^
+    let completion = await document.completions({ line: 0, character: 20 })
+
+    expect(completion?.items.length).toBe(12289)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show inside class functions in JS/TS contexts',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'html',
+      text: html`
+        <script>
+          let classes = clsx('')
+        </script>
+      `,
+    })
+
+    //   let classes = clsx('')
+    //                      ^
+    let completion = await document.completions({ line: 1, character: 22 })
 
     expect(completion?.items.length).toBe(12289)
   },
