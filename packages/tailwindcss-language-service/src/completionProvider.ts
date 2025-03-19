@@ -1866,16 +1866,18 @@ function provideCssDirectiveCompletions(
       },
     })
 
-    items.push({
-      label: '@source not',
-      documentation: {
-        kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: `Use the \`@source not\` directive to ignore files when scanning.\n\n[Tailwind CSS Documentation](${docsUrl(
-          state.version,
-          'functions-and-directives/#source',
-        )})`,
-      },
-    })
+    if (state.features.includes('source-not')) {
+      items.push({
+        label: '@source not',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use the \`@source not\` directive to ignore files when scanning.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#source',
+          )})`,
+        },
+      })
+    }
 
     items.push({
       label: '@plugin',
