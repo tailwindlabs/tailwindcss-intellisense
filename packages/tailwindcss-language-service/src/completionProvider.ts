@@ -1040,7 +1040,12 @@ function provideCssHelperCompletions(
     end: position,
   }
 
-  if (state.v4 && match.groups.helper === '--theme') {
+  if (
+    state.v4 &&
+    (match.groups.helper === '--theme' ||
+      match.groups.helper === 'theme' ||
+      match.groups.helper === 'var')
+  ) {
     let items: CompletionItem[] = themeKeyCompletions(state)
 
     editRange.start.character = match.indices.groups.helper[1] + 1
@@ -1057,6 +1062,8 @@ function provideCssHelperCompletions(
       state.editor.capabilities.itemDefaults,
     )
   }
+
+  if (match.groups.helper === 'var') return null
 
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
   let parts = path.split(/([\[\].]+)/)
