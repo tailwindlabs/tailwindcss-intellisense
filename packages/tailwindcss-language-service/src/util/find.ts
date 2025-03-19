@@ -9,7 +9,7 @@ import { isJsxContext } from './js'
 import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
-import { resolveRange } from './resolveRange'
+import { absoluteRange } from './absoluteRange'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 import { customClassesIn } from './classes'
@@ -164,20 +164,66 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
+export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
+  // 1. Validate the list of function name patterns provided by the user
+  let names = fnNames.filter((x) => typeof x === 'string')
+  if (names.length === 0) return []
+
+  // 2. Extract function names in the document
+  // This is intentionally scoped to JS syntax for now but should be extended to
+  // other languages in the future
+  //
+  // This regex the JS pattern for an identifier + function call with some
+  // additional constraints:
+  //
+  // - It needs to be in an expression position — so it must be preceded by
+  // whitespace, parens, curlies, commas, whitespace, etc…
+  // - It must look like a fn call or a tagged template literal
+  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgiu
+  let foundFns = findAll(FN_NAMES, text)
+
+  // 3. Match against the function names in the document
+  let re = /^(NAMES)$/
+  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'i')
+
+  let matches = foundFns.filter((fn) => isClassFn.test(fn[1]))
+
+  return matches
+}
+
 export async function findClassListsInHtmlRange(
   state: State,
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx',
   range?: Range,
 ): Promise<DocumentClassList[]> {
+  if (!state.editor) return []
+
   const text = getTextWithoutComments(doc, type, range)
 
-  const matches = matchClassAttributes(
-    text,
-    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes,
-  )
+  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
+  const matches = matchClassAttributes(text, settings.classAttributes)
 
-  const result: DocumentClassList[] = []
+  let boundaries = getLanguageBoundaries(state, doc)
+
+  for (let boundary of boundaries ?? []) {
+    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
+    if (!isJsContext) continue
+    if (!settings.classFunctions?.length) continue
+
+    let str = doc.getText(boundary.range)
+    let offset = doc.offsetAt(boundary.range.start)
+    let fnMatches = matchClassFunctions(str, settings.classFunctions)
+
+    fnMatches.forEach((match) => {
+      if (match.index) match.index += offset
+    })
+
+    matches.push(...fnMatches)
+  }
+
+  const existingResultSet = new Set<string>()
+  const results: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
@@ -222,46 +268,53 @@ export async function findClassListsInHtmlRange(
       })
     }
 
-    result.push(
-      ...classLists
-        .map(({ value, offset }) => {
-          if (value.trim() === '') {
-            return null
-          }
+    classLists.forEach(({ value, offset }) => {
+      if (value.trim() === '') {
+        return null
+      }
 
-          const before = value.match(/^\s*/)
-          const beforeOffset = before === null ? 0 : before[0].length
-          const after = value.match(/\s*$/)
-          const afterOffset = after === null ? 0 : -after[0].length
+      const before = value.match(/^\s*/)
+      const beforeOffset = before === null ? 0 : before[0].length
+      const after = value.match(/\s*$/)
+      const afterOffset = after === null ? 0 : -after[0].length
 
-          const start = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + beforeOffset,
-          )
-          const end = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + value.length + afterOffset,
-          )
+      const start = indexToPosition(text, match.index + match[0].length - 1 + offset + beforeOffset)
+      const end = indexToPosition(
+        text,
+        match.index + match[0].length - 1 + offset + value.length + afterOffset,
+      )
 
-          return {
-            classList: value.substr(beforeOffset, value.length + afterOffset),
-            range: {
-              start: {
-                line: (range?.start.line || 0) + start.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
-              },
-              end: {
-                line: (range?.start.line || 0) + end.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
-              },
-            },
-          }
-        })
-        .filter((x) => x !== null),
-    )
+      const result: DocumentClassList = {
+        classList: value.substr(beforeOffset, value.length + afterOffset),
+        range: {
+          start: {
+            line: (range?.start.line || 0) + start.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
+          },
+          end: {
+            line: (range?.start.line || 0) + end.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
+          },
+        },
+      }
+
+      const resultKey = [
+        result.classList,
+        result.range.start.line,
+        result.range.start.character,
+        result.range.end.line,
+        result.range.end.character,
+      ].join(':')
+
+      // No need to add the result if it was already matched
+      if (!existingResultSet.has(resultKey)) {
+        existingResultSet.add(resultKey)
+        results.push(result)
+      }
+    })
   })
 
-  return result
+  return results
 }
 
 export async function findClassListsInRange(
@@ -407,14 +460,14 @@ export function findHelperFunctionsInRange(
       helper,
       path,
       ranges: {
-        full: resolveRange(
+        full: absoluteRange(
           {
             start: indexToPosition(text, startIndex),
             end: indexToPosition(text, startIndex + match.groups.path.length),
           },
           range,
         ),
-        path: resolveRange(
+        path: absoluteRange(
           {
             start: indexToPosition(text, startIndex + quotesBefore.length),
             end: indexToPosition(text, startIndex + quotesBefore.length + path.length),

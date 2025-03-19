@@ -46,6 +46,7 @@ export type TailwindCssSettings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   classAttributes: string[]
+  classFunctions: string[]
   suggestions: boolean
   hovers: boolean
   codeActions: boolean
@@ -64,7 +65,7 @@ export type TailwindCssSettings = {
     recommendedVariantOrder: DiagnosticSeveritySetting
   }
   experimental: {
-    classRegex: string[]
+    classRegex: string[] | [string, string][]
     configFile: string | Record<string, string | string[]> | null
   }
   files: {
@@ -170,4 +171,74 @@ export type ClassNameMeta = {
   pseudo: string[]
   scope: string[]
   context: string[]
+}
+
+/**
+ * @internal
+ */
+export function getDefaultTailwindSettings(): Settings {
+  return {
+    editor: { tabSize: 2 },
+    tailwindCSS: {
+      inspectPort: null,
+      emmetCompletions: false,
+      classAttributes: ['class', 'className', 'ngClass', 'class:list'],
+      classFunctions: [],
+      codeActions: true,
+      hovers: true,
+      suggestions: true,
+      validate: true,
+      colorDecorators: true,
+      rootFontSize: 16,
+      lint: {
+        cssConflict: 'warning',
+        invalidApply: 'error',
+        invalidScreen: 'error',
+        invalidVariant: 'error',
+        invalidConfigPath: 'error',
+        invalidTailwindDirective: 'error',
+        invalidSourceDirective: 'error',
+        recommendedVariantOrder: 'warning',
+      },
+      showPixelEquivalents: true,
+      includeLanguages: {},
+      files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+      experimental: {
+        classRegex: [],
+        configFile: null,
+      },
+    },
+  }
+}
+
+/**
+ *  @internal
+ */
+export function createState(
+  partial: Omit<Partial<State>, 'editor'> & {
+    editor?: Partial<EditorState>
+  },
+): State {
+  return {
+    enabled: true,
+    ...partial,
+    editor: {
+      get connection(): Connection {
+        throw new Error('Not implemented')
+      },
+      folder: '/',
+      userLanguages: {},
+      capabilities: {
+        configuration: true,
+        diagnosticRelatedInformation: true,
+        itemDefaults: [],
+      },
+      getConfiguration: () => {
+        throw new Error('Not implemented')
+      },
+      getDocumentSymbols: async () => [],
+      readDirectory: async () => [],
+      ...partial.editor,
+    },
+  }
 }
