@@ -7,6 +7,7 @@
 - v4: Add support for upcoming `@source not` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
 - v4: Add support for upcoming `@source inline(…)` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
 - LSP: Refresh internal caches when settings are updated ([#1273](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1273))
+- v4: Show theme key completions in `var(…)` in CSS ([#1274](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1274))
 
 # 0.14.9
 
