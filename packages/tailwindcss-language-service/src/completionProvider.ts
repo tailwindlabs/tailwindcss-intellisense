@@ -1014,7 +1014,7 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/[\s:;/*(){}](?<helper>config|theme|--theme)\(\s*['"]?(?<path>[^)'"]*)$/)
+    .match(/[\s:;/*(){}](?<helper>config|theme|--theme|var)\(\s*['"]?(?<path>[^)'"]*)$/d)
 
   if (match === null) {
     return null
@@ -1041,16 +1041,9 @@ function provideCssHelperCompletions(
   }
 
   if (state.v4 && match.groups.helper === '--theme') {
-    // List known theme keys
-    let validThemeKeys = resolveKnownThemeKeys(state.designSystem)
+    let items: CompletionItem[] = themeKeyCompletions(state)
 
-    let items: CompletionItem[] = validThemeKeys.map((themeKey, index) => {
-      return {
-        label: themeKey,
-        sortText: naturalExpand(index, validThemeKeys.length),
-        kind: 9,
-      }
-    })
+    editRange.start.character = match.indices.groups.helper[1] + 1
 
     return withDefaults(
       { isIncomplete: false, items },
@@ -2485,4 +2478,38 @@ async function knownUtilityFunctionArguments(state: State, fn: UtilityFn): Promi
   })
 
   return args
+}
+
+export function themeKeyCompletions(state: State): CompletionItem[] {
+  if (!state.v4) return null
+  if (!state.designSystem) return null
+
+  let knownThemeKeys = resolveKnownThemeKeys(state.designSystem)
+
+  return knownThemeKeys.map((themeKey, index) => {
+    let value = state.designSystem.resolveThemeValue(themeKey)
+    let documentation: string | undefined
+
+    let color = getColorFromValue(value)
+    if (color !== null) {
+      if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+        documentation = formatColor(color)
+      }
+
+      return {
+        label: themeKey,
+        kind: CompletionItemKind.Color,
+        sortText: naturalExpand(index, knownThemeKeys.length),
+        detail: value,
+        documentation,
+      }
+    }
+
+    return {
+      label: themeKey,
+      kind: CompletionItemKind.Variable,
+      sortText: naturalExpand(index, knownThemeKeys.length),
+      detail: value,
+    }
+  })
 }
