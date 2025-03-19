@@ -33,6 +33,7 @@ import {
   DocumentLinkRequest,
   TextDocumentSyncKind,
   CodeLensRequest,
+  DidChangeConfigurationNotification,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
@@ -799,6 +800,7 @@ export class TW {
 
   private updateCapabilities() {
     if (!supportsDynamicRegistration(this.initializeParams)) {
+      this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
       return
     }
 
@@ -810,12 +812,16 @@ export class TW {
 
     let capabilities = BulkRegistration.create()
 
+    // TODO: We should *not* be re-registering these capabilities
+    // IDEA: These should probably be static registrations up front
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
     capabilities.add(CodeLensRequest.type, { documentSelector: null })
     capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    capabilities.add(DidChangeConfigurationNotification.type, undefined)
 
+    // TODO: Only re-register this if trigger characters change
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,

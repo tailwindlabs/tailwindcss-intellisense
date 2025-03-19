@@ -6,6 +6,7 @@
 - v4: Make sure completions show after variants using arbitrary and bare values ([#1263](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1263))
 - v4: Add support for upcoming `@source not` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
 - v4: Add support for upcoming `@source inline(…)` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
+- LSP: Refresh internal caches when settings are updated ([#1273](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1273))
 
 # 0.14.9
 
