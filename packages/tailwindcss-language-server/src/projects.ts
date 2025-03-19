@@ -216,6 +216,7 @@ export async function createProjectService(
 
   let state: State = {
     enabled: false,
+    features: [],
     completionItemData: {
       _projectKey: projectKey,
     },
@@ -466,6 +467,7 @@ export async function createProjectService(
       // and this should be determined there and passed in instead
       let features = supportedFeatures(tailwindcssVersion, tailwindcss)
       log(`supported features: ${JSON.stringify(features)}`)
+      state.features = features
 
       if (!features.includes('css-at-theme')) {
         tailwindcss = tailwindcss.default ?? tailwindcss
@@ -692,6 +694,7 @@ export async function createProjectService(
         state.v4 = true
         state.v4Fallback = true
         state.jit = true
+        state.features = features
         state.modules = {
           tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
           postcss: { version: null, module: null },
@@ -1154,7 +1157,7 @@ export async function createProjectService(
     },
     tryInit,
     async dispose() {
-      state = { enabled: false }
+      state = { enabled: false, features: [] }
       for (let disposable of disposables) {
         ;(await disposable).dispose()
       }

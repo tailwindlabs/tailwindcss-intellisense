@@ -4,6 +4,7 @@ import type { Postcss } from 'postcss'
 import type { KeywordColor } from './color'
 import type * as culori from 'culori'
 import type { DesignSystem } from './v4'
+import type { Feature } from '../features'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -142,6 +143,7 @@ export interface State {
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
+  features: Feature[]
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 
@@ -223,6 +225,7 @@ export function createState(
 ): State {
   return {
     enabled: true,
+    features: [],
     ...partial,
     editor: {
       get connection(): Connection {
