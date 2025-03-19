@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Detect classes in JS/TS functions and tagged template literals with the `tailwindCSS.classFunctions` setting ([#1258](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1258))
 
 # 0.14.9
 
