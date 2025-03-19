@@ -539,7 +539,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
   ])
 })
 
-test('classFunctions & classProperties should not duplicate matches', async ({ expect }) => {
+test('classFunctions & classAttributes should not duplicate matches', async ({ expect }) => {
   let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
