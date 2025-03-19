@@ -22,7 +22,7 @@ import isObject from './util/isObject'
 import { braceLevel, parenLevel } from './util/braceLevel'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
-import { isJsDoc, isJsxContext } from './util/js'
+import { isJsContext, isJsDoc, isJsxContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
 import { getTextWithoutComments } from './util/doc'
@@ -986,7 +986,11 @@ async function provideClassNameCompletions(
     return provideAtApplyCompletions(state, document, position, context)
   }
 
-  if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
+  if (
+    isHtmlContext(state, document, position) ||
+    isJsContext(state, document, position) ||
+    isJsxContext(state, document, position)
+  ) {
     return provideClassAttributeCompletions(state, document, position, context)
   }
 
