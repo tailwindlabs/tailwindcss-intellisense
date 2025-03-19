@@ -812,6 +812,8 @@ export class TW {
 
     let capabilities = BulkRegistration.create()
 
+    // TODO: We should *not* be re-registering these capabilities
+    // IDEA: These should probably be static registrations up front
     capabilities.add(HoverRequest.type, { documentSelector: null })
     capabilities.add(DocumentColorRequest.type, { documentSelector: null })
     capabilities.add(CodeActionRequest.type, { documentSelector: null })
@@ -819,6 +821,7 @@ export class TW {
     capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
     capabilities.add(DidChangeConfigurationNotification.type, undefined)
 
+    // TODO: Only re-register this if trigger characters change
     capabilities.add(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
