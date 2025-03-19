@@ -2,6 +2,7 @@ import { test, expect } from 'vitest'
 import { withFixture } from '../common'
 import { css, defineTest, html, js } from '../../src/testing'
 import { createClient } from '../utils/client'
+import { CompletionItemKind } from 'vscode-languageserver'
 
 function buildCompletion(c) {
   return async function completion({
@@ -796,5 +797,55 @@ defineTest({
     let completion = await document.completions({ line: 1, character: 22 })
 
     expect(completion?.items.length).toBe(12289)
+  },
+})
+
+defineTest({
+  name: 'v4: Theme key completions show in var(…)',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+
+      @theme {
+        --color-custom: #000;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'css',
+      text: css`
+        .foo {
+          color: var();
+        }
+      `,
+    })
+
+    //   color: var();
+    //             ^
+    let completion = await document.completions({ line: 1, character: 13 })
+
+    expect(completion).toEqual({
+      isIncomplete: false,
+      items: expect.arrayContaining([
+        // From the default theme
+        expect.objectContaining({ label: '--font-sans' }),
+
+        // From the `@theme` block in the CSS file
+        expect.objectContaining({
+          label: '--color-custom',
+
+          // And it's shown as a color
+          kind: CompletionItemKind.Color,
+          documentation: '#000000',
+        }),
+      ]),
+    })
   },
 })
