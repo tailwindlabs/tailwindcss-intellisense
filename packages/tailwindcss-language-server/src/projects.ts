@@ -469,6 +469,13 @@ export async function createProjectService(
       log(`supported features: ${JSON.stringify(features)}`)
       state.features = features
 
+      if (params.initializationOptions?.testMode) {
+        state.features = [
+          ...state.features,
+          ...(params.initializationOptions.additionalFeatures ?? []),
+        ]
+      }
+
       if (!features.includes('css-at-theme')) {
         tailwindcss = tailwindcss.default ?? tailwindcss
       }
@@ -695,6 +702,14 @@ export async function createProjectService(
         state.v4Fallback = true
         state.jit = true
         state.features = features
+
+        if (params.initializationOptions?.testMode) {
+          state.features = [
+            ...state.features,
+            ...(params.initializationOptions.additionalFeatures ?? []),
+          ]
+        }
+
         state.modules = {
           tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
           postcss: { version: null, module: null },

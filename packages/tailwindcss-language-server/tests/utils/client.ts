@@ -47,6 +47,7 @@ import { clearLanguageBoundariesCache } from '@tailwindcss/language-service/src/
 import { DefaultMap } from '../../src/util/default-map'
 import { connect, ConnectOptions } from './connection'
 import type { DeepPartial } from '@tailwindcss/language-service/src/types'
+import type { Feature } from '@tailwindcss/language-service/src/features'
 
 export interface DocumentDescriptor {
   /**
@@ -170,6 +171,14 @@ export interface ClientOptions extends ConnectOptions {
    * Settings to provide the server immediately when it starts
    */
   settings?: DeepPartial<Settings>
+
+  /**
+   * Additional features to force-enable
+   *
+   * These should normally be enabled by the server based on the project
+   * and the Tailwind CSS version it detects
+   */
+  features?: Feature[]
 }
 
 export interface Client extends ClientWorkspace {
@@ -394,6 +403,7 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     workspaceFolders,
     initializationOptions: {
       testMode: true,
+      additionalFeatures: opts.features,
       ...opts.options,
     },
   })
