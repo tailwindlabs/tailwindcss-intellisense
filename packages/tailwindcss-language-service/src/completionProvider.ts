@@ -2494,7 +2494,7 @@ export function themeKeyCompletions(state: State): CompletionItem[] {
   let knownThemeKeys = resolveKnownThemeKeys(state.designSystem)
 
   return knownThemeKeys.map((themeKey, index) => {
-    let value = state.designSystem.resolveThemeValue(themeKey)
+    let value = state.designSystem.resolveThemeValue(themeKey, true)
     let documentation: string | undefined
 
     let color = getColorFromValue(value)
