@@ -20,6 +20,8 @@ export async function getCodeLens(state: State, doc: TextDocument): Promise<Code
 
 const SOURCE_INLINE_PATTERN = /@source(?:\s+not)?\s*inline\((?<glob>'[^']+'|"[^"]+")/dg
 async function sourceInlineCodeLens(state: State, doc: TextDocument): Promise<CodeLens[]> {
+  if (!state.features.includes('source-inline')) return []
+
   let text = doc.getText()
 
   let countFormatter = new Intl.NumberFormat('en', {

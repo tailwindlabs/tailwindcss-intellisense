@@ -10,7 +10,10 @@ defineTest({
     `,
   },
   prepare: async ({ root }) => ({
-    client: await createClient({ root }),
+    client: await createClient({
+      root,
+      features: ['source-inline'],
+    }),
   }),
   handle: async ({ client }) => {
     let document = await client.open({
@@ -46,7 +49,10 @@ defineTest({
     `,
   },
   prepare: async ({ root }) => ({
-    client: await createClient({ root }),
+    client: await createClient({
+      root,
+      features: ['source-inline'],
+    }),
   }),
   handle: async ({ client }) => {
     let document = await client.open({
