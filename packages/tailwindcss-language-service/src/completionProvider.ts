@@ -737,6 +737,7 @@ async function provideClassAttributeCompletions(
 
     for (let match of fnMatches) {
       if (match.index) match.index += offset
+      if (match.index > current) continue
 
       matches.push(match)
     }
