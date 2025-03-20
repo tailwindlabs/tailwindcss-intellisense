@@ -8,5 +8,5 @@ export function resolveVariableValue(design: DesignSystem, name: string) {
     name = `--${name.slice(prefix.length + 3)}`
   }
 
-  return design.resolveThemeValue?.(name) ?? null
+  return design.resolveThemeValue?.(name, true) ?? null
 }
