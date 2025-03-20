@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix completions not showing for some class attributes when a class function exists in the document ([#1278](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1278))
 
 # 0.14.10
 

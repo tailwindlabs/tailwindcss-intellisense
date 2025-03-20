@@ -703,8 +703,9 @@ async function provideClassAttributeCompletions(
   position: Position,
   context?: CompletionContext,
 ): Promise<CompletionList> {
+  let current = document.offsetAt(position)
   let range: Range = {
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - SEARCH_RANGE)),
+    start: document.positionAt(Math.max(0, current - SEARCH_RANGE)),
     end: position,
   }
 
@@ -734,12 +735,16 @@ async function provideClassAttributeCompletions(
     let offset = document.offsetAt(boundary.range.start)
     let fnMatches = matchClassFunctions(str, settings.classFunctions)
 
-    fnMatches.forEach((match) => {
+    for (let match of fnMatches) {
       if (match.index) match.index += offset
-    })
+      if (match.index > current) continue
 
-    matches.push(...fnMatches)
+      matches.push(match)
+    }
   }
+
+  // Make sure matches are sorted by index
+  matches.sort((a, b) => a.index - b.index)
 
   if (matches.length === 0) {
     return null
