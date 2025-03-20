@@ -169,6 +169,8 @@ function stripRegexLiterals(input: string) {
   let regexStart = -1
   let regexEnd = -1
 
+  // Based on the oxc_parser crate
+  // https://github.com/oxc-project/oxc/blob/5f97f28ddbd2cd303a306f7fb0092b0e54bda43c/crates/oxc_parser/src/lexer/regex.rs#L29
   let prev = null
   for (let i = 0; i < input.length; ++i) {
     let c = input.charCodeAt(i)
