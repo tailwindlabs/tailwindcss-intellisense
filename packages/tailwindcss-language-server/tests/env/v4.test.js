@@ -793,7 +793,6 @@ defineTest({
 })
 
 defineTest({
-  options: { only: true },
   name: 'regex literals do not break language boundaries',
   fs: {
     'app.css': css`
