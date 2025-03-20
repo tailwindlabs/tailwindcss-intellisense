@@ -849,3 +849,61 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  name: 'v4: class function completions mixed with class attribute completions work',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classAttributes: ['className'],
+          classFunctions: ['cn', 'cva'],
+        },
+      },
+      lang: 'javascriptreact',
+      text: js`
+        let x = cva("")
+
+        export function Button() {
+          return <Test className={cn("")} />
+        }
+
+        export function Button2() {
+          return <Test className={cn("")} />
+        }
+
+        let y = cva("")
+      `,
+    })
+
+    // let x = cva("");
+    //             ^
+    let completionA = await document.completions({ line: 0, character: 13 })
+
+    expect(completionA?.items.length).toBe(12289)
+
+    //   return <Test className={cn("")} />;
+    //                              ^
+    let completionB = await document.completions({ line: 3, character: 30 })
+
+    expect(completionB?.items.length).toBe(12289)
+
+    //   return <Test className={cn("")} />;
+    //                              ^
+    let completionC = await document.completions({ line: 7, character: 30 })
+
+    expect(completionC?.items.length).toBe(12289)
+
+    // let y = cva("");
+    //             ^
+    let completionD = await document.completions({ line: 10, character: 13 })
+
+    expect(completionD?.items.length).toBe(12289)
+  },
+})
