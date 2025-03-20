@@ -175,7 +175,7 @@ export class TW {
   }
 
   private async _initFolder(baseUri: URI): Promise<void> {
-    // NOTE: We do this check because on Linux when using a LSP client that does
+    // NOTE: We do this check because on Linux when using an LSP client that does
     // not support watching files on behalf of the server, we'll use Parcel
     // Watcher (if possible). If we start the watcher with a non-existent or
     // inaccessible directory, it will throw an error with a very unhelpful
