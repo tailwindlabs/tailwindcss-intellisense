@@ -742,6 +742,9 @@ async function provideClassAttributeCompletions(
     }
   }
 
+  // Make sure matches are sorted by index
+  matches.sort((a, b) => a.index - b.index)
+
   if (matches.length === 0) {
     return null
   }
