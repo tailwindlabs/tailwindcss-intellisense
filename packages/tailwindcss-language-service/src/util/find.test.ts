@@ -1,12 +1,6 @@
-import { createState, getDefaultTailwindSettings, Settings, type DocumentClassList } from './state'
 import { test } from 'vitest'
-import { TextDocument } from 'vscode-languageserver-textdocument'
 import { findClassListsInHtmlRange } from './find'
-import type { DeepPartial } from '../types'
-import dedent from 'dedent'
-
-const js = dedent
-const html = dedent
+import { js, html, createDocument } from './test-utils'
 
 test('class regex works in astro', async ({ expect }) => {
   let file = createDocument({
@@ -688,56 +682,3 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     },
   ])
 })
-
-function createDocument({
-  name,
-  lang,
-  content,
-  settings,
-}: {
-  name: string
-  lang: string
-  content: string | string[]
-  settings: DeepPartial<Settings>
-}) {
-  let doc = TextDocument.create(
-    `file://${name}`,
-    lang,
-    1,
-    typeof content === 'string' ? content : content.join('\n'),
-  )
-  let defaults = getDefaultTailwindSettings()
-  let state = createState({
-    editor: {
-      getConfiguration: async () => ({
-        ...defaults,
-        ...settings,
-        tailwindCSS: {
-          ...defaults.tailwindCSS,
-          ...settings.tailwindCSS,
-          lint: {
-            ...defaults.tailwindCSS.lint,
-            ...(settings.tailwindCSS?.lint ?? {}),
-          },
-          experimental: {
-            ...defaults.tailwindCSS.experimental,
-            ...(settings.tailwindCSS?.experimental ?? {}),
-          },
-          files: {
-            ...defaults.tailwindCSS.files,
-            ...(settings.tailwindCSS?.files ?? {}),
-          },
-        },
-        editor: {
-          ...defaults.editor,
-          ...settings.editor,
-        },
-      }),
-    },
-  })
-
-  return {
-    doc,
-    state,
-  }
-}

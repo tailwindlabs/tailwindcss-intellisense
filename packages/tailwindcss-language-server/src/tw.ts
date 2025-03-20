@@ -38,6 +38,7 @@ import {
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'node:path'
+import * as fs from 'node:fs/promises'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import * as parcel from './watcher/index.js'
@@ -174,6 +175,26 @@ export class TW {
   }
 
   private async _initFolder(baseUri: URI): Promise<void> {
+    // NOTE: We do this check because on Linux when using an LSP client that does
+    // not support watching files on behalf of the server, we'll use Parcel
+    // Watcher (if possible). If we start the watcher with a non-existent or
+    // inaccessible directory, it will throw an error with a very unhelpful
+    // message: "Bad file descriptor"
+    //
+    // The best thing we can do is an initial check for access to the directory
+    // and log a more helpful error message if it fails.
+    let base = baseUri.fsPath
+
+    try {
+      await fs.access(base, fs.constants.F_OK | fs.constants.R_OK)
+    } catch (err) {
+      console.error(
+        `Unable to access the workspace folder [${base}]. This may happen if the directory does not exist or the current user does not have the necessary permissions to access it.`,
+      )
+      console.error(err)
+      return
+    }
+
     let initUserLanguages = this.initializeParams.initializationOptions?.userLanguages ?? {}
 
     if (Object.keys(initUserLanguages).length > 0) {
@@ -182,7 +203,6 @@ export class TW {
       )
     }
 
-    let base = baseUri.fsPath
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude

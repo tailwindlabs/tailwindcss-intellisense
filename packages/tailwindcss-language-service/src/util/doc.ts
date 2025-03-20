@@ -127,5 +127,155 @@ function getJsWithoutComments(text: string): string {
     }
   }
 
+  str = stripRegexLiterals(str)
+
   return str
+}
+
+function stripRegexLiterals(input: string) {
+  const BACKSLASH = 0x5c // \
+  const SLASH = 0x2f // /
+  const LINE_BREAK = 0x0a // \n
+  const COMMA = 0x2c // ,
+  const COLON = 0x3a // :
+  const EQUALS = 0x3d // =
+  const SEMICOLON = 0x3b // ;
+  const BRACKET_OPEN = 0x5b // [
+  const BRACKET_CLOSE = 0x5d // ]
+  const QUESTION_MARK = 0x3f // ?
+  const PAREN_OPEN = 0x28 // (
+  const CURLY_OPEN = 0x7b // {
+  const DOUBLE_QUOTE = 0x22 // "
+  const SINGLE_QUOTE = 0x27 // '
+  const BACKTICK = 0x60 // `
+
+  let SPACE = 0x20 // " "
+  let TAB = 0x09 // \t
+
+  // Top level; or
+  // after comma
+  // after colon
+  // after equals
+  // after semicolon
+  // after square bracket (arrays, object property expressions)
+  // after question mark
+  // after open paren
+  // after curly (jsx only)
+
+  let inRegex = false
+  let inEscape = false
+  let inCharacterClass = false
+
+  let regexStart = -1
+  let regexEnd = -1
+
+  // Based on the oxc_parser crate
+  // https://github.com/oxc-project/oxc/blob/5f97f28ddbd2cd303a306f7fb0092b0e54bda43c/crates/oxc_parser/src/lexer/regex.rs#L29
+  let prev = null
+  for (let i = 0; i < input.length; ++i) {
+    let c = input.charCodeAt(i)
+
+    if (inRegex) {
+      if (c === LINE_BREAK) {
+        break
+      } else if (inEscape) {
+        inEscape = false
+      } else if (c === SLASH && !inCharacterClass) {
+        inRegex = false
+        regexEnd = i
+        break
+      } else if (c === BRACKET_OPEN) {
+        inCharacterClass = true
+      } else if (c === BACKSLASH) {
+        inEscape = true
+      } else if (c === BRACKET_CLOSE) {
+        inCharacterClass = false
+      }
+
+      continue
+    }
+
+    // Skip over strings
+    if (c === SINGLE_QUOTE) {
+      for (let j = i; j < input.length; ++j) {
+        let peekChar = input.charCodeAt(j)
+
+        if (peekChar === BACKSLASH) {
+          j += 1
+        } else if (peekChar === SINGLE_QUOTE) {
+          i = j
+          break
+        } else if (peekChar === LINE_BREAK) {
+          i = j
+          break
+        }
+      }
+    }
+    //
+    else if (c === DOUBLE_QUOTE) {
+      for (let j = i; j < input.length; ++j) {
+        let peekChar = input.charCodeAt(j)
+
+        if (peekChar === BACKSLASH) {
+          j += 1
+        } else if (peekChar === DOUBLE_QUOTE) {
+          i = j
+          break
+        } else if (peekChar === LINE_BREAK) {
+          i = j
+          break
+        }
+      }
+    }
+    //
+    else if (c === BACKTICK) {
+      for (let j = i; j < input.length; ++j) {
+        let peekChar = input.charCodeAt(j)
+
+        if (peekChar === BACKSLASH) {
+          j += 1
+        } else if (peekChar === BACKTICK) {
+          i = j
+          break
+        } else if (peekChar === LINE_BREAK) {
+          i = j
+          break
+        }
+      }
+    }
+    //
+    else if (c === SPACE || c === TAB) {
+      // do nothing
+    }
+    //
+    else if (c === SLASH) {
+      if (
+        prev === COMMA ||
+        prev === COLON ||
+        prev === EQUALS ||
+        prev === SEMICOLON ||
+        prev === BRACKET_OPEN ||
+        prev === QUESTION_MARK ||
+        prev === PAREN_OPEN ||
+        prev === CURLY_OPEN ||
+        prev === LINE_BREAK
+      ) {
+        inRegex = true
+        regexStart = i
+      }
+    }
+    //
+    else {
+      prev = c
+    }
+  }
+
+  // Unterminated regex literal
+  if (inRegex) return input
+
+  if (regexStart === -1 || regexEnd === -1) return input
+
+  return (
+    input.slice(0, regexStart) + ' '.repeat(regexEnd - regexStart + 1) + input.slice(regexEnd + 1)
+  )
 }
