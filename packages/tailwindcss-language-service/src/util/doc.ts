@@ -249,15 +249,6 @@ function stripRegexLiterals(input: string) {
     }
     //
     else if (c === SLASH) {
-      // Top level; or
-      // after comma
-      // after colon
-      // after equals
-      // after semicolon
-      // after square bracket (arrays, object property expressions)
-      // after question mark
-      // after open paren
-      // after curly (jsx only)
       if (
         prev === COMMA ||
         prev === COLON ||
