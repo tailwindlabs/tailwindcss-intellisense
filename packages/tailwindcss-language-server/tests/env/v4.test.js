@@ -791,3 +791,51 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  options: { only: true },
+  name: 'regex literals do not break language boundaries',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'javascriptreact',
+      text: js`
+        export default function Page() {
+          let styles = "str".match(/<style>[\s\S]*?<\/style>/m)
+          return <div className="bg-[#000]">{styles}</div>
+        }
+      `,
+    })
+
+    expect(await client.project()).toMatchObject({
+      tailwind: {
+        version: '4.0.6',
+        isDefaultVersion: true,
+      },
+    })
+
+    //   return <div className="bg-[#000]">{styles}</div>
+    //                          ^
+    let hover = await doc.hover({ line: 2, character: 26 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-\[\#000\] {
+            background-color: #000;
+          }
+        `,
+      },
+      range: {
+        start: { line: 2, character: 25 },
+        end: { line: 2, character: 34 },
+      },
+    })
+  },
+})
