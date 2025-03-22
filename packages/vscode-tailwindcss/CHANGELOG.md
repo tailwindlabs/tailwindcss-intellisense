@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Fix content detection when using v4.0+ ([#1280](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1280))
+- Ensure file exclusions always work on Windows ([#1281](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1281))
 
 # 0.14.11
 
