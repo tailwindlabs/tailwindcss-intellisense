@@ -6,7 +6,6 @@ import {
   CompletionList,
   CompletionParams,
   Diagnostic,
-  DidChangeWorkspaceFoldersNotification,
   Disposable,
   DocumentLink,
   DocumentLinkRequest,
