@@ -5,6 +5,7 @@ import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
 import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
+import { normalizePath } from './utils'
 
 let settings: Settings = {
   tailwindCSS: {
@@ -29,12 +30,14 @@ function testFixture(fixture: string, details: any[]) {
 
       let detail = details[i]
 
-      let configPath = path.relative(fixturePath, project.config.path)
+      let configPath = path.posix.relative(normalizePath(fixturePath), project.config.path)
 
       expect(configPath).toEqual(detail?.config)
 
       if (detail?.content) {
-        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath)).sort()
+        let expected = detail?.content
+          .map((path) => path.replace('{URL}', normalizePath(fixturePath)))
+          .sort()
 
         let actual = project.documentSelector
           .filter((selector) => selector.priority === 1 /** content */)
@@ -45,7 +48,9 @@ function testFixture(fixture: string, details: any[]) {
       }
 
       if (detail?.selectors) {
-        let expected = detail?.selectors.map((path) => path.replace('{URL}', fixturePath)).sort()
+        let expected = detail?.selectors
+          .map((path) => path.replace('{URL}', normalizePath(fixturePath)))
+          .sort()
 
         let actual = project.documentSelector.map((selector) => selector.pattern).sort()
 
@@ -364,7 +369,7 @@ async function prepare({ root }: TestUtils) {
   } as Settings
 
   function adjustPath(filepath: string) {
-    filepath = filepath.replace(root, '{URL}')
+    filepath = filepath.replace(normalizePath(root), '{URL}')
 
     if (filepath.startsWith('{URL}/')) {
       filepath = filepath.slice(5)
