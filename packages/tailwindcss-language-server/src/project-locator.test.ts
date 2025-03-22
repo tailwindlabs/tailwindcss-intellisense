@@ -5,11 +5,12 @@ import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
 import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
+import { normalizePath } from './utils'
 
 let settings: Settings = {
   tailwindCSS: {
     files: {
-      exclude: [],
+      exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'],
     },
   },
 } as any
@@ -29,12 +30,14 @@ function testFixture(fixture: string, details: any[]) {
 
       let detail = details[i]
 
-      let configPath = path.relative(fixturePath, project.config.path)
+      let configPath = path.posix.relative(normalizePath(fixturePath), project.config.path)
 
       expect(configPath).toEqual(detail?.config)
 
       if (detail?.content) {
-        let expected = detail?.content.map((path) => path.replace('{URL}', fixturePath)).sort()
+        let expected = detail?.content
+          .map((path) => path.replace('{URL}', normalizePath(fixturePath)))
+          .sort()
 
         let actual = project.documentSelector
           .filter((selector) => selector.priority === 1 /** content */)
@@ -45,7 +48,9 @@ function testFixture(fixture: string, details: any[]) {
       }
 
       if (detail?.selectors) {
-        let expected = detail?.selectors.map((path) => path.replace('{URL}', fixturePath)).sort()
+        let expected = detail?.selectors
+          .map((path) => path.replace('{URL}', normalizePath(fixturePath)))
+          .sort()
 
         let actual = project.documentSelector.map((selector) => selector.pattern).sort()
 
@@ -114,10 +119,7 @@ testFixture('v4/workspaces', [
   {
     config: 'packages/admin/app.css',
     selectors: [
-      '{URL}/node_modules/tailwindcss/**',
-      '{URL}/node_modules/tailwindcss/index.css',
-      '{URL}/node_modules/tailwindcss/theme.css',
-      '{URL}/node_modules/tailwindcss/utilities.css',
+      '{URL}/packages/admin/*',
       '{URL}/packages/admin/**',
       '{URL}/packages/admin/app.css',
       '{URL}/packages/admin/package.json',
@@ -126,15 +128,12 @@ testFixture('v4/workspaces', [
   {
     config: 'packages/web/app.css',
     selectors: [
-      '{URL}/node_modules/tailwindcss/**',
-      '{URL}/node_modules/tailwindcss/index.css',
-      '{URL}/node_modules/tailwindcss/theme.css',
-      '{URL}/node_modules/tailwindcss/utilities.css',
       '{URL}/packages/style-export/**',
       '{URL}/packages/style-export/lib.css',
       '{URL}/packages/style-export/theme.css',
       '{URL}/packages/style-main-field/**',
       '{URL}/packages/style-main-field/lib.css',
+      '{URL}/packages/web/*',
       '{URL}/packages/web/**',
       '{URL}/packages/web/app.css',
       '{URL}/packages/web/package.json',
@@ -147,28 +146,24 @@ testFixture('v4/auto-content', [
   {
     config: 'src/app.css',
     content: [
+      '{URL}/*',
       '{URL}/package.json',
       '{URL}/src/index.html',
       '{URL}/src/components/example.html',
-      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
     ],
   },
 ])
 
 testFixture('v4/auto-content-split', [
-  //
-  {
-    // TODO: This should _probably_ not be present
-    config: 'node_modules/tailwindcss/index.css',
-    content: [],
-  },
   {
     config: 'src/app.css',
     content: [
+      '{URL}/*',
       '{URL}/package.json',
       '{URL}/src/index.html',
       '{URL}/src/components/example.html',
-      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
     ],
   },
 ])
@@ -178,23 +173,23 @@ testFixture('v4/custom-source', [
   {
     config: 'admin/app.css',
     content: [
-      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
-      '{URL}/admin/**/*.bin',
+      '{URL}/*',
       '{URL}/admin/foo.bin',
+      '{URL}/admin/{**/*.bin,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
       '{URL}/package.json',
       '{URL}/shared.html',
-      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/web/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
     ],
   },
   {
     config: 'web/app.css',
     content: [
-      '{URL}/admin/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
-      '{URL}/web/*.bin',
-      '{URL}/web/bar.bin',
+      '{URL}/*',
+      '{URL}/admin/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
       '{URL}/package.json',
       '{URL}/shared.html',
-      '{URL}/web/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/web/bar.bin',
+      '{URL}/web/{**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue},*.bin}',
     ],
   },
 ])
@@ -203,7 +198,7 @@ testFixture('v4/missing-files', [
   //
   {
     config: 'app.css',
-    content: ['{URL}/package.json'],
+    content: ['{URL}/*', '{URL}/package.json'],
   },
 ])
 
@@ -212,8 +207,9 @@ testFixture('v4/path-mappings', [
   {
     config: 'app.css',
     content: [
+      '{URL}/*',
       '{URL}/package.json',
-      '{URL}/src/**/*.{py,tpl,js,vue,php,mjs,cts,jsx,tsx,rhtml,slim,handlebars,twig,rs,njk,svelte,liquid,pug,md,ts,heex,mts,astro,nunjucks,rb,eex,haml,cjs,html,hbs,jade,aspx,razor,erb,mustache,mdx}',
+      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
       '{URL}/src/a/my-config.ts',
       '{URL}/src/a/my-plugin.ts',
       '{URL}/tsconfig.json',
@@ -225,7 +221,7 @@ testFixture('v4/invalid-import-order', [
   //
   {
     config: 'tailwind.css',
-    content: ['{URL}/package.json'],
+    content: ['{URL}/*', '{URL}/package.json'],
   },
 ])
 
@@ -373,7 +369,7 @@ async function prepare({ root }: TestUtils) {
   } as Settings
 
   function adjustPath(filepath: string) {
-    filepath = filepath.replace(root, '{URL}')
+    filepath = filepath.replace(normalizePath(root), '{URL}')
 
     if (filepath.startsWith('{URL}/')) {
       filepath = filepath.slice(5)

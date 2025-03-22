@@ -737,7 +737,7 @@ defineTest({
         presets: [require('some-pkg/config/tailwind.config.js').default]
       }
     `,
-    'packages/some-pkg': symlinkTo('packages/some-pkg#c3f1e'),
+    'packages/some-pkg': symlinkTo('packages/some-pkg#c3f1e', 'dir'),
     'packages/some-pkg#c3f1e/package.json': json`
       {
         "name": "some-pkg",

@@ -68,7 +68,7 @@ async function loadOxideAtPath(id: string): Promise<Oxide | null> {
   let oxide = await import(id)
 
   // This is a much older, unsupported version of Oxide before v4.0.0-alpha.1
-  if (!oxide.scanDir) return null
+  if (!oxide.scanDir && !oxide.Scanner) return null
 
   return oxide
 }
@@ -101,7 +101,7 @@ interface ScanResult {
  * For example, the `sources` option is ignored before v4.0.0-alpha.19.
  */
 export async function scan(options: ScanOptions): Promise<ScanResult | null> {
-  const oxide = await loadOxideAtPath(options.oxidePath)
+  let oxide = await loadOxideAtPath(options.oxidePath)
   if (!oxide) return null
 
   // V1
