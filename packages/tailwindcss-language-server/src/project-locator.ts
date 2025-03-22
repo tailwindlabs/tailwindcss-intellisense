@@ -1,7 +1,6 @@
-import * as os from 'node:os'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import glob from 'fast-glob'
+import { glob } from 'tinyglobby'
 import picomatch from 'picomatch'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
@@ -276,14 +275,14 @@ export class ProjectLocator {
 
   private async findConfigs(): Promise<ConfigEntry[]> {
     // Look for config files and CSS files
-    let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
+    let files = await glob({
+      patterns: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
       cwd: this.base,
       ignore: this.settings.tailwindCSS.files.exclude,
       onlyFiles: true,
       absolute: true,
-      suppressErrors: true,
+      followSymbolicLinks: true,
       dot: true,
-      concurrency: Math.max(os.cpus().length, 1),
     })
 
     let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
