@@ -1,4 +1,5 @@
 import { onTestFinished, test, TestOptions } from 'vitest'
+import * as os from 'node:os'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
@@ -12,6 +13,7 @@ export interface TestUtils {
 export interface StorageSymlink {
   [IS_A_SYMLINK]: true
   filepath: string
+  type: 'file' | 'dir' | undefined
 }
 
 export interface Storage {
@@ -75,10 +77,11 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 }
 
 const IS_A_SYMLINK = Symbol('is-a-symlink')
-export function symlinkTo(filepath: string): StorageSymlink {
+export function symlinkTo(filepath: string, type?: 'file' | 'dir'): StorageSymlink {
   return {
     [IS_A_SYMLINK]: true as const,
     filepath,
+    type,
   }
 }
 
@@ -93,7 +96,14 @@ async function prepareFileSystem(base: string, storage: Storage) {
 
     if (typeof content === 'object' && IS_A_SYMLINK in content) {
       let target = path.resolve(base, content.filepath)
-      await fs.symlink(target, fullPath)
+
+      let type: string = content.type
+
+      if (os.platform() === 'win32' && content.type === 'dir') {
+        type = 'junction'
+      }
+
+      await fs.symlink(target, fullPath, type)
       continue
     }
 
