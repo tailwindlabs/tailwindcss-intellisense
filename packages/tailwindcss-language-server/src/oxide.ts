@@ -58,10 +58,37 @@ declare namespace OxideV3And4 {
   }
 }
 
+// This covers the Oxide API from v4.1.0+
+declare namespace OxideV5 {
+  interface GlobEntry {
+    base: string
+    pattern: string
+  }
+
+  interface SourceEntry {
+    base: string
+    pattern: string
+    negated: boolean
+  }
+
+  interface ScannerOptions {
+    sources: Array<SourceEntry>
+  }
+
+  interface ScannerConstructor {
+    new (options: ScannerOptions): Scanner
+  }
+
+  interface Scanner {
+    get files(): Array<string>
+    get globs(): Array<GlobEntry>
+  }
+}
+
 interface Oxide {
   scanDir?(options: OxideV1.ScanOptions): OxideV1.ScanResult
   scanDir?(options: OxideV2.ScanOptions): OxideV2.ScanResult
-  Scanner?: OxideV3And4.ScannerConstructor
+  Scanner?: OxideV3And4.ScannerConstructor | OxideV5.ScannerConstructor
 }
 
 async function loadOxideAtPath(id: string): Promise<Oxide | null> {
@@ -150,11 +177,26 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   }
 
   // V4
-  else {
+  else if (lte(options.oxideVersion, '4.0.9999')) {
     let scanner = new (oxide.Scanner as OxideV3And4.ScannerConstructor)({
       sources: [
         { base: options.basePath, pattern: '**/*' },
         ...options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
+      ],
+    })
+
+    return {
+      files: scanner.files,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
+    }
+  }
+
+  // V5
+  else {
+    let scanner = new (oxide.Scanner as OxideV5.ScannerConstructor)({
+      sources: [
+        { base: options.basePath, pattern: '**/*', negated: false },
+        ...options.sources.map((g) => ({ base: g.base, pattern: g.pattern, negated: g.negated })),
       ],
     })
 
