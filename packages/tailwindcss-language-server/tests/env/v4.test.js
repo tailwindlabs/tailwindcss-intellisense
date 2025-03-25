@@ -650,6 +650,11 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    timeout: 30_000,
+  },
+
   name: 'v3: Presets with a `#` in the name are loadable',
   fs: {
     'package.json': json`
