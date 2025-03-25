@@ -36,8 +36,8 @@ declare namespace OxideV2 {
   }
 }
 
-// This covers the Oxide API from v4.0.0-alpha.20+
-declare namespace OxideV3 {
+// This covers the Oxide API from v4.0.0-alpha.30+
+declare namespace OxideV3And4 {
   interface GlobEntry {
     base: string
     pattern: string
@@ -61,7 +61,7 @@ declare namespace OxideV3 {
 interface Oxide {
   scanDir?(options: OxideV1.ScanOptions): OxideV1.ScanResult
   scanDir?(options: OxideV2.ScanOptions): OxideV2.ScanResult
-  Scanner?: OxideV3.ScannerConstructor
+  Scanner?: OxideV3And4.ScannerConstructor
 }
 
 async function loadOxideAtPath(id: string): Promise<Oxide | null> {
@@ -78,11 +78,17 @@ interface GlobEntry {
   pattern: string
 }
 
+interface SourceEntry {
+  base: string
+  pattern: string
+  negated: boolean
+}
+
 interface ScanOptions {
   oxidePath: string
   oxideVersion: string
   basePath: string
-  sources: Array<GlobEntry>
+  sources: Array<SourceEntry>
 }
 
 interface ScanResult {
@@ -118,38 +124,43 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   }
 
   // V2
-  if (lte(options.oxideVersion, '4.0.0-alpha.19')) {
+  else if (lte(options.oxideVersion, '4.0.0-alpha.19')) {
     let result = oxide.scanDir({
       base: options.basePath,
-      sources: options.sources,
+      sources: options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
     })
 
     return {
       files: result.files,
-      globs: result.globs,
+      globs: result.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
     }
   }
 
   // V3
-  if (lte(options.oxideVersion, '4.0.0-alpha.30')) {
-    let scanner = new oxide.Scanner({
+  else if (lte(options.oxideVersion, '4.0.0-alpha.30')) {
+    let scanner = new (oxide.Scanner as OxideV3And4.ScannerConstructor)({
       detectSources: { base: options.basePath },
-      sources: options.sources,
+      sources: options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
     })
 
     return {
       files: scanner.files,
-      globs: scanner.globs,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
     }
   }
 
   // V4
-  let scanner = new oxide.Scanner({
-    sources: [{ base: options.basePath, pattern: '**/*' }, ...options.sources],
-  })
+  else {
+    let scanner = new (oxide.Scanner as OxideV3And4.ScannerConstructor)({
+      sources: [
+        { base: options.basePath, pattern: '**/*' },
+        ...options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
+      ],
+    })
 
-  return {
-    files: scanner.files,
-    globs: scanner.globs,
+    return {
+      files: scanner.files,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
+    }
   }
 }
