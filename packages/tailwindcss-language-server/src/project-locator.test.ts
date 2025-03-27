@@ -4,7 +4,7 @@ import { ProjectLocator } from './project-locator'
 import { URL, fileURLToPath } from 'url'
 import { Settings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver } from './resolver'
-import { css, defineTest, js, json, scss, Storage, TestUtils } from './testing'
+import { css, defineTest, html, js, json, scss, Storage, symlinkTo, TestUtils } from './testing'
 import { normalizePath } from './utils'
 
 let settings: Settings = {
@@ -141,58 +141,129 @@ testFixture('v4/workspaces', [
   },
 ])
 
-testFixture('v4/auto-content', [
-  //
-  {
-    config: 'src/app.css',
-    content: [
-      '{URL}/*',
-      '{URL}/package.json',
-      '{URL}/src/index.html',
-      '{URL}/src/components/example.html',
-      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
-    ],
+testLocator({
+  name: 'automatic content detection with Oxide',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^4.0.15",
+          "@tailwindcss/oxide": "^4.0.15"
+        }
+      }
+    `,
+    'src/index.html': html`<div class="flex">Test</div>`,
+    'src/app.css': css`
+      @import 'tailwindcss';
+    `,
+    'src/components/example.html': html`<div class="underline">Test</div>`,
   },
-])
+  expected: [
+    {
+      config: '/src/app.css',
+      content: [
+        '/*',
+        '/package.json',
+        '/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/src/components/example.html',
+        '/src/index.html',
+      ],
+    },
+  ],
+})
 
-testFixture('v4/auto-content-split', [
-  {
-    config: 'src/app.css',
-    content: [
-      '{URL}/*',
-      '{URL}/package.json',
-      '{URL}/src/index.html',
-      '{URL}/src/components/example.html',
-      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
-    ],
+testLocator({
+  name: 'automatic content detection with Oxide using split config',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^4.0.15",
+          "@tailwindcss/oxide": "^4.0.15"
+        }
+      }
+    `,
+    'src/index.html': html`<div class="flex">Test</div>`,
+    'src/app.css': css`
+      @import 'tailwindcss/preflight' layer(base);
+      @import 'tailwindcss/theme' layer(theme);
+      @import 'tailwindcss/utilities' layer(utilities);
+    `,
+    'src/components/example.html': html`<div class="underline">Test</div>`,
   },
-])
+  expected: [
+    {
+      config: '/src/app.css',
+      content: [
+        '/*',
+        '/package.json',
+        '/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/src/components/example.html',
+        '/src/index.html',
+      ],
+    },
+  ],
+})
 
-testFixture('v4/custom-source', [
-  //
-  {
-    config: 'admin/app.css',
-    content: [
-      '{URL}/*',
-      '{URL}/admin/foo.bin',
-      '{URL}/admin/{**/*.bin,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
-      '{URL}/package.json',
-      '{URL}/shared.html',
-      '{URL}/web/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
-    ],
+testLocator({
+  name: 'automatic content detection with custom sources',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "^4.0.15",
+          "@tailwindcss/oxide": "^4.0.15"
+        }
+      }
+    `,
+    'admin/app.css': css`
+      @import './tw.css';
+      @import './ui.css';
+    `,
+    'admin/tw.css': css`
+      @import 'tailwindcss';
+      @source './**/*.bin';
+    `,
+    'admin/ui.css': css`
+      @theme {
+        --color-potato: #907a70;
+      }
+    `,
+    'admin/foo.bin': html`<p class="underline">Admin</p>`,
+
+    'web/app.css': css`
+      @import 'tailwindcss';
+      @source './*.bin';
+    `,
+    'web/bar.bin': html`<p class="underline">Web</p>`,
+
+    'shared.html': html`<p>I belong to no one!</p>`,
   },
-  {
-    config: 'web/app.css',
-    content: [
-      '{URL}/*',
-      '{URL}/admin/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
-      '{URL}/package.json',
-      '{URL}/shared.html',
-      '{URL}/web/bar.bin',
-      '{URL}/web/{**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue},*.bin}',
-    ],
-  },
-])
+  expected: [
+    {
+      config: '/admin/app.css',
+      content: [
+        '/*',
+        '/admin/foo.bin',
+        '/admin/{**/*.bin,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
+        '/package.json',
+        '/shared.html',
+        '/web/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+      ],
+    },
+    {
+      config: '/web/app.css',
+      content: [
+        '/*',
+        '/admin/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/package.json',
+        '/shared.html',
+        '/web/bar.bin',
+        '/web/{**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue},*.bin}',
+      ],
+    },
+  ],
+})
 
 testFixture('v4/missing-files', [
   //
