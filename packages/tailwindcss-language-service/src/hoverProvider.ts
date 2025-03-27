@@ -53,6 +53,8 @@ async function provideCssHelperHover(
   for (let helperFn of helperFns) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
 
+    if (helperFn.helper === 'var' && !state.v4) continue
+
     let validated = validateConfigPath(
       state,
       helperFn.path,

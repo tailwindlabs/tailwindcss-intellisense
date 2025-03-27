@@ -161,7 +161,7 @@ export type DocumentClassName = {
 }
 
 export type DocumentHelperFunction = {
-  helper: 'theme' | 'config'
+  helper: 'theme' | 'config' | 'var'
   path: string
   ranges: {
     full: Range

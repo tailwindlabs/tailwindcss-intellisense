@@ -405,7 +405,7 @@ export function findHelperFunctionsInRange(
 ): DocumentHelperFunction[] {
   const text = getTextWithoutComments(doc, 'css', range)
   let matches = findAll(
-    /(?<prefix>[\W])(?<helper>config|theme|--theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
+    /(?<prefix>[\W])(?<helper>config|theme|--theme|var)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
     text,
   )
 
@@ -450,10 +450,12 @@ export function findHelperFunctionsInRange(
       match.groups.helper.length +
       match.groups.innerPrefix.length
 
-    let helper: 'config' | 'theme' = 'config'
+    let helper: 'config' | 'theme' | 'var' = 'config'
 
     if (match.groups.helper === 'theme' || match.groups.helper === '--theme') {
       helper = 'theme'
+    } else if (match.groups.helper === 'var') {
+      helper = 'var'
     }
 
     return {
