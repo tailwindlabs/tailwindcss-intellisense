@@ -4,6 +4,8 @@
 
 - Fix content detection when using v4.0+ ([#1280](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1280))
 - Ensure file exclusions always work on Windows ([#1281](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1281))
+- Prep for new Oxide API in v4.1 ([#1284](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1284))
+- Handle negated sources during project discovery in v4.1 ([#1288](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1288))
 
 # 0.14.11
 
