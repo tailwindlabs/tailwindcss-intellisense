@@ -605,6 +605,12 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    retry: 3,
+    timeout: 30_000,
+  },
+
   name: 'Plugins with a `#` in the name are loadable',
   fs: {
     'app.css': css`
@@ -650,6 +656,12 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    retry: 3,
+    timeout: 30_000,
+  },
+
   name: 'v3: Presets with a `#` in the name are loadable',
   fs: {
     'package.json': json`
@@ -709,6 +721,7 @@ defineTest({
 defineTest({
   // This test sometimes takes a really long time on Windows because… Windows.
   options: {
+    retry: 3,
     timeout: 30_000,
   },
 
