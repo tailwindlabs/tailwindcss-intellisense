@@ -6,7 +6,9 @@ export function extractSourceDirectives(sources: SourcePattern[]): Plugin {
     postcssPlugin: 'extract-at-rules',
     AtRule: {
       source: ({ params }) => {
-        let negated = false
+        let negated = /^not\s+/.test(params)
+
+        if (negated) params = params.slice(4).trimStart()
 
         if (params[0] !== '"' && params[0] !== "'") return
 
