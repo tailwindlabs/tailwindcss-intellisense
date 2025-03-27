@@ -639,6 +639,7 @@ async function* detectContentFiles(
       sources: sources.map((pattern) => ({
         base: path.dirname(inputFile),
         pattern,
+        negated: false,
       })),
     })
 
