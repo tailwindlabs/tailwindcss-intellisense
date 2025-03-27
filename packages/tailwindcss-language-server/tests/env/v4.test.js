@@ -650,11 +650,6 @@ defineTest({
 })
 
 defineTest({
-  // This test sometimes takes a really long time on Windows because… Windows.
-  options: {
-    timeout: 30_000,
-  },
-
   name: 'v3: Presets with a `#` in the name are loadable',
   fs: {
     'package.json': json`
@@ -712,6 +707,11 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    timeout: 30_000,
+  },
+
   // This test *always* passes inside Vitest because our custom version of
   // `Module._resolveFilename` is not called. Our custom implementation is
   // using enhanced-resolve under the hood which is affected by the `#`
