@@ -623,7 +623,7 @@ async function* contentSelectorsFromCssConfig(
 async function* detectContentFiles(
   base: string,
   inputFile: string,
-  sources: string[],
+  sources: SourcePattern[],
   resolver: Resolver,
 ): AsyncIterable<string> {
   try {
@@ -636,10 +636,10 @@ async function* detectContentFiles(
       oxidePath,
       oxideVersion: oxidePackageJson.version,
       basePath: base,
-      sources: sources.map((pattern) => ({
+      sources: sources.map((source) => ({
         base: path.dirname(inputFile),
-        pattern,
-        negated: false,
+        pattern: source.pattern,
+        negated: source.negated,
       })),
     })
 
@@ -673,11 +673,16 @@ type ConfigEntry = {
   content: ContentItem[]
 }
 
+export interface SourcePattern {
+  pattern: string
+  negated: boolean
+}
+
 class FileEntry {
   content: string | null
   deps: FileEntry[] = []
   realpath: string | null
-  sources: string[] = []
+  sources: SourcePattern[] = []
   meta: TailwindStylesheet | null = null
 
   constructor(
