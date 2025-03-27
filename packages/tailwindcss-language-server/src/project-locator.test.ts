@@ -265,6 +265,40 @@ testLocator({
   ],
 })
 
+testLocator({
+  // TODO: Enable once v4.1 is released
+  options: { skip: true },
+  name: 'automatic content detection with negative custom sources',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "0.0.0-insiders.3e53e25",
+          "@tailwindcss/oxide": "0.0.0-insiders.3e53e25"
+        }
+      }
+    `,
+    'src/app.css': css`
+      @import 'tailwindcss';
+      @source './**/*.html';
+      @source not './ignored.html';
+    `,
+    'src/index.html': html`<div class="underline"></div>`,
+    'src/ignored.html': html`<div class="flex"></div>`,
+  },
+  expected: [
+    {
+      config: '/src/app.css',
+      content: [
+        '/*',
+        '/package.json',
+        '/src/index.html',
+        '/src/{**/*.html,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
+      ],
+    },
+  ],
+})
+
 testFixture('v4/missing-files', [
   //
   {
