@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "tailwindcss": "^4.0.15",
-    "@tailwindcss/oxide": "^4.0.15"
-  }
-}
