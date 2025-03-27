@@ -37,7 +37,7 @@
     "tmp-cache": "1.1.0",
     "vscode-emmet-helper-bundled": "0.0.1",
     "vscode-languageserver": "8.1.0",
-    "vscode-languageserver-textdocument": "1.0.11"
+    "vscode-languageserver-textdocument": "1.0.12"
   },
   "devDependencies": {
     "@types/braces": "3.0.1",
