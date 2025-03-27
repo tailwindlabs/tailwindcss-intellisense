@@ -627,12 +627,9 @@ async function* detectContentFiles(
   resolver: Resolver,
 ): AsyncIterable<string> {
   try {
-    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', path.dirname(base))
+    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', base)
     oxidePath = pathToFileURL(oxidePath).href
-    let oxidePackageJsonPath = await resolver.resolveJsId(
-      '@tailwindcss/oxide/package.json',
-      path.dirname(base),
-    )
+    let oxidePackageJsonPath = await resolver.resolveJsId('@tailwindcss/oxide/package.json', base)
     let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
     let result = await oxide.scan({
