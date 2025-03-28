@@ -7,7 +7,11 @@ interface ApiOptions {
 }
 
 export async function createApi({ context, outputChannel }: ApiOptions) {
+  let folderAnalysis: Promise<boolean> | null = null
+
   async function workspaceNeedsLanguageServer() {
+    if (folderAnalysis) return folderAnalysis
+
     let source: CancellationTokenSource | null = new CancellationTokenSource()
     source.token.onCancellationRequested(() => {
       source?.dispose()
@@ -22,7 +26,7 @@ export async function createApi({ context, outputChannel }: ApiOptions) {
     setTimeout(() => source?.cancel(), 15_000)
     context.subscriptions.push(source)
 
-    folderAnalysis = anyWorkspaceFoldersNeedServer({
+    folderAnalysis ??= anyWorkspaceFoldersNeedServer({
       token: source.token,
       folders: workspace.workspaceFolders ?? [],
     })
