@@ -4,9 +4,7 @@ import type {
   TextDocument,
   WorkspaceFolder,
   ConfigurationScope,
-  WorkspaceConfiguration,
   Selection,
-  CancellationToken,
 } from 'vscode'
 import {
   workspace as Workspace,
@@ -16,8 +14,6 @@ import {
   SymbolInformation,
   Position,
   Range,
-  RelativePattern,
-  CancellationTokenSource,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -34,11 +30,11 @@ import { languages as defaultLanguages } from '@tailwindcss/language-service/src
 import * as semver from '@tailwindcss/language-service/src/util/semver'
 import isObject from '@tailwindcss/language-service/src/util/isObject'
 import namedColors from 'color-name'
-import picomatch from 'picomatch'
 import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
-import braces from 'braces'
 import normalizePath from 'normalize-path'
 import * as servers from './servers/index'
+import { isExcluded, mergeExcludes } from './exclusions'
+import { createApi } from './api'
 
 const colorNames = Object.keys(namedColors)
 
@@ -50,60 +46,6 @@ let currentClient: Promise<LanguageClient> | null = null
 function getUserLanguages(folder?: WorkspaceFolder): Record<string, string> {
   const langs = Workspace.getConfiguration('tailwindCSS', folder).includeLanguages
   return isObject(langs) ? langs : {}
-}
-
-function getGlobalExcludePatterns(scope: ConfigurationScope | null): string[] {
-  return Object.entries(Workspace.getConfiguration('files', scope)?.get('exclude') ?? [])
-    .filter(([, value]) => value === true)
-    .map(([key]) => key)
-    .filter(Boolean)
-}
-
-function getExcludePatterns(scope: ConfigurationScope | null): string[] {
-  return [
-    ...getGlobalExcludePatterns(scope),
-    ...(<string[]>Workspace.getConfiguration('tailwindCSS', scope).get('files.exclude')).filter(
-      Boolean,
-    ),
-  ]
-}
-
-function isExcluded(file: string, folder: WorkspaceFolder): boolean {
-  for (let pattern of getExcludePatterns(folder)) {
-    let matcher = picomatch(path.join(folder.uri.fsPath, pattern))
-
-    if (matcher(file)) {
-      return true
-    }
-  }
-
-  return false
-}
-
-function mergeExcludes(settings: WorkspaceConfiguration, scope: ConfigurationScope | null): any {
-  return {
-    ...settings,
-    files: {
-      ...settings.files,
-      exclude: getExcludePatterns(scope),
-    },
-  }
-}
-
-async function fileMayBeTailwindRelated(uri: Uri) {
-  let contents = (await Workspace.fs.readFile(uri)).toString()
-
-  let HAS_CONFIG = /@config\s*['"]/
-  let HAS_IMPORT = /@import\s*['"]/
-  let HAS_TAILWIND = /@tailwind\s*[^;]+;/
-  let HAS_THEME = /@theme\s*\{/
-
-  return (
-    HAS_CONFIG.test(contents) ||
-    HAS_IMPORT.test(contents) ||
-    HAS_TAILWIND.test(contents) ||
-    HAS_THEME.test(contents)
-  )
 }
 
 function selectionsAreEqual(
@@ -177,6 +119,12 @@ function resetActiveTextEditorContext(): void {
 
 export async function activate(context: ExtensionContext) {
   let outputChannel = Window.createOutputChannel(CLIENT_NAME)
+
+  let api = await createApi({
+    context,
+    outputChannel,
+  })
+
   context.subscriptions.push(outputChannel)
   context.subscriptions.push(
     commands.registerCommand('tailwindCSS.showOutput', () => {
@@ -282,7 +230,7 @@ export async function activate(context: ExtensionContext) {
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    if (await fileMayBeTailwindRelated(uri)) {
+    if (await api.stylesheetNeedsLanguageServer(uri)) {
       await bootWorkspaceClient()
     }
   }
@@ -579,87 +527,11 @@ export async function activate(context: ExtensionContext) {
   }
 
   async function bootClientIfNeeded(): Promise<void> {
-    if (currentClient) {
-      return
+    if (currentClient) return
+
+    if (await api.workspaceNeedsLanguageServer()) {
+      await bootWorkspaceClient()
     }
-
-    let source: CancellationTokenSource | null = new CancellationTokenSource()
-    source.token.onCancellationRequested(() => {
-      source?.dispose()
-      source = null
-      outputChannel.appendLine(
-        'Server was not started. Search for Tailwind CSS-related files was taking too long.',
-      )
-    })
-
-    // Cancel the search after roughly 15 seconds
-    setTimeout(() => source?.cancel(), 15_000)
-
-    if (!(await anyFolderNeedsLanguageServer(Workspace.workspaceFolders ?? [], source!.token))) {
-      source?.dispose()
-      return
-    }
-
-    source?.dispose()
-
-    await bootWorkspaceClient()
-  }
-
-  async function anyFolderNeedsLanguageServer(
-    folders: readonly WorkspaceFolder[],
-    token: CancellationToken,
-  ): Promise<boolean> {
-    for (let folder of folders) {
-      if (await folderNeedsLanguageServer(folder, token)) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  async function folderNeedsLanguageServer(
-    folder: WorkspaceFolder,
-    token: CancellationToken,
-  ): Promise<boolean> {
-    let settings = Workspace.getConfiguration('tailwindCSS', folder)
-    if (settings.get('experimental.configFile') !== null) {
-      return true
-    }
-
-    let exclude = `{${getExcludePatterns(folder)
-      .flatMap((pattern) => braces.expand(pattern))
-      .join(',')
-      .replace(/{/g, '%7B')
-      .replace(/}/g, '%7D')}}`
-
-    let configFiles = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CONFIG_GLOB}`),
-      exclude,
-      1,
-      token,
-    )
-
-    for (let file of configFiles) {
-      return true
-    }
-
-    let cssFiles = await Workspace.findFiles(
-      new RelativePattern(folder, `**/${CSS_GLOB}`),
-      exclude,
-      undefined,
-      token,
-    )
-
-    for (let file of cssFiles) {
-      outputChannel.appendLine(`Checking if ${file.fsPath} may be Tailwind-related…`)
-
-      if (await fileMayBeTailwindRelated(file)) {
-        return true
-      }
-    }
-
-    return false
   }
 
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
