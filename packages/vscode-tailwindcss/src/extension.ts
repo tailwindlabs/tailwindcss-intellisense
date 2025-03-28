@@ -214,10 +214,10 @@ export async function activate(context: ExtensionContext) {
   let configWatcher = Workspace.createFileSystemWatcher(`**/${CONFIG_GLOB}`, false, true, true)
 
   configWatcher.onDidCreate(async (uri) => {
+    if (currentClient) return
     let folder = Workspace.getWorkspaceFolder(uri)
-    if (!folder || isExcluded(uri.fsPath, folder)) {
-      return
-    }
+    if (!folder || isExcluded(uri.fsPath, folder)) return
+
     await bootWorkspaceClient()
   })
 
@@ -226,13 +226,12 @@ export async function activate(context: ExtensionContext) {
   let cssWatcher = Workspace.createFileSystemWatcher(`**/${CSS_GLOB}`, false, false, true)
 
   async function bootClientIfCssFileMayBeTailwindRelated(uri: Uri) {
+    if (currentClient) return
     let folder = Workspace.getWorkspaceFolder(uri)
-    if (!folder || isExcluded(uri.fsPath, folder)) {
-      return
-    }
-    if (await api.stylesheetNeedsLanguageServer(uri)) {
-      await bootWorkspaceClient()
-    }
+    if (!folder || isExcluded(uri.fsPath, folder)) return
+    if (!(await api.stylesheetNeedsLanguageServer(uri))) return
+
+    await bootWorkspaceClient()
   }
 
   cssWatcher.onDidCreate(bootClientIfCssFileMayBeTailwindRelated)
@@ -526,35 +525,34 @@ export async function activate(context: ExtensionContext) {
     return client
   }
 
-  async function bootClientIfNeeded(): Promise<void> {
-    if (currentClient) return
-
-    if (await api.workspaceNeedsLanguageServer()) {
-      await bootWorkspaceClient()
-    }
-  }
-
+  /**
+   * Note that this method can fire *many* times even for documents that are
+   * not in a visible editor. It's critical that this doesn't start any
+   * expensive operations more than is necessary.
+   */
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
     if (document.languageId === 'tailwindcss') {
       servers.css.boot(context, outputChannel)
     }
 
-    // We are only interested in language mode text
-    if (document.uri.scheme !== 'file') {
-      return
-    }
+    if (currentClient) return
 
-    let uri = document.uri
-    let folder = Workspace.getWorkspaceFolder(uri)
+    // We are only interested in language mode text
+    if (document.uri.scheme !== 'file') return
+
+    let folder = Workspace.getWorkspaceFolder(document.uri)
 
     // Files outside a folder can't be handled. This might depend on the language.
     // Single file languages like JSON might handle files outside the workspace folders.
     if (!folder) return
 
-    await bootClientIfNeeded()
+    if (!(await api.workspaceNeedsLanguageServer())) return
+
+    await bootWorkspaceClient()
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
+
   Workspace.textDocuments.forEach(didOpenTextDocument)
   context.subscriptions.push(
     Workspace.onDidChangeWorkspaceFolders(async () => {
