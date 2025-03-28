@@ -373,7 +373,7 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
       applyEdit: true,
       configuration: true,
       didChangeConfiguration: { dynamicRegistration: true },
-      didChangeWatchedFiles: { dynamicRegistration: true },
+      // didChangeWatchedFiles: { dynamicRegistration: true },
       executeCommand: { dynamicRegistration: true },
       symbol: {
         dynamicRegistration: true,
