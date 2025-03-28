@@ -534,6 +534,11 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  /**
+   * Note that this method can fire *many* times even for documents that are
+   * not in a visible editor. It's critical that this doesn't start any
+   * expensive operations more than is necessary.
+   */
   async function didOpenTextDocument(document: TextDocument): Promise<void> {
     if (document.languageId === 'tailwindcss') {
       servers.css.boot(context, outputChannel)
@@ -544,8 +549,7 @@ export async function activate(context: ExtensionContext) {
       return
     }
 
-    let uri = document.uri
-    let folder = Workspace.getWorkspaceFolder(uri)
+    let folder = Workspace.getWorkspaceFolder(document.uri)
 
     // Files outside a folder can't be handled. This might depend on the language.
     // Single file languages like JSON might handle files outside the workspace folders.
@@ -555,6 +559,7 @@ export async function activate(context: ExtensionContext) {
   }
 
   context.subscriptions.push(Workspace.onDidOpenTextDocument(didOpenTextDocument))
+
   Workspace.textDocuments.forEach(didOpenTextDocument)
   context.subscriptions.push(
     Workspace.onDidChangeWorkspaceFolders(async () => {
