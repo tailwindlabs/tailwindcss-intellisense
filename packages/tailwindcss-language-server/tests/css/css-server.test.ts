@@ -689,3 +689,49 @@ defineTest({
     expect(await doc.diagnostics()).toEqual([])
   },
 })
+
+defineTest({
+  name: 'completions are hidden inside @import source(…)/theme(…)/prefix(…) functions',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        @import './file.css' source(none);
+        @import './file.css' theme(inline);
+        @import './file.css' prefix(tw);
+        @import './file.css' source(none) theme(inline) prefix(tw);
+      `,
+    })
+
+    // @import './file.css' source(none)
+    //                             ^
+    // @import './file.css' theme(inline);
+    //                            ^
+    // @import './file.css' prefix(tw);
+    //                             ^
+    let completionsA = await doc.completions({ line: 0, character: 29 })
+    let completionsB = await doc.completions({ line: 1, character: 28 })
+    let completionsC = await doc.completions({ line: 2, character: 29 })
+
+    expect(completionsA).toEqual({ isIncomplete: false, items: [] })
+    expect(completionsB).toEqual({ isIncomplete: false, items: [] })
+    expect(completionsC).toEqual({ isIncomplete: false, items: [] })
+
+    // @import './file.css' source(none) theme(inline) prefix(tw);
+    //                             ^           ^              ^
+    let completionsD = await doc.completions({ line: 3, character: 29 })
+    let completionsE = await doc.completions({ line: 3, character: 41 })
+    let completionsF = await doc.completions({ line: 3, character: 56 })
+
+    expect(completionsD).toEqual({ isIncomplete: false, items: [] })
+    expect(completionsE).toEqual({ isIncomplete: false, items: [] })
+    expect(completionsF).toEqual({ isIncomplete: false, items: [] })
+  },
+})
