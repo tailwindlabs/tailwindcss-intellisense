@@ -36,7 +36,7 @@ export async function createApi({ context, outputChannel }: ApiOptions) {
     return result
   }
 
-  async function stylesheeNeedsLanguageServer(uri: Uri) {
+  async function stylesheetNeedsLanguageServer(uri: Uri) {
     outputChannel.appendLine(`Checking if ${uri.fsPath} may be Tailwind-related…`)
 
     return fileMayBeTailwindRelated(uri)
@@ -44,6 +44,6 @@ export async function createApi({ context, outputChannel }: ApiOptions) {
 
   return {
     workspaceNeedsLanguageServer,
-    stylesheeNeedsLanguageServer,
+    stylesheetNeedsLanguageServer,
   }
 }

@@ -230,7 +230,7 @@ export async function activate(context: ExtensionContext) {
     if (!folder || isExcluded(uri.fsPath, folder)) {
       return
     }
-    if (await api.stylesheeNeedsLanguageServer(uri)) {
+    if (await api.stylesheetNeedsLanguageServer(uri)) {
       await bootWorkspaceClient()
     }
   }
