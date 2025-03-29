@@ -13,7 +13,7 @@ import {
   CompletionItemKind,
   Connection,
 } from 'vscode-languageserver/node'
-import { TextDocument } from 'vscode-languageserver-textdocument'
+import { Position, TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
 import { getLanguageModelCache } from './languageModelCache'
 import { Stylesheet } from 'vscode-css-languageservice'
@@ -137,8 +137,58 @@ export class CssServer {
       })
     }
 
+    function isInImportDirective(doc: TextDocument, pos: Position) {
+      let text = doc.getText({
+        start: { line: pos.line, character: 0 },
+        end: pos,
+      })
+
+      // Scan backwards to see if we're inside an `@import` directive
+      let foundImport = false
+      let foundDirective = false
+
+      for (let i = text.length - 1; i >= 0; i--) {
+        let char = text[i]
+        if (char === '\n') break
+
+        if (char === '(' && !foundDirective) {
+          if (text.startsWith(' source(', i - 7)) {
+            foundDirective = true
+          }
+
+          //
+          else if (text.startsWith(' theme(', i - 6)) {
+            foundDirective = true
+          }
+
+          //
+          else if (text.startsWith(' prefix(', i - 7)) {
+            foundDirective = true
+          }
+        }
+
+        //
+        else if (char === '@' && !foundImport) {
+          if (text.startsWith('@import ', i)) {
+            foundImport = true
+          }
+        }
+      }
+
+      return foundImport && foundDirective
+    }
+
     connection.onCompletion(async ({ textDocument, position }, _token) =>
       withDocumentAndSettings(textDocument.uri, async ({ original, document, settings }) => {
+        // If we're inside source(…), prefix(…), or theme(…), don't show
+        // completions from the CSS language server
+        if (isInImportDirective(original, position)) {
+          return {
+            isIncomplete: false,
+            items: [],
+          }
+        }
+
         let result = await cssLanguageService.doComplete2(
           document,
           position,
