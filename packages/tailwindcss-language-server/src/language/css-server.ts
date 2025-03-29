@@ -121,6 +121,7 @@ export class CssServer {
     async function withDocumentAndSettings<T>(
       uri: string,
       callback: (result: {
+        original: TextDocument
         document: TextDocument
         settings: LanguageSettings | undefined
       }) => T | Promise<T>,
@@ -130,13 +131,14 @@ export class CssServer {
         return null
       }
       return await callback({
+        original: document,
         document: createVirtualCssDocument(document),
         settings: await getDocumentSettings(document),
       })
     }
 
     connection.onCompletion(async ({ textDocument, position }, _token) =>
-      withDocumentAndSettings(textDocument.uri, async ({ document, settings }) => {
+      withDocumentAndSettings(textDocument.uri, async ({ original, document, settings }) => {
         let result = await cssLanguageService.doComplete2(
           document,
           position,
