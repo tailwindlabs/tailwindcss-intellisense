@@ -69,8 +69,10 @@ async function provideCssHelperHover(
       value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
     }
 
+    let lines = ['```plaintext', value, '```']
+
     return {
-      contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
+      contents: { kind: 'markdown', value: lines.join('\n') },
       range: helperFn.ranges.path,
     }
   }
