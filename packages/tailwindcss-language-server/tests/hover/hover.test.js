@@ -556,7 +556,7 @@ withFixture('v4/path-mappings', (c) => {
 })
 
 defineTest({
-  name: 'wip',
+  name: 'Can hover showing theme values used in var(…) and theme(…) functions',
   fs: {
     'app.css': css`
       @import 'tailwindcss';
