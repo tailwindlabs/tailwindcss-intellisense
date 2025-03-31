@@ -382,6 +382,13 @@ export class TW {
         for (let [, project] of this.projects) {
           if (!project.state.v4) continue
 
+          if (
+            change.type === FileChangeType.Deleted &&
+            changeAffectsFile(normalizedFilename, [project.projectConfig.configPath])
+          ) {
+            continue
+          }
+
           if (!changeAffectsFile(normalizedFilename, project.dependencies())) continue
 
           needsSoftRestart = true
