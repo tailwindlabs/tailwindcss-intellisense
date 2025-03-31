@@ -102,7 +102,7 @@ export interface ProjectService {
   state: State
   tryInit: () => Promise<void>
   dispose: () => Promise<void>
-  onUpdateSettings: (settings: any) => void
+  onUpdateSettings: () => void
   onFileEvents: (changes: Array<{ file: string; type: FileChangeType }>) => void
   onHover(params: TextDocumentPositionParams): Promise<Hover>
   onCompletion(params: CompletionParams): Promise<CompletionList>
@@ -1183,7 +1183,7 @@ export async function createProjectService(
         ;(await disposable).dispose()
       }
     },
-    async onUpdateSettings(settings: any): Promise<void> {
+    async onUpdateSettings(): Promise<void> {
       if (state.enabled) {
         refreshDiagnostics()
       }
