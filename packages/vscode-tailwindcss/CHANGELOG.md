@@ -2,7 +2,8 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Support theme key hovers in the CSS `var()` function ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
+- Show theme key hovers inside `@theme` for better context and syntax highlighting ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
 
 # 0.14.12
 
