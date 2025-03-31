@@ -1041,11 +1041,17 @@ export class TW {
     this.watched.length = 0
   }
 
-  restart(): void {
+  async restart(): void {
+    let isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     console.log('----------\nRESTARTING\n----------')
     this.dispose()
     this.initPromise = undefined
-    this.init()
+    await this.init()
+
+    if (isTestMode) {
+      this.connection.sendNotification('@/tailwindCSS/serverRestarted')
+    }
   }
 
   async softRestart(): Promise<void> {
