@@ -56,7 +56,7 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
     await installDependencies(baseDir, config.fs)
   }
 
-  onTestFinished(async (result) => {
+  onTestFinished(async (ctx) => {
     // Once done, move all the files to a new location
     try {
       await fs.rename(baseDir, doneDir)
@@ -66,7 +66,7 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
       console.error('Failed to move test files to done directory')
     }
 
-    if (result.state === 'fail') return
+    if (ctx.task.result?.state === 'fail') return
 
     if (path.sep === '\\') return
 
