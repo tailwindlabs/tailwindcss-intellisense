@@ -32,7 +32,7 @@ export interface TestConfig<Extras extends {}> {
 }
 
 export function defineTest<T>(config: TestConfig<T>) {
-  return test(config.name, config.options ?? {}, async ({ expect }) => {
+  async function runTest(ctx: TestContext) {
     let utils = await setup(config)
     let extras = await config.prepare?.(utils)
 
@@ -40,7 +40,9 @@ export function defineTest<T>(config: TestConfig<T>) {
       ...utils,
       ...extras,
     })
-  })
+  }
+
+  return test(config.name, config.options ?? {}, runTest)
 }
 
 async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
