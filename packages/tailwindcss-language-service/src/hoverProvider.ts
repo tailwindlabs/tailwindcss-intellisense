@@ -71,6 +71,17 @@ async function provideCssHelperHover(
 
     let lines = ['```plaintext', value, '```']
 
+    if (state.v4 && helperFn.path.startsWith('--')) {
+      lines = [
+        //
+        '```css',
+        '@theme {',
+        `  ${helperFn.path}: ${value};`,
+        '}',
+        '```',
+      ]
+    }
+
     return {
       contents: { kind: 'markdown', value: lines.join('\n') },
       range: helperFn.ranges.path,

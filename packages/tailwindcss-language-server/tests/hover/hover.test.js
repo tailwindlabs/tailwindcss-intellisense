@@ -399,7 +399,14 @@ withFixture('v4/basic', (c) => {
     expected: {
       contents: {
         kind: 'markdown',
-        value: ['```plaintext', '80rem /* 1280px */', '```'].join('\n'),
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --breakpoint-xl: 80rem /* 1280px */;',
+          '}',
+          '```',
+        ].join('\n'),
       },
       range: {
         start: { line: 0, character: 23 },
@@ -582,7 +589,14 @@ defineTest({
     expect(hoverTheme).toEqual({
       contents: {
         kind: 'markdown',
-        value: ['```plaintext', '#000', '```'].join('\n'),
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --color-black: #000;',
+          '}',
+          '```',
+        ].join('\n'),
       },
       range: {
         start: { line: 1, character: 15 },
@@ -593,7 +607,14 @@ defineTest({
     expect(hoverVar).toEqual({
       contents: {
         kind: 'markdown',
-        value: ['```plaintext', '#000', '```'].join('\n'),
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --color-black: #000;',
+          '}',
+          '```',
+        ].join('\n'),
       },
       range: {
         start: { line: 4, character: 13 },
