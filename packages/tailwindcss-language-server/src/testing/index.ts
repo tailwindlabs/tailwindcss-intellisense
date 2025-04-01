@@ -1,13 +1,20 @@
-import { onTestFinished, test, TestOptions } from 'vitest'
+import { onTestFinished, test, TestContext, TestOptions } from 'vitest'
 import * as os from 'node:os'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
 import dedent from 'dedent'
 
-export interface TestUtils {
+export interface TestUtils<TestInput extends Record<string, any>> {
   /** The "cwd" for this test */
   root: string
+
+  /**
+   * The input for this test — taken from the `inputs` in the test config
+   *
+   * @see {TestConfig}
+   */
+  input?: TestInput
 }
 
 export interface StorageSymlink {
@@ -21,29 +28,39 @@ export interface Storage {
   [filePath: string]: string | Uint8Array | StorageSymlink
 }
 
-export interface TestConfig<Extras extends {}> {
+export interface TestConfig<Extras extends {}, TestInput extends Record<string, any>> {
   name: string
+  inputs?: TestInput[]
+
   fs?: Storage
   debug?: boolean
-  prepare?(utils: TestUtils): Promise<Extras>
-  handle(utils: TestUtils & Extras): void | Promise<void>
+  prepare?(utils: TestUtils<TestInput>): Promise<Extras>
+  handle(utils: TestUtils<TestInput> & Extras): void | Promise<void>
 
   options?: TestOptions
 }
 
-export function defineTest<T>(config: TestConfig<T>) {
-  return test(config.name, config.options ?? {}, async ({ expect }) => {
-    let utils = await setup(config)
+export function defineTest<T, I>(config: TestConfig<T, I>) {
+  async function runTest(ctx: TestContext, input?: I) {
+    let utils = await setup(config, input)
     let extras = await config.prepare?.(utils)
 
     await config.handle({
       ...utils,
       ...extras,
     })
-  })
+  }
+
+  if (config.inputs) {
+    return test.for(config.inputs ?? [])(config.name, config.options ?? {}, (input, ctx) =>
+      runTest(ctx, input),
+    )
+  }
+
+  return test(config.name, config.options ?? {}, runTest)
 }
 
-async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
+async function setup<T, I>(config: TestConfig<T, I>, input: I): Promise<TestUtils<I>> {
   let randomId = Math.random().toString(36).substring(7)
 
   let baseDir = path.resolve(process.cwd(), `../../.debug/${randomId}`)
@@ -56,7 +73,7 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
     await installDependencies(baseDir, config.fs)
   }
 
-  onTestFinished(async (result) => {
+  onTestFinished(async (ctx) => {
     // Once done, move all the files to a new location
     try {
       await fs.rename(baseDir, doneDir)
@@ -66,7 +83,7 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
       console.error('Failed to move test files to done directory')
     }
 
-    if (result.state === 'fail') return
+    if (ctx.task.result?.state === 'fail') return
 
     if (path.sep === '\\') return
 
@@ -79,6 +96,7 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
   return {
     root: baseDir,
+    input,
   }
 }
 

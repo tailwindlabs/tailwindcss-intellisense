@@ -6,7 +6,6 @@ import {
   CompletionList,
   CompletionParams,
   Diagnostic,
-  DidChangeWorkspaceFoldersNotification,
   Disposable,
   DocumentLink,
   DocumentLinkRequest,
@@ -179,6 +178,11 @@ export interface ClientOptions extends ConnectOptions {
    * and the Tailwind CSS version it detects
    */
   features?: Feature[]
+
+  /**
+   * Tweak the client capabilities presented to the server
+   */
+  capabilities?(caps: ClientCapabilities): ClientCapabilities | Promise<ClientCapabilities> | void
 }
 
 export interface Client extends ClientWorkspace {
@@ -393,6 +397,8 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
       },
     },
   }
+
+  capabilities = (await opts.capabilities?.(capabilities)) ?? capabilities
 
   trace('Client initializing')
   await conn.sendRequest(InitializeRequest.type, {

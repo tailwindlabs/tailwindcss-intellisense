@@ -1164,6 +1164,11 @@ export async function createProjectService(
       let elapsed = process.hrtime.bigint() - start
 
       console.log(`---- RELOADED IN ${(Number(elapsed) / 1e6).toFixed(2)}ms ----`)
+
+      let isTestMode = params.initializationOptions?.testMode ?? false
+      if (!isTestMode) return
+
+      connection.sendNotification('@/tailwindCSS/projectReloaded')
     },
 
     state,
