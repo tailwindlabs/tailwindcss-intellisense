@@ -123,6 +123,7 @@ testFixture('v4/workspaces', [
       '{URL}/packages/admin/**',
       '{URL}/packages/admin/app.css',
       '{URL}/packages/admin/package.json',
+      '{URL}/packages/admin/tw.css',
     ],
   },
   {
@@ -147,8 +148,8 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "^4.0.15",
-          "@tailwindcss/oxide": "^4.0.15"
+          "tailwindcss": "4.1.0",
+          "@tailwindcss/oxide": "4.1.0"
         }
       }
     `,
@@ -164,7 +165,7 @@ testLocator({
       content: [
         '/*',
         '/package.json',
-        '/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/src/**/*.{aspx,astro,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
         '/src/components/example.html',
         '/src/index.html',
       ],
@@ -178,8 +179,8 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "^4.0.15",
-          "@tailwindcss/oxide": "^4.0.15"
+          "tailwindcss": "4.1.0",
+          "@tailwindcss/oxide": "4.1.0"
         }
       }
     `,
@@ -197,7 +198,7 @@ testLocator({
       content: [
         '/*',
         '/package.json',
-        '/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/src/**/*.{aspx,astro,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
         '/src/components/example.html',
         '/src/index.html',
       ],
@@ -211,8 +212,8 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "^4.0.15",
-          "@tailwindcss/oxide": "^4.0.15"
+          "tailwindcss": "4.1.0",
+          "@tailwindcss/oxide": "4.1.0"
         }
       }
     `,
@@ -245,36 +246,40 @@ testLocator({
       content: [
         '/*',
         '/admin/foo.bin',
-        '/admin/{**/*.bin,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
+        '/admin/tw.css',
+        '/admin/ui.css',
+        '/admin/{**/*.bin,**/*.{aspx,astro,bin,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
         '/package.json',
         '/shared.html',
-        '/web/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/web/**/*.{aspx,astro,bin,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/web/app.css',
       ],
     },
     {
       config: '/web/app.css',
       content: [
         '/*',
-        '/admin/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/admin/**/*.{aspx,astro,bin,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+        '/admin/app.css',
+        '/admin/tw.css',
+        '/admin/ui.css',
         '/package.json',
         '/shared.html',
         '/web/bar.bin',
-        '/web/{**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue},*.bin}',
+        '/web/{**/*.{aspx,astro,bin,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue},*.bin}',
       ],
     },
   ],
 })
 
 testLocator({
-  // TODO: Enable once v4.1 is released
-  options: { skip: true },
   name: 'automatic content detection with negative custom sources',
   fs: {
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "0.0.0-insiders.3e53e25",
-          "@tailwindcss/oxide": "0.0.0-insiders.3e53e25"
+          "tailwindcss": "4.1.0",
+          "@tailwindcss/oxide": "4.1.0"
         }
       }
     `,
@@ -293,7 +298,7 @@ testLocator({
         '/*',
         '/package.json',
         '/src/index.html',
-        '/src/{**/*.html,**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
+        '/src/{**/*.html,**/*.{aspx,astro,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}}',
       ],
     },
   ],
@@ -303,7 +308,7 @@ testFixture('v4/missing-files', [
   //
   {
     config: 'app.css',
-    content: ['{URL}/*', '{URL}/package.json'],
+    content: ['{URL}/*', '{URL}/i-exist.css', '{URL}/package.json'],
   },
 ])
 
@@ -314,7 +319,8 @@ testFixture('v4/path-mappings', [
     content: [
       '{URL}/*',
       '{URL}/package.json',
-      '{URL}/src/**/*.{aspx,astro,cjs,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+      '{URL}/src/**/*.{aspx,astro,cjs,css,cts,eex,erb,gjs,gts,haml,handlebars,hbs,heex,html,jade,js,json,jsx,liquid,md,mdx,mjs,mts,mustache,njk,nunjucks,php,pug,py,razor,rb,rhtml,rs,slim,svelte,tpl,ts,tsx,twig,vue}',
+      '{URL}/src/a/file.css',
       '{URL}/src/a/my-config.ts',
       '{URL}/src/a/my-plugin.ts',
       '{URL}/tsconfig.json',
@@ -326,7 +332,7 @@ testFixture('v4/invalid-import-order', [
   //
   {
     config: 'tailwind.css',
-    content: ['{URL}/*', '{URL}/package.json'],
+    content: ['{URL}/*', '{URL}/a.css', '{URL}/b.css', '{URL}/package.json'],
   },
 ])
 
@@ -338,7 +344,7 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "^4.0.2"
+          "tailwindcss": "4.1.0"
         }
       }
     `,
@@ -386,7 +392,7 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.6"
+          "tailwindcss": "4.1.0"
         }
       }
     `,
@@ -415,7 +421,7 @@ testLocator({
   },
   expected: [
     {
-      version: '4.0.6',
+      version: '4.1.0',
       config: '/src/articles/articles.css',
       content: [],
     },

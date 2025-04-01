@@ -313,8 +313,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(13172)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(317)
+    expect(result.items.length).toBe(19283)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(346)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
@@ -488,7 +488,7 @@ withFixture('v4/basic', (c) => {
     })
 
     // Make sure `@slot` is NOT suggested by default
-    expect(result.items.length).toBe(7)
+    expect(result.items.length).toBe(8)
     expect(result.items).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),
@@ -627,7 +627,7 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: oklch(0.637 0.237 25.331);',
+      detail: 'background-color: oklch(63.7% 0.237 25.331);',
       documentation: '#fb2c36',
     })
   })
@@ -692,7 +692,7 @@ defineTest({
     //                       ^
     let completion = await document.completions({ line: 0, character: 23 })
 
-    expect(completion?.items.length).toBe(12289)
+    expect(completion?.items.length).toBe(19236)
   },
 })
 
@@ -714,7 +714,7 @@ defineTest({
     //                      ^
     let completion = await document.completions({ line: 0, character: 22 })
 
-    expect(completion?.items.length).toBe(12289)
+    expect(completion?.items.length).toBe(19236)
   },
 })
 
@@ -736,7 +736,7 @@ defineTest({
     //                               ^
     let completion = await document.completions({ line: 0, character: 31 })
 
-    expect(completion?.items.length).toBe(12289)
+    expect(completion?.items.length).toBe(19236)
   },
 })
 
@@ -765,7 +765,7 @@ defineTest({
     //                    ^
     let completion = await document.completions({ line: 0, character: 20 })
 
-    expect(completion?.items.length).toBe(12289)
+    expect(completion?.items.length).toBe(19236)
   },
 })
 
@@ -796,7 +796,7 @@ defineTest({
     //                      ^
     let completion = await document.completions({ line: 1, character: 22 })
 
-    expect(completion?.items.length).toBe(12289)
+    expect(completion?.items.length).toBe(19236)
   },
 })
 
@@ -886,24 +886,24 @@ defineTest({
     //             ^
     let completionA = await document.completions({ line: 0, character: 13 })
 
-    expect(completionA?.items.length).toBe(12289)
+    expect(completionA?.items.length).toBe(19236)
 
     //   return <Test className={cn("")} />;
     //                              ^
     let completionB = await document.completions({ line: 3, character: 30 })
 
-    expect(completionB?.items.length).toBe(12289)
+    expect(completionB?.items.length).toBe(19236)
 
     //   return <Test className={cn("")} />;
     //                              ^
     let completionC = await document.completions({ line: 7, character: 30 })
 
-    expect(completionC?.items.length).toBe(12289)
+    expect(completionC?.items.length).toBe(19236)
 
     // let y = cva("");
     //             ^
     let completionD = await document.completions({ line: 10, character: 13 })
 
-    expect(completionD?.items.length).toBe(12289)
+    expect(completionD?.items.length).toBe(19236)
   },
 })
