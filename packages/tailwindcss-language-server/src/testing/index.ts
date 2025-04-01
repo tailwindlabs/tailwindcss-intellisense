@@ -9,7 +9,11 @@ export interface TestUtils<TestInput extends Record<string, any>> {
   /** The "cwd" for this test */
   root: string
 
-  /** The "cwd" for this test */
+  /**
+   * The input for this test — taken from the `inputs` in the test config
+   *
+   * @see {TestConfig}
+   */
   input?: TestInput
 }
 
