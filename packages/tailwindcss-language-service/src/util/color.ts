@@ -57,7 +57,7 @@ const colorRegex = new RegExp(
 )
 
 function getColorsInString(state: State, str: string): (culori.Color | KeywordColor)[] {
-  if (/(?:box|drop)-shadow/.test(str)) return []
+  if (/(?:box|drop)-shadow/.test(str) && !/--tw-drop-shadow/.test(str)) return []
 
   function toColor(match: RegExpMatchArray) {
     let color = match[1].replace(/var\([^)]+\)/, '1')
@@ -85,6 +85,17 @@ function getColorFromDecls(
     ) {
       return false
     }
+
+    // ignore mask-image & mask-composite
+    if (prop === 'mask-image' || prop === 'mask-composite') {
+      return false
+    }
+
+    // ignore `--tw-drop-shadow`
+    if (prop === '--tw-drop-shadow') {
+      return false
+    }
+
     return true
   })
 

@@ -17,6 +17,14 @@ export function replaceCssVarsWithFallbacks(state: State, str: string): string {
         return fallback
       }
 
+      if (
+        name === '--tw-text-shadow-alpha' ||
+        name === '--tw-drop-shadow-alpha' ||
+        name === '--tw-shadow-alpha'
+      ) {
+        return '100%'
+      }
+
       // Don't touch it since there's no suitable replacement
       return null
     },
