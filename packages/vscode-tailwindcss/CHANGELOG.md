@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Hide completions from CSS language server inside `@import "…" source(…)` ([#1091](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1091))
 
 # 0.14.12
 
