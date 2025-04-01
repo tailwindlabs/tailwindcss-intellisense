@@ -261,29 +261,25 @@ export function completionsFromClassList(
 
     // TODO: This is a bit of a hack
     if (prefix.length > 0) {
-      // No variants seen: suggest the prefix only
+      // No variants seen:
+      // - suggest the prefix as a variant
+      // - Modify the remaining items to include the prefix in the variant name
       if (existingVariants.length === 0) {
-        items = items.slice(0, 1)
+        items = items.map((item, idx) => {
+          if (idx === 0) return item
 
-        return withDefaults(
-          {
-            isIncomplete: false,
-            items,
-          },
-          {
-            data: {
-              ...(state.completionItemData ?? {}),
-              ...(important ? { important } : {}),
-              variants: existingVariants,
-            },
-            range: replacementRange,
-          },
-          state.editor.capabilities.itemDefaults,
-        )
+          item.label = `${prefix}:${item.label}`
+
+          if (item.textEditText) {
+            item.textEditText = `${prefix}:${item.textEditText}`
+          }
+
+          return item
+        })
       }
 
       // The first variant is not the prefix: don't suggest anything
-      if (existingVariants[0] !== prefix) {
+      if (existingVariants.length > 0 && existingVariants[0] !== prefix) {
         return null
       }
     }
@@ -302,6 +298,10 @@ export function completionsFromClassList(
 
             if (color && typeof color !== 'string') {
               documentation = formatColor(color)
+            }
+
+            if (prefix.length > 0 && existingVariants.length === 0) {
+              className = `${prefix}:${className}`
             }
 
             items.push({
