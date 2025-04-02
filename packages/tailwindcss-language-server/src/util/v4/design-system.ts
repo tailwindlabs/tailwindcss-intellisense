@@ -219,6 +219,14 @@ export async function loadDesignSystem(
   Object.assign(design, {
     dependencies: () => dependencies,
 
+    // TODOs:
+    //
+    // 1. Remove PostCSS parsing — its roughly 60% of the processing time
+    // ex: compiling 19k classes take 650ms and 400ms of that is PostCSS
+    //
+    // - Replace `candidatesToCss` with a `candidatesToAst` API
+    // First step would be to convert to a PostCSS AST by transforming the nodes directly
+    // Then it would be to drop the PostCSS AST representation entirely in all v4 code paths
     compile(classes: string[]): (postcss.Root | null)[] {
       let css = design.candidatesToCss(classes)
       let errors: any[] = []
