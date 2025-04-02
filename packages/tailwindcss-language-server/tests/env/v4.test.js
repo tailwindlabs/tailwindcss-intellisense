@@ -21,7 +21,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -49,7 +49,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(12288)
+    expect(completion?.items.length).toBe(19235)
   },
 })
 
@@ -137,7 +137,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -188,7 +188,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -205,7 +205,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.1',
+        version: '4.1.1',
         isDefaultVersion: false,
       },
     })
@@ -233,7 +233,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(12288)
+    expect(completion?.items.length).toBe(19235)
   },
 })
 
@@ -243,7 +243,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -270,7 +270,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.1',
+        version: '4.1.1',
         isDefaultVersion: false,
       },
     })
@@ -322,7 +322,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -354,7 +354,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -831,7 +831,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })

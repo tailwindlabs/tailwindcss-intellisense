@@ -57,7 +57,7 @@ const colorRegex = new RegExp(
 )
 
 function getColorsInString(state: State, str: string): (culori.Color | KeywordColor)[] {
-  if (/(?:box|drop)-shadow/.test(str)) return []
+  if (/(?:box|drop)-shadow/.test(str) && !/--tw-drop-shadow/.test(str)) return []
 
   function toColor(match: RegExpMatchArray) {
     let color = match[1].replace(/var\([^)]+\)/, '1')
@@ -85,6 +85,17 @@ function getColorFromDecls(
     ) {
       return false
     }
+
+    // ignore mask-image & mask-composite
+    if (prop === 'mask-image' || prop === 'mask-composite') {
+      return false
+    }
+
+    // ignore `--tw-drop-shadow`
+    if (prop === '--tw-drop-shadow') {
+      return false
+    }
+
     return true
   })
 
@@ -177,8 +188,25 @@ function getColorFromRoot(state: State, css: postcss.Root): culori.Color | Keywo
   return getColorFromDecls(state, decls)
 }
 
+let isNegative = /^-/
+let isNumericUtility =
+  /^-?((min-|max-)?[wh]|z|start|order|opacity|rounded|row|col|size|basis|end|duration|ease|font|top|left|bottom|right|inset|leading|cursor|(space|scale|skew|rotate)-[xyz]|gap(-[xy])?|(scroll-)?[pm][trblxyse]?)-/
+let isMaskUtility = /^-?mask-/
+
+function isLikelyColorless(className: string) {
+  if (isNegative.test(className)) return true
+  // TODO: This is **not** correct but is intentional because there are 5k mask utilities and a LOT of them are colors
+  // This causes a massive slowdown when building the design system
+  if (isMaskUtility.test(className)) return true
+  if (isNumericUtility.test(className)) return true
+  return false
+}
+
 export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
   if (state.v4) {
+    // FIXME: This is a performance optimization and not strictly correct
+    if (isLikelyColorless(className)) return null
+
     let css = state.designSystem.compile([className])[0]
 
     let color = getColorFromRoot(state, css)
