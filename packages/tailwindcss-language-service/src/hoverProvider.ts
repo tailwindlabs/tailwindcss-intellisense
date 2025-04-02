@@ -53,6 +53,8 @@ async function provideCssHelperHover(
   for (let helperFn of helperFns) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
 
+    if (helperFn.helper === 'var' && !state.v4) continue
+
     let validated = validateConfigPath(
       state,
       helperFn.path,
@@ -67,8 +69,21 @@ async function provideCssHelperHover(
       value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
     }
 
+    let lines = ['```plaintext', value, '```']
+
+    if (state.v4 && helperFn.path.startsWith('--')) {
+      lines = [
+        //
+        '```css',
+        '@theme {',
+        `  ${helperFn.path}: ${value};`,
+        '}',
+        '```',
+      ]
+    }
+
     return {
-      contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
+      contents: { kind: 'markdown', value: lines.join('\n') },
       range: helperFn.ranges.path,
     }
   }
