@@ -2,6 +2,7 @@
 
 ## Prerelease
 
+- Hide completions from CSS language server inside `@import "…" source(…)` ([#1091](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1091))
 - Support theme key hovers in the CSS `var()` function ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
 - Show theme key hovers inside `@theme` for better context and syntax highlighting ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
 
