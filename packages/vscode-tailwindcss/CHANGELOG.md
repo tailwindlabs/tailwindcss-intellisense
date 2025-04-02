@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+# 0.14.13
+
 - Hide completions from CSS language server inside `@import "…" source(…)` ([#1091](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1091))
 - Bump bundled v4 fallback to v4.1.1 ([#1294](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1294))
 - Show color swatches for most new v4.1 utilities ([#1294](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1294))
