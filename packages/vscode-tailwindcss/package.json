@@ -390,6 +390,6 @@
     "picomatch": "^4.0.1",
     "rimraf": "3.0.2",
     "typescript": "5.3.3",
-    "vscode-languageclient": "8.0.2"
+    "vscode-languageclient": "9.0.1"
   }
 }
