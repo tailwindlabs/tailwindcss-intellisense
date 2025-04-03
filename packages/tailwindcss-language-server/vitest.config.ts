@@ -7,5 +7,16 @@ export default defineConfig({
     css: true,
   },
 
-  plugins: [tsconfigPaths()],
+  plugins: [
+    tsconfigPaths(),
+    {
+      name: 'force-inline-css',
+      enforce: 'pre',
+      resolveId(id) {
+        if (!id.includes('index.css')) return
+        if (id.includes('?raw')) return
+        return this.resolve(`${id}?raw`)
+      },
+    },
+  ],
 })
