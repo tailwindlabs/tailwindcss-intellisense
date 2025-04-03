@@ -741,6 +741,80 @@ defineTest({
 })
 
 defineTest({
+  name: 'v4: Completions show after a variant arbitrary value, using prefixes',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="tw:data-[foo]:">',
+    })
+
+    // <div class="tw:data-[foo]:">
+    //                          ^
+    let completion = await document.completions({ line: 0, character: 26 })
+
+    expect(completion?.items.length).toBe(19236)
+  },
+})
+
+defineTest({
+  name: 'v4: Variant and utility suggestions show prefix when one has been typed',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="">',
+    })
+
+    // <div class="">
+    //            ^
+    let completion = await document.completions({ line: 0, character: 12 })
+
+    expect(completion?.items.length).toBe(19237)
+
+    // Verify that variants and utilities are all prefixed
+    let prefixed = completion.items.filter((item) => !item.label.startsWith('tw:'))
+    expect(prefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Variant and utility suggestions hide prefix when it has been typed',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="tw:">',
+    })
+
+    // <div class="tw:">
+    //               ^
+    let completion = await document.completions({ line: 0, character: 15 })
+
+    expect(completion?.items.length).toBe(19236)
+
+    // Verify that no variants and utilities have prefixes
+    let prefixed = completion.items.filter((item) => item.label.startsWith('tw:'))
+    expect(prefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
   name: 'v4: Completions show inside class functions in JS/TS files',
   fs: {
     'app.css': css`
