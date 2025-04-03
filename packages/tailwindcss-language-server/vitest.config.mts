@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     testTimeout: 15000,
     css: true,
+    silent: 'passed-only',
   },
 
   plugins: [
