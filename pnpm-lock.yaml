@@ -117,8 +117,8 @@ importers:
         specifier: ^0.0.33
         version: 0.0.33
       '@types/vscode':
-        specifier: 1.65.0
-        version: 1.65.0
+        specifier: 1.90.0
+        version: 1.90.0
       browserslist:
         specifier: ^4.23.0
         version: 4.23.3
@@ -394,8 +394,8 @@ importers:
         specifier: ^2.3.3
         version: 2.3.4
       '@types/vscode':
-        specifier: 1.65.0
-        version: 1.65.0
+        specifier: 1.90.0
+        version: 1.90.0
       '@vscode/vsce':
         specifier: 2.21.1
         version: 2.21.1
@@ -1152,8 +1152,8 @@ packages:
   '@types/stringify-object@4.0.5':
     resolution: {integrity: sha512-TzX5V+njkbJ8iJ0mrj+Vqveep/1JBH4SSA3J2wYrE1eUrOhdsjTBCb0kao4EquSQ8KgPpqY4zSVP2vCPWKBElg==}
 
-  '@types/vscode@1.65.0':
-    resolution: {integrity: sha512-wQhExnh2nEzpjDMSKhUvnNmz3ucpd3E+R7wJkOhBNK3No6fG3VUdmVmMOKD0A8NDZDDDiQcLNxe3oGmX5SjJ5w==}
+  '@types/vscode@1.90.0':
+    resolution: {integrity: sha512-oT+ZJL7qHS9Z8bs0+WKf/kQ27qWYR3trsXpq46YDjFqBsMLG4ygGGjPaJ2tyrH0wJzjOEmDyg9PDJBBhWg9pkQ==}
 
   '@types/ws@8.5.12':
     resolution: {integrity: sha512-3tPRkv1EtkDpzlgyKyI8pGsGZAGPEaXeu0DOj5DI25Ja91bdAYddYHbADRYVrZMRbfW+1l5YwXVDKohDJNQxkQ==}
@@ -3383,7 +3383,7 @@ snapshots:
 
   '@types/stringify-object@4.0.5': {}
 
-  '@types/vscode@1.65.0': {}
+  '@types/vscode@1.90.0': {}
 
   '@types/ws@8.5.12':
     dependencies:
