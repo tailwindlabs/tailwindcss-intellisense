@@ -5,7 +5,7 @@
     "@npmcli/package-json": "^5.0.0",
     "@types/culori": "^2.1.0",
     "culori": "^4.0.1",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.25.2",
     "minimist": "^1.2.8",
     "prettier": "^3.2.5",
     "semver": "^7.7.1"
