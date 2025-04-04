@@ -33,6 +33,12 @@ export function getVariantsFromClassName(
       // NOTE: This should never happen
       if (!state.designSystem) return false
 
+      let prefix = state.designSystem.theme.prefix ?? ''
+
+      if (prefix !== '') {
+        className = `${prefix}:${className}`
+      }
+
       // We don't use `compile()` so there's no overhead from PostCSS
       let compiled = state.designSystem.candidatesToCss([className])
 
