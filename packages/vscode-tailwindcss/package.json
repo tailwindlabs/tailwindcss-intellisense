@@ -24,7 +24,7 @@
     "vscode"
   ],
   "engines": {
-    "vscode": "^1.67.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Linters",
@@ -378,7 +378,7 @@
     "@tailwindcss/language-service": "workspace:*",
     "@types/braces": "3.0.1",
     "@types/picomatch": "^2.3.4",
-    "@types/vscode": "1.65.0",
+    "@types/vscode": "1.90.0",
     "@vscode/vsce": "2.21.1",
     "braces": "3.0.3",
     "color-name": "1.1.4",

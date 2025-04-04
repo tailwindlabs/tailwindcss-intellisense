@@ -62,7 +62,7 @@
     "@types/picomatch": "^2.3.4",
     "@types/postcss-import": "^14.0.3",
     "@types/stack-trace": "^0.0.33",
-    "@types/vscode": "1.65.0",
+    "@types/vscode": "1.90.0",
     "browserslist": "^4.24.4",
     "bun-types": "^1.2.8",
     "chokidar": "3.6.0",
@@ -108,6 +108,6 @@
     "vscode-uri": "3.1.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   }
 }
