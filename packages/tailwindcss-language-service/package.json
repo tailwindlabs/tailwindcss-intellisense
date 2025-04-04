@@ -16,7 +16,7 @@
     "@csstools/css-parser-algorithms": "2.1.1",
     "@csstools/css-tokenizer": "2.1.1",
     "@csstools/media-query-list-parser": "2.0.4",
-    "@types/culori": "^2.1.0",
+    "@types/culori": "^2.1.1",
     "@types/moo": "0.5.3",
     "@types/semver": "7.3.10",
     "braces": "3.0.3",
@@ -36,7 +36,7 @@
     "stringify-object": "3.3.0",
     "tmp-cache": "1.1.0",
     "vscode-emmet-helper-bundled": "0.0.1",
-    "vscode-languageserver": "8.1.0",
+    "vscode-languageserver": "9.0.1",
     "vscode-languageserver-textdocument": "1.0.12"
   },
   "devDependencies": {
@@ -44,14 +44,15 @@
     "@types/css.escape": "^1.5.2",
     "@types/dedent": "^0.7.2",
     "@types/line-column": "^1.0.2",
-    "@types/node": "^18.19.33",
+    "@types/node": "^18.19.86",
     "@types/stringify-object": "^4.0.5",
     "dedent": "^1.5.3",
-    "esbuild": "^0.25.0",
-    "esbuild-node-externals": "^1.9.0",
+    "esbuild": "^0.25.2",
+    "esbuild-node-externals": "^1.18.0",
     "minimist": "^1.2.8",
     "tslib": "2.2.0",
-    "typescript": "^5.3.3",
-    "vitest": "^3.0.9"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.5",
+    "vitest": "^3.1.1"
   }
 }
