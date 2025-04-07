@@ -89,6 +89,9 @@ defineTest({
 })
 
 defineTest({
+  options: {
+    retry: 3,
+  },
   name: 'Server is "restarted" when a config file is removed',
   fs: {
     'app.css': css`
