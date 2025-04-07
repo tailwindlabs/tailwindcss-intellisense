@@ -4,6 +4,7 @@
 
 - Only scan the file system once when needed ([#1287](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1287))
 - Don't follow recursive symlinks when searching for projects ([#1270](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1270))
+- Correctly re-create a project when its main config file is removed then re-created ([#1300](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1300))
 
 # 0.14.13
 

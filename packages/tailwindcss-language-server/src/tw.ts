@@ -52,7 +52,7 @@ import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
-import { retry } from './util/retry'
+import { analyzeStylesheet } from './version-guesser.js'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -382,6 +382,13 @@ export class TW {
         for (let [, project] of this.projects) {
           if (!project.state.v4) continue
 
+          if (
+            change.type === FileChangeType.Deleted &&
+            changeAffectsFile(normalizedFilename, [project.projectConfig.configPath])
+          ) {
+            continue
+          }
+
           if (!changeAffectsFile(normalizedFilename, project.dependencies())) continue
 
           needsSoftRestart = true
@@ -402,6 +409,31 @@ export class TW {
             needsRestart = true
             break
           } else if (!cssFileConfigMap.has(normalizedFilename) && configPath) {
+            needsRestart = true
+            break
+          }
+
+          //
+          else {
+            // If the main CSS file in a project is deleted and then re-created
+            // the server won't restart because the project is gone by now and
+            // there's no concept of a "config file" for us to compare with
+            //
+            // So we'll check if the stylesheet could *potentially* create
+            // a new project but we'll only do so if no projects were found
+            //
+            // If we did this all the time we'd potentially restart the server
+            // unncessarily a lot while the user is editing their stylesheets
+            if (this.projects.size > 0) continue
+
+            let content = await readCssFile(change.file)
+            if (!content) continue
+
+            let stylesheet = analyzeStylesheet(content)
+            if (!stylesheet.root) continue
+
+            if (!stylesheet.versions.includes('4')) continue
+
             needsRestart = true
             break
           }
@@ -1041,11 +1073,17 @@ export class TW {
     this.watched.length = 0
   }
 
-  restart(): void {
+  async restart(): void {
+    let isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     console.log('----------\nRESTARTING\n----------')
     this.dispose()
     this.initPromise = undefined
-    this.init()
+    await this.init()
+
+    if (isTestMode) {
+      this.connection.sendNotification('@/tailwindCSS/serverRestarted')
+    }
   }
 
   async softRestart(): Promise<void> {
