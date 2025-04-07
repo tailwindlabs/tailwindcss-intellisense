@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Only scan the file system once when needed ([#1287](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1287))
+- Don't follow recursive symlinks when searching for projects ([#1270](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1270))
 
 # 0.14.13
 
