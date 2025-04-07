@@ -1081,7 +1081,7 @@ export class TW {
     this.watched.length = 0
   }
 
-  async restart(): void {
+  async restart(): Promise<void> {
     let isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
 
     console.log('----------\nRESTARTING\n----------')
