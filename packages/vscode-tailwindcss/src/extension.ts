@@ -544,7 +544,7 @@ export async function activate(context: ExtensionContext) {
 
     // Files outside a folder can't be handled. This might depend on the language.
     // Single file languages like JSON might handle files outside the workspace folders.
-    if (!folder) return
+    if (!folder || isExcluded(document.uri.fsPath, folder)) return
 
     if (!(await api.workspaceNeedsLanguageServer())) return
 
