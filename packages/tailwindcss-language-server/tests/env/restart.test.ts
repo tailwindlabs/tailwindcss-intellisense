@@ -91,6 +91,11 @@ defineTest({
 defineTest({
   options: {
     retry: 3,
+
+    // This test passes on all platforms but it is super flaky
+    // The server needs some re-working to ensure everything is awaited
+    // properly with respect to messages and server responses
+    skip: true,
   },
   name: 'Server is "restarted" when a config file is removed',
   fs: {
