@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Don't scan the filesystem once for each opened document ([#1287](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1287))
+- Only scan the file system once when needed ([#1287](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1287))
 
 # 0.14.13
 
