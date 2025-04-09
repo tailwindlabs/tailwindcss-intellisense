@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+# 0.14.15
+
 - Prevent infinite loop when any file exclusion starts with `/` ([#1307](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1307))
 
 # 0.14.14
