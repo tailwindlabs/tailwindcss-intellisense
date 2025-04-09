@@ -274,11 +274,13 @@ export class ProjectLocator {
   }
 
   private async findConfigs(): Promise<ConfigEntry[]> {
+    let ignore = this.settings.tailwindCSS.files.exclude
+
     // Look for config files and CSS files
     let files = await glob({
       patterns: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
       cwd: this.base,
-      ignore: this.settings.tailwindCSS.files.exclude,
+      ignore,
       onlyFiles: true,
       absolute: true,
       followSymbolicLinks: true,
