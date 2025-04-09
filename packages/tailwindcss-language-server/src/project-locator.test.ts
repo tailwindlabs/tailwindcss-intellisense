@@ -462,6 +462,43 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'File exclusions starting with `/` do not cause traversal to loop forever',
+  fs: {
+    'index.css': css`
+      @import 'tailwindcss';
+    `,
+    'vendor/a.css': css`
+      @import 'tailwindcss';
+    `,
+    'vendor/nested/b.css': css`
+      @import 'tailwindcss';
+    `,
+    'src/vendor/c.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  settings: {
+    tailwindCSS: {
+      files: {
+        exclude: ['/vendor'],
+      },
+    } as Settings['tailwindCSS'],
+  },
+  expected: [
+    {
+      version: '4.1.1 (bundled)',
+      config: '/index.css',
+      content: [],
+    },
+    {
+      version: '4.1.1 (bundled)',
+      config: '/src/vendor/c.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({
