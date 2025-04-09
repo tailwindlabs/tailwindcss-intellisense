@@ -276,6 +276,15 @@ export class ProjectLocator {
   private async findConfigs(): Promise<ConfigEntry[]> {
     let ignore = this.settings.tailwindCSS.files.exclude
 
+    // NOTE: This is a temporary workaround for a bug in the `fdir` package used
+    // by `tinyglobby`. It infinite loops when the ignore pattern starts with
+    // a `/`. This should be removed once the bug is fixed.
+    ignore = ignore.map((pattern) => {
+      if (!pattern.startsWith('/')) return pattern
+
+      return pattern.slice(1)
+    })
+
     // Look for config files and CSS files
     let files = await glob({
       patterns: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
