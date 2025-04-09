@@ -502,7 +502,7 @@ function testLocator({
   })
 }
 
-async function prepare({ root }: TestUtils) {
+async function prepare({ root }: TestUtils<any>) {
   let defaultSettings = {
     tailwindCSS: {
       files: {
