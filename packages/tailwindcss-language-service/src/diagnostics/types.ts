@@ -10,7 +10,7 @@ export enum DiagnosticKind {
   InvalidTailwindDirective = 'invalidTailwindDirective',
   InvalidSourceDirective = 'invalidSourceDirective',
   RecommendedVariantOrder = 'recommendedVariantOrder',
-  UsedBlocklistedClass = 'UsedBlocklistedClass',
+  UsedBlocklistedClass = 'usedBlocklistedClass',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
