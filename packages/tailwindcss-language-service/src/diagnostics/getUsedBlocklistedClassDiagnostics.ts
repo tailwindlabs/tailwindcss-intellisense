@@ -8,6 +8,7 @@ export async function getUsedBlocklistedClassDiagnostics(
   document: TextDocument,
   settings: Settings,
 ): Promise<UsedBlocklistedClassDiagnostic[]> {
+  if (!state.v4) return []
   if (!state.blocklist?.length) return []
 
   let severity = settings.tailwindCSS.lint.usedBlocklistedClass
