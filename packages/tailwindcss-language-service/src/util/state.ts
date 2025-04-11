@@ -65,6 +65,7 @@ export type TailwindCssSettings = {
     invalidTailwindDirective: DiagnosticSeveritySetting
     invalidSourceDirective: DiagnosticSeveritySetting
     recommendedVariantOrder: DiagnosticSeveritySetting
+    usedBlocklistedClass: DiagnosticSeveritySetting
   }
   experimental: {
     classRegex: string[] | [string, string][]
@@ -203,6 +204,7 @@ export function getDefaultTailwindSettings(): Settings {
         invalidTailwindDirective: 'error',
         invalidSourceDirective: 'error',
         recommendedVariantOrder: 'warning',
+        usedBlocklistedClass: 'warning',
       },
       showPixelEquivalents: true,
       includeLanguages: {},
