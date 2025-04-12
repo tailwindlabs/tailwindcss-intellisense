@@ -5,7 +5,7 @@ import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
-import { isJsxContext } from './js'
+import { isJsContext } from './js'
 import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
@@ -526,7 +526,7 @@ export async function findClassNameAtPosition(
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')
   } else if (isHtmlContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
-  } else if (isJsxContext(state, doc, position)) {
+  } else if (isJsContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'jsx')
   } else {
     classNames = await findClassNamesInRange(state, doc, searchRange)
