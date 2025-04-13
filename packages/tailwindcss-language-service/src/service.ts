@@ -12,9 +12,10 @@ import {
   type DocumentLink,
   type Hover,
   type ColorPresentation,
+  type DocumentDiagnosticReport,
 } from 'vscode-languageserver'
 import type { State } from './util/state'
-import type { AugmentedDiagnostic, DiagnosticKind } from './diagnostics/types'
+import type { DiagnosticKind } from './diagnostics/types'
 import type { FileSystem } from './fs'
 import picomatch from 'picomatch'
 import { doHover } from './hoverProvider'
@@ -39,7 +40,7 @@ export interface LanguageDocument {
   documentLinks(): Promise<DocumentLink[]>
   documentColors(): Promise<ColorInformation[]>
   codeLenses(): Promise<CodeLens[]>
-  diagnostics(kinds?: DiagnosticKind[]): Promise<AugmentedDiagnostic[]>
+  diagnostics(kinds?: DiagnosticKind[]): Promise<DocumentDiagnosticReport>
   codeActions(range: Range, context: CodeActionContext): Promise<CodeAction[]>
   completions(position: Position, ctx?: CompletionContext): Promise<CompletionList | null>
   resolveCompletion(item: CompletionItem): Promise<CompletionItem>
@@ -150,7 +151,10 @@ async function createLanguageDocument(
 
     async diagnostics(kinds?: DiagnosticKind[]) {
       if (!state.enabled || !settings.tailwindCSS.validate) {
-        return []
+        return {
+          kind: 'full',
+          items: [],
+        }
       }
 
       return doValidate(state, doc, kinds)

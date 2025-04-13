@@ -1,6 +1,10 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import {
+  DocumentDiagnosticReportKind,
+  type FullDocumentDiagnosticReport,
+} from 'vscode-languageserver'
 import type { State } from '../util/state'
-import { DiagnosticKind, type AugmentedDiagnostic } from './types'
+import { DiagnosticKind } from './types'
 import { getCssConflictDiagnostics } from './getCssConflictDiagnostics'
 import { getInvalidApplyDiagnostics } from './getInvalidApplyDiagnostics'
 import { getInvalidScreenDiagnostics } from './getInvalidScreenDiagnostics'
@@ -25,10 +29,10 @@ export async function doValidate(
     DiagnosticKind.RecommendedVariantOrder,
     DiagnosticKind.UsedBlocklistedClass,
   ],
-): Promise<AugmentedDiagnostic[]> {
-  const settings = await state.editor.getConfiguration(document.uri)
+): Promise<FullDocumentDiagnosticReport> {
+  let settings = await state.editor.getConfiguration(document.uri)
 
-  return settings.tailwindCSS.validate
+  let items = settings.tailwindCSS.validate
     ? [
         ...(only.includes(DiagnosticKind.CssConflict)
           ? await getCssConflictDiagnostics(state, document, settings)
@@ -59,4 +63,9 @@ export async function doValidate(
           : []),
       ]
     : []
+
+  return {
+    kind: DocumentDiagnosticReportKind.Full,
+    items,
+  }
 }
