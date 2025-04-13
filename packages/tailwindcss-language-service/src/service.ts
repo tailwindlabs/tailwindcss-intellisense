@@ -139,7 +139,7 @@ async function createLanguageDocument(
     async documentColors() {
       if (!state.enabled || !settings.tailwindCSS.colorDecorators) return []
 
-      return getDocumentColors(state, doc.storage)
+      return getDocumentColors(doc)
     },
 
     async colorPresentation(color: Color, range: Range) {
