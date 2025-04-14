@@ -49,13 +49,16 @@
     "@types/picomatch": "^2.3.3",
     "@types/stringify-object": "^4.0.5",
     "dedent": "^1.5.3",
+    "deepmerge": "4.2.2",
     "esbuild": "^0.25.5",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
     "picomatch": "^4.0.1",
+    "tailwindcss-v4": "npm:tailwindcss@4.1.1",
     "tslib": "2.2.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vitest": "^3.2.1"
+    "vitest": "^3.2.1",
+    "vscode-uri": "3.0.2"
   }
 }

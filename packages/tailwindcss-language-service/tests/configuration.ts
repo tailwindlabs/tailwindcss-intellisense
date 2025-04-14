@@ -1,10 +1,7 @@
-import {
-  getDefaultTailwindSettings,
-  type Settings,
-} from '@tailwindcss/language-service/src/util/state'
+import { getDefaultTailwindSettings, type Settings } from '../src/util/state'
 import { URI } from 'vscode-uri'
-import type { DeepPartial } from '@tailwindcss/language-service/src/types'
-import { CacheMap } from '../../src/cache-map'
+import type { DeepPartial } from '../src/types'
+import { CacheMap } from './cache-map'
 import deepmerge from 'deepmerge'
 
 export interface Configuration {
