@@ -13,8 +13,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@csstools/css-parser-algorithms": "2.1.1",
-    "@csstools/css-tokenizer": "2.1.1",
+    "@csstools/css-parser-algorithms": "3.0.4",
+    "@csstools/css-tokenizer": "3.0.3",
     "@csstools/media-query-list-parser": "2.0.4",
     "@types/culori": "^2.1.0",
     "@types/moo": "0.5.3",
