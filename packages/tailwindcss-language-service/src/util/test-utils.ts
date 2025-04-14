@@ -9,6 +9,7 @@ export const ts = dedent
 export const tsx = dedent
 export const css = dedent
 export const html = dedent
+export const pug = dedent
 
 export function createDocument({
   name,

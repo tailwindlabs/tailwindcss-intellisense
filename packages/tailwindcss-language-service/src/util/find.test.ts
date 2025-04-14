@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import { findClassListsInHtmlRange } from './find'
-import { js, html, createDocument } from './test-utils'
+import { js, html, pug, createDocument } from './test-utils'
 
 test('class regex works in astro', async ({ expect }) => {
   let file = createDocument({
@@ -678,6 +678,115 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
       range: {
         start: { line: 15, character: 16 },
         end: { line: 15, character: 29 },
+      },
+    },
+  ])
+})
+
+test('classAttributes find class lists inside variables in JS(X)/TS(X)', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.html',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['className'],
+      },
+    },
+    content: js`
+      let className = {
+        a: "relative flex",
+        nested: {
+          b: "relative flex",
+        },
+        inFn: fn({
+          c: "relative flex",
+        })
+      }
+
+      let other = {
+        a: "relative flex",
+      }
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 1, character: 6 },
+        end: { line: 1, character: 19 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 3, character: 8 },
+        end: { line: 3, character: 21 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 6, character: 8 },
+        end: { line: 6, character: 21 },
+      },
+    },
+  ])
+})
+
+test('classAttributes find class lists inside pug', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.pug',
+    lang: 'pug',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['className'],
+      },
+    },
+    content: pug`
+      div(classNAme="relative flex")
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 0, character: 15 },
+        end: { line: 0, character: 28 },
+      },
+    },
+  ])
+})
+
+test('classAttributes find class lists inside Vue bindings', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.pug',
+    lang: 'vue',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['class'],
+      },
+    },
+    content: html`
+      <template>
+        <div :class="{'relative flex': true}"></div>
+      </template>
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 1, character: 17 },
+        end: { line: 1, character: 30 },
       },
     },
   ])
