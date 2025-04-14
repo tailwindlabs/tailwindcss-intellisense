@@ -228,6 +228,7 @@ export function createState(
   return {
     enabled: true,
     features: [],
+    blocklist: [],
     ...partial,
     editor: {
       get connection(): Connection {
