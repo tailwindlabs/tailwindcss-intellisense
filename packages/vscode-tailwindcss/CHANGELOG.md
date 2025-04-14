@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Warn when using a blocklisted class in v4 ([#1310](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1310))
 
 # 0.14.15
 

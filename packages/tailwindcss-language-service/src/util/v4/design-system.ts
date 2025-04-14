@@ -40,6 +40,7 @@ export interface DesignSystem {
 
   // Optional because it did not exist in earlier v4 alpha versions
   resolveThemeValue?(path: string, forceInline?: boolean): string | undefined
+  invalidCandidates?: Set<string>
 }
 
 export interface DesignSystem {

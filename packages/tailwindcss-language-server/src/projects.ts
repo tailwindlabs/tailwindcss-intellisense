@@ -837,6 +837,7 @@ export async function createProjectService(
         )
 
         state.designSystem = designSystem
+        state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
         let deps = designSystem.dependencies()
 
@@ -982,7 +983,9 @@ export async function createProjectService(
       if (typeof state.separator !== 'string') {
         state.separator = ':'
       }
-      state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      if (!state.v4) {
+        state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      }
       delete state.config.blocklist
 
       if (state.v4) {
@@ -1148,6 +1151,7 @@ export async function createProjectService(
       state.designSystem = designSystem
       state.classList = classList
       state.variants = getVariants(state)
+      state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
       let deps = designSystem.dependencies()
 
