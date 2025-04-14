@@ -682,3 +682,56 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     },
   ])
 })
+
+test('classAttributes find class lists inside variables in JS(X)/TS(X)', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.html',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classAttributes: ['className'],
+      },
+    },
+    content: js`
+      let className = {
+        a: "relative flex",
+        nested: {
+          b: "relative flex",
+        },
+        inFn: fn({
+          c: "relative flex",
+        })
+      }
+
+      let other = {
+        a: "relative flex",
+      }
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 1, character: 6 },
+        end: { line: 1, character: 19 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 3, character: 8 },
+        end: { line: 3, character: 21 },
+      },
+    },
+    {
+      classList: 'relative flex',
+      range: {
+        start: { line: 6, character: 8 },
+        end: { line: 6, character: 21 },
+      },
+    },
+  ])
+})
