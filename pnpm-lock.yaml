@@ -348,6 +348,9 @@ importers:
       dedent:
         specifier: ^1.5.3
         version: 1.5.3
+      deepmerge:
+        specifier: 4.2.2
+        version: 4.2.2
       esbuild:
         specifier: ^0.25.0
         version: 0.25.0
@@ -360,6 +363,9 @@ importers:
       picomatch:
         specifier: ^4.0.1
         version: 4.0.2
+      tailwindcss-v4:
+        specifier: npm:tailwindcss@4.1.1
+        version: tailwindcss@4.1.1
       tslib:
         specifier: 2.2.0
         version: 2.2.0
@@ -369,6 +375,9 @@ importers:
       vitest:
         specifier: ^3.0.9
         version: 3.0.9(@types/node@18.19.43)
+      vscode-uri:
+        specifier: 3.0.2
+        version: 3.0.2
 
   packages/vscode-tailwindcss:
     devDependencies:

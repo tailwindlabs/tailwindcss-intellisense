@@ -1,5 +1,5 @@
 {
-  "include": ["src", "../../types"],
+  "include": ["src", "tests", "../../types"],
   "compilerOptions": {
     "module": "NodeNext",
     "lib": ["ES2022"],
@@ -7,7 +7,6 @@
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,
-    "rootDir": "./src",
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
