@@ -95,6 +95,8 @@ test('Evaluating CSS calc expressions', () => {
   expect(replaceCssCalc('calc(1.25 / 0.875)', (node) => evaluateExpression(node.value))).toBe(
     '1.4286',
   )
+
+  expect(replaceCssCalc('calc(1/4 * 100%)', (node) => evaluateExpression(node.value))).toBe('25%')
 })
 
 test('Inlining calc expressions using the design system', () => {
