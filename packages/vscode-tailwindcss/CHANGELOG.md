@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Warn when using a blocklisted class in v4 ([#1310](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1310))
+- Support class function hovers in Svelte and HTML `<script>` blocks ([#1311](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1311))
 
 # 0.14.15
 
