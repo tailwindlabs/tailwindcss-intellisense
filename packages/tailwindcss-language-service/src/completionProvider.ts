@@ -2297,6 +2297,7 @@ export async function resolveCompletionItem(
         item.detail = await jit.stringifyDecls(
           state,
           postcss.rule({
+            selector: '.x',
             nodes: decls,
           }),
         )
