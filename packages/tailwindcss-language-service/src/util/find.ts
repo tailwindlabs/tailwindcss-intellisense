@@ -138,7 +138,7 @@ export function findClassListsInCssRange(
   })
 }
 
-async function findCustomClassLists(
+export async function findCustomClassLists(
   state: State,
   doc: TextDocument,
   range?: Range,

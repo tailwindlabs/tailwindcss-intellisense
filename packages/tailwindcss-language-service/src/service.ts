@@ -28,6 +28,8 @@ import { doCodeActions } from './codeActions/codeActionProvider'
 import { provideColorPresentation } from './colorPresentationProvider'
 import { getColor, KeywordColor } from './util/color'
 import * as culori from 'culori'
+import { Document } from './documents/document'
+import { createDocumentStore } from './documents/store'
 
 export interface ServiceOptions {
   fs: FileSystem
@@ -58,12 +60,10 @@ export interface LanguageService {
 }
 
 export function createLanguageService(opts: ServiceOptions): LanguageService {
-  async function open(doc: TextDocument | string) {
-    if (typeof doc === 'string') {
-      doc = await opts.fs.document(doc)
-    }
+  let store = createDocumentStore(opts)
 
-    return createLanguageDocument(opts, doc)
+  async function open(doc: TextDocument | string) {
+    return createLanguageDocument(opts, await store.parse(doc))
   }
 
   return {
@@ -91,7 +91,7 @@ export function createLanguageService(opts: ServiceOptions): LanguageService {
 
 async function createLanguageDocument(
   opts: ServiceOptions,
-  doc: TextDocument,
+  doc: Document,
 ): Promise<LanguageDocument | null> {
   let state = opts.state()
   if (!state.enabled) return null
@@ -120,33 +120,33 @@ async function createLanguageDocument(
     async hover(position: Position) {
       if (!state.enabled || !settings.tailwindCSS.hovers) return null
 
-      return doHover(state, doc, position)
+      return doHover(state, doc.storage, position)
     },
 
     async documentLinks() {
       if (!state.enabled) return []
 
-      return getDocumentLinks(state, doc, (path) => {
-        return opts.fs.resolve(doc, path)
+      return getDocumentLinks(state, doc.storage, (path) => {
+        return opts.fs.resolve(doc.storage, path)
       })
     },
 
     async documentColors() {
       if (!state.enabled || !settings.tailwindCSS.colorDecorators) return []
 
-      return getDocumentColors(state, doc)
+      return getDocumentColors(state, doc.storage)
     },
 
     async colorPresentation(color: Color, range: Range) {
       if (!state.enabled || !settings.tailwindCSS.colorDecorators) return []
 
-      return provideColorPresentation(state, doc, color, range)
+      return provideColorPresentation(state, doc.storage, color, range)
     },
 
     async codeLenses() {
       if (!state.enabled || !settings.tailwindCSS.codeLens) return []
 
-      return getCodeLens(state, doc)
+      return getCodeLens(state, doc.storage)
     },
 
     async diagnostics(kinds?: DiagnosticKind[]) {
@@ -157,7 +157,7 @@ async function createLanguageDocument(
         }
       }
 
-      return doValidate(state, doc, kinds)
+      return doValidate(state, doc.storage, kinds)
     },
 
     async codeActions(range: Range, context: CodeActionContext) {
@@ -169,14 +169,14 @@ async function createLanguageDocument(
         context,
       }
 
-      return doCodeActions(state, params, doc)
+      return doCodeActions(state, params, doc.storage)
     },
 
     async completions(position: Position, ctx?: CompletionContext) {
       if (!state.enabled || !settings.tailwindCSS.suggestions) return null
 
       state.completionItemData.uri = doc.uri
-      return doComplete(state, doc, position, ctx)
+      return doComplete(state, doc.storage, position, ctx)
     },
 
     async resolveCompletion(item: CompletionItem) {
