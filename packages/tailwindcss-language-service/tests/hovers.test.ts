@@ -1,14 +1,6 @@
 import { test, expect, describe } from 'vitest'
-import dedent from 'dedent'
-import { createClient } from './client'
-
-const css = dedent
-const html = dedent
-
-const range = (startLine: number, startCol: number, endLine: number, endCol: number) => ({
-  start: { line: startLine, character: startCol },
-  end: { line: endLine, character: endCol },
-})
+import { createClient } from './utils/client'
+import { css, html, range } from './utils/utils'
 
 describe('v4', async () => {
   let client = await createClient({

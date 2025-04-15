@@ -1,11 +1,11 @@
-import { Settings, State } from '../src'
+import { Settings, State } from '../../src'
 import postcss from 'postcss'
-import { createLanguageService, createState, getDefaultTailwindSettings } from '../src'
-import { supportedFeatures } from '../src/features'
+import { createLanguageService, createState } from '../../src'
+import { supportedFeatures } from '../../src/features'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI, Utils as URIUtils } from 'vscode-uri'
 import { createConfiguration } from './configuration'
-import { DeepPartial } from '../src/types'
+import { DeepPartial } from '../../src/types'
 
 export interface ClientOptions {
   config:
@@ -93,7 +93,10 @@ export async function createClient(options: ClientOptions) {
 
   let state = createState({
     v4: true,
+    version,
     designSystem: design as any,
+    // TODO: This should not be necessary
+    blocklist: Array.from(design.invalidCandidates),
     features: supportedFeatures(version, tailwindcss),
     editor: {
       getConfiguration: async (uri) => config.get(uri),
