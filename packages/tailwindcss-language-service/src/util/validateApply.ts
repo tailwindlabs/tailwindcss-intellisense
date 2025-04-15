@@ -7,6 +7,10 @@ export function validateApply(
   state: State,
   classNameOrParts: string | string[],
 ): { isApplyable: true } | { isApplyable: false; reason: string } | null {
+  if (state.v4) {
+    return { isApplyable: true }
+  }
+
   if (state.jit) {
     return { isApplyable: true }
   }

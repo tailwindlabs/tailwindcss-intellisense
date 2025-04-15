@@ -1,5 +1,6 @@
 import dedent from 'dedent'
 
+export const js = dedent
 export const css = dedent
 export const html = dedent
 
