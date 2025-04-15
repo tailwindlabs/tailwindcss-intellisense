@@ -27,7 +27,7 @@ let build = await esbuild.context({
     {
       name: 'generate-types',
       async setup(build) {
-        build.onEnd(async (result) => {
+        build.onEnd(async () => {
           // Call the tsc command to generate the types
           spawnSync(
             'tsc',
