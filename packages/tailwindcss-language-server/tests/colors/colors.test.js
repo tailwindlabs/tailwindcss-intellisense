@@ -9,6 +9,7 @@ const range = (startLine, startCol, endLine, endCol) => ({
   end: { line: endLine, character: endCol },
 })
 
+// TODO: Find a way to test these in the language service
 withFixture('basic', (c) => {
   async function testColors(name, { text, expected }) {
     test.concurrent(name, async ({ expect }) => {
@@ -159,6 +160,7 @@ withFixture('basic', (c) => {
   })
 })
 
+// TODO: Remove. These are all tested in the language service now
 withFixture('v4/basic', (c) => {
   async function testColors(name, { text, expected }) {
     test.concurrent(name, async ({ expect }) => {
@@ -309,6 +311,7 @@ withFixture('v4/basic', (c) => {
   })
 })
 
+// TODO: Remove. These are all tested in the language service now
 defineTest({
   name: 'v4: colors are recursively resolved from the theme',
   fs: {
@@ -354,6 +357,7 @@ defineTest({
   },
 })
 
+// TODO: Remove. These are all tested in the language service now
 defineTest({
   name: 'colors that use light-dark() resolve to their light color',
   fs: {
