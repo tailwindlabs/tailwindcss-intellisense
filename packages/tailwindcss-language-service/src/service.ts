@@ -125,7 +125,7 @@ async function createLanguageDocument(
     async hover(position: Position) {
       if (!state.enabled || !settings.tailwindCSS.hovers) return null
 
-      return doHover(state, doc.storage, position)
+      return doHover(doc, position)
     },
 
     async documentLinks() {
