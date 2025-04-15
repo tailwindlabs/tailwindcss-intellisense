@@ -26,8 +26,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run tests
+      - name: Run service tests
+        working-directory: packages/tailwindcss-language-service
+        run: pnpm run build && pnpm run test
+
+      - name: Run server tests
+        working-directory: packages/tailwindcss-language-server
         run: |
-          cd packages/tailwindcss-language-server &&
-          pnpm run build &&
-          pnpm run test
+          pnpm run build && pnpm run test
