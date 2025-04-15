@@ -1207,6 +1207,8 @@ export async function createProjectService(
       }
     },
     async onUpdateSettings(): Promise<void> {
+      service.onUpdateSettings()
+
       if (state.enabled) {
         refreshDiagnostics()
       }
