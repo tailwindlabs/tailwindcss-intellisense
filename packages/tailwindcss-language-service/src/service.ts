@@ -51,6 +51,7 @@ export interface LanguageDocument {
 export interface LanguageService {
   open(doc: TextDocument | string): Promise<LanguageDocument | null>
   resolveCompletion(item: CompletionItem): Promise<CompletionItem>
+  onUpdateSettings(): Promise<void>
 
   /** @internal */
   getColor(className: string): Promise<culori.Color | KeywordColor | null>
@@ -85,6 +86,10 @@ export function createLanguageService(opts: ServiceOptions): LanguageService {
       let doc = await open(textDoc)
 
       return doc.resolveCompletion(item)
+    },
+
+    async onUpdateSettings() {
+      store.clear()
     },
   }
 }
