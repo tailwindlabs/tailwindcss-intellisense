@@ -339,6 +339,9 @@ importers:
       '@types/node':
         specifier: ^18.19.33
         version: 18.19.43
+      '@types/normalize-path':
+        specifier: ^3.0.2
+        version: 3.0.2
       '@types/picomatch':
         specifier: ^2.3.3
         version: 2.3.4
@@ -363,6 +366,9 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      normalize-path:
+        specifier: 3.0.0
+        version: 3.0.0
       picomatch:
         specifier: ^4.0.1
         version: 4.0.2
