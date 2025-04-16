@@ -17,7 +17,6 @@ import {
 import type { State } from './util/state'
 import type { DiagnosticKind } from './diagnostics/types'
 import type { FileSystem } from './fs'
-import picomatch from 'picomatch'
 import { doHover } from './hoverProvider'
 import { getDocumentLinks } from './documentLinksProvider'
 import { getDocumentColors } from './documentColorProvider'
@@ -30,6 +29,7 @@ import { getColor, KeywordColor } from './util/color'
 import * as culori from 'culori'
 import { Document } from './documents/document'
 import { createDocumentStore } from './documents/store'
+import { createPathMatcher } from './paths'
 
 export interface ServiceOptions {
   fs: FileSystem
@@ -113,13 +113,9 @@ async function createLanguageDocument(
   if (!settings) throw new Error('Unable to get the settings for the current document')
 
   // Should we ignore this file?
-  let exclusions = settings.tailwindCSS.files.exclude.map((pattern) => {
-    return picomatch(`${state.editor.folder}/${pattern}`)
-  })
-
-  for (let isExcluded of exclusions) {
-    if (isExcluded(doc.uri)) return null
-  }
+  // TODO: Do we need to normalize windows paths?
+  let isExcludedPath = createPathMatcher(state.editor.folder, settings.tailwindCSS.files.exclude)
+  if (isExcludedPath(doc.uri)) return null
 
   return {
     async hover(position: Position) {
