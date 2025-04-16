@@ -6,12 +6,18 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI, Utils as URIUtils } from 'vscode-uri'
 import { createConfiguration } from './configuration'
 import { DeepPartial } from '../../src/types'
+import { createFileSystem, Storage } from './fs'
 
 export interface ClientOptions {
   config:
     | { kind: 'css'; content: string }
     | { kind: 'module'; content: any }
     | { kind: 'custom'; content: (state: State) => State }
+
+  /**
+   * In-memory filesystem structure
+   */
+  fs?: Storage
 }
 
 export interface DocumentDescriptor {
@@ -105,11 +111,7 @@ export async function createClient(options: ClientOptions) {
 
   let service = createLanguageService({
     state: () => state,
-    fs: {
-      document: async () => null,
-      resolve: async () => null,
-      readDirectory: async () => [],
-    },
+    fs: createFileSystem(options.fs ?? {}),
   })
 
   let index = 0
