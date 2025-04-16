@@ -114,6 +114,18 @@ export async function createClient(options: ClientOptions) {
     fs: createFileSystem(options.fs ?? {}),
   })
 
+  state.separator = ':'
+  state.variants = design.getVariants()
+  state.classList = await Promise.all(
+    design.getClassList().map(async (entry) => [
+      entry[0],
+      {
+        ...entry[1],
+        color: await service.getColor(entry[0]),
+      },
+    ]),
+  )
+
   let index = 0
   function open(desc: DocumentDescriptor) {
     let uri = URIUtils.resolvePath(
