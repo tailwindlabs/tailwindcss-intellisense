@@ -241,6 +241,7 @@ export function createState(
   return {
     enabled: true,
     features: [],
+    completionItemData: {},
     ...partial,
     editor: {
       get connection(): Connection {
