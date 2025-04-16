@@ -1,8 +1,8 @@
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
 import { findClassListsInHtmlRange } from './find'
 import { js, html, pug, createDocument } from './test-utils'
 
-test('class regex works in astro', async ({ expect }) => {
+test('class regex works in astro', async () => {
   let file = createDocument({
     name: 'file.astro',
     lang: 'astro',
@@ -54,7 +54,7 @@ test('class regex works in astro', async ({ expect }) => {
   ])
 })
 
-test('find class lists in functions', async ({ expect }) => {
+test('find class lists in functions', async () => {
   let fileA = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -174,7 +174,7 @@ test('find class lists in functions', async ({ expect }) => {
   expect(classListsB).toEqual([])
 })
 
-test('find class lists in nested fn calls', async ({ expect }) => {
+test('find class lists in nested fn calls', async () => {
   let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -299,7 +299,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
   ])
 })
 
-test('find class lists in nested fn calls (only nested matches)', async ({ expect }) => {
+test('find class lists in nested fn calls (only nested matches)', async () => {
   let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -348,7 +348,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
   ])
 })
 
-test('find class lists in tagged template literals', async ({ expect }) => {
+test('find class lists in tagged template literals', async () => {
   let fileA = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -452,7 +452,7 @@ test('find class lists in tagged template literals', async ({ expect }) => {
   expect(classListsB).toEqual([])
 })
 
-test('classFunctions can be a regex', async ({ expect }) => {
+test('classFunctions can be a regex', async () => {
   let fileA = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -497,7 +497,7 @@ test('classFunctions can be a regex', async ({ expect }) => {
   expect(classListsB).toEqual([])
 })
 
-test('classFunctions regexes only match on function names', async ({ expect }) => {
+test('classFunctions regexes only match on function names', async () => {
   let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -518,7 +518,7 @@ test('classFunctions regexes only match on function names', async ({ expect }) =
   expect(classLists).toEqual([])
 })
 
-test('Finds consecutive instances of a class function', async ({ expect }) => {
+test('Finds consecutive instances of a class function', async () => {
   let file = createDocument({
     name: 'file.js',
     lang: 'javascript',
@@ -566,7 +566,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
   ])
 })
 
-test('classFunctions & classAttributes should not duplicate matches', async ({ expect }) => {
+test('classFunctions & classAttributes should not duplicate matches', async () => {
   let file = createDocument({
     name: 'file.jsx',
     lang: 'javascriptreact',
@@ -656,7 +656,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
   ])
 })
 
-test('classFunctions should only match in JS-like contexts', async ({ expect }) => {
+test('classFunctions should only match in JS-like contexts', async () => {
   let file = createDocument({
     name: 'file.html',
     lang: 'html',
@@ -725,7 +725,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
   ])
 })
 
-test('classAttributes find class lists inside variables in JS(X)/TS(X)', async ({ expect }) => {
+test('classAttributes find class lists inside variables in JS(X)/TS(X)', async () => {
   let file = createDocument({
     name: 'file.html',
     lang: 'javascript',
@@ -781,7 +781,7 @@ test('classAttributes find class lists inside variables in JS(X)/TS(X)', async (
   ])
 })
 
-test('classAttributes find class lists inside pug', async ({ expect }) => {
+test('classAttributes find class lists inside pug', async () => {
   let file = createDocument({
     name: 'file.pug',
     lang: 'pug',
@@ -809,7 +809,7 @@ test('classAttributes find class lists inside pug', async ({ expect }) => {
   ])
 })
 
-test('classAttributes find class lists inside Vue bindings', async ({ expect }) => {
+test('classAttributes find class lists inside Vue bindings', async () => {
   let file = createDocument({
     name: 'file.pug',
     lang: 'vue',

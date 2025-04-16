@@ -1,8 +1,8 @@
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
 import { jsx, createDocument, html } from './test-utils'
 
-test('regex literals are ignored when determining language boundaries', ({ expect }) => {
+test('regex literals are ignored when determining language boundaries', () => {
   let file = createDocument({
     name: 'file.js',
     lang: 'javascript',
@@ -28,7 +28,7 @@ test('regex literals are ignored when determining language boundaries', ({ expec
   ])
 })
 
-test('style tags in HTML are treated as a separate boundary', ({ expect }) => {
+test('style tags in HTML are treated as a separate boundary', () => {
   let file = createDocument({
     name: 'file.html',
     lang: 'html',
@@ -74,7 +74,7 @@ test('style tags in HTML are treated as a separate boundary', ({ expect }) => {
   ])
 })
 
-test('script tags in HTML are treated as a separate boundary', ({ expect }) => {
+test('script tags in HTML are treated as a separate boundary', () => {
   let file = createDocument({
     name: 'file.html',
     lang: 'html',
@@ -120,7 +120,7 @@ test('script tags in HTML are treated as a separate boundary', ({ expect }) => {
   ])
 })
 
-test('Vue files detect <template>, <script>, and <style> as separate boundaries', ({ expect }) => {
+test('Vue files detect <template>, <script>, and <style> as separate boundaries', () => {
   let file = createDocument({
     name: 'file.vue',
     lang: 'vue',
