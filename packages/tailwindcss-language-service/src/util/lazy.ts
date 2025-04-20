@@ -1,19 +1,20 @@
-// https://www.codementor.io/@agustinchiappeberrini/lazy-evaluation-and-javascript-a5m7g8gs3
-
 export interface Lazy<T> {
-  (): T
-  isLazy: boolean
+  status: 'pending' | 'fulfilled'
+
+  (...args: unknown[]): T
 }
 
-export const lazy = <T>(getter: () => T): Lazy<T> => {
-  let evaluated: boolean = false
-  let _res: T = null
-  const res = <Lazy<T>>function (): T {
-    if (evaluated) return _res
-    _res = getter.apply(this, arguments)
-    evaluated = true
-    return _res
+export function lazy<T>(getter: () => T): Lazy<T> {
+  let result: { value: T } | undefined
+
+  function get(): T {
+    result ??= { value: getter() }
+    return result.value
   }
-  res.isLazy = true
-  return res
+
+  return Object.defineProperties(get as Lazy<T>, {
+    status: {
+      get: () => (result ? 'fulfilled' : 'pending'),
+    },
+  })
 }
