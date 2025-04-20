@@ -9,6 +9,8 @@ import * as culori from 'culori'
 import namedColors from 'color-name'
 import postcss from 'postcss'
 import { replaceCssVarsWithFallbacks } from './rewriting'
+import { AstNode } from '../css/ast'
+import { walk, WalkAction } from '../css/walk'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -34,7 +36,7 @@ const COLOR_PROPS = [
   'text-decoration-color',
 ]
 
-export type KeywordColor = 'transparent' | 'currentColor'
+export type KeywordColor = 'transparent' | 'currentColor' | 'inherit'
 
 function getKeywordColor(value: unknown): KeywordColor | null {
   if (typeof value !== 'string') return null
@@ -314,4 +316,33 @@ const LIGHT_DARK_REGEX = /light-dark\(\s*(.*?)\s*,\s*.*?\s*\)/g
 
 function resolveLightDark(str: string) {
   return str.replace(LIGHT_DARK_REGEX, (_, lightColor) => lightColor)
+}
+
+export function colorsInAst(state: State, ast: AstNode[]) {
+  let decls: Record<string, string[]> = {}
+
+  walk(ast, {
+    enter(node) {
+      if (node.kind === 'at-rule') {
+        if (node.name === '@property') {
+          return WalkAction.Skip
+        }
+
+        // Tailwind CSS v4 alpha and beta
+        if (node.name === '@supports' && node.params === '(-moz-orient: inline)') {
+          return WalkAction.Skip
+        }
+      } else if (node.kind === 'declaration') {
+        decls[node.property] ??= []
+        decls[node.property].push(node.value)
+      }
+
+      return WalkAction.Continue
+    },
+  })
+
+  let color = getColorFromDecls(state, decls)
+  if (!color) return []
+  if (typeof color === 'string') return []
+  return [color]
 }
