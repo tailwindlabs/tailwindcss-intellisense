@@ -79,9 +79,9 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
   expect(replaceCssVarsWithFallbacks(state, 'var(--level-3)')).toBe('blue')
 
   // Circular replacements don't cause infinite loops
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-1)')).toBe('var(--circular-3)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-2)')).toBe('var(--circular-1)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-3)')).toBe('var(--circular-2)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-1)')).toBe('var(--circular-1)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-2)')).toBe('var(--circular-2)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-3)')).toBe('var(--circular-3)')
 })
 
 test('recursive theme replacements', () => {
