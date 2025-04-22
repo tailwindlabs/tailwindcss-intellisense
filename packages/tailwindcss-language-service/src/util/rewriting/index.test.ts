@@ -84,6 +84,46 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
   expect(replaceCssVarsWithFallbacks(state, 'var(--circular-3)')).toBe('var(--circular-2)')
 })
 
+test('recursive theme replacements', () => {
+  let map = new Map<string, string>([
+    ['--color-a', 'var(--color-a)'],
+    ['--color-b', 'rgb(var(--color-b))'],
+    ['--color-c', 'rgb(var(--channel) var(--channel) var(--channel))'],
+    ['--channel', '255'],
+
+    ['--color-d', 'rgb(var(--indirect) var(--indirect) var(--indirect))'],
+    ['--indirect', 'var(--channel)'],
+    ['--channel', '255'],
+
+    ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
+    ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
+  ])
+
+  let state: State = {
+    enabled: true,
+    designSystem: {
+      theme: { prefix: null } as any,
+      resolveThemeValue: (name) => map.get(name) ?? null,
+    } as DesignSystem,
+  }
+
+  expect(replaceCssVarsWithFallbacks(state, 'var(--color-a)')).toBe('var(--color-a)')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--color-b)')).toBe('rgb(var(--color-b))')
+  expect(replaceCssVarsWithFallbacks(state, 'var(--color-c)')).toBe('rgb(255 255 255)')
+
+  // This one is wrong but fixing it without breaking the infinite recursion guard is complex
+  expect(replaceCssVarsWithFallbacks(state, 'var(--color-d)')).toBe(
+    'rgb(255 var(--indirect) var(--indirect))',
+  )
+
+  expect(replaceCssVarsWithFallbacks(state, 'var(--mutual-a)')).toBe(
+    'calc(calc(var(--mutual-a) + 1) * 1)',
+  )
+  expect(replaceCssVarsWithFallbacks(state, 'var(--mutual-b)')).toBe(
+    'calc(calc(var(--mutual-b) * 1) + 1)',
+  )
+})
+
 test('Evaluating CSS calc expressions', () => {
   expect(replaceCssCalc('calc(1px + 1px)', (node) => evaluateExpression(node.value))).toBe('2px')
   expect(replaceCssCalc('calc(1px * 4)', (node) => evaluateExpression(node.value))).toBe('4px')
