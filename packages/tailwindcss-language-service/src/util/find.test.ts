@@ -1,5 +1,5 @@
 import { test } from 'vitest'
-import { findClassListsInHtmlRange } from './find'
+import { findClassListsInHtmlRange, findClassNameAtPosition } from './find'
 import { js, html, pug, createDocument } from './test-utils'
 
 test('class regex works in astro', async ({ expect }) => {
@@ -790,4 +790,88 @@ test('classAttributes find class lists inside Vue bindings', async ({ expect }) 
       },
     },
   ])
+})
+
+test('Can find class name inside JS/TS functions in <script> tags (HTML)', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.html',
+    lang: 'html',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: html`
+      <script>
+        let classes = clsx('flex relative')
+      </script>
+    `,
+  })
+
+  let className = await findClassNameAtPosition(file.state, file.doc, {
+    line: 1,
+    character: 23,
+  })
+
+  expect(className).toEqual({
+    className: 'flex',
+    range: {
+      start: { line: 1, character: 22 },
+      end: { line: 1, character: 26 },
+    },
+    relativeRange: {
+      start: { line: 0, character: 0 },
+      end: { line: 0, character: 4 },
+    },
+    classList: {
+      classList: 'flex relative',
+      important: undefined,
+      range: {
+        start: { character: 22, line: 1 },
+        end: { character: 35, line: 1 },
+      },
+    },
+  })
+})
+
+test('Can find class name inside JS/TS functions in <script> tags (Svelte)', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.svelte',
+    lang: 'svelte',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: html`
+      <script>
+        let classes = clsx('flex relative')
+      </script>
+    `,
+  })
+
+  let className = await findClassNameAtPosition(file.state, file.doc, {
+    line: 1,
+    character: 23,
+  })
+
+  expect(className).toEqual({
+    className: 'flex',
+    range: {
+      start: { line: 1, character: 22 },
+      end: { line: 1, character: 26 },
+    },
+    relativeRange: {
+      start: { line: 0, character: 0 },
+      end: { line: 0, character: 4 },
+    },
+    classList: {
+      classList: 'flex relative',
+      important: undefined,
+      range: {
+        start: { character: 22, line: 1 },
+        end: { character: 35, line: 1 },
+      },
+    },
+  })
 })
