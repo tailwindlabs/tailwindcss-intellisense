@@ -11,11 +11,13 @@ export async function createApi({ context, outputChannel }: ApiOptions) {
 
   async function workspaceNeedsLanguageServer() {
     if (folderAnalysis) return folderAnalysis
+    let found = false
 
     let source: CancellationTokenSource | null = new CancellationTokenSource()
     source.token.onCancellationRequested(() => {
       source?.dispose()
       source = null
+      if (found) return
 
       outputChannel.appendLine(
         'Server was not started. Search for Tailwind CSS-related files was taking too long.',
@@ -32,7 +34,8 @@ export async function createApi({ context, outputChannel }: ApiOptions) {
     })
 
     let result = await folderAnalysis
-    source?.dispose()
+    found = true
+    source?.cancel()
     return result
   }
 
