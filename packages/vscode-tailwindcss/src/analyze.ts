@@ -108,10 +108,19 @@ export async function fileMayBeTailwindRelated(uri: Uri) {
   let buffer = await workspace.fs.readFile(uri)
   let contents = buffer.toString()
 
-  return (
-    HAS_CONFIG.test(contents) ||
-    HAS_IMPORT.test(contents) ||
-    HAS_TAILWIND.test(contents) ||
-    HAS_THEME.test(contents)
-  )
+  // This is a clear signal that this is Tailwind related in v0–v4
+  if (HAS_CONFIG.test(contents)) return true
+
+  if (uri.path.endsWith('.css')) {
+    // In v4 these are Tailwind related *in .css files only*
+    // other stylesheets like lesss, stylus, etc… don't consider these files
+    if (HAS_THEME.test(contents)) return true
+    if (HAS_TAILWIND.test(contents)) return true
+
+    // @import *might* signal the need for the language server we'll have to
+    // start it, let it check, and hope we were right.
+    if (HAS_IMPORT.test(contents)) return true
+  }
+
+  return false
 }
