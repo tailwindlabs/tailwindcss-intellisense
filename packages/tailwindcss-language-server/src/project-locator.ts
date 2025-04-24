@@ -545,13 +545,14 @@ function contentSelectorsFromConfig(
   entry: ConfigEntry,
   features: Feature[],
   resolver: Resolver,
+  actualConfig?: any,
 ): AsyncIterable<DocumentSelector> {
   if (entry.type === 'css') {
     return contentSelectorsFromCssConfig(entry, resolver)
   }
 
   if (entry.type === 'js') {
-    return contentSelectorsFromJsConfig(entry, features)
+    return contentSelectorsFromJsConfig(entry, features, actualConfig)
   }
 }
 
