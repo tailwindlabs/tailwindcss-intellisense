@@ -799,9 +799,18 @@ export async function calculateDocumnetSelectors(
   entry: ConfigEntry,
   features: Feature[],
   resolver: Resolver,
+  existing?: DocumentSelector[],
   actualConfig?: any,
 ) {
   let selectors = []
+
+  for (let selector of existing ?? []) {
+    if (selector.priority === DocumentSelectorPriority.CONTENT_FILE) {
+      continue
+    }
+
+    selectors.push(selector)
+  }
 
   for await (let selector of contentSelectorsFromConfig(entry, features, resolver, actualConfig)) {
     selectors.push(selector)
