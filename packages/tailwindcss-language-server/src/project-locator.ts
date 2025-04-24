@@ -225,7 +225,7 @@ export class ProjectLocator {
     })
 
     // - Content patterns from config
-    for await (let selector of contentSelectorsFromConfig(
+    for (let selector of await calculateDocumnetSelectors(
       config,
       tailwind.features,
       this.resolver,
@@ -793,4 +793,19 @@ function requiresPreprocessor(filepath: string) {
   let ext = path.extname(filepath)
 
   return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl' || ext === '.pcss'
+}
+
+export async function calculateDocumnetSelectors(
+  entry: ConfigEntry,
+  features: Feature[],
+  resolver: Resolver,
+  actualConfig?: any,
+) {
+  let selectors = []
+
+  for await (let selector of contentSelectorsFromConfig(entry, features, resolver, actualConfig)) {
+    selectors.push(selector)
+  }
+
+  return selectors
 }
