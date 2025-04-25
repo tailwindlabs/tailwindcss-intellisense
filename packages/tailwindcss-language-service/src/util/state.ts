@@ -217,6 +217,10 @@ export function getDefaultTailwindSettings(): Settings {
 
           // NPM
           '**/node_modules/**',
+
+          // Python Virtual Environments
+          '**/.venv/**',
+          '**/venv/**',
         ],
       },
       experimental: {
