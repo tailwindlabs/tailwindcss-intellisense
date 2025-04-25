@@ -6,11 +6,14 @@ import {
   CompletionList,
   CompletionParams,
   Diagnostic,
+  DidChangeWatchedFilesNotification,
   Disposable,
   DocumentLink,
   DocumentLinkRequest,
   DocumentSymbol,
   DocumentSymbolRequest,
+  FileChangeType,
+  FileEvent,
   Hover,
   NotificationHandler,
   ProtocolConnection,
@@ -83,6 +86,12 @@ export interface DocumentDescriptor {
    * Any document-specific language-server settings
    */
   settings?: Settings
+}
+
+export interface ChangedFiles {
+  created?: string[]
+  changed?: string[]
+  deleted?: string[]
 }
 
 export interface ClientDocument {
@@ -202,6 +211,11 @@ export interface Client extends ClientWorkspace {
    * Get the currently registered server capabilities
    */
   onServerCapabilitiesChanged(cb: () => void): void
+
+  /**
+   * Tell the server that files on disk have changed
+   */
+  notifyChangedFiles(changes: ChangedFiles): Promise<void>
 
   /**
    * Get a workspace by name
@@ -533,12 +547,33 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     await initPromise
   }
 
+  function notifyChangedFiles(changes: ChangedFiles) {
+    let events: FileEvent[] = []
+
+    for (const path of changes?.created ?? []) {
+      events.push({ uri: URI.file(path).toString(), type: FileChangeType.Created })
+    }
+
+    for (const path of changes?.changed ?? []) {
+      events.push({ uri: URI.file(path).toString(), type: FileChangeType.Changed })
+    }
+
+    for (const path of changes?.deleted ?? []) {
+      events.push({ uri: URI.file(path).toString(), type: FileChangeType.Deleted })
+    }
+
+    return conn.sendNotification(DidChangeWatchedFilesNotification.type, {
+      changes: events,
+    })
+  }
+
   return {
     ...clientWorkspaces[0],
     get serverCapabilities() {
       return registeredCapabilities
     },
     onServerCapabilitiesChanged,
+    notifyChangedFiles,
     workspace,
     updateSettings,
   }
