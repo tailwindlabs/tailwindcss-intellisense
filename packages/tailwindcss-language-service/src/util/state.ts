@@ -210,6 +210,15 @@ export function getDefaultTailwindSettings(): Settings {
       includeLanguages: {},
       files: {
         exclude: [
+          // These paths need to be universally ignorable. This means that we
+          // should only consider hidden folders with a commonly understood
+          // meaning unless there is a very good reason to do otherwise.
+          //
+          // This means that things like `build`, `target`, `cache`, etc… are
+          // not appropriate to include even though _in many cases_ they might
+          // be ignorable. The names are too general and ignoring them could
+          // cause us to ignore actual project files.
+
           // Version Control
           '**/.git/**',
           '**/.hg/**',
