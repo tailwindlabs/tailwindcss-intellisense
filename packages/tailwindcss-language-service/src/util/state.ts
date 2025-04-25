@@ -218,6 +218,9 @@ export function getDefaultTailwindSettings(): Settings {
           // NPM
           '**/node_modules/**',
 
+          // Yarn v2+ metadata & caches
+          '**/.yarn/**',
+
           // Python Virtual Environments
           '**/.venv/**',
           '**/venv/**',
