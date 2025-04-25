@@ -1086,6 +1086,11 @@ export async function createProjectService(
     refreshDiagnostics()
 
     updateCapabilities()
+
+    let isTestMode = params.initializationOptions?.testMode ?? false
+    if (!isTestMode) return
+
+    connection.sendNotification('@/tailwindCSS/projectReloaded')
   }
 
   for (let entry of projectConfig.config.entries) {
