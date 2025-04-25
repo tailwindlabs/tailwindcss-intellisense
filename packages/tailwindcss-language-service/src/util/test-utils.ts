@@ -1,15 +1,15 @@
-import { createState, getDefaultTailwindSettings, Settings } from './state'
+import { createState, getDefaultTailwindSettings, Settings, State } from './state'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DeepPartial } from '../types'
-import dedent from 'dedent'
+import dedent, { type Dedent } from 'dedent'
 
-export const js = dedent
-export const jsx = dedent
-export const ts = dedent
-export const tsx = dedent
-export const css = dedent
-export const html = dedent
-export const pug = dedent
+export const js: Dedent = dedent
+export const jsx: Dedent = dedent
+export const ts: Dedent = dedent
+export const tsx: Dedent = dedent
+export const css: Dedent = dedent
+export const html: Dedent = dedent
+export const pug: Dedent = dedent
 
 export function createDocument({
   name,
@@ -21,7 +21,7 @@ export function createDocument({
   lang: string
   content: string | string[]
   settings?: DeepPartial<Settings>
-}) {
+}): { doc: TextDocument; state: State } {
   let doc = TextDocument.create(
     `file://${name}`,
     lang,

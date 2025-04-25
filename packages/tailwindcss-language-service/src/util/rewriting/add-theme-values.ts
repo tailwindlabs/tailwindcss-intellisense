@@ -7,7 +7,7 @@ import { applyComments, Comment } from '../comments'
 import { getEquivalentColor } from '../colorEquivalents'
 import { resolveVariableValue } from './lookup'
 
-export function addThemeValues(css: string, state: State, settings: TailwindCssSettings) {
+export function addThemeValues(css: string, state: State, settings: TailwindCssSettings): string {
   if (!state.designSystem) return css
 
   let comments: Comment[] = []

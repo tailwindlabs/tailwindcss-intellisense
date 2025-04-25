@@ -120,7 +120,9 @@ function parse(obj, parent, postcss) {
   }
 }
 
-export function cssObjToAst(obj, postcss) {
+import type { Postcss, Root } from 'postcss'
+
+export function cssObjToAst(obj: any, postcss: Postcss): Root {
   var root = postcss.root()
   parse(obj, root, postcss)
   return root

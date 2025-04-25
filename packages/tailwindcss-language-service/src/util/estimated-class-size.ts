@@ -6,7 +6,7 @@ import { segment } from './segment'
  * This is meant to be a lower bound, as the actual size of a class can vary
  * depending on the actual CSS properties and values, configured theme, etc…
  */
-export function estimatedClassSize(className: string) {
+export function estimatedClassSize(className: string): number {
   let size = 0
 
   // We estimate the size using the following structure which gives a reasonable

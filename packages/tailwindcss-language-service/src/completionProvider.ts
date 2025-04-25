@@ -2230,7 +2230,7 @@ export async function doComplete(
   document: TextDocument,
   position: Position,
   context?: CompletionContext,
-) {
+): Promise<CompletionList | null> {
   if (state === null) return { items: [], isIncomplete: false }
 
   const result =

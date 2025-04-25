@@ -1,7 +1,7 @@
 import type { State } from './state'
 import dlv from 'dlv'
 
-export function flagEnabled(state: State, flag: string) {
+export function flagEnabled(state: State, flag: string): boolean {
   if (state.featureFlags.future.includes(flag)) {
     return state.config.future === 'all' || dlv(state.config, ['future', flag], false)
   }

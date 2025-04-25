@@ -1,5 +1,5 @@
 import moo from 'moo'
-import { lazy } from './lazy'
+import { Lazy, lazy } from './lazy'
 
 const classAttributeStates: () => { [x: string]: moo.Rules } = () => ({
   doubleClassList: {
@@ -66,7 +66,7 @@ const simpleClassAttributeStates: { [x: string]: moo.Rules } = {
   },
 }
 
-export const getClassAttributeLexer = lazy(() => {
+export const getClassAttributeLexer: Lazy<moo.Lexer> = lazy(() => {
   let supportsNegativeLookbehind = true
   try {
     new RegExp('(?<!)')
@@ -90,7 +90,7 @@ export const getClassAttributeLexer = lazy(() => {
   return moo.states(simpleClassAttributeStates)
 })
 
-export const getComputedClassAttributeLexer = lazy(() => {
+export const getComputedClassAttributeLexer: Lazy<moo.Lexer> = lazy(() => {
   let supportsNegativeLookbehind = true
   try {
     new RegExp('(?<!)')

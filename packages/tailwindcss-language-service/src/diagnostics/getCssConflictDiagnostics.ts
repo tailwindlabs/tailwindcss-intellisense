@@ -239,7 +239,7 @@ export function visit(
   nodes: postcss.AnyNode[],
   cb: (node: postcss.AnyNode, path: postcss.AnyNode[]) => void,
   path: postcss.AnyNode[] = [],
-) {
+): void {
   for (let child of nodes) {
     path = [...path, child]
     cb(child, path)

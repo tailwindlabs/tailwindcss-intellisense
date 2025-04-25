@@ -8,7 +8,7 @@ export interface StringChange {
  * Apply the changes to the string such that a change in the length
  * of the string does not break the indexes of the subsequent changes.
  */
-export function spliceChangesIntoString(str: string, changes: StringChange[]) {
+export function spliceChangesIntoString(str: string, changes: StringChange[]): string {
   // If there are no changes, return the original string
   if (!changes[0]) return str
 
