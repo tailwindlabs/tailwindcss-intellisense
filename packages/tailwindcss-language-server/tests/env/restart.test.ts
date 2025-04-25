@@ -140,12 +140,18 @@ defineTest({
       },
     })
 
+    expect(client.serverCapabilities).not.toEqual([])
+    let ids1 = client.serverCapabilities.map((cap) => cap.id)
+
     // Remove the CSS file
     let didRestart = new Promise((resolve) => {
       client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
     })
     await fs.unlink(path.resolve(root, 'app.css'))
     await didRestart
+
+    expect(client.serverCapabilities).not.toEqual([])
+    let ids2 = client.serverCapabilities.map((cap) => cap.id)
 
     // <div class="text-primary">
     //             ^
@@ -164,11 +170,23 @@ defineTest({
     )
     await didRestartAgain
 
+    expect(client.serverCapabilities).not.toEqual([])
+    let ids3 = client.serverCapabilities.map((cap) => cap.id)
+
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     // <div class="text-primary">
     //             ^
     let hover3 = await doc.hover({ line: 0, character: 13 })
     expect(hover3).toEqual(null)
+
+    expect(ids1).not.toContainEqual(expect.toBeOneOf(ids2))
+    expect(ids1).not.toContainEqual(expect.toBeOneOf(ids3))
+
+    expect(ids2).not.toContainEqual(expect.toBeOneOf(ids1))
+    expect(ids2).not.toContainEqual(expect.toBeOneOf(ids3))
+
+    expect(ids3).not.toContainEqual(expect.toBeOneOf(ids1))
+    expect(ids3).not.toContainEqual(expect.toBeOneOf(ids2))
   },
 })
