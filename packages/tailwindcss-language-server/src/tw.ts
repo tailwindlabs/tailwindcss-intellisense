@@ -910,7 +910,7 @@ export class TW {
     // If the client does not suppory dynamic registration of completions then
     // we cannot update the set of trigger characters
     let client = this.initializeParams.capabilities
-    if (client.textDocument?.completion?.dynamicRegistration) return
+    if (!client.textDocument?.completion?.dynamicRegistration) return
 
     // The new set of trigger characters is all the static ones plus
     // any characters from any separator in v3 config
@@ -927,10 +927,10 @@ export class TW {
     }
 
     // If the trigger characters haven't changed then we don't need to do anything
-    if (equal(Array.from(chars), Array.from(this.lastTriggerCharacters))) return
+    if (equal(Array.from(chars), Array.from(this.lastTriggerCharacters ?? []))) return
     this.lastTriggerCharacters = chars
 
-    this.completionRegistration.dispose()
+    this.completionRegistration?.dispose()
     this.completionRegistration = await this.connection.client.register(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
