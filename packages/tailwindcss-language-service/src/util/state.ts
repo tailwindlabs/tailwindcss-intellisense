@@ -208,7 +208,17 @@ export function getDefaultTailwindSettings(): Settings {
       },
       showPixelEquivalents: true,
       includeLanguages: {},
-      files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+      files: {
+        exclude: [
+          // Version Control
+          '**/.git/**',
+          '**/.hg/**',
+          '**/.svn/**',
+
+          // NPM
+          '**/node_modules/**',
+        ],
+      },
       experimental: {
         classRegex: [],
         configFile: null,
