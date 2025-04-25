@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Improve dynamic capability registration in the language server ([#1327](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1327))
 
 # 0.14.16
 
