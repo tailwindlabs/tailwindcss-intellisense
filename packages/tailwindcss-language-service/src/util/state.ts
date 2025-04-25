@@ -224,6 +224,13 @@ export function getDefaultTailwindSettings(): Settings {
           // Python Virtual Environments
           '**/.venv/**',
           '**/venv/**',
+
+          // Build caches
+          '**/.next/**',
+          '**/.parcel-cache/**',
+          '**/.svelte-kit/**',
+          '**/.turbo/**',
+          '**/__pycache__/**',
         ],
       },
       experimental: {
