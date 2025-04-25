@@ -15,7 +15,9 @@ import {
   NotificationHandler,
   ProtocolConnection,
   PublishDiagnosticsParams,
+  Registration,
   SymbolInformation,
+  UnregistrationRequest,
   WorkspaceFolder,
 } from 'vscode-languageserver'
 import type { Position } from 'vscode-languageserver-textdocument'
@@ -190,6 +192,16 @@ export interface Client extends ClientWorkspace {
    * The connection from the client to the server
    */
   readonly conn: ProtocolConnection
+
+  /**
+   * Get the currently registered server capabilities
+   */
+  serverCapabilities: Registration[]
+
+  /**
+   * Get the currently registered server capabilities
+   */
+  onServerCapabilitiesChanged(cb: () => void): void
 
   /**
    * Get a workspace by name
@@ -428,12 +440,40 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     })
   }
 
+  let serverCapabilityChangeCallbacks: (() => void)[] = []
+
+  function onServerCapabilitiesChanged(cb: () => void) {
+    serverCapabilityChangeCallbacks.push(cb)
+  }
+
+  let registeredCapabilities: Registration[] = []
+
   conn.onRequest(RegistrationRequest.type, ({ registrations }) => {
     trace('Registering capabilities')
 
     for (let registration of registrations) {
+      registeredCapabilities.push(registration)
       trace('-', registration.method)
     }
+
+    for (let cb of serverCapabilityChangeCallbacks) cb()
+  })
+
+  conn.onRequest(UnregistrationRequest.type, ({ unregisterations }) => {
+    trace('Unregistering capabilities')
+
+    let idsToRemove = new Set<string>()
+
+    for (let registration of unregisterations) {
+      idsToRemove.add(registration.id)
+      trace('-', registration.method)
+    }
+
+    registeredCapabilities = registeredCapabilities.filter(
+      (capability) => !idsToRemove.has(capability.id),
+    )
+
+    for (let cb of serverCapabilityChangeCallbacks) cb()
   })
 
   // TODO: Remove this its a hack
@@ -495,6 +535,10 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
 
   return {
     ...clientWorkspaces[0],
+    get serverCapabilities() {
+      return registeredCapabilities
+    },
+    onServerCapabilitiesChanged,
     workspace,
     updateSettings,
   }
