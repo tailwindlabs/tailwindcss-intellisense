@@ -7,7 +7,15 @@
       "request": "launch",
       "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceRoot}/packages/vscode-tailwindcss"],
+      "args": [
+        // enable this flag if you want to activate the extension only when you are debugging the extension
+        // "--disable-extensions",
+        "--disable-updates",
+        "--disable-workspace-trust",
+        "--skip-release-notes",
+        "--skip-welcome",
+        "--extensionDevelopmentPath=${workspaceRoot}/packages/vscode-tailwindcss"
+      ],
       "stopOnEntry": false,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/packages/vscode-tailwindcss/dist/**/*.js"],
