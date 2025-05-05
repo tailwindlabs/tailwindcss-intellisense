@@ -46,13 +46,18 @@
     "@types/dedent": "^0.7.2",
     "@types/line-column": "^1.0.2",
     "@types/node": "^18.19.33",
+    "@types/picomatch": "^2.3.3",
     "@types/stringify-object": "^4.0.5",
     "dedent": "^1.5.3",
+    "deepmerge": "4.2.2",
     "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
+    "picomatch": "^4.0.1",
+    "tailwindcss-v4": "npm:tailwindcss@4.1.1",
     "tslib": "2.2.0",
     "typescript": "^5.3.3",
-    "vitest": "^3.0.9"
+    "vitest": "^3.0.9",
+    "vscode-uri": "3.0.2"
   }
 }

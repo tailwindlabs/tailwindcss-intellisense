@@ -3,8 +3,9 @@ import { spawnSync } from 'node:child_process'
 import esbuild from 'esbuild'
 import minimist from 'minimist'
 import { nodeExternalsPlugin } from 'esbuild-node-externals'
+import { fileURLToPath } from 'node:url'
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
@@ -26,11 +27,17 @@ let build = await esbuild.context({
     {
       name: 'generate-types',
       async setup(build) {
-        build.onEnd(async (result) => {
+        build.onEnd(async () => {
           // Call the tsc command to generate the types
           spawnSync(
             'tsc',
-            ['-p', path.resolve(__dirname, './tsconfig.build.json'), '--emitDeclarationOnly', '--outDir', path.resolve(__dirname, '../dist')],
+            [
+              '-p',
+              path.resolve(__dirname, './tsconfig.build.json'),
+              '--emitDeclarationOnly',
+              '--outDir',
+              path.resolve(__dirname, '../dist'),
+            ],
             {
               stdio: 'inherit',
             },
