@@ -21,6 +21,8 @@ import type {
   WorkspaceFolder,
   CodeLensParams,
   CodeLens,
+  ServerCapabilities,
+  ClientCapabilities,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -624,6 +626,8 @@ export class TW {
 
     console.log(`[Global] Initializing projects...`)
 
+    await this.updateCommonCapabilities()
+
     // init projects for documents that are _already_ open
     let readyDocuments: string[] = []
     let enabledProjectCount = 0
@@ -639,8 +643,6 @@ export class TW {
     }
 
     console.log(`[Global] Initialized ${enabledProjectCount} projects`)
-
-    this.setupLSPHandlers()
 
     this.disposables.push(
       this.connection.onDidChangeConfiguration(async ({ settings }) => {
@@ -763,7 +765,7 @@ export class TW {
       this.connection,
       params,
       this.documentService,
-      () => this.updateCapabilities(),
+      () => this.updateProjectCapabilities(),
       () => {
         for (let document of this.documentService.getAllDocuments()) {
           let project = this.getProject(document)
@@ -810,9 +812,7 @@ export class TW {
   }
 
   setupLSPHandlers() {
-    if (this.lspHandlersAdded) {
-      return
-    }
+    if (this.lspHandlersAdded) return
     this.lspHandlersAdded = true
 
     this.connection.onHover(this.onHover.bind(this))
@@ -858,43 +858,84 @@ export class TW {
     }
   }
 
-  private updateCapabilities() {
-    if (!supportsDynamicRegistration(this.initializeParams)) {
-      this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
-      return
-    }
-
-    if (this.registrations) {
-      this.registrations.then((r) => r.dispose())
-    }
-
-    let projects = Array.from(this.projects.values())
-
+  // Common capabilities are always supported by the language server and do not
+  // require any project-specific information to know how to configure them.
+  //
+  // These capabilities will stay valid until/unless the server has to restart
+  // in which case they'll be unregistered and then re-registered once project
+  // discovery has completed
+  private commonRegistrations: BulkUnregistration | undefined
+  private async updateCommonCapabilities() {
     let capabilities = BulkRegistration.create()
 
-    // TODO: We should *not* be re-registering these capabilities
-    // IDEA: These should probably be static registrations up front
-    capabilities.add(HoverRequest.type, { documentSelector: null })
-    capabilities.add(DocumentColorRequest.type, { documentSelector: null })
-    capabilities.add(CodeActionRequest.type, { documentSelector: null })
-    capabilities.add(CodeLensRequest.type, { documentSelector: null })
-    capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
-    capabilities.add(DidChangeConfigurationNotification.type, undefined)
+    let client = this.initializeParams.capabilities
 
-    // TODO: Only re-register this if trigger characters change
-    capabilities.add(CompletionRequest.type, {
+    if (client.textDocument?.hover?.dynamicRegistration) {
+      capabilities.add(HoverRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.colorProvider?.dynamicRegistration) {
+      capabilities.add(DocumentColorRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.codeAction?.dynamicRegistration) {
+      capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.codeLens?.dynamicRegistration) {
+      capabilities.add(CodeLensRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.documentLink?.dynamicRegistration) {
+      capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    }
+
+    if (client.workspace?.didChangeConfiguration?.dynamicRegistration) {
+      capabilities.add(DidChangeConfigurationNotification.type, undefined)
+    }
+
+    this.commonRegistrations = await this.connection.client.register(capabilities)
+  }
+
+  // These capabilities depend on the projects we've found to appropriately
+  // configure them. This may mean collecting information from all discovered
+  // projects to determine what we can do and how
+  private updateProjectCapabilities() {
+    this.updateTriggerCharacters()
+  }
+
+  private lastTriggerCharacters: Set<string> | undefined
+  private completionRegistration: Disposable | undefined
+  private async updateTriggerCharacters() {
+    // If the client does not suppory dynamic registration of completions then
+    // we cannot update the set of trigger characters
+    let client = this.initializeParams.capabilities
+    if (!client.textDocument?.completion?.dynamicRegistration) return
+
+    // The new set of trigger characters is all the static ones plus
+    // any characters from any separator in v3 config
+    let chars = new Set<string>(TRIGGER_CHARACTERS)
+
+    for (let project of this.projects.values()) {
+      let sep = project.state.separator
+      if (typeof sep !== 'string') continue
+
+      sep = sep.slice(-1)
+      if (!sep) continue
+
+      chars.add(sep)
+    }
+
+    // If the trigger characters haven't changed then we don't need to do anything
+    if (equal(Array.from(chars), Array.from(this.lastTriggerCharacters ?? []))) return
+    this.lastTriggerCharacters = chars
+
+    this.completionRegistration?.dispose()
+    this.completionRegistration = await this.connection.client.register(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
-      triggerCharacters: [
-        ...TRIGGER_CHARACTERS,
-        ...projects
-          .map((project) => project.state.separator)
-          .filter((sep) => typeof sep === 'string')
-          .map((sep) => sep.slice(-1)),
-      ].filter(Boolean),
+      triggerCharacters: Array.from(chars),
     })
-
-    this.registrations = this.connection.client.register(capabilities)
   }
 
   private getProject(document: TextDocumentIdentifier): ProjectService {
@@ -1016,45 +1057,56 @@ export class TW {
     this.connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
       this.initializeParams = params
 
-      if (supportsDynamicRegistration(params)) {
-        return {
-          capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Full,
-            workspace: {
-              workspaceFolders: {
-                changeNotifications: true,
-              },
-            },
-          },
-        }
-      }
-
       this.setupLSPHandlers()
 
       return {
-        capabilities: {
-          textDocumentSync: TextDocumentSyncKind.Full,
-          hoverProvider: true,
-          colorProvider: true,
-          codeActionProvider: true,
-          codeLensProvider: {
-            resolveProvider: false,
-          },
-          documentLinkProvider: {},
-          completionProvider: {
-            resolveProvider: true,
-            triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
-          },
-          workspace: {
-            workspaceFolders: {
-              changeNotifications: true,
-            },
-          },
-        },
+        capabilities: this.computeServerCapabilities(params.capabilities),
       }
     })
 
     this.connection.onInitialized(() => this.init())
+  }
+
+  computeServerCapabilities(client: ClientCapabilities) {
+    let capabilities: ServerCapabilities = {
+      textDocumentSync: TextDocumentSyncKind.Full,
+      workspace: {
+        workspaceFolders: {
+          changeNotifications: true,
+        },
+      },
+    }
+
+    if (!client.textDocument?.hover?.dynamicRegistration) {
+      capabilities.hoverProvider = true
+    }
+
+    if (!client.textDocument?.colorProvider?.dynamicRegistration) {
+      capabilities.colorProvider = true
+    }
+
+    if (!client.textDocument?.codeAction?.dynamicRegistration) {
+      capabilities.codeActionProvider = true
+    }
+
+    if (!client.textDocument?.codeLens?.dynamicRegistration) {
+      capabilities.codeLensProvider = {
+        resolveProvider: false,
+      }
+    }
+
+    if (!client.textDocument?.completion?.dynamicRegistration) {
+      capabilities.completionProvider = {
+        resolveProvider: true,
+        triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
+      }
+    }
+
+    if (!client.textDocument?.documentLink?.dynamicRegistration) {
+      capabilities.documentLinkProvider = {}
+    }
+
+    return capabilities
   }
 
   listen() {
@@ -1070,10 +1122,11 @@ export class TW {
 
     this.refreshDiagnostics()
 
-    if (this.registrations) {
-      this.registrations.then((r) => r.dispose())
-      this.registrations = undefined
-    }
+    this.commonRegistrations?.dispose()
+    this.commonRegistrations = undefined
+
+    this.completionRegistration?.dispose()
+    this.completionRegistration = undefined
 
     this.disposables.forEach((d) => d.dispose())
     this.disposables.length = 0
@@ -1105,14 +1158,4 @@ export class TW {
       } catch {}
     }
   }
-}
-
-function supportsDynamicRegistration(params: InitializeParams): boolean {
-  return (
-    params.capabilities.textDocument?.hover?.dynamicRegistration &&
-    params.capabilities.textDocument?.colorProvider?.dynamicRegistration &&
-    params.capabilities.textDocument?.codeAction?.dynamicRegistration &&
-    params.capabilities.textDocument?.completion?.dynamicRegistration &&
-    params.capabilities.textDocument?.documentLink?.dynamicRegistration
-  )
 }
