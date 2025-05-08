@@ -26,7 +26,7 @@ const closingBracketStack = new Uint8Array(256)
  *        x              x  x    ╰──────── Split because top-level
  *        ╰──────────────┴──┴───────────── Ignored b/c inside >= 1 levels of parens
  */
-export function segment(input: string, separator: string) {
+export function segment(input: string, separator: string): string[] {
   // SAFETY: We can use an index into a shared buffer because this function is
   // synchronous, non-recursive, and runs in a single-threaded environment.
   let stackPos = 0

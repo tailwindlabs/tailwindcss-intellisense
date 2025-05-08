@@ -1,6 +1,6 @@
 import type { Range } from 'vscode-languageserver'
 
-export function absoluteRange(range: Range, reference?: Range) {
+export function absoluteRange(range: Range, reference?: Range): Range {
   return {
     start: {
       line: (reference?.start.line || 0) + range.start.line,

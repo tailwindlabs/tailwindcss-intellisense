@@ -3,7 +3,7 @@ import * as os from 'node:os'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
-import dedent from 'dedent'
+import dedent, { type Dedent } from 'dedent'
 
 export interface TestUtils<TestInput extends Record<string, any>> {
   /** The "cwd" for this test */
@@ -160,8 +160,8 @@ async function installDependenciesIn(dir: string) {
   })
 }
 
-export const css = dedent
-export const scss = dedent
-export const html = dedent
-export const js = dedent
-export const json = dedent
+export const css: Dedent = dedent
+export const scss: Dedent = dedent
+export const html: Dedent = dedent
+export const js: Dedent = dedent
+export const json: Dedent = dedent

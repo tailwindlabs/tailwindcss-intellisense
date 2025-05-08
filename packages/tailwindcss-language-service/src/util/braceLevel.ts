@@ -1,4 +1,4 @@
-export function braceLevel(text: string) {
+export function braceLevel(text: string): number {
   let count = 0
 
   for (let i = text.length - 1; i >= 0; i--) {
@@ -10,7 +10,7 @@ export function braceLevel(text: string) {
   return count
 }
 
-export function parenLevel(text: string) {
+export function parenLevel(text: string): number {
   let count = 0
 
   for (let i = text.length - 1; i >= 0; i--) {

@@ -212,7 +212,7 @@ function classNameToAst(
     obj = rule
   }
 
-  return cssObjToAst(obj, state.modules.postcss)
+  return cssObjToAst(obj, state.modules.postcss.module)
 }
 
 function appendPseudosToSelector(selector: string, pseudos: string[]): string | null {

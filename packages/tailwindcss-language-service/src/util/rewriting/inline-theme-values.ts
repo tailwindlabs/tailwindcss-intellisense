@@ -4,7 +4,7 @@ import { evaluateExpression } from './calc'
 import { resolveVariableValue } from './lookup'
 import { replaceCssVars, replaceCssCalc } from './replacements'
 
-export function inlineThemeValues(css: string, state: State) {
+export function inlineThemeValues(css: string, state: State): string {
   if (!state.designSystem) return css
 
   css = replaceCssCalc(css, (expr) => {

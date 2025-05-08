@@ -1,4 +1,4 @@
-import type { Plugin } from 'postcss'
+import type { Plugin, PluginCreator } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import { parse as parseMediaQueryList } from '@csstools/media-query-list-parser'
 import { isTokenNode } from '@csstools/css-parser-algorithms'
@@ -77,55 +77,53 @@ export function addPixelEquivalentsToMediaQuery(query: string): string {
   })
 }
 
-export function equivalentPixelValues({
-  comments,
-  rootFontSize,
-}: {
-  comments: Comment[]
-  rootFontSize: number
-}): Plugin {
-  return {
-    postcssPlugin: 'plugin',
-    AtRule: {
-      media(atRule) {
-        if (!atRule.params.includes('em')) {
+export const equivalentPixelValues: PluginCreator<any> = Object.assign(
+  ({ comments, rootFontSize }: { comments: Comment[]; rootFontSize: number }): Plugin => {
+    return {
+      postcssPlugin: 'plugin',
+      AtRule: {
+        media(atRule) {
+          if (!atRule.params.includes('em')) {
+            return
+          }
+
+          comments.push(
+            ...getPixelEquivalentsForMediaQuery(atRule.params).map(({ index, value }) => ({
+              index: index + atRule.source.start.offset + `@media${atRule.raws.afterName}`.length,
+              value,
+            })),
+          )
+        },
+      },
+      Declaration(decl) {
+        if (!decl.value.includes('rem')) {
           return
         }
 
-        comments.push(
-          ...getPixelEquivalentsForMediaQuery(atRule.params).map(({ index, value }) => ({
-            index: index + atRule.source.start.offset + `@media${atRule.raws.afterName}`.length,
-            value,
-          })),
-        )
-      },
-    },
-    Declaration(decl) {
-      if (!decl.value.includes('rem')) {
-        return
-      }
+        parseValue(decl.value).walk((node) => {
+          if (node.type !== 'word') {
+            return true
+          }
 
-      parseValue(decl.value).walk((node) => {
-        if (node.type !== 'word') {
-          return true
-        }
+          let unit = parseValue.unit(node.value)
+          if (!unit || unit.unit !== 'rem') {
+            return false
+          }
 
-        let unit = parseValue.unit(node.value)
-        if (!unit || unit.unit !== 'rem') {
+          comments.push({
+            index:
+              decl.source.start.offset +
+              `${decl.prop}${decl.raws.between}`.length +
+              node.sourceEndIndex,
+            value: `${parseFloat(unit.number) * rootFontSize}px`,
+          })
+
           return false
-        }
-
-        comments.push({
-          index:
-            decl.source.start.offset +
-            `${decl.prop}${decl.raws.between}`.length +
-            node.sourceEndIndex,
-          value: `${parseFloat(unit.number) * rootFontSize}px`,
         })
-
-        return false
-      })
-    },
-  }
-}
-equivalentPixelValues.postcss = true
+      },
+    }
+  },
+  {
+    postcss: true as const,
+  },
+)

@@ -22,7 +22,7 @@ export function visit(
   nodes: AstNode[],
   cb: (node: AstNode, path: AstNode[]) => void,
   path: AstNode[] = [],
-) {
+): void {
   for (let child of nodes) {
     path = [...path, child]
     cb(child, path)
