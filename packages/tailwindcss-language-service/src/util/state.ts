@@ -208,7 +208,40 @@ export function getDefaultTailwindSettings(): Settings {
       },
       showPixelEquivalents: true,
       includeLanguages: {},
-      files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
+      files: {
+        exclude: [
+          // These paths need to be universally ignorable. This means that we
+          // should only consider hidden folders with a commonly understood
+          // meaning unless there is a very good reason to do otherwise.
+          //
+          // This means that things like `build`, `target`, `cache`, etc… are
+          // not appropriate to include even though _in many cases_ they might
+          // be ignorable. The names are too general and ignoring them could
+          // cause us to ignore actual project files.
+
+          // Version Control
+          '**/.git/**',
+          '**/.hg/**',
+          '**/.svn/**',
+
+          // NPM
+          '**/node_modules/**',
+
+          // Yarn v2+ metadata & caches
+          '**/.yarn/**',
+
+          // Python Virtual Environments
+          '**/.venv/**',
+          '**/venv/**',
+
+          // Build caches
+          '**/.next/**',
+          '**/.parcel-cache/**',
+          '**/.svelte-kit/**',
+          '**/.turbo/**',
+          '**/__pycache__/**',
+        ],
+      },
       experimental: {
         classRegex: [],
         configFile: null,
