@@ -6,6 +6,8 @@
 - Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Hide `@property` declarations from completion details ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
+- Hide variant-provided declarations from completion details for a utility ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
 
 # 0.14.16
 
