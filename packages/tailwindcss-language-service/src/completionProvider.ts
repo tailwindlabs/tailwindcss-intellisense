@@ -202,9 +202,7 @@ export function completionsFromClassList(
             variant,
             err,
           })
-        }
 
-        if (selectors.length === 0) {
           continue
         }
 
