@@ -1,6 +1,16 @@
 import { test } from 'vitest'
-import { findClassListsInHtmlRange, findClassNameAtPosition } from './find'
-import { js, html, pug, createDocument } from './test-utils'
+import {
+  findClassListsInHtmlRange,
+  findClassNameAtPosition,
+  findHelperFunctionsInDocument,
+} from './find'
+import { js, html, pug, createDocument, css } from './test-utils'
+import type { Range } from 'vscode-languageserver-textdocument'
+
+const range = (startLine: number, startCol: number, endLine: number, endCol: number): Range => ({
+  start: { line: startLine, character: startCol },
+  end: { line: endLine, character: endCol },
+})
 
 test('class regex works in astro', async ({ expect }) => {
   let file = createDocument({
@@ -874,4 +884,71 @@ test('Can find class name inside JS/TS functions in <script> tags (Svelte)', asy
       },
     },
   })
+})
+
+test('Can find helper functions in CSS', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .a { color: theme(foo); }
+      .a { color: theme(foo, default); }
+      .a { color: theme("foo"); }
+      .a { color: theme("foo", default); }
+      .a { color: theme(foo / 0.5); }
+      .a { color: theme(foo / 0.5, default); }
+      .a { color: theme("foo" / 0.5); }
+      .a { color: theme("foo" / 0.5, default); }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(1, 24, 1, 27), path: range(1, 24, 1, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(2, 24, 2, 36), path: range(2, 24, 2, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(3, 24, 3, 29), path: range(3, 25, 3, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(4, 24, 4, 38), path: range(4, 25, 4, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(5, 24, 5, 33), path: range(5, 24, 5, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(6, 24, 6, 42), path: range(6, 24, 6, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(7, 24, 7, 35), path: range(7, 25, 7, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(8, 24, 8, 44), path: range(8, 25, 8, 28) },
+    },
+  ])
 })
