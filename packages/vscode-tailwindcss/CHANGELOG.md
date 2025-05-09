@@ -6,6 +6,8 @@
 - Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Boot langauage server quicker in multi-root workspaces ([#1334](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1334))
+- Don't start language server if we only see `@import` in preprocessor files ([#1334](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1334))
 
 # 0.14.16
 
