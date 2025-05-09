@@ -190,7 +190,7 @@
       "end": "(?<=}|;)(?!\\G)",
       "patterns": [
         {
-          "include": "source.css#rule-list"
+          "include": "#property-list"
         }
       ]
     },
@@ -360,7 +360,7 @@
           "name": "meta.at-rule.utility.body.tailwind",
           "patterns": [
             {
-              "include": "source.css#rule-list"
+              "include": "source.css#rule-list-innards"
             }
           ]
         }
@@ -465,6 +465,7 @@
   "repository": {
     "property-list": {
       "patterns": [
+        { "include": "#nesting-rules" },
         {
           "begin": "(?<![-a-zA-Z])(?=[-a-zA-Z])",
           "end": "$|(?![-a-zA-Z])",
@@ -501,7 +502,8 @@
         {
           "match": ";",
           "name": "punctuation.terminator.rule.css"
-        }
+        },
+        { "include": "$self" }
       ]
     },
     "source-fn": {
@@ -640,6 +642,37 @@
               "name": "invalid.illegal.invalid-source.css"
             }
           ]
+        }
+      ]
+    },
+    "nesting-selector": {
+      "match": "&",
+      "name": "entity.name.tag.nesting.selector.css"
+    },
+    "nesting-at-rules": {
+      "patterns": [
+        {
+          "include": "source.css#commas"
+        },
+        {
+          "include": "#nesting-rules"
+        },
+        {
+          "include": "source.css#rule-list-innards"
+        }
+      ]
+    },
+    "nesting-rules": {
+      "patterns": [
+        {
+          "match": "(?i)(?<![\\w:-])(?:header|label|mark|nav|ruby|span)(?=[+~>\\s,.\\#|&){:\\[]|/\\*|$)",
+          "name": "entity.name.tag.css"
+        },
+        {
+          "include": "source.css#property-names"
+        },
+        {
+          "include": "source.css#selector-innards"
         }
       ]
     }
