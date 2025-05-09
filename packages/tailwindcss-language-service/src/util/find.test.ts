@@ -1,6 +1,16 @@
 import { test } from 'vitest'
-import { findClassListsInHtmlRange, findClassNameAtPosition } from './find'
-import { js, html, pug, createDocument } from './test-utils'
+import {
+  findClassListsInHtmlRange,
+  findClassNameAtPosition,
+  findHelperFunctionsInDocument,
+} from './find'
+import { js, html, pug, createDocument, css } from './test-utils'
+import type { Range } from 'vscode-languageserver-textdocument'
+
+const range = (startLine: number, startCol: number, endLine: number, endCol: number): Range => ({
+  start: { line: startLine, character: startCol },
+  end: { line: endLine, character: endCol },
+})
 
 test('class regex works in astro', async ({ expect }) => {
   let file = createDocument({
@@ -874,4 +884,163 @@ test('Can find class name inside JS/TS functions in <script> tags (Svelte)', asy
       },
     },
   })
+})
+
+test('Can find helper functions in CSS', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .a { color: theme(foo); }
+      .a { color: theme(foo, default); }
+      .a { color: theme("foo"); }
+      .a { color: theme("foo", default); }
+      .a { color: theme(foo / 0.5); }
+      .a { color: theme(foo / 0.5, default); }
+      .a { color: theme("foo" / 0.5); }
+      .a { color: theme("foo" / 0.5, default); }
+
+      /* nested invocations */
+      .a { color: from-config(theme(foo)); }
+      .a { color: from-config(theme(foo, default)); }
+      .a { color: from-config(theme("foo")); }
+      .a { color: from-config(theme("foo", default)); }
+      .a { color: from-config(theme(foo / 0.5)); }
+      .a { color: from-config(theme(foo / 0.5, default)); }
+      .a { color: from-config(theme("foo" / 0.5)); }
+      .a { color: from-config(theme("foo" / 0.5, default)); }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(1, 24, 1, 27), path: range(1, 24, 1, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(2, 24, 2, 36), path: range(2, 24, 2, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(3, 24, 3, 29), path: range(3, 25, 3, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(4, 24, 4, 38), path: range(4, 25, 4, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(5, 24, 5, 33), path: range(5, 24, 5, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(6, 24, 6, 42), path: range(6, 24, 6, 27) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(7, 24, 7, 35), path: range(7, 25, 7, 28) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(8, 24, 8, 44), path: range(8, 25, 8, 28) },
+    },
+
+    // Nested
+    {
+      helper: 'config',
+      path: 'theme(foo)',
+      ranges: { full: range(11, 30, 11, 40), path: range(11, 30, 11, 40) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(11, 36, 11, 39), path: range(11, 36, 11, 39) },
+    },
+    {
+      helper: 'config',
+      path: 'theme(foo, default)',
+      ranges: { full: range(12, 30, 12, 49), path: range(12, 30, 12, 49) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(12, 36, 12, 48), path: range(12, 36, 12, 39) },
+    },
+    {
+      helper: 'config',
+      path: 'theme("foo")',
+      ranges: { full: range(13, 30, 13, 42), path: range(13, 30, 13, 42) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(13, 36, 13, 41), path: range(13, 37, 13, 40) },
+    },
+    {
+      helper: 'config',
+      path: 'theme("foo", default)',
+      ranges: { full: range(14, 30, 14, 51), path: range(14, 30, 14, 51) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(14, 36, 14, 50), path: range(14, 37, 14, 40) },
+    },
+    {
+      helper: 'config',
+      path: 'theme(foo / 0.5)',
+      ranges: { full: range(15, 30, 15, 46), path: range(15, 30, 15, 46) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(15, 36, 15, 45), path: range(15, 36, 15, 39) },
+    },
+    {
+      helper: 'config',
+      path: 'theme(foo / 0.5, default)',
+      ranges: { full: range(16, 30, 16, 55), path: range(16, 30, 16, 55) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(16, 36, 16, 54), path: range(16, 36, 16, 39) },
+    },
+    {
+      helper: 'config',
+      path: 'theme("foo" / 0.5)',
+      ranges: { full: range(17, 30, 17, 48), path: range(17, 30, 17, 48) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(17, 36, 17, 47), path: range(17, 37, 17, 40) },
+    },
+    {
+      helper: 'config',
+      path: 'theme("foo" / 0.5, default)',
+      ranges: { full: range(18, 30, 18, 57), path: range(18, 30, 18, 57) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(18, 36, 18, 56), path: range(18, 37, 18, 40) },
+    },
+  ])
 })
