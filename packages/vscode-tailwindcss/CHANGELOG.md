@@ -6,6 +6,8 @@
 - Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Compute correct document selectors when a project is initialized ([#1335](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1335))
+- Fix matching of some content file paths on Windows ([#1335](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1335))
 
 # 0.14.16
 
