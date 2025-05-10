@@ -532,11 +532,18 @@ async function* contentSelectorsFromJsConfig(
     if (typeof item !== 'string') continue
 
     let filepath = item.startsWith('!')
-      ? `!${path.resolve(contentBase, item.slice(1))}`
+      ? path.resolve(contentBase, item.slice(1))
       : path.resolve(contentBase, item)
 
+    filepath = normalizePath(filepath)
+    filepath = normalizeDriveLetter(filepath)
+
+    if (item.startsWith('!')) {
+      filepath = `!${filepath}`
+    }
+
     yield {
-      pattern: normalizePath(filepath),
+      pattern: filepath,
       priority: DocumentSelectorPriority.CONTENT_FILE,
     }
   }
@@ -549,8 +556,11 @@ async function* contentSelectorsFromCssConfig(
   let auto = false
   for (let item of entry.content) {
     if (item.kind === 'file') {
+      let filepath = item.file
+      filepath = normalizePath(filepath)
+      filepath = normalizeDriveLetter(filepath)
       yield {
-        pattern: normalizePath(item.file),
+        pattern: filepath,
         priority: DocumentSelectorPriority.CONTENT_FILE,
       }
     } else if (item.kind === 'auto' && !auto) {
@@ -603,12 +613,16 @@ async function* detectContentFiles(
     if (!result) return
 
     for (let file of result.files) {
-      yield normalizePath(file)
+      file = normalizePath(file)
+      file = normalizeDriveLetter(file)
+      yield file
     }
 
     for (let { base, pattern } of result.globs) {
       // Do not normalize the glob itself as it may contain escape sequences
-      yield normalizePath(base) + '/' + pattern
+      base = normalizePath(base)
+      base = normalizeDriveLetter(base)
+      yield `${base}/${pattern}`
     }
   } catch {
     //
@@ -754,14 +768,14 @@ export async function calculateDocumentSelectors(
     if (entry.type !== 'css') continue
 
     selectors.push({
-      pattern: entry.path,
+      pattern: normalizeDriveLetter(normalizePath(entry.path)),
       priority: DocumentSelectorPriority.CSS_FILE,
     })
   }
 
   // - Config File
   selectors.push({
-    pattern: config.path,
+    pattern: normalizeDriveLetter(normalizePath(config.path)),
     priority: DocumentSelectorPriority.CONFIG_FILE,
   })
 
@@ -775,20 +789,20 @@ export async function calculateDocumentSelectors(
     if (entry.type !== 'css') continue
 
     selectors.push({
-      pattern: normalizePath(path.join(path.dirname(entry.path), '**')),
+      pattern: normalizeDriveLetter(normalizePath(path.join(path.dirname(entry.path), '**'))),
       priority: DocumentSelectorPriority.CSS_DIRECTORY,
     })
   }
 
   // - Directory containing the config
   selectors.push({
-    pattern: normalizePath(path.join(path.dirname(config.path), '**')),
+    pattern: normalizeDriveLetter(normalizePath(path.join(path.dirname(config.path), '**'))),
     priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
   })
 
   // - Root of package that contains the config
   selectors.push({
-    pattern: normalizePath(path.join(config.packageRoot, '**')),
+    pattern: normalizeDriveLetter(normalizePath(path.join(config.packageRoot, '**'))),
     priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
   })
 
