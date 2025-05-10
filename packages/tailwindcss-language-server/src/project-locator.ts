@@ -206,62 +206,7 @@ export class ProjectLocator {
     // Look for the package root for the config
     config.packageRoot = await getPackageRoot(path.dirname(config.path), this.base)
 
-    let selectors: DocumentSelector[] = []
-
-    // selectors:
-    // - CSS files
-    for (let entry of config.entries) {
-      if (entry.type !== 'css') continue
-      selectors.push({
-        pattern: entry.path,
-        priority: DocumentSelectorPriority.CSS_FILE,
-      })
-    }
-
-    // - Config File
-    selectors.push({
-      pattern: config.path,
-      priority: DocumentSelectorPriority.CONFIG_FILE,
-    })
-
-    // - Content patterns from config
-    for (let selector of await calculateDocumnetSelectors(
-      config,
-      tailwind.features,
-      this.resolver,
-    )) {
-      selectors.push(selector)
-    }
-
-    // - Directories containing the CSS files
-    for (let entry of config.entries) {
-      if (entry.type !== 'css') continue
-      selectors.push({
-        pattern: normalizePath(path.join(path.dirname(entry.path), '**')),
-        priority: DocumentSelectorPriority.CSS_DIRECTORY,
-      })
-    }
-
-    // - Directory containing the config
-    selectors.push({
-      pattern: normalizePath(path.join(path.dirname(config.path), '**')),
-      priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
-    })
-
-    // - Root of package that contains the config
-    selectors.push({
-      pattern: normalizePath(path.join(config.packageRoot, '**')),
-      priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
-    })
-
-    // Reorder selectors from most specific to least specific
-    selectors.sort((a, z) => a.priority - z.priority)
-
-    // Eliminate duplicate selector patterns
-    selectors = selectors.filter(
-      ({ pattern }, index, documentSelectors) =>
-        documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index,
-    )
+    let selectors = await calculateDocumentSelectors(config, tailwind.features, this.resolver)
 
     return {
       config,
@@ -795,26 +740,66 @@ function requiresPreprocessor(filepath: string) {
   return ext === '.scss' || ext === '.sass' || ext === '.less' || ext === '.styl' || ext === '.pcss'
 }
 
-export async function calculateDocumnetSelectors(
-  entry: ConfigEntry,
+export async function calculateDocumentSelectors(
+  config: ConfigEntry,
   features: Feature[],
   resolver: Resolver,
-  existing?: DocumentSelector[],
   actualConfig?: any,
 ) {
-  let selectors = []
+  let selectors: DocumentSelector[] = []
 
-  for (let selector of existing ?? []) {
-    if (selector.priority === DocumentSelectorPriority.CONTENT_FILE) {
-      continue
-    }
+  // selectors:
+  // - CSS files
+  for (let entry of config.entries) {
+    if (entry.type !== 'css') continue
 
+    selectors.push({
+      pattern: entry.path,
+      priority: DocumentSelectorPriority.CSS_FILE,
+    })
+  }
+
+  // - Config File
+  selectors.push({
+    pattern: config.path,
+    priority: DocumentSelectorPriority.CONFIG_FILE,
+  })
+
+  // - Content patterns from config
+  for await (let selector of contentSelectorsFromConfig(config, features, resolver, actualConfig)) {
     selectors.push(selector)
   }
 
-  for await (let selector of contentSelectorsFromConfig(entry, features, resolver, actualConfig)) {
-    selectors.push(selector)
+  // - Directories containing the CSS files
+  for (let entry of config.entries) {
+    if (entry.type !== 'css') continue
+
+    selectors.push({
+      pattern: normalizePath(path.join(path.dirname(entry.path), '**')),
+      priority: DocumentSelectorPriority.CSS_DIRECTORY,
+    })
   }
+
+  // - Directory containing the config
+  selectors.push({
+    pattern: normalizePath(path.join(path.dirname(config.path), '**')),
+    priority: DocumentSelectorPriority.CONFIG_DIRECTORY,
+  })
+
+  // - Root of package that contains the config
+  selectors.push({
+    pattern: normalizePath(path.join(config.packageRoot, '**')),
+    priority: DocumentSelectorPriority.PACKAGE_DIRECTORY,
+  })
+
+  // Reorder selectors from most specific to least specific
+  selectors.sort((a, z) => a.priority - z.priority)
+
+  // Eliminate duplicate selector patterns
+  selectors = selectors.filter(
+    ({ pattern }, index, documentSelectors) =>
+      documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index,
+  )
 
   return selectors
 }
