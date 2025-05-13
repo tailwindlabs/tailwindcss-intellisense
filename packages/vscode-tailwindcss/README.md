@@ -249,3 +249,5 @@ If you’re having issues getting the IntelliSense features to activate, there a
 
 - Make sure your VS Code settings aren’t causing your stylesheet or your Tailwind CSS config file to be hidden/ignored, for example via the `files.exclude`, `files.watcherExclude`,  or `tailwindCSS.files.exclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
+
+For projects with multiple installations of Tailwind CSS, multiple config files, or several stylesheets with `@import "tailwindcss"` we recommend using the `tailwindCSS.experimental.configFile` setting to explicitly state your stylesheet or config paths.
