@@ -6,7 +6,10 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation).
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and one of these:
+- For v4 and later, a `.css` file that imports a Tailwind CSS stylesheet (e.g. `@import "tailwindcss"`)
+- For v3 and earlier, a stylesheet that points to a config file via `@config`
+- For v3 and earlier, a [Tailwind CSS config file](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
 
 ## Features
 
@@ -240,11 +243,9 @@ For projects with multiple config files, use an object where each key is a confi
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
-In order for the extension to activate, you must have `tailwindcss` installed in your workspace. The extension will then attempt to detect your Tailwind CSS configuration, which can be located in one of the following:
+-  You must have `tailwindcss` installed in your workspace via `npm`, `pnpm`, or `yarn`.  The extension will then attempt to detect your Tailwind CSS configuration, which can be located in one of the following:
+    - For Tailwind CSS **v4** projects, configuration defined directly within your main CSS file using directives like `@import "tailwindcss";` and `@theme { ... }`. Preprocessor files like Less, Sass, or Stylus are not supported. A `.css` file is **required** for IntelliSense to function.
+    - For Tailwind CSS **v3 and earlier**, a Tailwind CSS config file in your workspace whose name matches (`tailwind.config.{js,cjs,mjs,ts,cts,mts}`). Check out the Tailwind documentation for details on [creating a config file](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file).
 
-* A JavaScript config file (`tailwind.config.{js,cjs,mjs,ts,cts,mts}`), typically used in **v3 and earlier**.
-* Or, for Tailwind CSS **v4** projects, configuration defined directly within your main CSS file using directives like `@import "tailwindcss";` and `@theme { ... }`.
-
-- Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
-- Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
+- Make sure your VS Code settings aren’t causing your stylesheet or your Tailwind CSS config file to be hidden/ignored, for example via the `files.exclude`, `files.watcherExclude`,  or `tailwindCSS.files.exclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
