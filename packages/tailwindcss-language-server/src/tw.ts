@@ -41,6 +41,7 @@ import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
+import * as fsSync from 'node:fs'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import * as parcel from './watcher/index.js'
@@ -188,7 +189,8 @@ export class TW {
     let base = baseUri.fsPath
 
     try {
-      await fs.access(base, fs.constants.F_OK | fs.constants.R_OK)
+      // TODO: Change this to fs.constants after the node version bump
+      await fs.access(base, fsSync.constants.F_OK | fsSync.constants.R_OK)
     } catch (err) {
       console.error(
         `Unable to access the workspace folder [${base}]. This may happen if the directory does not exist or the current user does not have the necessary permissions to access it.`,

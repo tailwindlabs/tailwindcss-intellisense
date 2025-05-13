@@ -202,9 +202,7 @@ export function completionsFromClassList(
             variant,
             err,
           })
-        }
 
-        if (selectors.length === 0) {
           continue
         }
 
@@ -2282,7 +2280,10 @@ export async function resolveCompletionItem(
   if (state.v4) {
     if (item.kind === 9) return item
     if (item.detail && item.documentation) return item
+
+    let base = state.designSystem.compile([className])[0]
     let root = state.designSystem.compile([[...variants, className].join(state.separator)])[0]
+
     let rules = root.nodes.filter((node) => node.type === 'rule')
     if (rules.length === 0) return item
 
@@ -2290,16 +2291,26 @@ export async function resolveCompletionItem(
       if (rules.length === 1) {
         let decls: postcss.Declaration[] = []
 
-        root.walkDecls((node) => {
+        // Remove any `@property` rules
+        base = base.clone()
+        base.walkAtRules((rule) => {
+          // Ignore declarations inside `@property` rules
+          if (rule.name === 'property') {
+            rule.remove()
+          }
+
+          // Ignore declarations @supports (-moz-orient: inline)
+          // this is a hack used for `@property` fallbacks in Firefox
+          if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
+            rule.remove()
+          }
+        })
+
+        base.walkDecls((node) => {
           decls.push(node)
         })
 
-        item.detail = await jit.stringifyDecls(
-          state,
-          postcss.rule({
-            nodes: decls,
-          }),
-        )
+        item.detail = await jit.stringifyDecls(state, postcss.rule({ nodes: decls }))
       } else {
         item.detail = `${rules.length} rules`
       }
