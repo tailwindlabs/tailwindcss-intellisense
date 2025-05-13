@@ -10,6 +10,7 @@
 - Calculate swatches for HSL colors with angular units ([#1360](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1360))
 - Fix error when using VSCode < 1.78 ([#1353](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1353))
 - Don’t skip suggesting empty variant implementations ([#1352](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1352))
+- Handle helper function lookups in nested parens ([#1354](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1354))
 
 # 0.14.16
 
