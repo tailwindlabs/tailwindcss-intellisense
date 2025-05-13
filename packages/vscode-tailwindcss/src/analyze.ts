@@ -29,33 +29,53 @@ export async function anyWorkspaceFoldersNeedServer({ folders, token }: SearchOp
     if (typeof configFilePath === 'object' && Object.values(configFilePath).length > 0) return true
   }
 
-  let configs: Array<() => Thenable<Uri[]>> = []
-  let stylesheets: Array<() => Thenable<Uri[]>> = []
+  // If any search returns that it needs a workspace then the server needs to be started
+  // and the remainder of the searches will be cancelled
+  let searches = folders.map((folder) =>
+    workspaceFoldersNeedServer({ folder, token }).then((found) => {
+      if (found) return true
 
-  for (let folder of folders) {
-    let exclusions = getExcludePatterns(folder).flatMap((pattern) => braces.expand(pattern))
-    let exclude = `{${exclusions.join(',').replace(/{/g, '%7B').replace(/}/g, '%7D')}}`
+      // We use `throw` so we can use Promise.any(…)
+      throw new Error(DUMMY_ERROR_MESSAGE)
+    }),
+  )
 
-    configs.push(() =>
-      workspace.findFiles(
-        new RelativePattern(folder, `**/${CONFIG_GLOB}`),
-        exclude,
-        undefined,
-        token,
-      ),
-    )
+  const DUMMY_ERROR_MESSAGE = 'Workspace folder not needed'
 
-    stylesheets.push(() =>
-      workspace.findFiles(new RelativePattern(folder, `**/${CSS_GLOB}`), exclude, undefined, token),
-    )
+  try {
+    return await Promise.any(searches)
+  } catch (err) {
+    for (let anErr of (err as AggregateError).errors ?? []) {
+      if (typeof anErr === 'object' && err.message === DUMMY_ERROR_MESSAGE) {
+        continue
+      }
+
+      console.error(anErr)
+    }
+
+    return false
   }
+}
+
+export interface FolderSearchOptions {
+  folder: WorkspaceFolder
+  token: CancellationToken
+}
+
+async function workspaceFoldersNeedServer({ folder, token }: FolderSearchOptions) {
+  let exclusions = getExcludePatterns(folder).flatMap((pattern) => braces.expand(pattern))
+  let exclude = `{${exclusions.join(',').replace(/{/g, '%7B').replace(/}/g, '%7D')}}`
 
   // If we find a config file then we need the server
-  let configUrls = await Promise.all(configs.map((fn) => fn()))
-  for (let group of configUrls) {
-    if (group.length > 0) {
-      return true
-    }
+  let configs = await workspace.findFiles(
+    new RelativePattern(folder, `**/${CONFIG_GLOB}`),
+    exclude,
+    undefined,
+    token,
+  )
+
+  if (configs.length > 0) {
+    return true
   }
 
   // If we find a possibly-related stylesheet then we need the server
@@ -65,12 +85,16 @@ export async function anyWorkspaceFoldersNeedServer({ folders, token }: SearchOp
   // This is also, unfortunately, prone to starting the server unncessarily
   // in projects that don't use TailwindCSS so we do this one-by-one instead
   // of all at once to keep disk I/O low.
-  let stylesheetUrls = await Promise.all(stylesheets.map((fn) => fn()))
-  for (let group of stylesheetUrls) {
-    for (let file of group) {
-      if (await fileMayBeTailwindRelated(file)) {
-        return true
-      }
+  let stylesheets = await workspace.findFiles(
+    new RelativePattern(folder, `**/${CSS_GLOB}`),
+    exclude,
+    undefined,
+    token,
+  )
+
+  for (let file of stylesheets) {
+    if (await fileMayBeTailwindRelated(file)) {
+      return true
     }
   }
 }
@@ -84,10 +108,19 @@ export async function fileMayBeTailwindRelated(uri: Uri) {
   let buffer = await workspace.fs.readFile(uri)
   let contents = buffer.toString()
 
-  return (
-    HAS_CONFIG.test(contents) ||
-    HAS_IMPORT.test(contents) ||
-    HAS_TAILWIND.test(contents) ||
-    HAS_THEME.test(contents)
-  )
+  // This is a clear signal that this is Tailwind related in v0–v4
+  if (HAS_CONFIG.test(contents)) return true
+
+  if (uri.path.endsWith('.css')) {
+    // In v4 these are Tailwind related *in .css files only*
+    // other stylesheets like lesss, stylus, etc… don't consider these files
+    if (HAS_THEME.test(contents)) return true
+    if (HAS_TAILWIND.test(contents)) return true
+
+    // @import *might* signal the need for the language server we'll have to
+    // start it, let it check, and hope we were right.
+    if (HAS_IMPORT.test(contents)) return true
+  }
+
+  return false
 }
