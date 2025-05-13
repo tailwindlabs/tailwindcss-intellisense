@@ -276,7 +276,7 @@ export function getColorFromValue(value: unknown): culori.Color | KeywordColor |
     return null
   }
 
-  return tryParseColor(trimmedValue) ?? null
+  return tryParseColor(trimmedValue)
 }
 
 let toRgb = culori.converter('rgb')
@@ -298,7 +298,7 @@ const COLOR_MIX_REGEX = /color-mix\(in [^,]+,\s*(.*?)\s*(\d+|\.\d+|\d+\.\d+)%,\s
 
 function tryParseColor(color: string) {
   try {
-    return culori.parse(color)
+    return culori.parse(color) ?? null
   } catch (err) {
     console.error('Error parsing color', color)
     console.error(err)
