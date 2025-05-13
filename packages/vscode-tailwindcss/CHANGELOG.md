@@ -8,6 +8,7 @@
 - Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Gracefully handle color parsing failures ([#1363](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1363))
 - Calculate swatches for HSL colors with angular units ([#1360](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1360))
+- Don’t skip suggesting empty variant implementations ([#1352](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1352))
 
 # 0.14.16
 
