@@ -213,6 +213,11 @@ For projects with multiple config files, use an object where each key is a confi
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
+In order for the extension to activate, you must have `tailwindcss` installed in your workspace. The extension will then attempt to detect your Tailwind CSS configuration, which can be located in one of the following:
+
+* A JavaScript config file (`tailwind.config.{js,cjs,mjs,ts,cts,mts}`), typically used in **v3 and earlier**.
+* Or, for Tailwind CSS **v4** projects, configuration defined directly within your main CSS file using directives like `@import "tailwindcss";` and `@theme { ... }`.
+
 - Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
 - Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
