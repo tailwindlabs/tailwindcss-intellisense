@@ -61,7 +61,7 @@ function getColorsInString(state: State, str: string): (culori.Color | KeywordCo
 
   function toColor(match: RegExpMatchArray) {
     let color = match[1].replace(/var\([^)]+\)/, '1')
-    return getKeywordColor(color) ?? culori.parse(color)
+    return getKeywordColor(color) ?? tryParseColor(color)
   }
 
   str = replaceCssVarsWithFallbacks(state, str)
@@ -275,7 +275,7 @@ export function getColorFromValue(value: unknown): culori.Color | KeywordColor |
   ) {
     return null
   }
-  const color = culori.parse(trimmedValue)
+  const color = tryParseColor(trimmedValue)
   return color ?? null
 }
 
@@ -296,11 +296,21 @@ export function formatColor(color: culori.Color): string {
 
 const COLOR_MIX_REGEX = /color-mix\(in [^,]+,\s*(.*?)\s*(\d+|\.\d+|\d+\.\d+)%,\s*transparent\)/g
 
+function tryParseColor(color: string) {
+  try {
+    return culori.parse(color)
+  } catch (err) {
+    console.error('Error parsing color', color)
+    console.error(err)
+    return null
+  }
+}
+
 function removeColorMixWherePossible(str: string) {
   return str.replace(COLOR_MIX_REGEX, (match, color, percentage) => {
     if (color.startsWith('var(')) return match
 
-    let parsed = culori.parse(color)
+    let parsed = tryParseColor(color)
     if (!parsed) return match
 
     let alpha = Number(percentage) / 100
