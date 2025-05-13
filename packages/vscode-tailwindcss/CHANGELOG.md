@@ -6,6 +6,7 @@
 - Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Gracefully handle color parsing failures ([#1363](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1363))
 - Calculate swatches for HSL colors with angular units ([#1360](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1360))
 
 # 0.14.16
