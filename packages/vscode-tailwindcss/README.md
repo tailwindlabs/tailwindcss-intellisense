@@ -94,11 +94,13 @@ The HTML attributes for which to provide class completions, hover previews, lint
 
 Functions in which to provide completions, hover previews, linting etc. Currently, this works for both function calls and tagged template literals in JavaScript / TypeScript.
 
+Each entry is treated as regex pattern that matches on a function name. You *cannot* match on content before or after the function name — matches are anchored to function names only.
+
 Example:
 
 ```json
 {
-  "tailwindCSS.classFunctions": ["tw", "clsx"]
+  "tailwindCSS.classFunctions": ["tw", "clsx", "tw\\.[a-z-]+"]
 }
 ```
 
@@ -108,6 +110,7 @@ let classes2 = clsx([
   "flex bg-red-500",
   { "text-red-500": true }
 ])
+let element = tw.div`flex bg-red-500`
 ```
 
 ### `tailwindCSS.colorDecorators`
