@@ -403,13 +403,12 @@ export function findHelperFunctionsInRange(
   doc: TextDocument,
   range?: Range,
 ): DocumentHelperFunction[] {
-  const text = getTextWithoutComments(doc, 'css', range)
-  let matches = findAll(
-    /(?<prefix>[\W])(?<helper>config|theme|--theme|var)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
-    text,
-  )
+  let text = getTextWithoutComments(doc, 'css', range)
 
-  // Eliminate matches that are on an `@import`
+  // Find every instance of a helper function
+  let matches = findAll(/\b(?<helper>config|theme|--theme|var)\(/g, text)
+
+  // Eliminate matches that are attached to an `@import`
   matches = matches.filter((match) => {
     // Scan backwards to see if we're in an `@import` statement
     for (let i = match.index - 1; i >= 0; i--) {
@@ -427,58 +426,157 @@ export function findHelperFunctionsInRange(
     return true
   })
 
-  return matches.map((match) => {
-    let quotesBefore = ''
-    let path = match.groups.path
-    let commaIndex = getFirstCommaIndex(path)
-    if (commaIndex !== null) {
-      path = path.slice(0, commaIndex).trimEnd()
-    }
-    path = path.replace(/['"]+$/, '').replace(/^['"]+/, (m) => {
-      quotesBefore = m
-      return ''
-    })
-    let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]+))$/)
-    if (matches) {
-      path = matches[1]
-    }
-    path = path.replace(/['"]*\s*$/, '')
+  let fns: DocumentHelperFunction[] = []
 
-    let startIndex =
-      match.index +
-      match.groups.prefix.length +
-      match.groups.helper.length +
-      match.groups.innerPrefix.length
+  // Collect the first argument of each fn accounting for balanced params
+  const COMMA = 0x2c
+  const SLASH = 0x2f
+  const BACKSLASH = 0x5c
+  const OPEN_PAREN = 0x28
+  const CLOSE_PAREN = 0x29
+  const DOUBLE_QUOTE = 0x22
+  const SINGLE_QUOTE = 0x27
 
-    let helper: 'config' | 'theme' | 'var' = 'config'
+  let len = text.length
+
+  for (let match of matches) {
+    let argsStart = match.index + match[0].length
+    let argsEnd = null
+    let pathStart = argsStart
+    let pathEnd = null
+    let depth = 1
+
+    // Scan until we find a `,` or balanced `)` not in quotes
+    for (let idx = argsStart; idx < len; ++idx) {
+      let char = text.charCodeAt(idx)
+
+      if (char === BACKSLASH) {
+        idx += 1
+      }
+
+      //
+      else if (char === SINGLE_QUOTE || char === DOUBLE_QUOTE) {
+        while (++idx < len) {
+          let nextChar = text.charCodeAt(idx)
+          if (nextChar === BACKSLASH) {
+            idx += 1
+            continue
+          }
+          if (nextChar === char) break
+        }
+      }
+
+      //
+      else if (char === OPEN_PAREN) {
+        depth += 1
+      }
+
+      //
+      else if (char === CLOSE_PAREN) {
+        depth -= 1
+
+        if (depth === 0) {
+          pathEnd ??= idx
+          argsEnd = idx
+          break
+        }
+      }
+
+      //
+      else if (char === COMMA && depth === 1) {
+        pathEnd ??= idx
+      }
+    }
+
+    if (argsEnd === null) continue
+
+    let helper: 'config' | 'theme' | 'var'
 
     if (match.groups.helper === 'theme' || match.groups.helper === '--theme') {
       helper = 'theme'
     } else if (match.groups.helper === 'var') {
       helper = 'var'
+    } else if (match.groups.helper === 'config') {
+      helper = 'config'
+    } else {
+      continue
     }
 
-    return {
+    let path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing whitespace
+    pathStart += path.match(/^\s+/)?.length ?? 0
+    pathEnd -= path.match(/\s+$/)?.length ?? 0
+
+    // Skip leading/trailing quotes
+    let quoteStart = path.match(/^['"]+/)?.length ?? 0
+    let quoteEnd = path.match(/['"]+$/)?.length ?? 0
+
+    if (quoteStart && quoteEnd) {
+      pathStart += quoteStart
+      pathEnd -= quoteEnd
+    }
+
+    // Clip to the top-level slash
+    depth = 1
+    for (let idx = pathStart; idx < pathEnd; ++idx) {
+      let char = text.charCodeAt(idx)
+      if (char === BACKSLASH) {
+        idx += 1
+      } else if (char === OPEN_PAREN) {
+        depth += 1
+      } else if (char === CLOSE_PAREN) {
+        depth -= 1
+      } else if (char === SLASH && depth === 1) {
+        pathEnd = idx
+      }
+    }
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing whitespace
+    //
+    // This can happen if we've clipped the path down to before the `/`
+    pathStart += path.match(/^\s+/)?.length ?? 0
+    pathEnd -= path.match(/\s+$/)?.length ?? 0
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing quotes
+    quoteStart = path.match(/^['"]+/)?.length ?? 0
+    quoteEnd = path.match(/['"]+$/)?.length ?? 0
+
+    pathStart += quoteStart
+    pathEnd -= quoteEnd
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    fns.push({
       helper,
       path,
       ranges: {
         full: absoluteRange(
           {
-            start: indexToPosition(text, startIndex),
-            end: indexToPosition(text, startIndex + match.groups.path.length),
+            start: indexToPosition(text, argsStart),
+            end: indexToPosition(text, argsEnd),
           },
           range,
         ),
         path: absoluteRange(
           {
-            start: indexToPosition(text, startIndex + quotesBefore.length),
-            end: indexToPosition(text, startIndex + quotesBefore.length + path.length),
+            start: indexToPosition(text, pathStart),
+            end: indexToPosition(text, pathEnd),
           },
           range,
         ),
       },
-    }
-  })
+    })
+  }
+
+  return fns
 }
 
 export function indexToPosition(str: string, index: number): Position {

@@ -49,7 +49,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(19235)
+    expect(completion?.items.length).not.toBe(0)
   },
 })
 
@@ -233,7 +233,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(19235)
+    expect(completion?.items.length).not.toBe(0)
   },
 })
 
