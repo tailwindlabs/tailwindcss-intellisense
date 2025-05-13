@@ -11,6 +11,8 @@
 - Fix error when using VSCode < 1.78 ([#1353](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1353))
 - Don’t skip suggesting empty variant implementations ([#1352](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1352))
 - Handle helper function lookups in nested parens ([#1354](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1354))
+- Hide `@property` declarations from completion details ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
+- Hide variant-provided declarations from completion details for a utility ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
 
 # 0.14.16
 
