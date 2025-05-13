@@ -275,8 +275,8 @@ export function getColorFromValue(value: unknown): culori.Color | KeywordColor |
   ) {
     return null
   }
-  const color = tryParseColor(trimmedValue)
-  return color ?? null
+
+  return tryParseColor(trimmedValue) ?? null
 }
 
 let toRgb = culori.converter('rgb')
