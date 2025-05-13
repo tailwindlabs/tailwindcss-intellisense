@@ -1,6 +1,7 @@
 import { test } from 'vitest'
-import { withFixture } from '../common'
 import * as path from 'path'
+import { URI } from 'vscode-uri'
+import { withFixture } from '../common'
 
 withFixture('basic', (c) => {
   async function testDocumentLinks(name, { text, lang, expected }) {
@@ -19,9 +20,7 @@ withFixture('basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/basic/tailwind.config.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/basic/tailwind.config.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 28 } },
       },
     ],
@@ -32,9 +31,7 @@ withFixture('basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/basic/does-not-exist.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/basic/does-not-exist.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 27 } },
       },
     ],
@@ -58,9 +55,7 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/tailwind.config.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/tailwind.config.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 28 } },
       },
     ],
@@ -71,9 +66,7 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/does-not-exist.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/does-not-exist.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 27 } },
       },
     ],
@@ -84,9 +77,7 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/plugin.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/plugin.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 19 } },
       },
     ],
@@ -97,9 +88,7 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/does-not-exist.js')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/does-not-exist.js')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 27 } },
       },
     ],
@@ -110,9 +99,7 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/index.html')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/index.html')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 20 } },
       },
     ],
@@ -123,12 +110,44 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path
-          .resolve('./tests/fixtures/v4/basic/does-not-exist.html')
-          .replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/does-not-exist.html')).toString(),
         range: { start: { line: 0, character: 8 }, end: { line: 0, character: 29 } },
       },
     ],
+  })
+
+  testDocumentLinks('source not: file exists', {
+    text: '@source not "index.html";',
+    lang: 'css',
+    expected: [
+      {
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/index.html')).toString(),
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 24 } },
+      },
+    ],
+  })
+
+  testDocumentLinks('source not: file does not exist', {
+    text: '@source not "does-not-exist.html";',
+    lang: 'css',
+    expected: [
+      {
+        target: URI.file(path.resolve('./tests/fixtures/v4/basic/does-not-exist.html')).toString(),
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 33 } },
+      },
+    ],
+  })
+
+  testDocumentLinks('@source inline(…)', {
+    text: '@source inline("m-{1,2,3}");',
+    lang: 'css',
+    expected: [],
+  })
+
+  testDocumentLinks('@source not inline(…)', {
+    text: '@source not inline("m-{1,2,3}");',
+    lang: 'css',
+    expected: [],
   })
 
   testDocumentLinks('Directories in source(…) show links', {
@@ -139,11 +158,11 @@ withFixture('v4/basic', (c) => {
     lang: 'css',
     expected: [
       {
-        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures')).toString(),
         range: { start: { line: 1, character: 35 }, end: { line: 1, character: 43 } },
       },
       {
-        target: `file://${path.resolve('./tests/fixtures').replace(/@/g, '%40')}`,
+        target: URI.file(path.resolve('./tests/fixtures')).toString(),
         range: { start: { line: 2, character: 33 }, end: { line: 2, character: 41 } },
       },
     ],

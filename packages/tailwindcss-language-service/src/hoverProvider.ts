@@ -53,6 +53,8 @@ async function provideCssHelperHover(
   for (let helperFn of helperFns) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
 
+    if (helperFn.helper === 'var' && !state.v4) continue
+
     let validated = validateConfigPath(
       state,
       helperFn.path,
@@ -67,8 +69,21 @@ async function provideCssHelperHover(
       value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
     }
 
+    let lines = ['```plaintext', value, '```']
+
+    if (state.v4 && helperFn.path.startsWith('--')) {
+      lines = [
+        //
+        '```css',
+        '@theme {',
+        `  ${helperFn.path}: ${value};`,
+        '}',
+        '```',
+      ]
+    }
+
     return {
-      contents: { kind: 'markdown', value: ['```plaintext', value, '```'].join('\n') },
+      contents: { kind: 'markdown', value: lines.join('\n') },
       range: helperFn.ranges.path,
     }
   }
@@ -168,19 +183,24 @@ async function provideSourceGlobHover(
 
   let text = getTextWithoutComments(document, 'css', range)
 
-  let pattern = /@source\s*(?<path>'[^']+'|"[^"]+")/dg
+  let patterns = [
+    /@source(?:\s+not)?\s*(?<glob>'[^']+'|"[^"]+")/dg,
+    /@source(?:\s+not)?\s*inline\((?<glob>'[^']+'|"[^"]+")/dg,
+  ]
 
-  for (let match of findAll(pattern, text)) {
-    let path = match.groups.path.slice(1, -1)
+  let matches = patterns.flatMap((pattern) => findAll(pattern, text))
 
-    // Ignore paths that don't need brace expansion
-    if (!path.includes('{') || !path.includes('}')) continue
+  for (let match of matches) {
+    let glob = match.groups.glob.slice(1, -1)
 
-    // Ignore paths that don't contain the current position
+    // Ignore globs that don't need brace expansion
+    if (!glob.includes('{') || !glob.includes('}')) continue
+
+    // Ignore glob that don't contain the current position
     let slice: Range = absoluteRange(
       {
-        start: indexToPosition(text, match.indices.groups.path[0]),
-        end: indexToPosition(text, match.indices.groups.path[1]),
+        start: indexToPosition(text, match.indices.groups.glob[0]),
+        end: indexToPosition(text, match.indices.groups.glob[1]),
       },
       range,
     )
@@ -188,8 +208,8 @@ async function provideSourceGlobHover(
     if (!isWithinRange(position, slice)) continue
 
     // Perform brace expansion
-    let paths = new Set(braces.expand(path))
-    if (paths.size < 2) continue
+    let expanded = new Set(braces.expand(glob))
+    if (expanded.size < 2) continue
 
     return {
       range: slice,
@@ -197,7 +217,7 @@ async function provideSourceGlobHover(
         //
         '**Expansion**',
         '```plaintext',
-        ...Array.from(paths, (path) => `- ${path}`),
+        ...Array.from(expanded, (entry) => `- ${entry}`),
         '```',
       ]),
     }

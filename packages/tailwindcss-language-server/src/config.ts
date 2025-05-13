@@ -1,45 +1,14 @@
 import merge from 'deepmerge'
 import { isObject } from './utils'
-import type { Settings } from '@tailwindcss/language-service/src/util/state'
+import {
+  getDefaultTailwindSettings,
+  type Settings,
+} from '@tailwindcss/language-service/src/util/state'
 import type { Connection } from 'vscode-languageserver'
 
 export interface SettingsCache {
   get(uri?: string): Promise<Settings>
   clear(): void
-}
-
-function getDefaultSettings(): Settings {
-  return {
-    editor: { tabSize: 2 },
-    tailwindCSS: {
-      inspectPort: null,
-      emmetCompletions: false,
-      classAttributes: ['class', 'className', 'ngClass', 'class:list'],
-      codeActions: true,
-      hovers: true,
-      suggestions: true,
-      validate: true,
-      colorDecorators: true,
-      rootFontSize: 16,
-      lint: {
-        cssConflict: 'warning',
-        invalidApply: 'error',
-        invalidScreen: 'error',
-        invalidVariant: 'error',
-        invalidConfigPath: 'error',
-        invalidTailwindDirective: 'error',
-        invalidSourceDirective: 'error',
-        recommendedVariantOrder: 'warning',
-      },
-      showPixelEquivalents: true,
-      includeLanguages: {},
-      files: { exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'] },
-      experimental: {
-        classRegex: [],
-        configFile: null,
-      },
-    },
-  }
 }
 
 export function createSettingsCache(connection: Connection): SettingsCache {
@@ -73,7 +42,7 @@ export function createSettingsCache(connection: Connection): SettingsCache {
     tailwindCSS = isObject(tailwindCSS) ? tailwindCSS : {}
 
     return merge<Settings>(
-      getDefaultSettings(),
+      getDefaultTailwindSettings(),
       { editor, tailwindCSS },
       { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray },
     )

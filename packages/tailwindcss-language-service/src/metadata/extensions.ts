@@ -72,5 +72,5 @@ let templateExtensions = [
   'rs',
 ]
 
-export const IS_SCRIPT_SOURCE = new RegExp(`\\.(${scriptExtensions.join('|')})$`)
-export const IS_TEMPLATE_SOURCE = new RegExp(`\\.(${templateExtensions.join('|')})$`)
+export const IS_SCRIPT_SOURCE: RegExp = new RegExp(`\\.(${scriptExtensions.join('|')})$`)
+export const IS_TEMPLATE_SOURCE: RegExp = new RegExp(`\\.(${templateExtensions.join('|')})$`)

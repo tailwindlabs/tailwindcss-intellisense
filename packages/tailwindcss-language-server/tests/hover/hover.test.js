@@ -1,5 +1,7 @@
-import { test } from 'vitest'
+import { expect, test } from 'vitest'
 import { withFixture } from '../common'
+import { css, defineTest } from '../../src/testing'
+import { createClient } from '../utils/client'
 
 withFixture('basic', (c) => {
   async function testHover(
@@ -214,7 +216,7 @@ withFixture('v4/basic', (c) => {
     text: '<div class="bg-red-500">',
     position: { line: 0, character: 13 },
     expected:
-      '.bg-red-500 {\n  background-color: var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */;\n}',
+      '.bg-red-500 {\n  background-color: var(--color-red-500) /* oklch(63.7% 0.237 25.331) = #fb2c36 */;\n}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 22 },
@@ -231,16 +233,15 @@ withFixture('v4/basic', (c) => {
     },
   })
 
-  test.todo('arbitrary value with theme function')
-  // testHover('arbitrary value with theme function', {
-  //   text: '<div class="p-[theme(spacing.4)]">',
-  //   position: { line: 0, character: 13 },
-  //   expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
-  //   expectedRange: {
-  //     start: { line: 0, character: 12 },
-  //     end: { line: 0, character: 32 },
-  //   },
-  // })
+  testHover('arbitrary value with theme function', {
+    text: '<div class="p-[theme(spacing.4)]">',
+    position: { line: 0, character: 13 },
+    expected: '.p-\\[theme\\(spacing\\.4\\)\\] {\n' + '  padding: 1rem /* 16px */;\n' + '}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 32 },
+    },
+  })
 
   testHover('arbitrary property', {
     text: '<div class="[text-wrap:balance]">',
@@ -293,6 +294,101 @@ withFixture('v4/basic', (c) => {
     },
   })
 
+  testHover('css @source not glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source not "../{app,components}/**/*.jsx"`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- ../app/**/*.jsx',
+          '- ../components/**/*.jsx',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 42 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
+  testHover('css @source inline glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source inline("{hover:,active:,}m-{1,2,3}")`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- hover:m-1',
+          '- hover:m-2',
+          '- hover:m-3',
+          '- active:m-1',
+          '- active:m-2',
+          '- active:m-3',
+          '- m-1',
+          '- m-2',
+          '- m-3',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 15 },
+        end: { line: 0, character: 43 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 15 },
+    },
+  })
+
+  testHover('css @source not inline glob expansion', {
+    exact: true,
+    lang: 'css',
+    text: `@source not inline("{hover:,active:,}m-{1,2,3}")`,
+    position: { line: 0, character: 23 },
+    expected: {
+      contents: {
+        kind: 'markdown',
+        value: [
+          '**Expansion**',
+          '```plaintext',
+          '- hover:m-1',
+          '- hover:m-2',
+          '- hover:m-3',
+          '- active:m-1',
+          '- active:m-2',
+          '- active:m-3',
+          '- m-1',
+          '- m-2',
+          '- m-3',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 0, character: 19 },
+        end: { line: 0, character: 47 },
+      },
+    },
+    expectedRange: {
+      start: { line: 2, character: 9 },
+      end: { line: 2, character: 18 },
+    },
+  })
+
   testHover('--theme() works inside @media queries', {
     lang: 'tailwindcss',
     text: `@media (width>=--theme(--breakpoint-xl)) { .foo { color: red; } }`,
@@ -302,7 +398,14 @@ withFixture('v4/basic', (c) => {
     expected: {
       contents: {
         kind: 'markdown',
-        value: ['```plaintext', '80rem /* 1280px */', '```'].join('\n'),
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --breakpoint-xl: 80rem /* 1280px */;',
+          '}',
+          '```',
+        ].join('\n'),
       },
       range: {
         start: { line: 0, character: 23 },
@@ -449,4 +552,73 @@ withFixture('v4/path-mappings', (c) => {
       end: { line: 0, character: 27 },
     },
   })
+})
+
+defineTest({
+  name: 'Can hover showing theme values used in var(…) and theme(…) functions',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'css',
+      text: css`
+        .foo {
+          color: theme(--color-black);
+        }
+        .bar {
+          color: var(--color-black);
+        }
+      `,
+    })
+
+    //   color: theme(--color-black);
+    //                  ^
+    let hoverTheme = await doc.hover({ line: 1, character: 18 })
+
+    //   color: var(--color-black);
+    //                ^
+    let hoverVar = await doc.hover({ line: 4, character: 16 })
+
+    expect(hoverTheme).toEqual({
+      contents: {
+        kind: 'markdown',
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --color-black: #000;',
+          '}',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 1, character: 15 },
+        end: { line: 1, character: 28 },
+      },
+    })
+
+    expect(hoverVar).toEqual({
+      contents: {
+        kind: 'markdown',
+        value: [
+          //
+          '```css',
+          '@theme {',
+          '  --color-black: #000;',
+          '}',
+          '```',
+        ].join('\n'),
+      },
+      range: {
+        start: { line: 4, character: 13 },
+        end: { line: 4, character: 26 },
+      },
+    })
+  },
 })

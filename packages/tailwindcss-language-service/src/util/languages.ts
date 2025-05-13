@@ -1,6 +1,6 @@
 import type { EditorState } from './state'
 
-export const htmlLanguages = [
+export const htmlLanguages: string[] = [
   'aspnetcorerazor',
   'astro',
   'astro-markdown',
@@ -21,6 +21,7 @@ export const htmlLanguages = [
   'html-eex',
   'htmldjango',
   'jade',
+  'latte',
   'leaf',
   'liquid',
   'markdown',
@@ -36,7 +37,7 @@ export const htmlLanguages = [
   'twig',
 ]
 
-export const cssLanguages = [
+export const cssLanguages: string[] = [
   'css',
   'less',
   'postcss',
@@ -47,7 +48,7 @@ export const cssLanguages = [
   'tailwindcss',
 ]
 
-export const jsLanguages = [
+export const jsLanguages: string[] = [
   'javascript',
   'javascriptreact',
   'reason',
@@ -58,16 +59,21 @@ export const jsLanguages = [
   'glimmer-ts',
 ]
 
-export const specialLanguages = ['vue', 'svelte']
+export const specialLanguages: string[] = ['vue', 'svelte']
 
-export const languages = [...cssLanguages, ...htmlLanguages, ...jsLanguages, ...specialLanguages]
+export const languages: string[] = [
+  ...cssLanguages,
+  ...htmlLanguages,
+  ...jsLanguages,
+  ...specialLanguages,
+]
 
 const semicolonlessLanguages = ['sass', 'sugarss', 'stylus']
 
 export function isSemicolonlessCssLanguage(
   languageId: string,
   userLanguages: EditorState['userLanguages'] = {},
-) {
+): boolean {
   return (
     semicolonlessLanguages.includes(languageId) ||
     semicolonlessLanguages.includes(userLanguages[languageId])

@@ -1,42 +1,66 @@
-import { onTestFinished, test, TestOptions } from 'vitest'
+import { onTestFinished, test, TestContext, TestOptions } from 'vitest'
+import * as os from 'node:os'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as proc from 'node:child_process'
-import dedent from 'dedent'
+import dedent, { type Dedent } from 'dedent'
 
-export interface TestUtils {
+export interface TestUtils<TestInput extends Record<string, any>> {
   /** The "cwd" for this test */
   root: string
+
+  /**
+   * The input for this test — taken from the `inputs` in the test config
+   *
+   * @see {TestConfig}
+   */
+  input?: TestInput
+}
+
+export interface StorageSymlink {
+  [IS_A_SYMLINK]: true
+  filepath: string
+  type: 'file' | 'dir' | undefined
 }
 
 export interface Storage {
   /** A list of files and their content */
-  [filePath: string]: string | Uint8Array | { [IS_A_SYMLINK]: true; filepath: string }
+  [filePath: string]: string | Uint8Array | StorageSymlink
 }
 
-export interface TestConfig<Extras extends {}> {
+export interface TestConfig<Extras extends {}, TestInput extends Record<string, any>> {
   name: string
+  inputs?: TestInput[]
+
   fs?: Storage
   debug?: boolean
-  prepare?(utils: TestUtils): Promise<Extras>
-  handle(utils: TestUtils & Extras): void | Promise<void>
+  prepare?(utils: TestUtils<TestInput>): Promise<Extras>
+  handle(utils: TestUtils<TestInput> & Extras): void | Promise<void>
 
   options?: TestOptions
 }
 
-export function defineTest<T>(config: TestConfig<T>) {
-  return test(config.name, config.options ?? {}, async ({ expect }) => {
-    let utils = await setup(config)
+export function defineTest<T, I>(config: TestConfig<T, I>) {
+  async function runTest(ctx: TestContext, input?: I) {
+    let utils = await setup(config, input)
     let extras = await config.prepare?.(utils)
 
     await config.handle({
       ...utils,
       ...extras,
     })
-  })
+  }
+
+  if (config.inputs) {
+    return test.for(config.inputs ?? [])(config.name, config.options ?? {}, (input, ctx) =>
+      runTest(ctx, input),
+    )
+  }
+
+  return test(config.name, config.options ?? {}, runTest)
 }
 
-async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
+async function setup<T, I>(config: TestConfig<T, I>, input: I): Promise<TestUtils<I>> {
   let randomId = Math.random().toString(36).substring(7)
 
   let baseDir = path.resolve(process.cwd(), `../../.debug/${randomId}`)
@@ -49,11 +73,17 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
     await installDependencies(baseDir, config.fs)
   }
 
-  onTestFinished(async (result) => {
+  onTestFinished(async (ctx) => {
     // Once done, move all the files to a new location
-    await fs.rename(baseDir, doneDir)
+    try {
+      await fs.rename(baseDir, doneDir)
+    } catch {
+      // If it fails it doesn't really matter. It only fails on Windows and then
+      // only randomly so whatever
+      console.error('Failed to move test files to done directory')
+    }
 
-    if (result.state === 'fail') return
+    if (ctx.task.result?.state === 'fail') return
 
     if (path.sep === '\\') return
 
@@ -66,14 +96,16 @@ async function setup<T>(config: TestConfig<T>): Promise<TestUtils> {
 
   return {
     root: baseDir,
+    input,
   }
 }
 
 const IS_A_SYMLINK = Symbol('is-a-symlink')
-export const symlinkTo = function (filepath: string) {
+export function symlinkTo(filepath: string, type?: 'file' | 'dir'): StorageSymlink {
   return {
     [IS_A_SYMLINK]: true as const,
     filepath,
+    type,
   }
 }
 
@@ -88,7 +120,14 @@ async function prepareFileSystem(base: string, storage: Storage) {
 
     if (typeof content === 'object' && IS_A_SYMLINK in content) {
       let target = path.resolve(base, content.filepath)
-      await fs.symlink(target, fullPath)
+
+      let type: string = content.type
+
+      if (os.platform() === 'win32' && content.type === 'dir') {
+        type = 'junction'
+      }
+
+      await fs.symlink(target, fullPath, type)
       continue
     }
 
@@ -121,8 +160,8 @@ async function installDependenciesIn(dir: string) {
   })
 }
 
-export const css = dedent
-export const scss = dedent
-export const html = dedent
-export const js = dedent
-export const json = dedent
+export const css: Dedent = dedent
+export const scss: Dedent = dedent
+export const html: Dedent = dedent
+export const js: Dedent = dedent
+export const json: Dedent = dedent

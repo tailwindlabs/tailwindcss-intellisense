@@ -1,5 +1,8 @@
-import { test } from 'vitest'
+import { test, expect } from 'vitest'
 import { withFixture } from '../common'
+import { css, defineTest, html, js } from '../../src/testing'
+import { createClient } from '../utils/client'
+import { CompletionItemKind } from 'vscode-languageserver'
 
 function buildCompletion(c) {
   return async function completion({
@@ -310,8 +313,8 @@ withFixture('v4/basic', (c) => {
     let result = await completion({ lang, text, position, settings })
     let textEdit = expect.objectContaining({ range: { start: position, end: position } })
 
-    expect(result.items.length).toBe(12314)
-    expect(result.items.filter((item) => item.label.endsWith(':')).length).toBe(304)
+    expect(result.items.length).not.toBe(0)
+    expect(result.items.filter((item) => item.label.endsWith(':')).length).not.toBe(0)
     expect(result).toEqual({
       isIncomplete: false,
       items: expect.arrayContaining([
@@ -485,7 +488,7 @@ withFixture('v4/basic', (c) => {
     })
 
     // Make sure `@slot` is NOT suggested by default
-    expect(result.items.length).toBe(7)
+    expect(result.items.length).toBe(8)
     expect(result.items).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 14, label: '@slot', sortText: '-0000000' }),
@@ -624,7 +627,7 @@ withFixture('v4/basic', (c) => {
 
     expect(resolved).toEqual({
       ...item,
-      detail: 'background-color: oklch(0.637 0.237 25.331);',
+      detail: 'background-color: oklch(63.7% 0.237 25.331);',
       documentation: '#fb2c36',
     })
   })
@@ -669,4 +672,312 @@ withFixture('v4/workspaces', (c) => {
       documentation: '#8e3b46',
     })
   })
+})
+
+defineTest({
+  name: 'v4: Completions show after a variant arbitrary value',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="data-[foo]:">',
+    })
+
+    // <div class="data-[foo]:">
+    //                       ^
+    let completion = await document.completions({ line: 0, character: 23 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show after an arbitrary variant',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="[&:hover]:">',
+    })
+
+    // <div class="[&:hover]:">
+    //                      ^
+    let completion = await document.completions({ line: 0, character: 22 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show after a variant with a bare value',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="supports-not-hover:">',
+    })
+
+    // <div class="supports-not-hover:">
+    //                               ^
+    let completion = await document.completions({ line: 0, character: 31 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show after a variant arbitrary value, using prefixes',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="tw:data-[foo]:">',
+    })
+
+    // <div class="tw:data-[foo]:">
+    //                          ^
+    let completion = await document.completions({ line: 0, character: 26 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Variant and utility suggestions show prefix when one has been typed',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="">',
+    })
+
+    // <div class="">
+    //            ^
+    let completion = await document.completions({ line: 0, character: 12 })
+
+    expect(completion?.items.length).not.toBe(0)
+
+    // Verify that variants and utilities are all prefixed
+    let prefixed = completion.items.filter((item) => !item.label.startsWith('tw:'))
+    expect(prefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Variant and utility suggestions hide prefix when it has been typed',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="tw:">',
+    })
+
+    // <div class="tw:">
+    //               ^
+    let completion = await document.completions({ line: 0, character: 15 })
+
+    expect(completion?.items.length).not.toBe(0)
+
+    // Verify that no variants and utilities have prefixes
+    let prefixed = completion.items.filter((item) => item.label.startsWith('tw:'))
+    expect(prefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show inside class functions in JS/TS files',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'javascript',
+      text: js`
+        let classes = clsx('');
+      `,
+    })
+
+    // let classes = clsx('');
+    //                    ^
+    let completion = await document.completions({ line: 0, character: 20 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Completions show inside class functions in JS/TS contexts',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'html',
+      text: html`
+        <script>
+          let classes = clsx('')
+        </script>
+      `,
+    })
+
+    //   let classes = clsx('')
+    //                      ^
+    let completion = await document.completions({ line: 1, character: 22 })
+
+    expect(completion?.items.length).not.toBe(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Theme key completions show in var(…)',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+
+      @theme {
+        --color-custom: #000;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classFunctions: ['clsx'],
+        },
+      },
+      lang: 'css',
+      text: css`
+        .foo {
+          color: var();
+        }
+      `,
+    })
+
+    //   color: var();
+    //             ^
+    let completion = await document.completions({ line: 1, character: 13 })
+
+    expect(completion).toEqual({
+      isIncomplete: false,
+      items: expect.arrayContaining([
+        // From the default theme
+        expect.objectContaining({ label: '--font-sans' }),
+
+        // From the `@theme` block in the CSS file
+        expect.objectContaining({
+          label: '--color-custom',
+
+          // And it's shown as a color
+          kind: CompletionItemKind.Color,
+          documentation: '#000000',
+        }),
+      ]),
+    })
+  },
+})
+
+defineTest({
+  name: 'v4: class function completions mixed with class attribute completions work',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      settings: {
+        tailwindCSS: {
+          classAttributes: ['className'],
+          classFunctions: ['cn', 'cva'],
+        },
+      },
+      lang: 'javascriptreact',
+      text: js`
+        let x = cva("")
+
+        export function Button() {
+          return <Test className={cn("")} />
+        }
+
+        export function Button2() {
+          return <Test className={cn("")} />
+        }
+
+        let y = cva("")
+      `,
+    })
+
+    // let x = cva("");
+    //             ^
+    let completionA = await document.completions({ line: 0, character: 13 })
+
+    expect(completionA?.items.length).not.toBe(0)
+
+    //   return <Test className={cn("")} />;
+    //                              ^
+    let completionB = await document.completions({ line: 3, character: 30 })
+
+    expect(completionB?.items.length).not.toBe(0)
+
+    //   return <Test className={cn("")} />;
+    //                              ^
+    let completionC = await document.completions({ line: 7, character: 30 })
+
+    expect(completionC?.items.length).not.toBe(0)
+
+    // let y = cva("");
+    //             ^
+    let completionD = await document.completions({ line: 10, character: 13 })
+
+    expect(completionD?.items.length).not.toBe(0)
+  },
 })

@@ -15,6 +15,8 @@ import type {
   Disposable,
   DocumentLinkParams,
   DocumentLink,
+  CodeLensParams,
+  CodeLens,
 } from 'vscode-languageserver/node'
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -35,6 +37,7 @@ import stackTrace from 'stack-trace'
 import extractClassNames from './lib/extractClassNames'
 import { klona } from 'klona/full'
 import { doHover } from '@tailwindcss/language-service/src/hoverProvider'
+import { getCodeLens } from '@tailwindcss/language-service/src/codeLensProvider'
 import { Resolver } from './resolver'
 import {
   doComplete,
@@ -110,6 +113,7 @@ export interface ProjectService {
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
   onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
+  onCodeLens(params: CodeLensParams): Promise<CodeLens[]>
   sortClassLists(classLists: string[]): string[]
 
   dependencies(): Iterable<string>
@@ -212,6 +216,7 @@ export async function createProjectService(
 
   let state: State = {
     enabled: false,
+    features: [],
     completionItemData: {
       _projectKey: projectKey,
     },
@@ -462,6 +467,14 @@ export async function createProjectService(
       // and this should be determined there and passed in instead
       let features = supportedFeatures(tailwindcssVersion, tailwindcss)
       log(`supported features: ${JSON.stringify(features)}`)
+      state.features = features
+
+      if (params.initializationOptions?.testMode) {
+        state.features = [
+          ...state.features,
+          ...(params.initializationOptions.additionalFeatures ?? []),
+        ]
+      }
 
       if (!features.includes('css-at-theme')) {
         tailwindcss = tailwindcss.default ?? tailwindcss
@@ -688,6 +701,15 @@ export async function createProjectService(
         state.v4 = true
         state.v4Fallback = true
         state.jit = true
+        state.features = features
+
+        if (params.initializationOptions?.testMode) {
+          state.features = [
+            ...state.features,
+            ...(params.initializationOptions.additionalFeatures ?? []),
+          ]
+        }
+
         state.modules = {
           tailwindcss: { version: tailwindcssVersion, module: tailwindcss },
           postcss: { version: null, module: null },
@@ -815,6 +837,7 @@ export async function createProjectService(
         )
 
         state.designSystem = designSystem
+        state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
         let deps = designSystem.dependencies()
 
@@ -960,7 +983,9 @@ export async function createProjectService(
       if (typeof state.separator !== 'string') {
         state.separator = ':'
       }
-      state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      if (!state.v4) {
+        state.blocklist = Array.isArray(state.config.blocklist) ? state.config.blocklist : []
+      }
       delete state.config.blocklist
 
       if (state.v4) {
@@ -1061,6 +1086,11 @@ export async function createProjectService(
     refreshDiagnostics()
 
     updateCapabilities()
+
+    let isTestMode = params.initializationOptions?.testMode ?? false
+    if (!isTestMode) return
+
+    connection.sendNotification('@/tailwindCSS/projectReloaded')
   }
 
   for (let entry of projectConfig.config.entries) {
@@ -1126,6 +1156,7 @@ export async function createProjectService(
       state.designSystem = designSystem
       state.classList = classList
       state.variants = getVariants(state)
+      state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
       let deps = designSystem.dependencies()
 
@@ -1142,6 +1173,11 @@ export async function createProjectService(
       let elapsed = process.hrtime.bigint() - start
 
       console.log(`---- RELOADED IN ${(Number(elapsed) / 1e6).toFixed(2)}ms ----`)
+
+      let isTestMode = params.initializationOptions?.testMode ?? false
+      if (!isTestMode) return
+
+      connection.sendNotification('@/tailwindCSS/projectReloaded')
     },
 
     state,
@@ -1150,7 +1186,7 @@ export async function createProjectService(
     },
     tryInit,
     async dispose() {
-      state = { enabled: false }
+      state = { enabled: false, features: [] }
       for (let disposable of disposables) {
         ;(await disposable).dispose()
       }
@@ -1159,11 +1195,9 @@ export async function createProjectService(
       if (state.enabled) {
         refreshDiagnostics()
       }
-      if (settings.editor?.colorDecorators) {
-        updateCapabilities()
-      } else {
-        connection.sendNotification('@/tailwindCSS/clearColors')
-      }
+
+      updateCapabilities()
+      connection.sendNotification('@/tailwindCSS/clearColors')
     },
     onFileEvents,
     async onHover(params: TextDocumentPositionParams): Promise<Hover> {
@@ -1175,6 +1209,17 @@ export async function createProjectService(
         if (!settings.tailwindCSS.hovers) return null
         if (await isExcluded(state, document)) return null
         return doHover(state, document, params.position)
+      }, null)
+    },
+    async onCodeLens(params: CodeLensParams): Promise<CodeLens[]> {
+      return withFallback(async () => {
+        if (!state.enabled) return null
+        let document = documentService.getDocument(params.textDocument.uri)
+        if (!document) return null
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.codeLens) return null
+        if (await isExcluded(state, document)) return null
+        return getCodeLens(state, document)
       }, null)
     },
     async onCompletion(params: CompletionParams): Promise<CompletionList> {

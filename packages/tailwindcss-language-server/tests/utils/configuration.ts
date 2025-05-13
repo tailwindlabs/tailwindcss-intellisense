@@ -1,4 +1,7 @@
-import type { Settings } from '@tailwindcss/language-service/src/util/state'
+import {
+  getDefaultTailwindSettings,
+  type Settings,
+} from '@tailwindcss/language-service/src/util/state'
 import { URI } from 'vscode-uri'
 import type { DeepPartial } from './types'
 import { CacheMap } from '../../src/cache-map'
@@ -10,41 +13,7 @@ export interface Configuration {
 }
 
 export function createConfiguration(): Configuration {
-  let defaults: Settings = {
-    editor: {
-      tabSize: 2,
-    },
-    tailwindCSS: {
-      inspectPort: null,
-      emmetCompletions: false,
-      includeLanguages: {},
-      classAttributes: ['class', 'className', 'ngClass', 'class:list'],
-      suggestions: true,
-      hovers: true,
-      codeActions: true,
-      validate: true,
-      showPixelEquivalents: true,
-      rootFontSize: 16,
-      colorDecorators: true,
-      lint: {
-        cssConflict: 'warning',
-        invalidApply: 'error',
-        invalidScreen: 'error',
-        invalidVariant: 'error',
-        invalidConfigPath: 'error',
-        invalidTailwindDirective: 'error',
-        invalidSourceDirective: 'error',
-        recommendedVariantOrder: 'warning',
-      },
-      experimental: {
-        classRegex: [],
-        configFile: {},
-      },
-      files: {
-        exclude: ['**/.git/**', '**/node_modules/**', '**/.hg/**', '**/.svn/**'],
-      },
-    },
-  }
+  let defaults = getDefaultTailwindSettings()
 
   /**
    * Settings per file or directory URI

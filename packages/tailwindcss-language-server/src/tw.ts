@@ -19,6 +19,10 @@ import type {
   DocumentLink,
   InitializeResult,
   WorkspaceFolder,
+  CodeLensParams,
+  CodeLens,
+  ServerCapabilities,
+  ClientCapabilities,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -30,10 +34,14 @@ import {
   FileChangeType,
   DocumentLinkRequest,
   TextDocumentSyncKind,
+  CodeLensRequest,
+  DidChangeConfigurationNotification,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
 import * as path from 'node:path'
+import * as fs from 'node:fs/promises'
+import * as fsSync from 'node:fs'
 import type * as chokidar from 'chokidar'
 import picomatch from 'picomatch'
 import * as parcel from './watcher/index.js'
@@ -47,7 +55,7 @@ import { readCssFile } from './util/css'
 import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
-import { retry } from './util/retry'
+import { analyzeStylesheet } from './version-guesser.js'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -170,6 +178,27 @@ export class TW {
   }
 
   private async _initFolder(baseUri: URI): Promise<void> {
+    // NOTE: We do this check because on Linux when using an LSP client that does
+    // not support watching files on behalf of the server, we'll use Parcel
+    // Watcher (if possible). If we start the watcher with a non-existent or
+    // inaccessible directory, it will throw an error with a very unhelpful
+    // message: "Bad file descriptor"
+    //
+    // The best thing we can do is an initial check for access to the directory
+    // and log a more helpful error message if it fails.
+    let base = baseUri.fsPath
+
+    try {
+      // TODO: Change this to fs.constants after the node version bump
+      await fs.access(base, fsSync.constants.F_OK | fsSync.constants.R_OK)
+    } catch (err) {
+      console.error(
+        `Unable to access the workspace folder [${base}]. This may happen if the directory does not exist or the current user does not have the necessary permissions to access it.`,
+      )
+      console.error(err)
+      return
+    }
+
     let initUserLanguages = this.initializeParams.initializationOptions?.userLanguages ?? {}
 
     if (Object.keys(initUserLanguages).length > 0) {
@@ -178,7 +207,6 @@ export class TW {
       )
     }
 
-    let base = baseUri.fsPath
     let workspaceFolders: Array<ProjectConfig> = []
     let globalSettings = await this.settingsCache.get()
     let ignore = globalSettings.tailwindCSS.files.exclude
@@ -358,6 +386,13 @@ export class TW {
         for (let [, project] of this.projects) {
           if (!project.state.v4) continue
 
+          if (
+            change.type === FileChangeType.Deleted &&
+            changeAffectsFile(normalizedFilename, [project.projectConfig.configPath])
+          ) {
+            continue
+          }
+
           if (!changeAffectsFile(normalizedFilename, project.dependencies())) continue
 
           needsSoftRestart = true
@@ -378,6 +413,31 @@ export class TW {
             needsRestart = true
             break
           } else if (!cssFileConfigMap.has(normalizedFilename) && configPath) {
+            needsRestart = true
+            break
+          }
+
+          //
+          else {
+            // If the main CSS file in a project is deleted and then re-created
+            // the server won't restart because the project is gone by now and
+            // there's no concept of a "config file" for us to compare with
+            //
+            // So we'll check if the stylesheet could *potentially* create
+            // a new project but we'll only do so if no projects were found
+            //
+            // If we did this all the time we'd potentially restart the server
+            // unncessarily a lot while the user is editing their stylesheets
+            if (this.projects.size > 0) continue
+
+            let content = await readCssFile(change.file)
+            if (!content) continue
+
+            let stylesheet = analyzeStylesheet(content)
+            if (!stylesheet.root) continue
+
+            if (!stylesheet.versions.includes('4')) continue
+
             needsRestart = true
             break
           }
@@ -465,6 +525,10 @@ export class TW {
         }
       }
     } else if (parcel.getBinding()) {
+      console.log(
+        '[Global] Your LSP client does not support watching files on behalf of the server',
+      )
+      console.log('[Global] Using bundled file watcher: @parcel/watcher')
       let typeMap = {
         create: FileChangeType.Created,
         update: FileChangeType.Changed,
@@ -491,6 +555,10 @@ export class TW {
         },
       })
     } else {
+      console.log(
+        '[Global] Your LSP client does not support watching files on behalf of the server',
+      )
+      console.log('[Global] Using bundled file watcher: chokidar')
       let watch: typeof chokidar.watch = require('chokidar').watch
       let chokidarWatcher = watch(
         [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`, `**/${TSCONFIG_GLOB}`],
@@ -560,6 +628,8 @@ export class TW {
 
     console.log(`[Global] Initializing projects...`)
 
+    await this.updateCommonCapabilities()
+
     // init projects for documents that are _already_ open
     let readyDocuments: string[] = []
     let enabledProjectCount = 0
@@ -575,8 +645,6 @@ export class TW {
     }
 
     console.log(`[Global] Initialized ${enabledProjectCount} projects`)
-
-    this.setupLSPHandlers()
 
     this.disposables.push(
       this.connection.onDidChangeConfiguration(async ({ settings }) => {
@@ -699,7 +767,7 @@ export class TW {
       this.connection,
       params,
       this.documentService,
-      () => this.updateCapabilities(),
+      () => this.updateProjectCapabilities(),
       () => {
         for (let document of this.documentService.getAllDocuments()) {
           let project = this.getProject(document)
@@ -746,9 +814,7 @@ export class TW {
   }
 
   setupLSPHandlers() {
-    if (this.lspHandlersAdded) {
-      return
-    }
+    if (this.lspHandlersAdded) return
     this.lspHandlersAdded = true
 
     this.connection.onHover(this.onHover.bind(this))
@@ -757,6 +823,7 @@ export class TW {
     this.connection.onDocumentColor(this.onDocumentColor.bind(this))
     this.connection.onColorPresentation(this.onColorPresentation.bind(this))
     this.connection.onCodeAction(this.onCodeAction.bind(this))
+    this.connection.onCodeLens(this.onCodeLens.bind(this))
     this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
     this.connection.onRequest(this.onRequest.bind(this))
   }
@@ -793,37 +860,84 @@ export class TW {
     }
   }
 
-  private updateCapabilities() {
-    if (!supportsDynamicRegistration(this.initializeParams)) {
-      return
-    }
-
-    if (this.registrations) {
-      this.registrations.then((r) => r.dispose())
-    }
-
-    let projects = Array.from(this.projects.values())
-
+  // Common capabilities are always supported by the language server and do not
+  // require any project-specific information to know how to configure them.
+  //
+  // These capabilities will stay valid until/unless the server has to restart
+  // in which case they'll be unregistered and then re-registered once project
+  // discovery has completed
+  private commonRegistrations: BulkUnregistration | undefined
+  private async updateCommonCapabilities() {
     let capabilities = BulkRegistration.create()
 
-    capabilities.add(HoverRequest.type, { documentSelector: null })
-    capabilities.add(DocumentColorRequest.type, { documentSelector: null })
-    capabilities.add(CodeActionRequest.type, { documentSelector: null })
-    capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    let client = this.initializeParams.capabilities
 
-    capabilities.add(CompletionRequest.type, {
+    if (client.textDocument?.hover?.dynamicRegistration) {
+      capabilities.add(HoverRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.colorProvider?.dynamicRegistration) {
+      capabilities.add(DocumentColorRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.codeAction?.dynamicRegistration) {
+      capabilities.add(CodeActionRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.codeLens?.dynamicRegistration) {
+      capabilities.add(CodeLensRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.documentLink?.dynamicRegistration) {
+      capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    }
+
+    if (client.workspace?.didChangeConfiguration?.dynamicRegistration) {
+      capabilities.add(DidChangeConfigurationNotification.type, undefined)
+    }
+
+    this.commonRegistrations = await this.connection.client.register(capabilities)
+  }
+
+  // These capabilities depend on the projects we've found to appropriately
+  // configure them. This may mean collecting information from all discovered
+  // projects to determine what we can do and how
+  private updateProjectCapabilities() {
+    this.updateTriggerCharacters()
+  }
+
+  private lastTriggerCharacters: Set<string> | undefined
+  private completionRegistration: Disposable | undefined
+  private async updateTriggerCharacters() {
+    // If the client does not suppory dynamic registration of completions then
+    // we cannot update the set of trigger characters
+    let client = this.initializeParams.capabilities
+    if (!client.textDocument?.completion?.dynamicRegistration) return
+
+    // The new set of trigger characters is all the static ones plus
+    // any characters from any separator in v3 config
+    let chars = new Set<string>(TRIGGER_CHARACTERS)
+
+    for (let project of this.projects.values()) {
+      let sep = project.state.separator
+      if (typeof sep !== 'string') continue
+
+      sep = sep.slice(-1)
+      if (!sep) continue
+
+      chars.add(sep)
+    }
+
+    // If the trigger characters haven't changed then we don't need to do anything
+    if (equal(Array.from(chars), Array.from(this.lastTriggerCharacters ?? []))) return
+    this.lastTriggerCharacters = chars
+
+    this.completionRegistration?.dispose()
+    this.completionRegistration = await this.connection.client.register(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
-      triggerCharacters: [
-        ...TRIGGER_CHARACTERS,
-        ...projects
-          .map((project) => project.state.separator)
-          .filter((sep) => typeof sep === 'string')
-          .map((sep) => sep.slice(-1)),
-      ].filter(Boolean),
+      triggerCharacters: Array.from(chars),
     })
-
-    this.registrations = this.connection.client.register(capabilities)
   }
 
   private getProject(document: TextDocumentIdentifier): ProjectService {
@@ -931,6 +1045,11 @@ export class TW {
     return this.getProject(params.textDocument)?.onCodeAction(params) ?? null
   }
 
+  async onCodeLens(params: CodeLensParams): Promise<CodeLens[]> {
+    await this.init()
+    return this.getProject(params.textDocument)?.onCodeLens(params) ?? null
+  }
+
   async onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
     await this.init()
     return this.getProject(params.textDocument)?.onDocumentLinks(params) ?? null
@@ -940,42 +1059,56 @@ export class TW {
     this.connection.onInitialize(async (params: InitializeParams): Promise<InitializeResult> => {
       this.initializeParams = params
 
-      if (supportsDynamicRegistration(params)) {
-        return {
-          capabilities: {
-            textDocumentSync: TextDocumentSyncKind.Full,
-            workspace: {
-              workspaceFolders: {
-                changeNotifications: true,
-              },
-            },
-          },
-        }
-      }
-
       this.setupLSPHandlers()
 
       return {
-        capabilities: {
-          textDocumentSync: TextDocumentSyncKind.Full,
-          hoverProvider: true,
-          colorProvider: true,
-          codeActionProvider: true,
-          documentLinkProvider: {},
-          completionProvider: {
-            resolveProvider: true,
-            triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
-          },
-          workspace: {
-            workspaceFolders: {
-              changeNotifications: true,
-            },
-          },
-        },
+        capabilities: this.computeServerCapabilities(params.capabilities),
       }
     })
 
     this.connection.onInitialized(() => this.init())
+  }
+
+  computeServerCapabilities(client: ClientCapabilities) {
+    let capabilities: ServerCapabilities = {
+      textDocumentSync: TextDocumentSyncKind.Full,
+      workspace: {
+        workspaceFolders: {
+          changeNotifications: true,
+        },
+      },
+    }
+
+    if (!client.textDocument?.hover?.dynamicRegistration) {
+      capabilities.hoverProvider = true
+    }
+
+    if (!client.textDocument?.colorProvider?.dynamicRegistration) {
+      capabilities.colorProvider = true
+    }
+
+    if (!client.textDocument?.codeAction?.dynamicRegistration) {
+      capabilities.codeActionProvider = true
+    }
+
+    if (!client.textDocument?.codeLens?.dynamicRegistration) {
+      capabilities.codeLensProvider = {
+        resolveProvider: false,
+      }
+    }
+
+    if (!client.textDocument?.completion?.dynamicRegistration) {
+      capabilities.completionProvider = {
+        resolveProvider: true,
+        triggerCharacters: [...TRIGGER_CHARACTERS, ':'],
+      }
+    }
+
+    if (!client.textDocument?.documentLink?.dynamicRegistration) {
+      capabilities.documentLinkProvider = {}
+    }
+
+    return capabilities
   }
 
   listen() {
@@ -991,10 +1124,11 @@ export class TW {
 
     this.refreshDiagnostics()
 
-    if (this.registrations) {
-      this.registrations.then((r) => r.dispose())
-      this.registrations = undefined
-    }
+    this.commonRegistrations?.dispose()
+    this.commonRegistrations = undefined
+
+    this.completionRegistration?.dispose()
+    this.completionRegistration = undefined
 
     this.disposables.forEach((d) => d.dispose())
     this.disposables.length = 0
@@ -1002,11 +1136,17 @@ export class TW {
     this.watched.length = 0
   }
 
-  restart(): void {
+  async restart(): Promise<void> {
+    let isTestMode = this.initializeParams.initializationOptions?.testMode ?? false
+
     console.log('----------\nRESTARTING\n----------')
     this.dispose()
     this.initPromise = undefined
-    this.init()
+    await this.init()
+
+    if (isTestMode) {
+      this.connection.sendNotification('@/tailwindCSS/serverRestarted')
+    }
   }
 
   async softRestart(): Promise<void> {
@@ -1020,14 +1160,4 @@ export class TW {
       } catch {}
     }
   }
-}
-
-function supportsDynamicRegistration(params: InitializeParams): boolean {
-  return (
-    params.capabilities.textDocument?.hover?.dynamicRegistration &&
-    params.capabilities.textDocument?.colorProvider?.dynamicRegistration &&
-    params.capabilities.textDocument?.codeAction?.dynamicRegistration &&
-    params.capabilities.textDocument?.completion?.dynamicRegistration &&
-    params.capabilities.textDocument?.documentLink?.dynamicRegistration
-  )
 }

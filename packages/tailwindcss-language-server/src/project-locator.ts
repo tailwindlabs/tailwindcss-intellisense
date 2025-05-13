@@ -1,7 +1,6 @@
-import * as os from 'node:os'
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import glob from 'fast-glob'
+import { glob } from 'tinyglobby'
 import picomatch from 'picomatch'
 import type { Settings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
@@ -275,15 +274,26 @@ export class ProjectLocator {
   }
 
   private async findConfigs(): Promise<ConfigEntry[]> {
+    let ignore = this.settings.tailwindCSS.files.exclude
+
+    // NOTE: This is a temporary workaround for a bug in the `fdir` package used
+    // by `tinyglobby`. It infinite loops when the ignore pattern starts with
+    // a `/`. This should be removed once the bug is fixed.
+    ignore = ignore.map((pattern) => {
+      if (!pattern.startsWith('/')) return pattern
+
+      return pattern.slice(1)
+    })
+
     // Look for config files and CSS files
-    let files = await glob([`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`], {
+    let files = await glob({
+      patterns: [`**/${CONFIG_GLOB}`, `**/${CSS_GLOB}`],
       cwd: this.base,
-      ignore: this.settings.tailwindCSS.files.exclude,
+      ignore,
       onlyFiles: true,
       absolute: true,
-      suppressErrors: true,
+      followSymbolicLinks: true,
       dot: true,
-      concurrency: Math.max(os.cpus().length, 1),
     })
 
     let realpaths = await Promise.all(files.map((file) => fs.realpath(file)))
@@ -623,25 +633,23 @@ async function* contentSelectorsFromCssConfig(
 async function* detectContentFiles(
   base: string,
   inputFile: string,
-  sources: string[],
+  sources: SourcePattern[],
   resolver: Resolver,
 ): AsyncIterable<string> {
   try {
-    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', path.dirname(base))
+    let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', base)
     oxidePath = pathToFileURL(oxidePath).href
-    let oxidePackageJsonPath = await resolver.resolveJsId(
-      '@tailwindcss/oxide/package.json',
-      path.dirname(base),
-    )
+    let oxidePackageJsonPath = await resolver.resolveJsId('@tailwindcss/oxide/package.json', base)
     let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
     let result = await oxide.scan({
       oxidePath,
       oxideVersion: oxidePackageJson.version,
       basePath: base,
-      sources: sources.map((pattern) => ({
+      sources: sources.map((source) => ({
         base: path.dirname(inputFile),
-        pattern,
+        pattern: source.pattern,
+        negated: source.negated,
       })),
     })
 
@@ -675,11 +683,16 @@ type ConfigEntry = {
   content: ContentItem[]
 }
 
+export interface SourcePattern {
+  pattern: string
+  negated: boolean
+}
+
 class FileEntry {
   content: string | null
   deps: FileEntry[] = []
   realpath: string | null
-  sources: string[] = []
+  sources: SourcePattern[] = []
   meta: TailwindStylesheet | null = null
 
   constructor(

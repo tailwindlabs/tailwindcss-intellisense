@@ -1,4 +1,4 @@
-import type { Plugin } from 'postcss'
+import type { Plugin, PluginCreator } from 'postcss'
 import parseValue from 'postcss-value-parser'
 import { inGamut } from 'culori'
 import { formatColor, getColorFromValue } from './color'
@@ -16,51 +16,55 @@ export function getEquivalentColor(value: string): string {
   return formatColor(color)
 }
 
-export function equivalentColorValues({ comments }: { comments: Comment[] }): Plugin {
-  return {
-    postcssPlugin: 'plugin',
-    Declaration(decl) {
-      if (!allowedFunctions.some((fn) => decl.value.includes(fn))) {
-        return
-      }
-
-      parseValue(decl.value).walk((node) => {
-        if (node.type !== 'function') {
-          return true
+export const equivalentColorValues: PluginCreator<any> = Object.assign(
+  ({ comments }: { comments: Comment[] }): Plugin => {
+    return {
+      postcssPlugin: 'plugin',
+      Declaration(decl) {
+        if (!allowedFunctions.some((fn) => decl.value.includes(fn))) {
+          return
         }
 
-        if (node.value === 'var') {
-          return true
-        }
+        parseValue(decl.value).walk((node) => {
+          if (node.type !== 'function') {
+            return true
+          }
 
-        if (!allowedFunctions.includes(node.value)) {
+          if (node.value === 'var') {
+            return true
+          }
+
+          if (!allowedFunctions.includes(node.value)) {
+            return false
+          }
+
+          const values = node.nodes.filter((n) => n.type === 'word').map((n) => n.value)
+          if (values.length < 3) {
+            return false
+          }
+
+          let color = `${node.value}(${values.join(' ')})`
+
+          let equivalent = getEquivalentColor(color)
+
+          if (equivalent === color) {
+            return false
+          }
+
+          comments.push({
+            index:
+              decl.source.start.offset +
+              `${decl.prop}${decl.raws.between}`.length +
+              node.sourceEndIndex,
+            value: equivalent,
+          })
+
           return false
-        }
-
-        const values = node.nodes.filter((n) => n.type === 'word').map((n) => n.value)
-        if (values.length < 3) {
-          return false
-        }
-
-        let color = `${node.value}(${values.join(' ')})`
-
-        let equivalent = getEquivalentColor(color)
-
-        if (equivalent === color) {
-          return false
-        }
-
-        comments.push({
-          index:
-            decl.source.start.offset +
-            `${decl.prop}${decl.raws.between}`.length +
-            node.sourceEndIndex,
-          value: equivalent,
         })
-
-        return false
-      })
-    },
-  }
-}
-equivalentColorValues.postcss = true
+      },
+    }
+  },
+  {
+    postcss: true as const,
+  },
+)

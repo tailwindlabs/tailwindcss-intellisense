@@ -39,11 +39,12 @@ export interface DesignSystem {
   getVariants(): VariantEntry[]
 
   // Optional because it did not exist in earlier v4 alpha versions
-  resolveThemeValue?(path: string): string | undefined
+  resolveThemeValue?(path: string, forceInline?: boolean): string | undefined
+  invalidCandidates?: Set<string>
 }
 
 export interface DesignSystem {
   dependencies(): Set<string>
-  compile(classes: string[]): postcss.Root[]
+  compile(classes: string[]): (postcss.Root | null)[]
   toCss(nodes: postcss.Root | postcss.Node[]): string
 }

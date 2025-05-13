@@ -23,6 +23,9 @@
         "panel": "dedicated",
         "reveal": "never"
       },
+      "options": {
+        "cwd": "${workspaceFolder}/packages/vscode-tailwindcss"
+      },
       "problemMatcher": ["$tsc-watch"]
     }
   ]

@@ -271,6 +271,51 @@ withFixture('v4/dependencies', (c) => {
     })
   })
 
+  test.concurrent('@source not', async ({ expect }) => {
+    let result = await completion({
+      text: '@source not "',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 13,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'index.html',
+          kind: 17,
+          data: expect.anything(),
+          textEdit: {
+            newText: 'index.html',
+            range: { start: { line: 0, character: 13 }, end: { line: 0, character: 13 } },
+          },
+        },
+        {
+          label: 'sub-dir/',
+          kind: 19,
+          command: { command: 'editor.action.triggerSuggest', title: '' },
+          data: expect.anything(),
+          textEdit: {
+            newText: 'sub-dir/',
+            range: { start: { line: 0, character: 13 }, end: { line: 0, character: 13 } },
+          },
+        },
+        {
+          label: 'tailwind.config.js',
+          kind: 17,
+          data: expect.anything(),
+          textEdit: {
+            newText: 'tailwind.config.js',
+            range: { start: { line: 0, character: 13 }, end: { line: 0, character: 13 } },
+          },
+        },
+      ],
+    })
+  })
+
   test.concurrent('@source directory', async ({ expect }) => {
     let result = await completion({
       text: '@source "./sub-dir/',
@@ -295,6 +340,58 @@ withFixture('v4/dependencies', (c) => {
         },
       ],
     })
+  })
+
+  test.concurrent('@source not directory', async ({ expect }) => {
+    let result = await completion({
+      text: '@source not "./sub-dir/',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 23,
+      },
+    })
+
+    expect(result).toEqual({
+      isIncomplete: false,
+      items: [
+        {
+          label: 'colors.js',
+          kind: 17,
+          data: expect.anything(),
+          textEdit: {
+            newText: 'colors.js',
+            range: { start: { line: 0, character: 23 }, end: { line: 0, character: 23 } },
+          },
+        },
+      ],
+    })
+  })
+
+  test.concurrent('@source inline(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@source inline("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 16,
+      },
+    })
+
+    expect(result).toEqual(null)
+  })
+
+  test.concurrent('@source not inline(…)', async ({ expect }) => {
+    let result = await completion({
+      text: '@source not inline("',
+      lang: 'css',
+      position: {
+        line: 0,
+        character: 20,
+      },
+    })
+
+    expect(result).toEqual(null)
   })
 
   test.concurrent('@import "…" source(…)', async ({ expect }) => {

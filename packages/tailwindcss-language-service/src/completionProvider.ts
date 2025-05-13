@@ -15,14 +15,14 @@ import removeMeta from './util/removeMeta'
 import { formatColor, getColor, getColorFromValue } from './util/color'
 import { isHtmlContext, isHtmlDoc, isVueDoc } from './util/html'
 import { isCssContext } from './util/css'
-import { findLast, matchClassAttributes } from './util/find'
+import { findLast, matchClassAttributes, matchClassFunctions } from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
 import { braceLevel, parenLevel } from './util/braceLevel'
 import * as emmetHelper from 'vscode-emmet-helper-bundled'
 import { isValidLocationForEmmetAbbreviation } from './util/isValidLocationForEmmetAbbreviation'
-import { isJsDoc, isJsxContext } from './util/js'
+import { isJsContext, isJsDoc, isJsxContext } from './util/js'
 import { naturalExpand } from './util/naturalExpand'
 import * as semver from './util/semver'
 import { getTextWithoutComments } from './util/doc'
@@ -45,6 +45,8 @@ import type { ThemeEntry } from './util/v4'
 import { segment } from './util/segment'
 import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/theme-keys'
 import { SEARCH_RANGE } from './util/constants'
+import { getLanguageBoundaries } from './util/getLanguageBoundaries'
+import { isWithinRange } from './util/isWithinRange'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -187,15 +189,7 @@ export function completionsFromClassList(
           }),
         )
       } else {
-        let shouldSortVariants = !semver.gte(state.version, '2.99.0')
         let resultingVariants = [...existingVariants, variant.name]
-
-        if (shouldSortVariants) {
-          let allVariants = state.variants.map(({ name }) => name)
-          resultingVariants = resultingVariants.sort(
-            (a, b) => allVariants.indexOf(b) - allVariants.indexOf(a),
-          )
-        }
 
         let selectors: string[] = []
 
@@ -208,9 +202,7 @@ export function completionsFromClassList(
             variant,
             err,
           })
-        }
 
-        if (selectors.length === 0) {
           continue
         }
 
@@ -221,25 +213,6 @@ export function completionsFromClassList(
               .map((selector) => addPixelEquivalentsToMediaQuery(selector))
               .join(', '),
             textEditText: resultingVariants[resultingVariants.length - 1] + sep,
-            additionalTextEdits:
-              shouldSortVariants && resultingVariants.length > 1
-                ? [
-                    {
-                      newText:
-                        resultingVariants.slice(0, resultingVariants.length - 1).join(sep) + sep,
-                      range: {
-                        start: {
-                          ...classListRange.start,
-                          character: classListRange.end.character - partialClassName.length,
-                        },
-                        end: {
-                          ...replacementRange.start,
-                          character: replacementRange.start.character,
-                        },
-                      },
-                    },
-                  ]
-                : [],
           }),
         )
       }
@@ -286,29 +259,25 @@ export function completionsFromClassList(
 
     // TODO: This is a bit of a hack
     if (prefix.length > 0) {
-      // No variants seen: suggest the prefix only
+      // No variants seen:
+      // - suggest the prefix as a variant
+      // - Modify the remaining items to include the prefix in the variant name
       if (existingVariants.length === 0) {
-        items = items.slice(0, 1)
+        items = items.map((item, idx) => {
+          if (idx === 0) return item
 
-        return withDefaults(
-          {
-            isIncomplete: false,
-            items,
-          },
-          {
-            data: {
-              ...(state.completionItemData ?? {}),
-              ...(important ? { important } : {}),
-              variants: existingVariants,
-            },
-            range: replacementRange,
-          },
-          state.editor.capabilities.itemDefaults,
-        )
+          item.label = `${prefix}:${item.label}`
+
+          if (item.textEditText) {
+            item.textEditText = `${prefix}:${item.textEditText}`
+          }
+
+          return item
+        })
       }
 
       // The first variant is not the prefix: don't suggest anything
-      if (existingVariants[0] !== prefix) {
+      if (existingVariants.length > 0 && existingVariants[0] !== prefix) {
         return null
       }
     }
@@ -327,6 +296,10 @@ export function completionsFromClassList(
 
             if (color && typeof color !== 'string') {
               documentation = formatColor(color)
+            }
+
+            if (prefix.length > 0 && existingVariants.length === 0) {
+              className = `${prefix}:${className}`
             }
 
             items.push({
@@ -728,8 +701,9 @@ async function provideClassAttributeCompletions(
   position: Position,
   context?: CompletionContext,
 ): Promise<CompletionList> {
+  let current = document.offsetAt(position)
   let range: Range = {
-    start: document.positionAt(Math.max(0, document.offsetAt(position) - SEARCH_RANGE)),
+    start: document.positionAt(Math.max(0, current - SEARCH_RANGE)),
     end: position,
   }
 
@@ -746,6 +720,29 @@ async function provideClassAttributeCompletions(
   let settings = (await state.editor.getConfiguration(document.uri)).tailwindCSS
 
   let matches = matchClassAttributes(str, settings.classAttributes)
+
+  let boundaries = getLanguageBoundaries(state, document)
+
+  for (let boundary of boundaries ?? []) {
+    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
+    if (!isJsContext) continue
+    if (!settings.classFunctions?.length) continue
+    if (!isWithinRange(position, boundary.range)) continue
+
+    let str = document.getText(boundary.range)
+    let offset = document.offsetAt(boundary.range.start)
+    let fnMatches = matchClassFunctions(str, settings.classFunctions)
+
+    for (let match of fnMatches) {
+      if (match.index) match.index += offset
+      if (match.index > current) continue
+
+      matches.push(match)
+    }
+  }
+
+  // Make sure matches are sorted by index
+  matches.sort((a, b) => a.index - b.index)
 
   if (matches.length === 0) {
     return null
@@ -992,7 +989,11 @@ async function provideClassNameCompletions(
     return provideAtApplyCompletions(state, document, position, context)
   }
 
-  if (isHtmlContext(state, document, position) || isJsxContext(state, document, position)) {
+  if (
+    isHtmlContext(state, document, position) ||
+    isJsContext(state, document, position) ||
+    isJsxContext(state, document, position)
+  ) {
     return provideClassAttributeCompletions(state, document, position, context)
   }
 
@@ -1016,7 +1017,7 @@ function provideCssHelperCompletions(
 
   const match = text
     .substr(0, text.length - 1) // don't include that extra character from earlier
-    .match(/[\s:;/*(){}](?<helper>config|theme|--theme)\(\s*['"]?(?<path>[^)'"]*)$/)
+    .match(/[\s:;/*(){}](?<helper>config|theme|--theme|var)\(\s*['"]?(?<path>[^)'"]*)$/d)
 
   if (match === null) {
     return null
@@ -1042,17 +1043,15 @@ function provideCssHelperCompletions(
     end: position,
   }
 
-  if (state.v4 && match.groups.helper === '--theme') {
-    // List known theme keys
-    let validThemeKeys = resolveKnownThemeKeys(state.designSystem)
+  if (
+    state.v4 &&
+    (match.groups.helper === '--theme' ||
+      match.groups.helper === 'theme' ||
+      match.groups.helper === 'var')
+  ) {
+    let items: CompletionItem[] = themeKeyCompletions(state)
 
-    let items: CompletionItem[] = validThemeKeys.map((themeKey, index) => {
-      return {
-        label: themeKey,
-        sortText: naturalExpand(index, validThemeKeys.length),
-        kind: 9,
-      }
-    })
+    editRange.start.character = match.indices.groups.helper[1] + 1
 
     return withDefaults(
       { isIncomplete: false, items },
@@ -1066,6 +1065,8 @@ function provideCssHelperCompletions(
       state.editor.capabilities.itemDefaults,
     )
   }
+
+  if (match.groups.helper === 'var') return null
 
   let base = match.groups.helper === 'config' ? state.config : dlv(state.config, 'theme', {})
   let parts = path.split(/([\[\].]+)/)
@@ -1872,6 +1873,19 @@ function provideCssDirectiveCompletions(
       },
     })
 
+    if (state.features.includes('source-not')) {
+      items.push({
+        label: '@source not',
+        documentation: {
+          kind: 'markdown' as typeof MarkupKind.Markdown,
+          value: `Use the \`@source not\` directive to ignore files when scanning.\n\n[Tailwind CSS Documentation](${docsUrl(
+            state.version,
+            'functions-and-directives/#source',
+          )})`,
+        },
+      })
+    }
+
     items.push({
       label: '@plugin',
       documentation: {
@@ -2214,7 +2228,7 @@ export async function doComplete(
   document: TextDocument,
   position: Position,
   context?: CompletionContext,
-) {
+): Promise<CompletionList | null> {
   if (state === null) return { items: [], isIncomplete: false }
 
   const result =
@@ -2266,7 +2280,10 @@ export async function resolveCompletionItem(
   if (state.v4) {
     if (item.kind === 9) return item
     if (item.detail && item.documentation) return item
+
+    let base = state.designSystem.compile([className])[0]
     let root = state.designSystem.compile([[...variants, className].join(state.separator)])[0]
+
     let rules = root.nodes.filter((node) => node.type === 'rule')
     if (rules.length === 0) return item
 
@@ -2274,16 +2291,26 @@ export async function resolveCompletionItem(
       if (rules.length === 1) {
         let decls: postcss.Declaration[] = []
 
-        root.walkDecls((node) => {
+        // Remove any `@property` rules
+        base = base.clone()
+        base.walkAtRules((rule) => {
+          // Ignore declarations inside `@property` rules
+          if (rule.name === 'property') {
+            rule.remove()
+          }
+
+          // Ignore declarations @supports (-moz-orient: inline)
+          // this is a hack used for `@property` fallbacks in Firefox
+          if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
+            rule.remove()
+          }
+        })
+
+        base.walkDecls((node) => {
           decls.push(node)
         })
 
-        item.detail = await jit.stringifyDecls(
-          state,
-          postcss.rule({
-            nodes: decls,
-          }),
-        )
+        item.detail = await jit.stringifyDecls(state, postcss.rule({ nodes: decls }))
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -2474,4 +2501,38 @@ async function knownUtilityFunctionArguments(state: State, fn: UtilityFn): Promi
   })
 
   return args
+}
+
+export function themeKeyCompletions(state: State): CompletionItem[] {
+  if (!state.v4) return null
+  if (!state.designSystem) return null
+
+  let knownThemeKeys = resolveKnownThemeKeys(state.designSystem)
+
+  return knownThemeKeys.map((themeKey, index) => {
+    let value = state.designSystem.resolveThemeValue(themeKey, true)
+    let documentation: string | undefined
+
+    let color = getColorFromValue(value)
+    if (color !== null) {
+      if (typeof color !== 'string' && (color.alpha ?? 1) !== 0) {
+        documentation = formatColor(color)
+      }
+
+      return {
+        label: themeKey,
+        kind: CompletionItemKind.Color,
+        sortText: naturalExpand(index, knownThemeKeys.length),
+        detail: value,
+        documentation,
+      }
+    }
+
+    return {
+      label: themeKey,
+      kind: CompletionItemKind.Variable,
+      sortText: naturalExpand(index, knownThemeKeys.length),
+      detail: value,
+    }
+  })
 }

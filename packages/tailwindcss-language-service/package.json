@@ -1,6 +1,6 @@
 {
   "name": "@tailwindcss/language-service",
-  "version": "0.14.9",
+  "version": "0.14.16",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
@@ -13,8 +13,9 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@csstools/css-parser-algorithms": "2.1.1",
-    "@csstools/css-tokenizer": "2.1.1",
+    "@csstools/css-calc": "2.1.2",
+    "@csstools/css-parser-algorithms": "3.0.4",
+    "@csstools/css-tokenizer": "3.0.3",
     "@csstools/media-query-list-parser": "2.0.4",
     "@types/culori": "^2.1.0",
     "@types/moo": "0.5.3",
@@ -37,18 +38,21 @@
     "tmp-cache": "1.1.0",
     "vscode-emmet-helper-bundled": "0.0.1",
     "vscode-languageserver": "8.1.0",
-    "vscode-languageserver-textdocument": "1.0.11"
+    "vscode-languageserver-textdocument": "1.0.12"
   },
   "devDependencies": {
+    "@types/braces": "3.0.1",
     "@types/css.escape": "^1.5.2",
+    "@types/dedent": "^0.7.2",
     "@types/line-column": "^1.0.2",
     "@types/node": "^18.19.33",
     "@types/stringify-object": "^4.0.5",
+    "dedent": "^1.5.3",
     "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
     "tslib": "2.2.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.6.1"
+    "vitest": "^3.0.9"
   }
 }

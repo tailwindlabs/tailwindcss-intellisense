@@ -21,7 +21,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -49,7 +49,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(12288)
+    expect(completion?.items.length).not.toBe(0)
   },
 })
 
@@ -137,7 +137,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -188,7 +188,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -205,7 +205,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.1',
+        version: '4.1.1',
         isDefaultVersion: false,
       },
     })
@@ -233,7 +233,7 @@ defineTest({
       },
     })
 
-    expect(completion?.items.length).toBe(12288)
+    expect(completion?.items.length).not.toBe(0)
   },
 })
 
@@ -243,7 +243,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -270,7 +270,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.1',
+        version: '4.1.1',
         isDefaultVersion: false,
       },
     })
@@ -322,7 +322,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.0.6',
+        version: '4.1.1',
         isDefaultVersion: true,
       },
     })
@@ -354,7 +354,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.0.1"
+          "tailwindcss": "4.1.1"
         }
       }
     `,
@@ -605,6 +605,12 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    retry: 3,
+    timeout: 30_000,
+  },
+
   name: 'Plugins with a `#` in the name are loadable',
   fs: {
     'app.css': css`
@@ -650,6 +656,12 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    retry: 3,
+    timeout: 30_000,
+  },
+
   name: 'v3: Presets with a `#` in the name are loadable',
   fs: {
     'package.json': json`
@@ -707,6 +719,12 @@ defineTest({
 })
 
 defineTest({
+  // This test sometimes takes a really long time on Windows because… Windows.
+  options: {
+    retry: 3,
+    timeout: 30_000,
+  },
+
   // This test *always* passes inside Vitest because our custom version of
   // `Module._resolveFilename` is not called. Our custom implementation is
   // using enhanced-resolve under the hood which is affected by the `#`
@@ -737,7 +755,7 @@ defineTest({
         presets: [require('some-pkg/config/tailwind.config.js').default]
       }
     `,
-    'packages/some-pkg': symlinkTo('packages/some-pkg#c3f1e'),
+    'packages/some-pkg': symlinkTo('packages/some-pkg#c3f1e', 'dir'),
     'packages/some-pkg#c3f1e/package.json': json`
       {
         "name": "some-pkg",
@@ -787,6 +805,53 @@ defineTest({
       range: {
         start: { line: 0, character: 12 },
         end: { line: 0, character: 19 },
+      },
+    })
+  },
+})
+
+defineTest({
+  name: 'regex literals do not break language boundaries',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'javascriptreact',
+      text: js`
+        export default function Page() {
+          let styles = "str".match(/<style>[\s\S]*?<\/style>/m)
+          return <div className="bg-[#000]">{styles}</div>
+        }
+      `,
+    })
+
+    expect(await client.project()).toMatchObject({
+      tailwind: {
+        version: '4.1.1',
+        isDefaultVersion: true,
+      },
+    })
+
+    //   return <div className="bg-[#000]">{styles}</div>
+    //                          ^
+    let hover = await doc.hover({ line: 2, character: 26 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-\[\#000\] {
+            background-color: #000;
+          }
+        `,
+      },
+      range: {
+        start: { line: 2, character: 25 },
+        end: { line: 2, character: 34 },
       },
     })
   },

@@ -1,6 +1,8 @@
+import * as fs from 'node:fs/promises'
 import { expect, test } from 'vitest'
 import { withFixture } from '../common'
-import * as fs from 'node:fs/promises'
+import { css, defineTest } from '../../src/testing'
+import { createClient } from '../utils/client'
 
 withFixture('basic', (c) => {
   function testFixture(fixture) {
@@ -382,4 +384,44 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+})
+
+defineTest({
+  name: 'Shows warning when using blocklisted classes',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @source not inline("{,hover:}flex");
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="flex underline hover:flex">',
+    })
+
+    let diagnostics = await doc.diagnostics()
+
+    expect(diagnostics).toEqual([
+      {
+        code: 'usedBlocklistedClass',
+        message: 'The class "flex" will not be generated as it has been blocklisted',
+        range: {
+          start: { line: 0, character: 12 },
+          end: { line: 0, character: 16 },
+        },
+        severity: 2,
+      },
+      {
+        code: 'usedBlocklistedClass',
+        message: 'The class "hover:flex" will not be generated as it has been blocklisted',
+        range: {
+          start: { line: 0, character: 27 },
+          end: { line: 0, character: 37 },
+        },
+        severity: 2,
+      },
+    ])
+  },
 })

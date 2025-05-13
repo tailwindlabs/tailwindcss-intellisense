@@ -4,6 +4,7 @@ import type { Postcss } from 'postcss'
 import type { KeywordColor } from './color'
 import type * as culori from 'culori'
 import type { DesignSystem } from './v4'
+import type { Feature } from '../features'
 
 export type ClassNamesTree = {
   [key: string]: ClassNamesTree
@@ -46,8 +47,10 @@ export type TailwindCssSettings = {
   emmetCompletions: boolean
   includeLanguages: Record<string, string>
   classAttributes: string[]
+  classFunctions: string[]
   suggestions: boolean
   hovers: boolean
+  codeLens: boolean
   codeActions: boolean
   validate: boolean
   showPixelEquivalents: boolean
@@ -62,9 +65,10 @@ export type TailwindCssSettings = {
     invalidTailwindDirective: DiagnosticSeveritySetting
     invalidSourceDirective: DiagnosticSeveritySetting
     recommendedVariantOrder: DiagnosticSeveritySetting
+    usedBlocklistedClass: DiagnosticSeveritySetting
   }
   experimental: {
-    classRegex: string[]
+    classRegex: string[] | [string, string][]
     configFile: string | Record<string, string | string[]> | null
   }
   files: {
@@ -140,6 +144,7 @@ export interface State {
   classListContainsMetadata?: boolean
   pluginVersions?: string
   completionItemData?: Record<string, any>
+  features: Feature[]
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 
@@ -157,7 +162,7 @@ export type DocumentClassName = {
 }
 
 export type DocumentHelperFunction = {
-  helper: 'theme' | 'config'
+  helper: 'theme' | 'config' | 'var'
   path: string
   ranges: {
     full: Range
@@ -170,4 +175,111 @@ export type ClassNameMeta = {
   pseudo: string[]
   scope: string[]
   context: string[]
+}
+
+/**
+ * @internal
+ */
+export function getDefaultTailwindSettings(): Settings {
+  return {
+    editor: { tabSize: 2 },
+    tailwindCSS: {
+      inspectPort: null,
+      emmetCompletions: false,
+      classAttributes: ['class', 'className', 'ngClass', 'class:list'],
+      classFunctions: [],
+      codeActions: true,
+      codeLens: true,
+      hovers: true,
+      suggestions: true,
+      validate: true,
+      colorDecorators: true,
+      rootFontSize: 16,
+      lint: {
+        cssConflict: 'warning',
+        invalidApply: 'error',
+        invalidScreen: 'error',
+        invalidVariant: 'error',
+        invalidConfigPath: 'error',
+        invalidTailwindDirective: 'error',
+        invalidSourceDirective: 'error',
+        recommendedVariantOrder: 'warning',
+        usedBlocklistedClass: 'warning',
+      },
+      showPixelEquivalents: true,
+      includeLanguages: {},
+      files: {
+        exclude: [
+          // These paths need to be universally ignorable. This means that we
+          // should only consider hidden folders with a commonly understood
+          // meaning unless there is a very good reason to do otherwise.
+          //
+          // This means that things like `build`, `target`, `cache`, etc… are
+          // not appropriate to include even though _in many cases_ they might
+          // be ignorable. The names are too general and ignoring them could
+          // cause us to ignore actual project files.
+
+          // Version Control
+          '**/.git/**',
+          '**/.hg/**',
+          '**/.svn/**',
+
+          // NPM
+          '**/node_modules/**',
+
+          // Yarn v2+ metadata & caches
+          '**/.yarn/**',
+
+          // Python Virtual Environments
+          '**/.venv/**',
+          '**/venv/**',
+
+          // Build caches
+          '**/.next/**',
+          '**/.parcel-cache/**',
+          '**/.svelte-kit/**',
+          '**/.turbo/**',
+          '**/__pycache__/**',
+        ],
+      },
+      experimental: {
+        classRegex: [],
+        configFile: null,
+      },
+    },
+  }
+}
+
+/**
+ *  @internal
+ */
+export function createState(
+  partial: Omit<Partial<State>, 'editor'> & {
+    editor?: Partial<EditorState>
+  },
+): State {
+  return {
+    enabled: true,
+    features: [],
+    blocklist: [],
+    ...partial,
+    editor: {
+      get connection(): Connection {
+        throw new Error('Not implemented')
+      },
+      folder: '/',
+      userLanguages: {},
+      capabilities: {
+        configuration: true,
+        diagnosticRelatedInformation: true,
+        itemDefaults: [],
+      },
+      getConfiguration: () => {
+        throw new Error('Not implemented')
+      },
+      getDocumentSymbols: async () => [],
+      readDirectory: async () => [],
+      ...partial.editor,
+    },
+  }
 }

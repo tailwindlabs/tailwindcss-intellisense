@@ -4,7 +4,7 @@ import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
 import { addThemeValues, inlineThemeValues } from './rewriting'
 
-export function bigSign(bigIntValue) {
+export function bigSign(bigIntValue: number | bigint): number {
   // @ts-ignore
   return (bigIntValue > 0n) - (bigIntValue < 0n)
 }

@@ -5,11 +5,11 @@ import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
 import { isHtmlContext, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
-import { isJsxContext } from './js'
+import { isJsContext } from './js'
 import { dedupeByRange, flatten } from './array'
 import { getClassAttributeLexer, getComputedClassAttributeLexer } from './lexers'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
-import { resolveRange } from './resolveRange'
+import { absoluteRange } from './absoluteRange'
 import { getTextWithoutComments } from './doc'
 import { isSemicolonlessCssLanguage } from './languages'
 import { customClassesIn } from './classes'
@@ -164,20 +164,66 @@ export function matchClassAttributes(text: string, attributes: string[]): RegExp
   return findAll(new RegExp(re.source.replace('ATTRS', attrs.join('|')), 'gi'), text)
 }
 
+export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatchArray[] {
+  // 1. Validate the list of function name patterns provided by the user
+  let names = fnNames.filter((x) => typeof x === 'string')
+  if (names.length === 0) return []
+
+  // 2. Extract function names in the document
+  // This is intentionally scoped to JS syntax for now but should be extended to
+  // other languages in the future
+  //
+  // This regex the JS pattern for an identifier + function call with some
+  // additional constraints:
+  //
+  // - It needs to be in an expression position — so it must be preceded by
+  // whitespace, parens, curlies, commas, whitespace, etc…
+  // - It must look like a fn call or a tagged template literal
+  let FN_NAMES = /(?<=^|[:=,;\s{()])([\p{ID_Start}$_][\p{ID_Continue}$_.]*)[(`]/dgiu
+  let foundFns = findAll(FN_NAMES, text)
+
+  // 3. Match against the function names in the document
+  let re = /^(NAMES)$/
+  let isClassFn = new RegExp(re.source.replace('NAMES', names.join('|')), 'i')
+
+  let matches = foundFns.filter((fn) => isClassFn.test(fn[1]))
+
+  return matches
+}
+
 export async function findClassListsInHtmlRange(
   state: State,
   doc: TextDocument,
   type: 'html' | 'js' | 'jsx',
   range?: Range,
 ): Promise<DocumentClassList[]> {
+  if (!state.editor) return []
+
   const text = getTextWithoutComments(doc, type, range)
 
-  const matches = matchClassAttributes(
-    text,
-    (await state.editor.getConfiguration(doc.uri)).tailwindCSS.classAttributes,
-  )
+  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
+  const matches = matchClassAttributes(text, settings.classAttributes)
 
-  const result: DocumentClassList[] = []
+  let boundaries = getLanguageBoundaries(state, doc)
+
+  for (let boundary of boundaries ?? []) {
+    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
+    if (!isJsContext) continue
+    if (!settings.classFunctions?.length) continue
+
+    let str = doc.getText(boundary.range)
+    let offset = doc.offsetAt(boundary.range.start)
+    let fnMatches = matchClassFunctions(str, settings.classFunctions)
+
+    fnMatches.forEach((match) => {
+      if (match.index) match.index += offset
+    })
+
+    matches.push(...fnMatches)
+  }
+
+  const existingResultSet = new Set<string>()
+  const results: DocumentClassList[] = []
 
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
@@ -222,46 +268,53 @@ export async function findClassListsInHtmlRange(
       })
     }
 
-    result.push(
-      ...classLists
-        .map(({ value, offset }) => {
-          if (value.trim() === '') {
-            return null
-          }
+    classLists.forEach(({ value, offset }) => {
+      if (value.trim() === '') {
+        return null
+      }
 
-          const before = value.match(/^\s*/)
-          const beforeOffset = before === null ? 0 : before[0].length
-          const after = value.match(/\s*$/)
-          const afterOffset = after === null ? 0 : -after[0].length
+      const before = value.match(/^\s*/)
+      const beforeOffset = before === null ? 0 : before[0].length
+      const after = value.match(/\s*$/)
+      const afterOffset = after === null ? 0 : -after[0].length
 
-          const start = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + beforeOffset,
-          )
-          const end = indexToPosition(
-            text,
-            match.index + match[0].length - 1 + offset + value.length + afterOffset,
-          )
+      const start = indexToPosition(text, match.index + match[0].length - 1 + offset + beforeOffset)
+      const end = indexToPosition(
+        text,
+        match.index + match[0].length - 1 + offset + value.length + afterOffset,
+      )
 
-          return {
-            classList: value.substr(beforeOffset, value.length + afterOffset),
-            range: {
-              start: {
-                line: (range?.start.line || 0) + start.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
-              },
-              end: {
-                line: (range?.start.line || 0) + end.line,
-                character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
-              },
-            },
-          }
-        })
-        .filter((x) => x !== null),
-    )
+      const result: DocumentClassList = {
+        classList: value.substr(beforeOffset, value.length + afterOffset),
+        range: {
+          start: {
+            line: (range?.start.line || 0) + start.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
+          },
+          end: {
+            line: (range?.start.line || 0) + end.line,
+            character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
+          },
+        },
+      }
+
+      const resultKey = [
+        result.classList,
+        result.range.start.line,
+        result.range.start.character,
+        result.range.end.line,
+        result.range.end.character,
+      ].join(':')
+
+      // No need to add the result if it was already matched
+      if (!existingResultSet.has(resultKey)) {
+        existingResultSet.add(resultKey)
+        results.push(result)
+      }
+    })
   })
 
-  return result
+  return results
 }
 
 export async function findClassListsInRange(
@@ -350,13 +403,12 @@ export function findHelperFunctionsInRange(
   doc: TextDocument,
   range?: Range,
 ): DocumentHelperFunction[] {
-  const text = getTextWithoutComments(doc, 'css', range)
-  let matches = findAll(
-    /(?<prefix>[\W])(?<helper>config|theme|--theme)(?<innerPrefix>\(\s*)(?<path>[^)]*?)\s*\)/g,
-    text,
-  )
+  let text = getTextWithoutComments(doc, 'css', range)
 
-  // Eliminate matches that are on an `@import`
+  // Find every instance of a helper function
+  let matches = findAll(/\b(?<helper>config|theme|--theme|var)\(/g, text)
+
+  // Eliminate matches that are attached to an `@import`
   matches = matches.filter((match) => {
     // Scan backwards to see if we're in an `@import` statement
     for (let i = match.index - 1; i >= 0; i--) {
@@ -374,56 +426,157 @@ export function findHelperFunctionsInRange(
     return true
   })
 
-  return matches.map((match) => {
-    let quotesBefore = ''
-    let path = match.groups.path
-    let commaIndex = getFirstCommaIndex(path)
-    if (commaIndex !== null) {
-      path = path.slice(0, commaIndex).trimEnd()
-    }
-    path = path.replace(/['"]+$/, '').replace(/^['"]+/, (m) => {
-      quotesBefore = m
-      return ''
-    })
-    let matches = path.match(/^([^\s]+)(?![^\[]*\])(?:\s*\/\s*([^\/\s]+))$/)
-    if (matches) {
-      path = matches[1]
-    }
-    path = path.replace(/['"]*\s*$/, '')
+  let fns: DocumentHelperFunction[] = []
 
-    let startIndex =
-      match.index +
-      match.groups.prefix.length +
-      match.groups.helper.length +
-      match.groups.innerPrefix.length
+  // Collect the first argument of each fn accounting for balanced params
+  const COMMA = 0x2c
+  const SLASH = 0x2f
+  const BACKSLASH = 0x5c
+  const OPEN_PAREN = 0x28
+  const CLOSE_PAREN = 0x29
+  const DOUBLE_QUOTE = 0x22
+  const SINGLE_QUOTE = 0x27
 
-    let helper: 'config' | 'theme' = 'config'
+  let len = text.length
+
+  for (let match of matches) {
+    let argsStart = match.index + match[0].length
+    let argsEnd = null
+    let pathStart = argsStart
+    let pathEnd = null
+    let depth = 1
+
+    // Scan until we find a `,` or balanced `)` not in quotes
+    for (let idx = argsStart; idx < len; ++idx) {
+      let char = text.charCodeAt(idx)
+
+      if (char === BACKSLASH) {
+        idx += 1
+      }
+
+      //
+      else if (char === SINGLE_QUOTE || char === DOUBLE_QUOTE) {
+        while (++idx < len) {
+          let nextChar = text.charCodeAt(idx)
+          if (nextChar === BACKSLASH) {
+            idx += 1
+            continue
+          }
+          if (nextChar === char) break
+        }
+      }
+
+      //
+      else if (char === OPEN_PAREN) {
+        depth += 1
+      }
+
+      //
+      else if (char === CLOSE_PAREN) {
+        depth -= 1
+
+        if (depth === 0) {
+          pathEnd ??= idx
+          argsEnd = idx
+          break
+        }
+      }
+
+      //
+      else if (char === COMMA && depth === 1) {
+        pathEnd ??= idx
+      }
+    }
+
+    if (argsEnd === null) continue
+
+    let helper: 'config' | 'theme' | 'var'
 
     if (match.groups.helper === 'theme' || match.groups.helper === '--theme') {
       helper = 'theme'
+    } else if (match.groups.helper === 'var') {
+      helper = 'var'
+    } else if (match.groups.helper === 'config') {
+      helper = 'config'
+    } else {
+      continue
     }
 
-    return {
+    let path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing whitespace
+    pathStart += path.match(/^\s+/)?.length ?? 0
+    pathEnd -= path.match(/\s+$/)?.length ?? 0
+
+    // Skip leading/trailing quotes
+    let quoteStart = path.match(/^['"]+/)?.length ?? 0
+    let quoteEnd = path.match(/['"]+$/)?.length ?? 0
+
+    if (quoteStart && quoteEnd) {
+      pathStart += quoteStart
+      pathEnd -= quoteEnd
+    }
+
+    // Clip to the top-level slash
+    depth = 1
+    for (let idx = pathStart; idx < pathEnd; ++idx) {
+      let char = text.charCodeAt(idx)
+      if (char === BACKSLASH) {
+        idx += 1
+      } else if (char === OPEN_PAREN) {
+        depth += 1
+      } else if (char === CLOSE_PAREN) {
+        depth -= 1
+      } else if (char === SLASH && depth === 1) {
+        pathEnd = idx
+      }
+    }
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing whitespace
+    //
+    // This can happen if we've clipped the path down to before the `/`
+    pathStart += path.match(/^\s+/)?.length ?? 0
+    pathEnd -= path.match(/\s+$/)?.length ?? 0
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    // Skip leading/trailing quotes
+    quoteStart = path.match(/^['"]+/)?.length ?? 0
+    quoteEnd = path.match(/['"]+$/)?.length ?? 0
+
+    pathStart += quoteStart
+    pathEnd -= quoteEnd
+
+    // Re-slice
+    path = text.slice(pathStart, pathEnd)
+
+    fns.push({
       helper,
       path,
       ranges: {
-        full: resolveRange(
+        full: absoluteRange(
           {
-            start: indexToPosition(text, startIndex),
-            end: indexToPosition(text, startIndex + match.groups.path.length),
+            start: indexToPosition(text, argsStart),
+            end: indexToPosition(text, argsEnd),
           },
           range,
         ),
-        path: resolveRange(
+        path: absoluteRange(
           {
-            start: indexToPosition(text, startIndex + quotesBefore.length),
-            end: indexToPosition(text, startIndex + quotesBefore.length + path.length),
+            start: indexToPosition(text, pathStart),
+            end: indexToPosition(text, pathEnd),
           },
           range,
         ),
       },
-    }
-  })
+    })
+  }
+
+  return fns
 }
 
 export function indexToPosition(str: string, index: number): Position {
@@ -471,7 +624,7 @@ export async function findClassNameAtPosition(
     classNames = await findClassNamesInRange(state, doc, searchRange, 'css')
   } else if (isHtmlContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'html')
-  } else if (isJsxContext(state, doc, position)) {
+  } else if (isJsContext(state, doc, position)) {
     classNames = await findClassNamesInRange(state, doc, searchRange, 'jsx')
   } else {
     classNames = await findClassNamesInRange(state, doc, searchRange)

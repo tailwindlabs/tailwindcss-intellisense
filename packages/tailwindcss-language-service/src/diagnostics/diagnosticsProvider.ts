@@ -9,6 +9,7 @@ import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnosti
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
 import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
+import { getUsedBlocklistedClassDiagnostics } from './getUsedBlocklistedClassDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -22,6 +23,7 @@ export async function doValidate(
     DiagnosticKind.InvalidTailwindDirective,
     DiagnosticKind.InvalidSourceDirective,
     DiagnosticKind.RecommendedVariantOrder,
+    DiagnosticKind.UsedBlocklistedClass,
   ],
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
@@ -51,6 +53,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.RecommendedVariantOrder)
           ? await getRecommendedVariantOrderDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.UsedBlocklistedClass)
+          ? await getUsedBlocklistedClassDiagnostics(state, document, settings)
           : []),
       ]
     : []

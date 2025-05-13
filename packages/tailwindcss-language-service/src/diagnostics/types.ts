@@ -10,6 +10,7 @@ export enum DiagnosticKind {
   InvalidTailwindDirective = 'invalidTailwindDirective',
   InvalidSourceDirective = 'invalidSourceDirective',
   RecommendedVariantOrder = 'recommendedVariantOrder',
+  UsedBlocklistedClass = 'usedBlocklistedClass',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -100,6 +101,16 @@ export function isRecommendedVariantOrderDiagnostic(
   return diagnostic.code === DiagnosticKind.RecommendedVariantOrder
 }
 
+export type UsedBlocklistedClassDiagnostic = Diagnostic & {
+  code: DiagnosticKind.UsedBlocklistedClass
+}
+
+export function isUsedBlocklistedClass(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is UsedBlocklistedClassDiagnostic {
+  return diagnostic.code === DiagnosticKind.UsedBlocklistedClass
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -109,3 +120,4 @@ export type AugmentedDiagnostic =
   | InvalidTailwindDirectiveDiagnostic
   | InvalidSourceDirectiveDiagnostic
   | RecommendedVariantOrderDiagnostic
+  | UsedBlocklistedClassDiagnostic

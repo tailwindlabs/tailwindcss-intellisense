@@ -1,5 +1,6 @@
 import type { State } from './state'
 import * as jit from './jit'
+import { segment } from './segment'
 
 export function getVariantsFromClassName(
   state: State,
@@ -13,60 +14,58 @@ export function getVariantsFromClassName(
     }
     return [variant.name]
   })
-  let variants = new Set<string>()
-  let offset = 0
-  let parts = splitAtTopLevelOnly(className, state.separator)
+
+  let parts = segment(className, state.separator)
   if (parts.length < 2) {
-    return { variants: Array.from(variants), offset }
+    return { variants: [], offset: 0 }
   }
+
   parts = parts.filter(Boolean)
 
-  for (let part of parts) {
-    if (
-      allVariants.includes(part) ||
-      (state.jit &&
-        ((part.includes('[') && part.endsWith(']')) || part.includes('/')) &&
-        jit.generateRules(state, [`${part}${state.separator}[color:red]`]).rules.length > 0)
-    ) {
-      variants.add(part)
-      offset += part.length + state.separator.length
-      continue
+  function isValidVariant(part: string) {
+    if (allVariants.includes(part)) {
+      return true
     }
 
-    break
-  }
+    let className = `${part}${state.separator}[color:red]`
 
-  return { variants: Array.from(variants), offset }
-}
+    if (state.v4) {
+      // NOTE: This should never happen
+      if (!state.designSystem) return false
 
-// https://github.com/tailwindlabs/tailwindcss/blob/a8a2e2a7191fbd4bee044523aecbade5823a8664/src/util/splitAtTopLevelOnly.js
-function splitAtTopLevelOnly(input: string, separator: string): string[] {
-  let stack: string[] = []
-  let parts: string[] = []
-  let lastPos = 0
+      let prefix = state.designSystem.theme.prefix ?? ''
 
-  for (let idx = 0; idx < input.length; idx++) {
-    let char = input[idx]
+      if (prefix !== '') {
+        className = `${prefix}:${className}`
+      }
 
-    if (stack.length === 0 && char === separator[0]) {
-      if (separator.length === 1 || input.slice(idx, idx + separator.length) === separator) {
-        parts.push(input.slice(lastPos, idx))
-        lastPos = idx + separator.length
+      // We don't use `compile()` so there's no overhead from PostCSS
+      let compiled = state.designSystem.candidatesToCss([className])
+
+      // NOTE: This should never happen
+      if (compiled.length !== 1) return false
+
+      return compiled[0] !== null
+    }
+
+    if (state.jit) {
+      if ((part.includes('[') && part.endsWith(']')) || part.includes('/')) {
+        return jit.generateRules(state, [className]).rules.length > 0
       }
     }
 
-    if (char === '(' || char === '[' || char === '{') {
-      stack.push(char)
-    } else if (
-      (char === ')' && stack[stack.length - 1] === '(') ||
-      (char === ']' && stack[stack.length - 1] === '[') ||
-      (char === '}' && stack[stack.length - 1] === '{')
-    ) {
-      stack.pop()
-    }
+    return false
   }
 
-  parts.push(input.slice(lastPos))
+  let offset = 0
+  let variants = new Set<string>()
 
-  return parts
+  for (let part of parts) {
+    if (!isValidVariant(part)) break
+
+    variants.add(part)
+    offset += part.length + state.separator!.length
+  }
+
+  return { variants: Array.from(variants), offset }
 }

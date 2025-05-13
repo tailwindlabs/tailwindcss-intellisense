@@ -186,6 +186,11 @@ export function getInvalidConfigPathDiagnostics(
 
   findHelperFunctionsInDocument(state, document).forEach((helperFn) => {
     let base = helperFn.helper === 'theme' ? ['theme'] : []
+
+    // var(…) may not refer to theme values but other values in the cascade
+    // so they can't be unconditionally validated
+    if (helperFn.helper === 'var') return
+
     let result = validateConfigPath(state, helperFn.path, base)
 
     if (result.isValid === true) {

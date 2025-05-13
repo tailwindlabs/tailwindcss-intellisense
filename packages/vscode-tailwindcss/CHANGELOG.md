@@ -2,7 +2,64 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Improve dynamic capability registration in the language server ([#1327](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1327))
+- Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Ignore some build caches by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
+- Gracefully handle color parsing failures ([#1363](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1363))
+- Calculate swatches for HSL colors with angular units ([#1360](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1360))
+- Fix error when using VSCode < 1.78 ([#1353](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1353))
+- Don’t skip suggesting empty variant implementations ([#1352](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1352))
+- Handle helper function lookups in nested parens ([#1354](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1354))
+- Hide `@property` declarations from completion details ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
+- Hide variant-provided declarations from completion details for a utility ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
+
+# 0.14.16
+
+- Warn when using a blocklisted class in v4 ([#1310](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1310))
+- Support class function hovers in Svelte and HTML `<script>` blocks ([#1311](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1311))
+- Evaluate complex `calc(…)` expressions in completions and equivalents ([#1316](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1316))
+- Guard against recursive theme key lookup ([#1332](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1332))
+
+# 0.14.15
+
+- Prevent infinite loop when any file exclusion starts with `/` ([#1307](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1307))
+
+# 0.14.14
+
+- Only scan the file system once when needed ([#1287](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1287))
+- Don't follow recursive symlinks when searching for projects ([#1270](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1270))
+- Correctly re-create a project when its main config file is removed then re-created ([#1300](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1300))
+- Bump `@parcel/watcher` used by the language server ([#1269](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1269))
+
+# 0.14.13
+
+- Hide completions from CSS language server inside `@import "…" source(…)` ([#1091](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1091))
+- Bump bundled v4 fallback to v4.1.1 ([#1294](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1294))
+- Show color swatches for most new v4.1 utilities ([#1294](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1294))
+- Support theme key hovers in the CSS `var()` function ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
+- Show theme key hovers inside `@theme` for better context and syntax highlighting ([#1289](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1289))
+
+# 0.14.12
+
+- Fix content detection when using v4.0+ ([#1280](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1280))
+- Ensure file exclusions always work on Windows ([#1281](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1281))
+- Prep for new Oxide API in v4.1 ([#1284](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1284))
+- Handle negated sources during project discovery in v4.1 ([#1288](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1288))
+
+# 0.14.11
+
+- Fix completions not showing for some class attributes when a class function exists in the document ([#1278](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1278))
+
+# 0.14.10
+
+- Detect classes in JS/TS functions and tagged template literals with the `tailwindCSS.classFunctions` setting ([#1258](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1258), [#1272](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1272))
+- v4: Make sure completions show after variants using arbitrary and bare values ([#1263](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1263))
+- v4: Add support for upcoming `@source not` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
+- v4: Add support for upcoming `@source inline(…)` feature ([#1262](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1262))
+- LSP: Refresh internal caches when settings are updated ([#1273](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1273))
+- LSP: Improve error message when a workspace folder does not exist or is inaccesible to the current user ([#1276](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1276))
+- v4: Show theme key completions in `var(…)` in CSS ([#1274](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1274))
 
 # 0.14.9
 

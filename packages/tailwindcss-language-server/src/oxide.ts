@@ -36,8 +36,8 @@ declare namespace OxideV2 {
   }
 }
 
-// This covers the Oxide API from v4.0.0-alpha.20+
-declare namespace OxideV3 {
+// This covers the Oxide API from v4.0.0-alpha.30+
+declare namespace OxideV3And4 {
   interface GlobEntry {
     base: string
     pattern: string
@@ -58,17 +58,44 @@ declare namespace OxideV3 {
   }
 }
 
+// This covers the Oxide API from v4.1.0+
+declare namespace OxideV5 {
+  interface GlobEntry {
+    base: string
+    pattern: string
+  }
+
+  interface SourceEntry {
+    base: string
+    pattern: string
+    negated: boolean
+  }
+
+  interface ScannerOptions {
+    sources: Array<SourceEntry>
+  }
+
+  interface ScannerConstructor {
+    new (options: ScannerOptions): Scanner
+  }
+
+  interface Scanner {
+    get files(): Array<string>
+    get globs(): Array<GlobEntry>
+  }
+}
+
 interface Oxide {
   scanDir?(options: OxideV1.ScanOptions): OxideV1.ScanResult
   scanDir?(options: OxideV2.ScanOptions): OxideV2.ScanResult
-  Scanner?: OxideV3.ScannerConstructor
+  Scanner?: OxideV3And4.ScannerConstructor | OxideV5.ScannerConstructor
 }
 
 async function loadOxideAtPath(id: string): Promise<Oxide | null> {
   let oxide = await import(id)
 
   // This is a much older, unsupported version of Oxide before v4.0.0-alpha.1
-  if (!oxide.scanDir) return null
+  if (!oxide.scanDir && !oxide.Scanner) return null
 
   return oxide
 }
@@ -78,11 +105,17 @@ interface GlobEntry {
   pattern: string
 }
 
+interface SourceEntry {
+  base: string
+  pattern: string
+  negated: boolean
+}
+
 interface ScanOptions {
   oxidePath: string
   oxideVersion: string
   basePath: string
-  sources: Array<GlobEntry>
+  sources: Array<SourceEntry>
 }
 
 interface ScanResult {
@@ -101,7 +134,7 @@ interface ScanResult {
  * For example, the `sources` option is ignored before v4.0.0-alpha.19.
  */
 export async function scan(options: ScanOptions): Promise<ScanResult | null> {
-  const oxide = await loadOxideAtPath(options.oxidePath)
+  let oxide = await loadOxideAtPath(options.oxidePath)
   if (!oxide) return null
 
   // V1
@@ -118,38 +151,58 @@ export async function scan(options: ScanOptions): Promise<ScanResult | null> {
   }
 
   // V2
-  if (lte(options.oxideVersion, '4.0.0-alpha.19')) {
+  else if (lte(options.oxideVersion, '4.0.0-alpha.19')) {
     let result = oxide.scanDir({
       base: options.basePath,
-      sources: options.sources,
+      sources: options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
     })
 
     return {
       files: result.files,
-      globs: result.globs,
+      globs: result.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
     }
   }
 
   // V3
-  if (lte(options.oxideVersion, '4.0.0-alpha.30')) {
-    let scanner = new oxide.Scanner({
+  else if (lte(options.oxideVersion, '4.0.0-alpha.30')) {
+    let scanner = new (oxide.Scanner as OxideV3And4.ScannerConstructor)({
       detectSources: { base: options.basePath },
-      sources: options.sources,
+      sources: options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
     })
 
     return {
       files: scanner.files,
-      globs: scanner.globs,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
     }
   }
 
   // V4
-  let scanner = new oxide.Scanner({
-    sources: [{ base: options.basePath, pattern: '**/*' }, ...options.sources],
-  })
+  else if (lte(options.oxideVersion, '4.0.9999')) {
+    let scanner = new (oxide.Scanner as OxideV3And4.ScannerConstructor)({
+      sources: [
+        { base: options.basePath, pattern: '**/*' },
+        ...options.sources.map((g) => ({ base: g.base, pattern: g.pattern })),
+      ],
+    })
 
-  return {
-    files: scanner.files,
-    globs: scanner.globs,
+    return {
+      files: scanner.files,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
+    }
+  }
+
+  // V5
+  else {
+    let scanner = new (oxide.Scanner as OxideV5.ScannerConstructor)({
+      sources: [
+        { base: options.basePath, pattern: '**/*', negated: false },
+        ...options.sources.map((g) => ({ base: g.base, pattern: g.pattern, negated: g.negated })),
+      ],
+    })
+
+    return {
+      files: scanner.files,
+      globs: scanner.globs.map((g) => ({ base: g.base, pattern: g.pattern })),
+    }
   }
 }

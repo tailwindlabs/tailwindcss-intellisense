@@ -1,6 +1,6 @@
 {
   "name": "vscode-tailwindcss",
-  "version": "0.14.9",
+  "version": "0.14.16",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Intelligent Tailwind CSS tooling for VS Code",
   "author": "Brad Cornes <hello@bradley.dev>",
@@ -184,6 +184,14 @@
           ],
           "markdownDescription": "The HTML attributes for which to provide class completions, hover previews, linting etc."
         },
+        "tailwindCSS.classFunctions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "The function or tagged template literal names for which to provide class completions, hover previews, linting etc."
+        },
         "tailwindCSS.suggestions": {
           "type": "boolean",
           "default": true,
@@ -200,6 +208,12 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Enable code actions.",
+          "scope": "language-overridable"
+        },
+        "tailwindCSS.codeLens": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable code lens.",
           "scope": "language-overridable"
         },
         "tailwindCSS.colorDecorators": {
@@ -289,6 +303,17 @@
           ],
           "default": "warning",
           "markdownDescription": "Class variants not in the recommended order (applies in [JIT mode](https://tailwindcss.com/docs/just-in-time-mode) only)",
+          "scope": "language-overridable"
+        },
+        "tailwindCSS.lint.usedBlocklistedClass": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "Usage of class names that have been blocklisted via `@source not inline(…)`",
           "scope": "language-overridable"
         },
         "tailwindCSS.experimental.classRegex": {

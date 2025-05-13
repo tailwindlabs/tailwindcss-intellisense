@@ -1,5 +1,5 @@
 import moo from 'moo'
-import { lazy } from './lazy'
+import { Lazy, lazy } from './lazy'
 
 const classAttributeStates: () => { [x: string]: moo.Rules } = () => ({
   doubleClassList: {
@@ -27,6 +27,14 @@ const classAttributeStates: () => { [x: string]: moo.Rules } = () => ({
     startTick: { match: new RegExp('(?<!\\\\)`'), push: 'tickClassList' },
     lbrace: { match: new RegExp('(?<!\\\\)\\{'), push: 'interpBrace' },
     rbrace: { match: new RegExp('(?<!\\\\)\\}'), pop: 1 },
+    text: { match: new RegExp('[\\s\\S]'), lineBreaks: true },
+  },
+  interpParen: {
+    startSingle: { match: new RegExp("(?<!\\\\)'"), push: 'singleClassList' },
+    startDouble: { match: new RegExp('(?<!\\\\)"'), push: 'doubleClassList' },
+    startTick: { match: new RegExp('(?<!\\\\)`'), push: 'tickClassList' },
+    lbrace: { match: new RegExp('(?<!\\\\)\\('), push: 'interpParen' },
+    rbrace: { match: new RegExp('(?<!\\\\)\\)'), pop: 1 },
     text: { match: new RegExp('[\\s\\S]'), lineBreaks: true },
   },
   interpSingle: {
@@ -58,7 +66,7 @@ const simpleClassAttributeStates: { [x: string]: moo.Rules } = {
   },
 }
 
-export const getClassAttributeLexer = lazy(() => {
+export const getClassAttributeLexer: Lazy<moo.Lexer> = lazy(() => {
   let supportsNegativeLookbehind = true
   try {
     new RegExp('(?<!)')
@@ -73,6 +81,7 @@ export const getClassAttributeLexer = lazy(() => {
         start2: { match: "'", push: 'singleClassList' },
         start3: { match: '{', push: 'interpBrace' },
         start4: { match: '`', push: 'tickClassList' },
+        start5: { match: '(', push: 'interpParen' },
       },
       ...classAttributeStates(),
     })
@@ -81,7 +90,7 @@ export const getClassAttributeLexer = lazy(() => {
   return moo.states(simpleClassAttributeStates)
 })
 
-export const getComputedClassAttributeLexer = lazy(() => {
+export const getComputedClassAttributeLexer: Lazy<moo.Lexer> = lazy(() => {
   let supportsNegativeLookbehind = true
   try {
     new RegExp('(?<!)')
