@@ -21,6 +21,7 @@ export const htmlLanguages: string[] = [
   'html-eex',
   'htmldjango',
   'jade',
+  'latte',
   'leaf',
   'liquid',
   'markdown',
