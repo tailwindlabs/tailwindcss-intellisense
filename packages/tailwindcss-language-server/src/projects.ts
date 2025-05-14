@@ -286,7 +286,9 @@ export async function createProjectService(
     )
   }
 
-  function onFileEvents(changes: Array<{ file: string; type: FileChangeType }>): void {
+  async function onFileEvents(
+    changes: Array<{ file: string; type: FileChangeType }>,
+  ): Promise<void> {
     let needsInit = false
     let needsRebuild = false
 
