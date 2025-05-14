@@ -13,6 +13,8 @@
 - Handle helper function lookups in nested parens ([#1354](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1354))
 - Hide `@property` declarations from completion details ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
 - Hide variant-provided declarations from completion details for a utility ([#1356](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1356))
+- Compute correct document selectors when a project is initialized ([#1335](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1335))
+- Fix matching of some content file paths on Windows ([#1335](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1335))
 
 # 0.14.16
 
