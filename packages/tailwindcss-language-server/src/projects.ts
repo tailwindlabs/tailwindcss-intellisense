@@ -80,7 +80,7 @@ import {
   normalizeDriveLetter,
 } from './utils'
 import type { DocumentService } from './documents'
-import type { ProjectConfig } from './project-locator'
+import { calculateDocumentSelectors, type ProjectConfig } from './project-locator'
 import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
@@ -309,16 +309,11 @@ export async function createProjectService(
           projectConfig.configPath &&
           (isConfigFile || isDependency)
         ) {
-          documentSelector = [
-            ...documentSelector.filter(
-              ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE,
-            ),
-            ...getContentDocumentSelectorFromConfigFile(
-              projectConfig.configPath,
-              initialTailwindVersion,
-              projectConfig.folder,
-            ),
-          ]
+          documentSelector = await calculateDocumentSelectors(
+            projectConfig.config,
+            state.features,
+            resolver,
+          )
 
           checkOpenDocuments()
         }
@@ -965,17 +960,12 @@ export async function createProjectService(
 
     /////////////////////
     if (!projectConfig.isUserConfigured) {
-      documentSelector = [
-        ...documentSelector.filter(
-          ({ priority }) => priority !== DocumentSelectorPriority.CONTENT_FILE,
-        ),
-        ...getContentDocumentSelectorFromConfigFile(
-          state.configPath,
-          tailwindcss.version,
-          projectConfig.folder,
-          originalConfig,
-        ),
-      ]
+      documentSelector = await calculateDocumentSelectors(
+        projectConfig.config,
+        state.features,
+        resolver,
+        originalConfig,
+      )
     }
     //////////////////////
 
