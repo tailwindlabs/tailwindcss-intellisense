@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+# 0.14.17
+
 - Improve dynamic capability registration in the language server ([#1327](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1327))
 - Ignore Python virtual env directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
 - Ignore Yarn v2+ metadata & cache directories by default ([#1336](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1336))
