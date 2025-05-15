@@ -9,8 +9,8 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and one of these:
 
 - For v4 and later, a `.css` file that imports a Tailwind CSS stylesheet (e.g. `@import "tailwindcss"`)
-- For v3 and earlier, a stylesheet that points to a config file via `@config`
 - For v3 and earlier, a [Tailwind CSS config file](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
+- For v3 and earlier, a stylesheet that points to a config file via `@config`
 
 ## Features
 
