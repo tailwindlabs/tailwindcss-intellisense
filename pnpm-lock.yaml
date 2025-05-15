@@ -211,16 +211,16 @@ importers:
         version: 0.2.12
       tsconfck:
         specifier: ^3.1.4
-        version: 3.1.4(typescript@5.3.3)
+        version: 3.1.4(typescript@5.8.3)
       tsconfig-paths:
         specifier: ^4.2.0
         version: 4.2.0
       typescript:
-        specifier: 5.3.3
-        version: 5.3.3
+        specifier: 5.8.3
+        version: 5.8.3
       vite-tsconfig-paths:
         specifier: ^4.3.1
-        version: 4.3.2(typescript@5.3.3)(vite@5.4.14(@types/node@18.19.43))
+        version: 4.3.2(typescript@5.8.3)(vite@5.4.14(@types/node@18.19.43))
       vitest:
         specifier: ^3.0.9
         version: 3.0.9(@types/node@18.19.43)
@@ -361,8 +361,8 @@ importers:
         specifier: 2.2.0
         version: 2.2.0
       typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
+        specifier: ^5.8.3
+        version: 5.8.3
       vitest:
         specifier: ^3.0.9
         version: 3.0.9(@types/node@18.19.43)
@@ -415,8 +415,8 @@ importers:
         specifier: 3.0.2
         version: 3.0.2
       typescript:
-        specifier: 5.3.3
-        version: 5.3.3
+        specifier: 5.8.3
+        version: 5.8.3
       vscode-languageclient:
         specifier: 8.0.2
         version: 8.0.2
@@ -2652,8 +2652,8 @@ packages:
   typed-rest-client@1.8.11:
     resolution: {integrity: sha512-5UvfMpd1oelmUPRbbaVnq+rHP7ng2cE4qoQkQeAqxRL6PklkxsM0g32/HL0yfvruK6ojQ5x8EE+HF4YV6DtuCA==}
 
-  typescript@5.3.3:
-    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -4921,9 +4921,9 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  tsconfck@3.1.4(typescript@5.3.3):
+  tsconfck@3.1.4(typescript@5.8.3):
     optionalDependencies:
-      typescript: 5.3.3
+      typescript: 5.8.3
 
   tsconfig-paths@4.2.0:
     dependencies:
@@ -4952,7 +4952,7 @@ snapshots:
       tunnel: 0.0.6
       underscore: 1.13.7
 
-  typescript@5.3.3: {}
+  typescript@5.8.3: {}
 
   uc.micro@1.0.6: {}
 
@@ -5001,11 +5001,11 @@ snapshots:
       - supports-color
       - terser
 
-  vite-tsconfig-paths@4.3.2(typescript@5.3.3)(vite@5.4.14(@types/node@18.19.43)):
+  vite-tsconfig-paths@4.3.2(typescript@5.8.3)(vite@5.4.14(@types/node@18.19.43)):
     dependencies:
       debug: 4.3.6
       globrex: 0.1.2
-      tsconfck: 3.1.4(typescript@5.3.3)
+      tsconfck: 3.1.4(typescript@5.8.3)
     optionalDependencies:
       vite: 5.4.14(@types/node@18.19.43)
     transitivePeerDependencies:
