@@ -247,7 +247,6 @@ If you’re having issues getting the IntelliSense features to activate, there a
 -  You must have `tailwindcss` installed in your workspace via `npm`, `pnpm`, or `yarn`.  The extension will then attempt to detect your Tailwind CSS configuration, which can be located in one of the following:
     - For Tailwind CSS **v4** projects, configuration defined directly within your main CSS file using directives like `@import "tailwindcss";` and `@theme { ... }`. Preprocessor files like Less, Sass, or Stylus are not supported. A `.css` file is **required** for IntelliSense to function.
     - For Tailwind CSS **v3 and earlier**, a Tailwind CSS config file in your workspace whose name matches (`tailwind.config.{js,cjs,mjs,ts,cts,mts}`), or a stylesheet that points to a config file via `@config`.
-
 - Make sure your VS Code settings aren’t causing your stylesheet or your Tailwind CSS config file to be hidden/ignored, for example via the `files.exclude`, `files.watcherExclude`,  or `tailwindCSS.files.exclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
 - For projects with multiple installations of Tailwind CSS, multiple config files, or several stylesheets with `@import "tailwindcss"` we recommend using the `tailwindCSS.experimental.configFile` setting to explicitly state your stylesheet or config paths.
