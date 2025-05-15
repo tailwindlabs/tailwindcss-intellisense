@@ -6,7 +6,11 @@ Tailwind CSS IntelliSense enhances the Tailwind development experience by provid
 
 **[Install via the Visual Studio Code Marketplace →](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)**
 
-In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and a [Tailwind config file](https://tailwindcss.com/docs/installation#create-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
+In order for the extension to activate you must have [`tailwindcss` installed](https://tailwindcss.com/docs/installation) and one of these:
+
+- For v4 and later, a `.css` file that imports a Tailwind CSS stylesheet (e.g. `@import "tailwindcss"`)
+- For v3 and earlier, a [Tailwind CSS config file](https://v3.tailwindcss.com/docs/configuration#creating-your-configuration-file) named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your workspace.
+- For v3 and earlier, a stylesheet that points to a config file via `@config`
 
 ## Features
 
@@ -94,11 +98,13 @@ The HTML attributes for which to provide class completions, hover previews, lint
 
 Functions in which to provide completions, hover previews, linting etc. Currently, this works for both function calls and tagged template literals in JavaScript / TypeScript.
 
+Each entry is treated as regex pattern that matches on a function name. You *cannot* match on content before or after the function name — matches are limited to function names only.
+
 Example:
 
 ```json
 {
-  "tailwindCSS.classFunctions": ["tw", "clsx"]
+  "tailwindCSS.classFunctions": ["tw", "clsx", "tw\\.[a-z-]+"]
 }
 ```
 
@@ -108,6 +114,7 @@ let classes2 = clsx([
   "flex bg-red-500",
   { "text-red-500": true }
 ])
+let element = tw.div`flex bg-red-500`
 ```
 
 ### `tailwindCSS.colorDecorators`
@@ -237,7 +244,10 @@ For projects with multiple config files, use an object where each key is a confi
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
 
-- Ensure that you have a Tailwind config file in your workspace and that this is named `tailwind.config.{js,cjs,mjs,ts,cts,mts}`. Check out the Tailwind documentation for details on [creating a config file](https://tailwindcss.com/docs/configuration#creating-your-configuration-file).
-- Ensure that the `tailwindcss` module is installed in your workspace, via `npm`, `yarn`, or `pnpm`.
-- Make sure your VS Code settings aren’t causing your Tailwind config file to be hidden/ignored, for example via the `files.exclude` or `files.watcherExclude` settings.
+-  You must have `tailwindcss` installed in your workspace via `npm`, `pnpm`, or `yarn`.  The extension will then attempt to detect your Tailwind CSS configuration, which can be located in one of the following:
+    - For Tailwind CSS **v4** projects, configuration defined directly within your main CSS file using directives like `@import "tailwindcss";` and `@theme { ... }`. Preprocessor files like Less, Sass, or Stylus are not supported. A `.css` file is **required** for IntelliSense to function.
+    - For Tailwind CSS **v3 and earlier**, a Tailwind CSS config file in your workspace whose name matches (`tailwind.config.{js,cjs,mjs,ts,cts,mts}`), or a stylesheet that points to a config file via `@config`.
+
+- Make sure your VS Code settings aren’t causing your stylesheet or your Tailwind CSS config file to be hidden/ignored, for example via the `files.exclude`, `files.watcherExclude`,  or `tailwindCSS.files.exclude` settings.
 - Take a look at the language server output by running the `Tailwind CSS: Show Output` command from the command palette. This may show errors that are preventing the extension from activating.
+- For projects with multiple installations of Tailwind CSS, multiple config files, or several stylesheets with `@import "tailwindcss"` we recommend using the `tailwindCSS.experimental.configFile` setting to explicitly state your stylesheet or config paths.
