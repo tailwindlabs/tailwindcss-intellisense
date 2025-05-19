@@ -222,13 +222,12 @@ defineTest({
       client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
     })
 
-    // Force the server to restart:
-    // A tsconfig.json change causes that currently
+    // Force a server restart by telling the server tsconfig.json changed
     client.notifyChangedFiles({
       changed: [`${root}/tsconfig.json`],
     })
 
-    // Wait for the project to finish building
+    // Wait for the server initialization to finish
     await didRestart
 
     expect(client.serverCapabilities).toEqual(
