@@ -82,6 +82,10 @@ function getColorFromDecls(
     if (prop === 'content') {
       let value = decls[prop]
 
+      if (Array.isArray(value) && value.length === 1) {
+        value = value[0]
+      }
+
       if (value === '""' || value === "''" || value === 'var(--tw-content)') {
         return false
       }
