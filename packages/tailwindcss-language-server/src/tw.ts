@@ -1127,6 +1127,7 @@ export class TW {
     this.commonRegistrations?.dispose()
     this.commonRegistrations = undefined
 
+    this.lastTriggerCharacters.clear()
     this.completionRegistration?.dispose()
     this.completionRegistration = undefined
 
