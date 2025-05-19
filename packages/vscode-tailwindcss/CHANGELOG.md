@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Display color swatches when using `before`/`after` variants ([#1374](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1374))
 
 # 0.14.17
 
