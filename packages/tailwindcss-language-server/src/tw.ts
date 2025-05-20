@@ -941,6 +941,18 @@ export class TW {
 
     this.lastTriggerCharacters = chars
 
+    // TODO: This might technically be a race condition if:
+    // - There are multiple workspace roots
+    // - There are multiple projects with different separators
+    //
+    // Everything up to this point is synchronous including the bailout code
+    // so it *should* be fine
+    //
+    // The proper fix here is to:
+    // - Refactor workspace folder initialization so discovery, initialization,
+    //   file events, config watchers, etc… are all shared.
+    // - Remove the need for the "restart" concept in the server for as much as
+    //   possible. Each project should be capable of reloading its modules.
     this.completionRegistration?.dispose()
     this.completionRegistration = await this.connection.client.register(CompletionRequest.type, {
       documentSelector: null,
