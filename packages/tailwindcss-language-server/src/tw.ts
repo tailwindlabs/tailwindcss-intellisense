@@ -174,6 +174,10 @@ export class TW {
       }
     }
 
+    if (results.some((result) => result.status === 'fulfilled')) {
+      await this.updateCommonCapabilities()
+    }
+
     await this.listenForEvents()
   }
 
@@ -628,8 +632,6 @@ export class TW {
 
     console.log(`[Global] Initializing projects...`)
 
-    await this.updateCommonCapabilities()
-
     // init projects for documents that are _already_ open
     let readyDocuments: string[] = []
     let enabledProjectCount = 0
@@ -896,6 +898,7 @@ export class TW {
       capabilities.add(DidChangeConfigurationNotification.type, undefined)
     }
 
+    this.commonRegistrations?.dispose()
     this.commonRegistrations = await this.connection.client.register(capabilities)
   }
 
