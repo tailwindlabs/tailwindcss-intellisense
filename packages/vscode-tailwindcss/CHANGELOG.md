@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+# 0.14.18
+
 - Display color swatches when using `before`/`after` variants ([#1374](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1374))
 - Clear trigger characters when restarting server ([#1375](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1375))
 - Don't register ability to hover, request colors, etc… more than once ([#1378](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1378))
