@@ -910,7 +910,7 @@ export class TW {
   }
 
   private lastTriggerCharacters: Set<string> | undefined
-  private completionRegistration: Disposable | undefined
+  private completionRegistration: Promise<Disposable> | undefined
   private async updateTriggerCharacters() {
     // If the client does not suppory dynamic registration of completions then
     // we cannot update the set of trigger characters
@@ -941,24 +941,27 @@ export class TW {
 
     this.lastTriggerCharacters = chars
 
-    // TODO: This might technically be a race condition if:
-    // - There are multiple workspace roots
-    // - There are multiple projects with different separators
-    //
-    // Everything up to this point is synchronous including the bailout code
-    // so it *should* be fine
-    //
-    // The proper fix here is to:
-    // - Refactor workspace folder initialization so discovery, initialization,
-    //   file events, config watchers, etc… are all shared.
-    // - Remove the need for the "restart" concept in the server for as much as
-    //   possible. Each project should be capable of reloading its modules.
-    this.completionRegistration?.dispose()
-    this.completionRegistration = await this.connection.client.register(CompletionRequest.type, {
+    let current = this.completionRegistration
+    this.completionRegistration = this.connection.client.register(CompletionRequest.type, {
       documentSelector: null,
       resolveProvider: true,
       triggerCharacters: Array.from(chars),
     })
+
+    // NOTE:
+    // This weird setup works around a race condition where multiple projects
+    // with different separators update their capabilities at the same time. It
+    // is extremely unlikely but it could cause `CompletionRequest` to be
+    // registered more than once with the LSP client.
+    //
+    // We store the promises meaning everything up to this point is synchronous
+    // so it should be fine but really the proper fix here is to:
+    // - Refactor workspace folder initialization so discovery, initialization,
+    //   file events, config watchers, etc… are all shared.
+    // - Remove the need for the "restart" concept in the server for as much as
+    //   possible. Each project should be capable of reloading its modules.
+    await current?.then((r) => r.dispose())
+    await this.completionRegistration
   }
 
   private getProject(document: TextDocumentIdentifier): ProjectService {
@@ -1149,7 +1152,7 @@ export class TW {
     this.commonRegistrations = undefined
 
     this.lastTriggerCharacters.clear()
-    this.completionRegistration?.dispose()
+    this.completionRegistration?.then((r) => r.dispose())
     this.completionRegistration = undefined
 
     this.disposables.forEach((d) => d.dispose())
