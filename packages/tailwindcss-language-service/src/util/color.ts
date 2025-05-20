@@ -79,11 +79,16 @@ function getColorFromDecls(
 ): culori.Color | KeywordColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
-    if (
-      prop === 'content' &&
-      (decls[prop] === '""' || decls[prop] === "''" || decls[prop] === 'var(--tw-content)')
-    ) {
-      return false
+    if (prop === 'content') {
+      let value = decls[prop]
+
+      if (Array.isArray(value) && value.length === 1) {
+        value = value[0]
+      }
+
+      if (value === '""' || value === "''" || value === 'var(--tw-content)') {
+        return false
+      }
     }
 
     // ignore mask-image & mask-composite
