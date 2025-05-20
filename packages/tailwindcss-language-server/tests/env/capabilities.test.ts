@@ -182,3 +182,65 @@ defineTest({
     expect(idsBefore).toEqual(idsAfter)
   },
 })
+
+defineTest({
+  name: 'Trigger characters are registered after a server restart',
+  fs: {
+    'app.css': '@import "tailwindcss"',
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ root, client }) => {
+    // Initially don't have any registered capabilities because dynamic
+    // registration is delayed until after project initialization
+    expect(client.serverCapabilities).toEqual([])
+
+    // We open a document so a project gets initialized
+    await client.open({
+      lang: 'html',
+      text: '<div class="bg-[#000]/25 hover:">',
+    })
+
+    // And now capabilities are registered
+    expect(client.serverCapabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          method: 'textDocument/hover',
+        }),
+
+        expect.objectContaining({
+          method: 'textDocument/completion',
+          registerOptions: {
+            documentSelector: null,
+            resolveProvider: true,
+            triggerCharacters: ['"', "'", '`', ' ', '.', '(', '[', ']', '!', '/', '-', ':'],
+          },
+        }),
+      ]),
+    )
+
+    let didRestart = new Promise((resolve) => {
+      client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
+    })
+
+    // Force a server restart by telling the server tsconfig.json changed
+    client.notifyChangedFiles({
+      changed: [`${root}/tsconfig.json`],
+    })
+
+    // Wait for the server initialization to finish
+    await didRestart
+
+    expect(client.serverCapabilities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          method: 'textDocument/completion',
+          registerOptions: {
+            documentSelector: null,
+            resolveProvider: true,
+            triggerCharacters: ['"', "'", '`', ' ', '.', '(', '[', ']', '!', '/', '-', ':'],
+          },
+        }),
+      ]),
+    )
+  },
+})

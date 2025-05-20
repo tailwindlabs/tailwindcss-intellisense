@@ -929,7 +929,13 @@ export class TW {
     }
 
     // If the trigger characters haven't changed then we don't need to do anything
-    if (equal(Array.from(chars), Array.from(this.lastTriggerCharacters ?? []))) return
+    if (
+      this.completionRegistration &&
+      equal(Array.from(chars), Array.from(this.lastTriggerCharacters ?? []))
+    ) {
+      return
+    }
+
     this.lastTriggerCharacters = chars
 
     this.completionRegistration?.dispose()
@@ -1127,6 +1133,7 @@ export class TW {
     this.commonRegistrations?.dispose()
     this.commonRegistrations = undefined
 
+    this.lastTriggerCharacters.clear()
     this.completionRegistration?.dispose()
     this.completionRegistration = undefined
 
