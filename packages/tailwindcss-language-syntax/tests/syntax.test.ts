@@ -18,19 +18,18 @@ test('wip', async ({ expect }) => {
     @theme {
     ^               source.css.tailwind keyword.control.at-rule.theme.tailwind punctuation.definition.keyword.css
      ^^^^^          source.css.tailwind keyword.control.at-rule.theme.tailwind
-          ^         source.css.tailwind
-           ^        source.css.tailwind meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+          ^^^       source.css.tailwind
 
       --color: red;
-    ^^              source.css.tailwind meta.property-list.css
-      ^^^^^^^       source.css.tailwind meta.property-list.css variable.css
-             ^      source.css.tailwind meta.property-list.css punctuation.separator.key-value.css
-              ^     source.css.tailwind meta.property-list.css
-               ^^^  source.css.tailwind meta.property-list.css meta.property-value.css support.constant.color.w3c-standard-color-name.css
-                  ^ source.css.tailwind meta.property-list.css punctuation.terminator.rule.css
+    ^^              source.css.tailwind
+      ^^^^^^^       source.css.tailwind meta.property-name.css
+             ^      source.css.tailwind punctuation.separator.key-value.css
+              ^     source.css.tailwind
+               ^^^  source.css.tailwind meta.property-value.css support.constant.color.w3c-standard-color-name.css
+                  ^ source.css.tailwind punctuation.terminator.rule.css
 
     }
-    ^               source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+    ^^              source.css.tailwind
 
     "
   `)
@@ -102,7 +101,7 @@ test('plugins with options', async ({ expect }) => {
 
       color: red;
     ^^                     source.css.tailwind meta.at-rule.plugin.body.tailwind
-      ^^^^^                source.css.tailwind meta.at-rule.plugin.body.tailwind meta.property-name.css support.type.property-name.css
+      ^^^^^                source.css.tailwind meta.at-rule.plugin.body.tailwind support.type.property-name.css
            ^               source.css.tailwind meta.at-rule.plugin.body.tailwind punctuation.separator.key-value.css
             ^              source.css.tailwind meta.at-rule.plugin.body.tailwind
              ^^^           source.css.tailwind meta.at-rule.plugin.body.tailwind meta.property-value.css support.constant.color.w3c-standard-color-name.css
