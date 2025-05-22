@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Speed up project selector matching in large projects ([#1381](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1381))
 
 # 0.14.18
 
