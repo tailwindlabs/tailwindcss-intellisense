@@ -20,6 +20,7 @@ export default async function isExcluded(
     pattern = normalizePath(pattern)
     pattern = normalizeDriveLetter(pattern)
 
+    // TODO: This should use the server-level path matcher
     if (picomatch(pattern)(file)) {
       return true
     }

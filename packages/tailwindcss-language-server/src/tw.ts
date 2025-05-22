@@ -56,6 +56,7 @@ import { ProjectLocator, type ProjectConfig } from './project-locator'
 import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { createResolver, Resolver } from './resolver'
 import { analyzeStylesheet } from './version-guesser.js'
+import { createPathMatcher, PathMatcher } from './matching.js'
 
 const TRIGGER_CHARACTERS = [
   // class attributes
@@ -104,12 +105,14 @@ export class TW {
   private watched: string[] = []
 
   private settingsCache: SettingsCache
+  private pathMatcher: PathMatcher
 
   constructor(private connection: Connection) {
     this.documentService = new DocumentService(this.connection)
     this.projects = new Map()
     this.projectCounter = 0
     this.settingsCache = createSettingsCache(connection)
+    this.pathMatcher = createPathMatcher()
   }
 
   async init(): Promise<void> {
@@ -151,6 +154,7 @@ export class TW {
   private async _init(): Promise<void> {
     clearRequireCache()
 
+    this.pathMatcher.clear()
     let folders = this.getWorkspaceFolders().map((folder) => normalizePath(folder.uri))
 
     if (folders.length === 0) {
@@ -325,6 +329,7 @@ export class TW {
       let needsRestart = false
       let needsSoftRestart = false
 
+      // TODO: This should use the server-level path matcher
       let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
       let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
       let isConfigMatcher = picomatch(`**/${CONFIG_GLOB}`, { dot: true })
@@ -339,6 +344,7 @@ export class TW {
         normalizedFilename = normalizeDriveLetter(normalizedFilename)
 
         for (let ignorePattern of ignore) {
+          // TODO: This should use the server-level path matcher
           let isIgnored = picomatch(ignorePattern, { dot: true })
 
           if (isIgnored(normalizedFilename)) {
@@ -984,44 +990,20 @@ export class TW {
         continue
       }
 
-      let documentSelector = project
-        .documentSelector()
-        .concat()
-        // move all the negated patterns to the front
-        .sort((a, z) => {
-          if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
-            return -1
-          }
-          if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
-            return 1
-          }
-          return 0
-        })
-
-      for (let selector of documentSelector) {
-        let pattern = selector.pattern.replace(/[\[\]{}()]/g, (m) => `\\${m}`)
-
-        if (pattern.startsWith('!')) {
-          if (picomatch(pattern.slice(1), { dot: true })(fsPath)) {
-            break
-          }
-
-          if (picomatch(pattern.slice(1), { dot: true })(normalPath)) {
-            break
-          }
+      for (let selector of project.documentSelector()) {
+        if (
+          selector.pattern.startsWith('!') &&
+          this.pathMatcher.anyMatches(selector.pattern.slice(1), [fsPath, normalPath])
+        ) {
+          break
         }
 
-        if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
+        if (
+          selector.priority < matchedPriority &&
+          this.pathMatcher.anyMatches(selector.pattern, [fsPath, normalPath])
+        ) {
           matchedProject = project
           matchedPriority = selector.priority
-
-          continue
-        }
-
-        if (picomatch(pattern, { dot: true })(normalPath) && selector.priority < matchedPriority) {
-          matchedProject = project
-          matchedPriority = selector.priority
-
           continue
         }
       }
