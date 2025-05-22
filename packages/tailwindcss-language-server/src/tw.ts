@@ -984,21 +984,7 @@ export class TW {
         continue
       }
 
-      let documentSelector = project
-        .documentSelector()
-        .concat()
-        // move all the negated patterns to the front
-        .sort((a, z) => {
-          if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) {
-            return -1
-          }
-          if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) {
-            return 1
-          }
-          return 0
-        })
-
-      for (let selector of documentSelector) {
+      for (let selector of project.documentSelector()) {
         let pattern = selector.pattern.replace(/[\[\]{}()]/g, (m) => `\\${m}`)
 
         if (pattern.startsWith('!')) {

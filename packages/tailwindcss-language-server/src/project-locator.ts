@@ -815,5 +815,12 @@ export async function calculateDocumentSelectors(
       documentSelectors.findIndex(({ pattern: p }) => p === pattern) === index,
   )
 
+  // Move all the negated patterns to the front
+  selectors = selectors.sort((a, z) => {
+    if (a.pattern.startsWith('!') && !z.pattern.startsWith('!')) return -1
+    if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) return 1
+    return 0
+  })
+
   return selectors
 }
