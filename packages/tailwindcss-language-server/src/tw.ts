@@ -997,18 +997,20 @@ export class TW {
           }
         }
 
-        if (picomatch(pattern, { dot: true })(fsPath) && selector.priority < matchedPriority) {
-          matchedProject = project
-          matchedPriority = selector.priority
+        if (selector.priority < matchedPriority) {
+          if (picomatch(pattern, { dot: true })(fsPath)) {
+            matchedProject = project
+            matchedPriority = selector.priority
 
-          continue
-        }
+            continue
+          }
 
-        if (picomatch(pattern, { dot: true })(normalPath) && selector.priority < matchedPriority) {
-          matchedProject = project
-          matchedPriority = selector.priority
+          if (picomatch(pattern, { dot: true })(normalPath)) {
+            matchedProject = project
+            matchedPriority = selector.priority
 
-          continue
+            continue
+          }
         }
       }
     }
