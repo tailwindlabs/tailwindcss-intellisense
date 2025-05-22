@@ -325,6 +325,7 @@ export class TW {
       let needsRestart = false
       let needsSoftRestart = false
 
+      // TODO: This should use the server-level path matcher
       let isPackageMatcher = picomatch(`**/${PACKAGE_LOCK_GLOB}`, { dot: true })
       let isCssMatcher = picomatch(`**/${CSS_GLOB}`, { dot: true })
       let isConfigMatcher = picomatch(`**/${CONFIG_GLOB}`, { dot: true })
@@ -339,6 +340,7 @@ export class TW {
         normalizedFilename = normalizeDriveLetter(normalizedFilename)
 
         for (let ignorePattern of ignore) {
+          // TODO: This should use the server-level path matcher
           let isIgnored = picomatch(ignorePattern, { dot: true })
 
           if (isIgnored(normalizedFilename)) {
