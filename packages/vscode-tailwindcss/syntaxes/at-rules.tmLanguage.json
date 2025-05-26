@@ -699,11 +699,11 @@
           "patterns": [
             {
               "match": "[a-z]+",
-              "name": "variable.other.css"
+              "name": "variable.parameter.prefix.css"
             },
             {
               "match": "[^a-z]+",
-              "name": "invalid.illegal.invalid-source.css"
+              "name": "invalid.illegal.prefix.css"
             }
           ]
         }
