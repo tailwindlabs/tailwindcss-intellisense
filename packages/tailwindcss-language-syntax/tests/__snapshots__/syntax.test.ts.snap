@@ -239,7 +239,7 @@ exports[`@import 1`] = `
                                                 ^          1: punctuation.terminator.rule.css
 
 @import './test.css' theme(default invalid reference);
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    16: source.css.tailwind meta.at-rule.import.css
 ^^^^^^^                                                    2: keyword.control.at-rule.import.css
 ^                                                          1: punctuation.definition.keyword.css
         ^^^^^^^^^^^^                                       3: string.quoted.single.css
@@ -247,8 +247,8 @@ exports[`@import 1`] = `
                    ^                                       1: punctuation.definition.string.end.css
                      ^^^^^                                 1: support.function.theme.css
                           ^                                1: punctuation.section.function.begin.bracket.round.css
-                           ^^^^^^^^                        2: variable.other.css
-                                   ^^^^^^^^^^^^^^^^^       1: invalid.illegal.invalid-source.css
+                           ^^^^^^^^       ^^^^^^^^^^       4: variable.other.css
+                                   ^^^^^^^                 1: invalid.illegal.invalid-source.css
                                                     ^      1: punctuation.section.function.end.bracket.round.css
                                                      ^     1: punctuation.terminator.rule.css
 
@@ -393,7 +393,7 @@ exports[`@import 1`] = `
                                                    ^       1: punctuation.terminator.rule.css
 
 @reference './test.css' theme(default invalid reference);
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 16: source.css.tailwind meta.at-rule.import.css
 ^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
 ^                                                          1: punctuation.definition.keyword.css
            ^^^^^^^^^^^^                                    3: string.quoted.single.css
@@ -401,8 +401,8 @@ exports[`@import 1`] = `
                       ^                                    1: punctuation.definition.string.end.css
                         ^^^^^                              1: support.function.theme.css
                              ^                             1: punctuation.section.function.begin.bracket.round.css
-                              ^^^^^^^^                     2: variable.other.css
-                                      ^^^^^^^^^^^^^^^^^    1: invalid.illegal.invalid-source.css
+                              ^^^^^^^^       ^^^^^^^^^^    4: variable.other.css
+                                      ^^^^^^^              1: invalid.illegal.invalid-source.css
                                                        ^   1: punctuation.section.function.end.bracket.round.css
                                                         ^  1: punctuation.terminator.rule.css
 "

@@ -605,7 +605,7 @@
               "name": "variable.other.css"
             },
             {
-              "match": "[^)]+",
+              "match": "[^)\\s]+",
               "name": "invalid.illegal.invalid-source.css"
             }
           ]
