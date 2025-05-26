@@ -204,7 +204,7 @@
           "name": "punctuation.definition.keyword.tailwind"
         }
       },
-      "end": ";",
+      "end": ";|(?=[@{])",
       "endCaptures": {
         "0": {
           "name": "punctuation.terminator.rule.css"
