@@ -190,7 +190,55 @@
       "end": "(?<=}|;)(?!\\G)",
       "patterns": [
         {
-          "include": "source.css#rule-list"
+          "include": "#prefix-meta-fn"
+        },
+        {
+          "match": "\\s+",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "reference",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "inline",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "static",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "default",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "deprecated",
+          "name": "variable.other.css"
+        },
+        {
+          "match": "[^{\\s]+",
+          "name": "invalid.illegal.invalid-theme.css"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.theme.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.theme.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.theme.body.tailwind",
+          "patterns": [
+            {
+              "include": "#property-list"
+            }
+          ]
         }
       ]
     },

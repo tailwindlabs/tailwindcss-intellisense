@@ -698,65 +698,72 @@ exports[`@theme 1`] = `
 ^^^^^^^^                               4: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-       ^                               1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+      ^                                1: variable.other.css
+       ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
-^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.property-list.css
-  ^^^^^^^                              1: variable.css
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
 
 }
-^                                      1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
 
 @theme static {
-^^^^^^^^^^^^^^^                        4: source.css.tailwind
+^^^^^^^^^^^^^^^                        6: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-              ^                        1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+      ^^^^^^^^                         3: variable.other.css
+              ^                        1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
-^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.property-list.css
-  ^^^^^^^                              1: variable.css
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
 
 }
-^                                      1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
 
 @theme inline deprecated {
-^^^^^^^^^^^^^^^^^^^^^^^^^^             4: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^             8: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-                         ^             1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+      ^^^^^^^^^^^^^^^^^^^              5: variable.other.css
+                         ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
-^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.property-list.css
-  ^^^^^^^                              1: variable.css
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
 
 }
-^                                      1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
 
 @theme prefix(tw) inline {
-^^^^^^^^^^^^^^^^^^^^^^^^^^             4: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^            11: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-                         ^             1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+       ^^^^^^                          1: support.function.prefix.css
+             ^                         1: punctuation.section.function.begin.bracket.round.css
+              ^^ ^^^^^^^^              4: variable.other.css
+                ^                      1: punctuation.section.function.end.bracket.round.css
+                         ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
-^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.property-list.css
-  ^^^^^^^                              1: variable.css
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
 
 }
-^                                      1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
 
 
 ^                                      1: source.css.tailwind
@@ -765,25 +772,26 @@ exports[`@theme 1`] = `
 ^^^^^^^^                               4: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-       ^                               1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+      ^                                1: variable.other.css
+       ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --spacing: initial;
-^^^^^^^^^^^^^^^^^^^^^                  6: source.css.tailwind meta.property-list.css
-  ^^^^^^^^^                            1: variable.css
+^^^^^^^^^^^^^^^^^^^^^                  6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^                            1: meta.property-name.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
                     ^                  1: punctuation.terminator.rule.css
 
   --color-*: initial;
-^^^^^^^^^^^^^^^^^^^^^                  7: source.css.tailwind meta.property-list.css
-  ^^^^^^^^                             1: variable.css
+^^^^^^^^^^^^^^^^^^^^^                  7: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^                             1: meta.property-name.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
                     ^                  1: punctuation.terminator.rule.css
 
   --animate-pulse: 1s pulse infinite;
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind meta.property-list.css
-  ^^^^^^^^^^^^^^^                      1: variable.css
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^^^^^^^                      1: meta.property-name.css
                  ^                     1: punctuation.separator.key-value.css
                    ^^^^^^^^^^^^^^^^^   4: meta.property-value.css
                    ^^                  2: constant.numeric.css
@@ -792,28 +800,28 @@ exports[`@theme 1`] = `
                                     ^  1: punctuation.terminator.rule.css
 
 
-^                                      1: source.css.tailwind meta.property-list.css
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind
 
   @keyframes pulse {
-^^^^^^^^^^^^^^^^^^^^^                  5: source.css.tailwind meta.property-list.css
+^^^^^^^^^^^^^^^^^^^^^                  5: source.css.tailwind meta.at-rule.theme.body.tailwind
    ^^^^^^^^^ ^^^^^                     2: meta.property-name.css
 
     0%,
-^^^^^^^^                               1: source.css.tailwind meta.property-list.css
+^^^^^^^^                               1: source.css.tailwind meta.at-rule.theme.body.tailwind
 
     100% {
-^^^^^^^^^^^                            1: source.css.tailwind meta.property-list.css
+^^^^^^^^^^^                            1: source.css.tailwind meta.at-rule.theme.body.tailwind
 
       opacity: 0;
-^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.property-list.css
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind
       ^^^^^^^                          1: meta.property-name.css support.type.property-name.css
              ^                         1: punctuation.separator.key-value.css
                ^                       1: meta.property-value.css constant.numeric.css
                 ^                      1: punctuation.terminator.rule.css
 
     }
-^^^^^                                  2: source.css.tailwind meta.property-list.css
-    ^                                  1: punctuation.section.property-list.end.bracket.curly.css
+^^^^^                                  2: source.css.tailwind meta.at-rule.theme.body.tailwind
+    ^                                  1: punctuation.section.theme.end.bracket.curly.tailwind
 
     50% {
 ^^^^^^^^^                              2: source.css.tailwind
