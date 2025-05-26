@@ -82,7 +82,7 @@
           "include": "#source-fn"
         },
         {
-          "match": "[^\\s;]+?",
+          "match": "[^\\s;]+",
           "name": "variable.parameter.tailwind.tailwind"
         }
       ]
@@ -103,7 +103,7 @@
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{]+?",
+          "match": "[^\\s{]+",
           "name": "variable.parameter.screen.tailwind"
         },
         {
@@ -144,7 +144,7 @@
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{;,]+?",
+          "match": "[^\\s{;,]+",
           "name": "variable.parameter.layer.tailwind"
         },
         {
@@ -351,7 +351,7 @@
           "include": "source.css#commas"
         },
         {
-          "match": "[^\\s{,]+?",
+          "match": "[^\\s{,]+",
           "name": "variable.parameter.variants.tailwind"
         },
         {
@@ -389,7 +389,7 @@
       "end": "(?<=})(?!\\G)",
       "patterns": [
         {
-          "match": "[^\\s{,]+?",
+          "match": "[^\\s{,]+",
           "name": "variable.parameter.utility.tailwind"
         },
         {
@@ -427,7 +427,7 @@
       "end": "(?<=[};])(?!\\G)",
       "patterns": [
         {
-          "match": "[^\\s({;,]+?",
+          "match": "[^\\s({;,]+",
           "name": "variable.parameter.variant.tailwind"
         },
         {
