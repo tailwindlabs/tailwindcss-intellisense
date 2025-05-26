@@ -1,7 +1,10 @@
 {
   "scopeName": "tailwindcss.theme-fn.injection",
   "fileTypes": [],
-  "injectionSelector": "L:meta.property-list.css -comment",
+  "injectionSelector": [
+    "L:meta.property-list.css -comment",
+    "L:meta.at-rule.utility.body.tailwind -comment"
+  ],
   "name": "TailwindCSS",
   "patterns": [
     {
@@ -55,6 +58,135 @@
           "name": "variable.parameter.screen.tailwind"
         }
       ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(--alpha)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.alpha.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.css#string"
+        },
+        {
+          "match": "[^\\s\\)]+",
+          "name": "variable.parameter.alpha.tailwind"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(--value)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.value.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#utility-helper-innards"
+        },
+        {
+          "match": "[^\\s\\)]+",
+          "name": "variable.parameter.value.tailwind"
+        }
+      ]
+    },
+    {
+      "begin": "(?i)(?<![\\w-])(--modifier)(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "support.function.modifier.tailwind"
+        },
+        "2": {
+          "name": "punctuation.section.function.begin.bracket.round.css"
+        }
+      },
+      "end": "\\)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.function.end.bracket.round.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#utility-helper-innards"
+        },
+        {
+          "match": "[^\\s\\)]+",
+          "name": "variable.parameter.modifier.tailwind"
+        }
+      ]
     }
-  ]
+  ],
+  "repository": {
+    "utility-helper-innards": {
+      "patterns": [
+        { "match": "\\s+" },
+        {
+          "match": ",",
+          "name": "punctuation.separator.list.comma.css"
+        },
+        {
+          "match": "(--[^,\\s]+)",
+          "name": "variable.theme-namespace.css"
+        },
+        { "include": "#utility-data-type-bare" },
+        {
+          "begin": "\\[",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.arbitrary.begin.bracket.square.css"
+            }
+          },
+          "end": "\\]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.arbitrary.end.bracket.square.css"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#utility-data-type-all"
+            }
+          ]
+        },
+        {
+          "include": "source.css#string"
+        }
+      ]
+    },
+    "utility-data-type-bare": {
+      "match": "(integer|number|percentage|ratio)",
+      "name": "support.constant.utility.data-type.css"
+    },
+    "utility-data-type-all": {
+      "patterns": [
+        { "include": "#utility-data-type-bare" },
+        {
+          "match": "(color|length|url|position|angle|vector)",
+          "name": "support.constant.utility.data-type.css"
+        }
+      ]
+    }
+  }
 }

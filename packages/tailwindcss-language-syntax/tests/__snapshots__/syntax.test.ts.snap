@@ -907,14 +907,16 @@ exports[`@utility 1`] = `
                       ^                1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
 
   width: calc(--value(number) * 1px);
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 13: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 17: source.css.tailwind meta.at-rule.utility.body.tailwind
   ^^^^^                                1: meta.property-name.css support.type.property-name.css
        ^                               1: punctuation.separator.key-value.css
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^    7: meta.property-value.css
-         ^^^^^^^^^^^^^^^^^^^^          4: meta.function.calc.css
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^  12: meta.property-value.css meta.function.calc.css
          ^^^^                          1: support.function.calc.css
-             ^                         1: punctuation.section.function.begin.bracket.round.css
-                            ^          1: punctuation.section.function.end.bracket.round.css
+             ^       ^                 2: punctuation.section.function.begin.bracket.round.css
+              ^^^^^^^                  1: support.function.value.tailwind
+                      ^^^^^^           1: support.constant.utility.data-type.css
+                            ^      ^   2: punctuation.section.function.end.bracket.round.css
+                              ^        1: keyword.operator.arithmetic.css
                                 ^^^    2: constant.numeric.css
                                  ^^    1: keyword.other.unit.px.css
                                     ^  1: punctuation.terminator.rule.css
@@ -984,95 +986,182 @@ exports[`@variant 1`] = `
 exports[`--value(…) 1`] = `
 "
 @utility functional-* {
-^^^^^^^^^^^^^^^^^^^^^^^                                   17: source.css.tailwind
-^^^^^^^^                                                   2: keyword.control.at-rule.utility.tailwind
-^                                                          1: punctuation.definition.keyword.css
-         ^^^^^^^^^^^^                                     12: variable.parameter.utility.tailwind
-                      ^                                    1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^                                   6: source.css.tailwind
+^^^^^^^^                                                  2: keyword.control.at-rule.utility.tailwind
+^                                                         1: punctuation.definition.keyword.css
+         ^^^^^^^^^^^^                                     1: variable.parameter.utility.tailwind
+                      ^                                   1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
 
   width: --value(
-^^^^^^^^^^^^^^^^^^                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^                                         6: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                                   1: meta.property-name.css support.type.property-name.css
+       ^                                                  1: punctuation.separator.key-value.css
+         ^^^^^^^^                                         2: meta.property-value.css
+         ^^^^^^^                                          1: support.function.value.tailwind
+                ^                                         1: punctuation.section.function.begin.bracket.round.css
 
     --size,
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: variable.theme-namespace.css
+          ^                                               1: punctuation.separator.list.comma.css
 
     'literal',
-^^^^^^^^^^^^^^^                                            1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^                                             3: string.quoted.single.css
+    ^                                                     1: punctuation.definition.string.begin.css
+            ^                                             1: punctuation.definition.string.end.css
+             ^                                            1: punctuation.separator.list.comma.css
 
     integer,
-^^^^^^^^^^^^^                                              1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^                                              3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.separator.list.comma.css
 
     number,
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.separator.list.comma.css
 
     percentage,
-^^^^^^^^^^^^^^^^                                           1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^                                           3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^^                                            1: support.constant.utility.data-type.css
+              ^                                           1: punctuation.separator.list.comma.css
 
     ratio,
-^^^^^^^^^^^                                                1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^                                                3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^                                                 1: support.constant.utility.data-type.css
+         ^                                                1: punctuation.separator.list.comma.css
 
     [integer],
-^^^^^^^^^^^^^^^                                            1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^                                              1: support.constant.utility.data-type.css
+            ^                                             1: punctuation.definition.arbitrary.end.bracket.square.css
+             ^                                            1: punctuation.separator.list.comma.css
 
     [number],
-^^^^^^^^^^^^^^                                             1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^                                             5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.definition.arbitrary.end.bracket.square.css
+            ^                                             1: punctuation.separator.list.comma.css
 
     [percentage],
-^^^^^^^^^^^^^^^^^^                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^                                         5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^^^^                                           1: support.constant.utility.data-type.css
+               ^                                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                ^                                         1: punctuation.separator.list.comma.css
 
     [ratio]
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               4: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.definition.arbitrary.end.bracket.square.css
 
   );
-^^^^^                                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^                                                      3: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^                                                       2: meta.property-value.css
+  ^                                                       1: punctuation.section.function.end.bracket.round.css
+   ^                                                      1: punctuation.terminator.rule.css
 
 
-^                                                          1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
 
   height: --modifier(
-^^^^^^^^^^^^^^^^^^^^^^                                     1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^^^^^                                     6: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^                                                  1: meta.property-name.css support.type.property-name.css
+        ^                                                 1: punctuation.separator.key-value.css
+          ^^^^^^^^^^^                                     2: meta.property-value.css
+          ^^^^^^^^^^                                      1: support.function.modifier.tailwind
+                    ^                                     1: punctuation.section.function.begin.bracket.round.css
 
     --size,
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: variable.theme-namespace.css
+          ^                                               1: punctuation.separator.list.comma.css
 
     'literal',
-^^^^^^^^^^^^^^^                                            1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^                                             3: string.quoted.single.css
+    ^                                                     1: punctuation.definition.string.begin.css
+            ^                                             1: punctuation.definition.string.end.css
+             ^                                            1: punctuation.separator.list.comma.css
 
     integer,
-^^^^^^^^^^^^^                                              1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^                                              3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.separator.list.comma.css
 
     number,
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.separator.list.comma.css
 
     percentage,
-^^^^^^^^^^^^^^^^                                           1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^                                           3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^^                                            1: support.constant.utility.data-type.css
+              ^                                           1: punctuation.separator.list.comma.css
 
     ratio,
-^^^^^^^^^^^                                                1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^                                                3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^                                                 1: support.constant.utility.data-type.css
+         ^                                                1: punctuation.separator.list.comma.css
 
     [integer],
-^^^^^^^^^^^^^^^                                            1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^                                              1: support.constant.utility.data-type.css
+            ^                                             1: punctuation.definition.arbitrary.end.bracket.square.css
+             ^                                            1: punctuation.separator.list.comma.css
 
     [number],
-^^^^^^^^^^^^^^                                             1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^                                             5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.definition.arbitrary.end.bracket.square.css
+            ^                                             1: punctuation.separator.list.comma.css
 
     [percentage],
-^^^^^^^^^^^^^^^^^^                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^                                         5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^^^^                                           1: support.constant.utility.data-type.css
+               ^                                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                ^                                         1: punctuation.separator.list.comma.css
 
     [ratio]
-^^^^^^^^^^^^                                               1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^                                               4: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.definition.arbitrary.end.bracket.square.css
 
   );
-^^^^^                                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^                                                      3: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^                                                       2: meta.property-value.css
+  ^                                                       1: punctuation.section.function.end.bracket.round.css
+   ^                                                      1: punctuation.terminator.rule.css
 
 
-^                                                          1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
 
   color: --alpha(--value([color]) / --modifier(number));
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  1: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 21: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                                   1: meta.property-name.css support.type.property-name.css
+       ^                                                  1: punctuation.separator.key-value.css
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  16: meta.property-value.css
+         ^^^^^^^                                          1: support.function.alpha.tailwind
+                ^       ^                     ^           3: punctuation.section.function.begin.bracket.round.css
+                 ^^^^^^^                                  1: support.function.value.tailwind
+                         ^                                1: punctuation.definition.arbitrary.begin.bracket.square.css
+                          ^^^^^                ^^^^^^     2: support.constant.utility.data-type.css
+                               ^                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                                ^                    ^^   3: punctuation.section.function.end.bracket.round.css
+                                  ^                       1: variable.parameter.alpha.tailwind
+                                    ^^^^^^^^^^            1: support.function.modifier.tailwind
+                                                       ^  1: punctuation.terminator.rule.css
 
 }
-^                                                          1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
 "
 `;
 
