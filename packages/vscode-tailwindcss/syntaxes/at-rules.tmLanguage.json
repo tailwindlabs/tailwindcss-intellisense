@@ -311,6 +311,9 @@
         },
         {
           "include": "source.css#string"
+        },
+        {
+          "include": "#inline-fn"
         }
       ]
     },
@@ -608,6 +611,36 @@
             {
               "match": "\\s*([a-zA-Z][a-zA-Z0-9.]+|\\\\(?:[0-9a-fA-F]{1,6}))?\\s*",
               "name": "support.constant.layer-name.css"
+            }
+          ]
+        }
+      ]
+    },
+    "inline-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(inline)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.inline.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "none(?=[)])",
+              "name": "support.constant.none.css"
+            },
+            {
+              "include": "source.css#string"
             }
           ]
         }
