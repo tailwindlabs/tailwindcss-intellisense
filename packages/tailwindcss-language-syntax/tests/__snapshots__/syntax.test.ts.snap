@@ -25,20 +25,30 @@ exports[`@config statement 1`] = `
 exports[`@custom-variant 1`] = `
 "
 @custom-variant dark (&:is(.dark, .dark *));
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  4: source.css.tailwind meta.at-rule.header.css
-^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.css
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 21: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
 ^                                             1: punctuation.definition.keyword.css
-                                           ^  1: punctuation.terminator.rule.css
+                ^^^^                          1: variable.parameter.variant.tailwind
+                     ^^^^^^^^^^^^^^^^^^^^^^  15: meta.selector.tailwind
+                     ^                        1: punctuation.section.variant.begin.bracket.paren.tailwind
+                       ^^^                    2: entity.other.attribute-name.pseudo-class.css
+                       ^   ^      ^           3: punctuation.definition.entity.css
+                          ^                   1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^  ^^^^^       4: entity.other.attribute-name.class.css
+                                ^             1: punctuation.separator.list.comma.css
+                                        ^     1: entity.name.tag.wildcard.css
+                                         ^    1: punctuation.section.function.end.bracket.round.css
+                                          ^   1: punctuation.section.variant.end.bracket.paren.tailwind
 
 @custom-variant dark {
-^^^^^^^^^^^^^^^^^^^^^^                        5: source.css.tailwind
-^^^^^^^^^^^^^^^^^^^^                          3: meta.at-rule.header.css
-^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.css
+^^^^^^^^^^^^^^^^^^^^^^                        6: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
 ^                                             1: punctuation.definition.keyword.css
-                     ^                        1: meta.at-rule.body.css punctuation.section.begin.bracket.curly.css
+                ^^^^                          1: variable.parameter.variant.tailwind
+                     ^                        1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
 
   &:is(.dark, .dark *) {
-^^^^^^^^^^^^^^^^^^^^^^^^                     15: source.css.tailwind meta.at-rule.body.css
+^^^^^^^^^^^^^^^^^^^^^^^^                     15: source.css.tailwind meta.at-rule.variant.body.tailwind
    ^^^^^^^^^^^^^^^^^^^                       12: meta.selector.css
    ^^^                                        2: entity.other.attribute-name.pseudo-class.css
    ^   ^      ^                               3: punctuation.definition.entity.css
@@ -50,52 +60,52 @@ exports[`@custom-variant 1`] = `
                        ^                      1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
 
     @slot;
-^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.body.css meta.property-list.css
+^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
      ^^^^                                     1: meta.property-name.css
          ^                                    1: punctuation.terminator.rule.css
 
   }
-^^^                                           2: source.css.tailwind meta.at-rule.body.css meta.property-list.css
+^^^                                           2: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
   ^                                           1: punctuation.section.property-list.end.bracket.curly.css
 
 }
-^                                             1: source.css.tailwind meta.at-rule.body.css punctuation.section.end.bracket.curly.css
+^                                             1: source.css.tailwind meta.at-rule.variant.body.tailwind punctuation.section.variant.end.bracket.curly.tailwind
 
 @custom-variant around {
-^^^^^^^^^^^^^^^^^^^^^^^^                      5: source.css.tailwind
-^^^^^^^^^^^^^^^^^^^^^^                        3: meta.at-rule.header.css
-^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.css
+^^^^^^^^^^^^^^^^^^^^^^^^                      6: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
 ^                                             1: punctuation.definition.keyword.css
-                       ^                      1: meta.at-rule.body.css punctuation.section.begin.bracket.curly.css
+                ^^^^^^                        1: variable.parameter.variant.tailwind
+                       ^                      1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
 
   color: '';
-^^^^^^^^^^^^^                                 2: source.css.tailwind meta.at-rule.body.css
+^^^^^^^^^^^^^                                 2: source.css.tailwind meta.at-rule.variant.body.tailwind
   ^^^^^^^^^^^                                 1: meta.selector.css
 
   &::before,
-^^^^^^^^^^^^                                  4: source.css.tailwind meta.at-rule.body.css meta.selector.css
+^^^^^^^^^^^^                                  4: source.css.tailwind meta.at-rule.variant.body.tailwind meta.selector.css
    ^^^^^^^^                                   2: entity.other.attribute-name.pseudo-element.css
    ^^                                         1: punctuation.definition.entity.css
            ^                                  1: punctuation.separator.list.comma.css
 
   &::after {
-^^^^^^^^^^^^                                  5: source.css.tailwind meta.at-rule.body.css
+^^^^^^^^^^^^                                  5: source.css.tailwind meta.at-rule.variant.body.tailwind
 ^^^^^^^^^^                                    3: meta.selector.css
    ^^^^^^^                                    2: entity.other.attribute-name.pseudo-element.css
    ^^                                         1: punctuation.definition.entity.css
            ^                                  1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
 
     @slot;
-^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.body.css meta.property-list.css
+^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
      ^^^^                                     1: meta.property-name.css
          ^                                    1: punctuation.terminator.rule.css
 
   }
-^^^                                           2: source.css.tailwind meta.at-rule.body.css meta.property-list.css
+^^^                                           2: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
   ^                                           1: punctuation.section.property-list.end.bracket.curly.css
 
 }
-^                                             1: source.css.tailwind meta.at-rule.body.css punctuation.section.end.bracket.curly.css
+^                                             1: source.css.tailwind meta.at-rule.variant.body.tailwind punctuation.section.variant.end.bracket.curly.tailwind
 "
 `;
 

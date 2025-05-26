@@ -415,7 +415,7 @@
       ]
     },
     {
-      "begin": "(?i)((@)variant)(?=[\\s{(]|$)",
+      "begin": "(?i)((@)(?:custom-)?variant)(?=[\\s{(]|$)",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.at-rule.variant.tailwind"
