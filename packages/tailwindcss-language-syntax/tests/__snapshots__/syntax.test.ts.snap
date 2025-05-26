@@ -205,7 +205,7 @@ exports[`@import 1`] = `
                    ^                                       1: punctuation.definition.string.end.css
                      ^^^^^                                 1: support.function.theme.css
                           ^                                1: punctuation.section.function.begin.bracket.round.css
-                           ^^^^^^                          1: variable.other.css
+                           ^^^^^^                          1: support.constant.theme-option.css
                                  ^                         1: punctuation.section.function.end.bracket.round.css
                                   ^                        1: punctuation.terminator.rule.css
 
@@ -218,7 +218,7 @@ exports[`@import 1`] = `
                    ^                                       1: punctuation.definition.string.end.css
                      ^^^^^                                 1: support.function.theme.css
                           ^                                1: punctuation.section.function.begin.bracket.round.css
-                           ^^^^^^^^^^^^^^^^^^^^^           5: variable.other.css
+                           ^^^^^^ ^^^^^^^ ^^^^^^           3: support.constant.theme-option.css
                                                 ^          1: punctuation.section.function.end.bracket.round.css
                                                  ^         1: punctuation.terminator.rule.css
 
@@ -231,7 +231,7 @@ exports[`@import 1`] = `
                    ^                                       1: punctuation.definition.string.end.css
                      ^^^^^                                 1: support.function.theme.css
                           ^                                1: punctuation.section.function.begin.bracket.round.css
-                           ^^^^^^^^^^^^^^^^^^^^            3: variable.other.css
+                           ^^^^^^^^^ ^^^^^^^^^^            2: support.constant.theme-option.css
                                                ^           1: punctuation.section.function.end.bracket.round.css
                                                 ^          1: punctuation.terminator.rule.css
 
@@ -245,8 +245,9 @@ exports[`@import 1`] = `
                      ^^^^^                                 1: support.function.theme.css
                           ^      ^                         2: punctuation.section.function.begin.bracket.round.css
                            ^^^^^^                          1: support.function.prefix.css
-                                  ^^ ^^^^^^^^^^            3: variable.other.css
+                                  ^^                       1: variable.other.css
                                     ^          ^           2: punctuation.section.function.end.bracket.round.css
+                                      ^^^^^^^^^            1: support.constant.theme-option.css
                                                 ^          1: punctuation.terminator.rule.css
 
 @import './test.css' theme(default invalid reference);
@@ -258,8 +259,8 @@ exports[`@import 1`] = `
                    ^                                       1: punctuation.definition.string.end.css
                      ^^^^^                                 1: support.function.theme.css
                           ^                                1: punctuation.section.function.begin.bracket.round.css
-                           ^^^^^^^^       ^^^^^^^^^^       4: variable.other.css
-                                   ^^^^^^^                 1: invalid.illegal.invalid-source.css
+                           ^^^^^^^         ^^^^^^^^^       2: support.constant.theme-option.css
+                                   ^^^^^^^                 1: invalid.illegal.theme-option.css
                                                     ^      1: punctuation.section.function.end.bracket.round.css
                                                      ^     1: punctuation.terminator.rule.css
 
@@ -360,7 +361,7 @@ exports[`@import 1`] = `
                       ^                                    1: punctuation.definition.string.end.css
                         ^^^^^                              1: support.function.theme.css
                              ^                             1: punctuation.section.function.begin.bracket.round.css
-                              ^^^^^^                       1: variable.other.css
+                              ^^^^^^                       1: support.constant.theme-option.css
                                     ^                      1: punctuation.section.function.end.bracket.round.css
                                      ^                     1: punctuation.terminator.rule.css
 
@@ -373,7 +374,7 @@ exports[`@import 1`] = `
                       ^                                    1: punctuation.definition.string.end.css
                         ^^^^^                              1: support.function.theme.css
                              ^                             1: punctuation.section.function.begin.bracket.round.css
-                              ^^^^^^^^^^^^^^^^^^^^^        5: variable.other.css
+                              ^^^^^^ ^^^^^^^ ^^^^^^        3: support.constant.theme-option.css
                                                    ^       1: punctuation.section.function.end.bracket.round.css
                                                     ^      1: punctuation.terminator.rule.css
 
@@ -386,7 +387,7 @@ exports[`@import 1`] = `
                       ^                                    1: punctuation.definition.string.end.css
                         ^^^^^                              1: support.function.theme.css
                              ^                             1: punctuation.section.function.begin.bracket.round.css
-                              ^^^^^^^^^^^^^^^^^^^^         3: variable.other.css
+                              ^^^^^^^^^ ^^^^^^^^^^         2: support.constant.theme-option.css
                                                   ^        1: punctuation.section.function.end.bracket.round.css
                                                    ^       1: punctuation.terminator.rule.css
 
@@ -400,8 +401,9 @@ exports[`@import 1`] = `
                         ^^^^^                              1: support.function.theme.css
                              ^      ^                      2: punctuation.section.function.begin.bracket.round.css
                               ^^^^^^                       1: support.function.prefix.css
-                                     ^^ ^^^^^^^^^^         3: variable.other.css
+                                     ^^                    1: variable.other.css
                                        ^          ^        2: punctuation.section.function.end.bracket.round.css
+                                         ^^^^^^^^^         1: support.constant.theme-option.css
                                                    ^       1: punctuation.terminator.rule.css
 
 @reference './test.css' theme(default invalid reference);
@@ -413,8 +415,8 @@ exports[`@import 1`] = `
                       ^                                    1: punctuation.definition.string.end.css
                         ^^^^^                              1: support.function.theme.css
                              ^                             1: punctuation.section.function.begin.bracket.round.css
-                              ^^^^^^^^       ^^^^^^^^^^    4: variable.other.css
-                                      ^^^^^^^              1: invalid.illegal.invalid-source.css
+                              ^^^^^^^         ^^^^^^^^^    2: support.constant.theme-option.css
+                                      ^^^^^^^              1: invalid.illegal.theme-option.css
                                                        ^   1: punctuation.section.function.end.bracket.round.css
                                                         ^  1: punctuation.terminator.rule.css
 "
@@ -727,7 +729,6 @@ exports[`@theme 1`] = `
 ^^^^^^^^                               4: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-      ^                                1: variable.other.css
        ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
@@ -744,7 +745,7 @@ exports[`@theme 1`] = `
 ^^^^^^^^^^^^^^^                        6: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-      ^^^^^^^^                         3: variable.other.css
+       ^^^^^^                          1: support.constant.theme-option.css
               ^                        1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
@@ -761,7 +762,7 @@ exports[`@theme 1`] = `
 ^^^^^^^^^^^^^^^^^^^^^^^^^^             8: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-      ^^^^^^^^^^^^^^^^^^^              5: variable.other.css
+       ^^^^^^ ^^^^^^^^^^               2: support.constant.theme-option.css
                          ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
@@ -780,8 +781,9 @@ exports[`@theme 1`] = `
 ^                                      1: punctuation.definition.keyword.css
        ^^^^^^                          1: support.function.prefix.css
              ^                         1: punctuation.section.function.begin.bracket.round.css
-              ^^ ^^^^^^^^              4: variable.other.css
+              ^^                       1: variable.other.css
                 ^                      1: punctuation.section.function.end.bracket.round.css
+                  ^^^^^^               1: support.constant.theme-option.css
                          ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --color: red;
@@ -801,7 +803,6 @@ exports[`@theme 1`] = `
 ^^^^^^^^                               4: source.css.tailwind
 ^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
 ^                                      1: punctuation.definition.keyword.css
-      ^                                1: variable.other.css
        ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
 
   --spacing: initial;

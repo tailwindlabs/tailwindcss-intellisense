@@ -189,36 +189,10 @@
       },
       "end": "(?<=}|;)(?!\\G)",
       "patterns": [
-        {
-          "include": "#prefix-meta-fn"
-        },
-        {
-          "match": "\\s+",
-          "name": "variable.other.css"
-        },
-        {
-          "match": "reference",
-          "name": "variable.other.css"
-        },
-        {
-          "match": "inline",
-          "name": "variable.other.css"
-        },
-        {
-          "match": "static",
-          "name": "variable.other.css"
-        },
-        {
-          "match": "default",
-          "name": "variable.other.css"
-        },
-        {
-          "match": "deprecated",
-          "name": "variable.other.css"
-        },
+        { "include": "#theme-options" },
         {
           "match": "[^{\\s]+",
-          "name": "invalid.illegal.invalid-theme.css"
+          "name": "invalid.illegal.theme-option.css"
         },
         {
           "begin": "{",
@@ -646,6 +620,36 @@
         }
       ]
     },
+    "theme-options": {
+      "patterns": [
+        {
+          "match": "\\s+"
+        },
+        {
+          "match": "reference",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "inline",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "static",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "default",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "deprecated",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "include": "#prefix-meta-fn"
+        }
+      ]
+    },
     "theme-meta-fn": {
       "patterns": [
         {
@@ -665,36 +669,10 @@
             }
           },
           "patterns": [
-            {
-              "match": "\\s+",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "reference",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "inline",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "static",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "default",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "deprecated",
-              "name": "variable.other.css"
-            },
-            {
-              "include": "#prefix-meta-fn"
-            },
+            { "include": "#theme-options" },
             {
               "match": "[^)\\s]+",
-              "name": "invalid.illegal.invalid-source.css"
+              "name": "invalid.illegal.theme-option.css"
             }
           ]
         }
