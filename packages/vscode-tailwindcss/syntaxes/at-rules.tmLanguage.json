@@ -653,6 +653,9 @@
               "name": "variable.other.css"
             },
             {
+              "include": "#prefix-meta-fn"
+            },
+            {
               "match": "[^)\\s]+",
               "name": "invalid.illegal.invalid-source.css"
             }
