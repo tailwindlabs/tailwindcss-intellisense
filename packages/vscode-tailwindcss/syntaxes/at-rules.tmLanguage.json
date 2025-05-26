@@ -306,6 +306,10 @@
           "name": "invalid.illegal.invalid-source.css"
         },
         {
+          "match": "not(?=\\s)",
+          "name": "support.constant.not.css"
+        },
+        {
           "include": "source.css#string"
         }
       ]

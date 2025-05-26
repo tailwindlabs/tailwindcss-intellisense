@@ -567,27 +567,30 @@ exports[`@source 1`] = `
                                 ^                            1: punctuation.terminator.rule.css
 
 @source not "./dir";
-^^^^^^^^^^^^^^^^^^^^                                         8: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^                                         9: source.css.tailwind
 ^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
 ^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
             ^^^^^^^                                          3: string.quoted.double.css
             ^                                                1: punctuation.definition.string.begin.css
                   ^                                          1: punctuation.definition.string.end.css
                    ^                                         1: punctuation.terminator.rule.css
 
 @source not "./file.ts";
-^^^^^^^^^^^^^^^^^^^^^^^^                                     8: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^                                     9: source.css.tailwind
 ^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
 ^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
             ^^^^^^^^^^^                                      3: string.quoted.double.css
             ^                                                1: punctuation.definition.string.begin.css
                       ^                                      1: punctuation.definition.string.end.css
                        ^                                     1: punctuation.terminator.rule.css
 
 @source not "./dir/**/file-{a,b}.ts";
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                        8: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                        9: source.css.tailwind
 ^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
 ^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
             ^^^^^^^^^^^^^^^^^^^^^^^^                         3: string.quoted.double.css
             ^                                                1: punctuation.definition.string.begin.css
                                    ^                         1: punctuation.definition.string.end.css
@@ -615,18 +618,20 @@ exports[`@source 1`] = `
                                                       ^      1: punctuation.terminator.rule.css
 
 @source not inline("flex");
-^^^^^^^^^^^^^^^^^^^^^^^^^^^                                  9: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^^                                 10: source.css.tailwind
 ^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
 ^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
                    ^^^^^^                                    3: string.quoted.double.css
                    ^                                         1: punctuation.definition.string.begin.css
                         ^                                    1: punctuation.definition.string.end.css
                           ^                                  1: punctuation.terminator.rule.css
 
 @source not inline("flex bg-red-{50,{100..900..100},950}");
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 10: source.css.tailwind
 ^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
 ^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    3: string.quoted.double.css
                    ^                                         1: punctuation.definition.string.begin.css
                                                         ^    1: punctuation.definition.string.end.css
