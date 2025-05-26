@@ -2307,6 +2307,9 @@ export async function resolveCompletionItem(
         })
 
         base.walkDecls((node) => {
+          if (node.value === 'var(--tw-border-style)') return
+          if (node.value === 'var(--tw-outline-style)') return
+
           decls.push(node)
         })
 

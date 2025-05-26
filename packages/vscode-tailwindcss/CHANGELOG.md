@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Simplify completion details for border and outline utilities ([#1384](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1384))
 
 # 0.14.19
 

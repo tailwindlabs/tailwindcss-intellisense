@@ -981,3 +981,36 @@ defineTest({
     expect(completionD?.items.length).not.toBe(0)
   },
 })
+
+defineTest({
+  name: 'Completions for outline and border utilities have simplified details',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: html`<div class="border-0 outline-0"></div>`,
+    })
+
+    // <div class="border-0 outline-0"></div>
+    //                    ^
+    let completionA = await document.completions({ line: 0, character: 20 })
+
+    // <div class="border-0 outline-0"></div>
+    //                              ^
+    let completionB = await document.completions({ line: 0, character: 30 })
+
+    let border = completionA?.items.find((item) => item.label === 'border-0')
+    let outline = completionB?.items.find((item) => item.label === 'outline-0')
+
+    let borderResolved = await client.conn.sendRequest('completionItem/resolve', border)
+    let outlineResolved = await client.conn.sendRequest('completionItem/resolve', outline)
+
+    expect(borderResolved).toMatchObject({ detail: 'border-width: 0px;' })
+    expect(outlineResolved).toMatchObject({ detail: 'outline-width: 0px;' })
+  },
+})
