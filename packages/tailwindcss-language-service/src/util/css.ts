@@ -1,6 +1,6 @@
 import type { Position } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { isVueDoc, isSvelteDoc, isHtmlDoc } from './html'
+import { isVueDoc, isSvelteDoc, isHtmlDoc, isAstroDoc } from './html'
 import { isJsDoc } from './js'
 import type { State } from './state'
 import { cssLanguages } from './languages'
@@ -27,7 +27,13 @@ export function isCssContext(state: State, doc: TextDocument, position: Position
     return true
   }
 
-  if (isHtmlDoc(state, doc) || isVueDoc(doc) || isSvelteDoc(doc) || isJsDoc(state, doc)) {
+  if (
+    isHtmlDoc(state, doc) ||
+    isVueDoc(doc) ||
+    isSvelteDoc(doc) ||
+    isJsDoc(state, doc) ||
+    isAstroDoc(doc)
+  ) {
     let str = doc.getText({
       start: { line: 0, character: 0 },
       end: position,
