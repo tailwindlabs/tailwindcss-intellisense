@@ -157,13 +157,15 @@ export function getLanguageBoundaries(
 
   let isJs = isJsDoc(state, doc)
 
-  let defaultType = isVueDoc(doc)
-    ? 'none'
-    : isHtmlDoc(state, doc) || isSvelteDoc(doc)
-      ? 'html'
-      : isJs
-        ? 'jsx'
-        : null
+  let defaultType: string | null = null
+
+  if (isVueDoc(doc)) {
+    defaultType = 'none'
+  } else if (isHtmlDoc(state, doc) || isSvelteDoc(doc)) {
+    defaultType = 'html'
+  } else if (isJs) {
+    defaultType = 'jsx'
+  }
 
   if (defaultType === null) {
     cache.set(cacheKey, null)
@@ -172,7 +174,14 @@ export function getLanguageBoundaries(
 
   text = getTextWithoutComments(text, isJs ? 'js' : 'html')
 
-  let lexer = defaultType === 'none' ? vueLexer : defaultLexer
+  let lexer = defaultLexer
+
+  if (defaultType === 'none') {
+    if (isVueDoc(doc)) {
+      lexer = vueLexer
+    }
+  }
+
   lexer.reset(text)
 
   let type = defaultType
