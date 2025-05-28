@@ -12,6 +12,7 @@ import {
   DocumentLinkRequest,
   DocumentSymbol,
   DocumentSymbolRequest,
+  ExitNotification,
   FileChangeType,
   FileEvent,
   Hover,
@@ -19,6 +20,7 @@ import {
   ProtocolConnection,
   PublishDiagnosticsParams,
   Registration,
+  ShutdownRequest,
   SymbolInformation,
   UnregistrationRequest,
   WorkspaceFolder,
@@ -226,6 +228,11 @@ export interface Client extends ClientWorkspace {
    * Update the global settings for the server
    */
   updateSettings(settings: DeepPartial<Settings>): Promise<void>
+
+  /**
+   * Shutdown the server
+   */
+  shutdown(): Promise<void>
 }
 
 export interface ClientWorkspaceOptions {
@@ -567,6 +574,13 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     })
   }
 
+  let didExit = new Promise<void>((resolve) => conn.onNotification(ExitNotification.type, resolve))
+
+  async function shutdown() {
+    await conn.sendRequest(ShutdownRequest.type)
+    await didExit
+  }
+
   return {
     ...clientWorkspaces[0],
     get serverCapabilities() {
@@ -576,6 +590,7 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
     notifyChangedFiles,
     workspace,
     updateSettings,
+    shutdown,
   }
 }
 

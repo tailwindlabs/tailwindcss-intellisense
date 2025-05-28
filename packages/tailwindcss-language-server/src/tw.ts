@@ -1133,7 +1133,7 @@ export class TW {
     this.commonRegistrations?.dispose()
     this.commonRegistrations = undefined
 
-    this.lastTriggerCharacters.clear()
+    this.lastTriggerCharacters?.clear()
     this.completionRegistration?.then((r) => r.dispose())
     this.completionRegistration = undefined
 
