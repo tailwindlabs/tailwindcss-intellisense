@@ -1411,7 +1411,7 @@
           "include": "#property-names"
         },
         {
-          "include": "#selector-innards"
+          "include": "#selector"
         }
       ]
     },
@@ -1551,10 +1551,7 @@
       "name": "meta.property-list.css",
       "patterns": [
         {
-          "include": "#nesting-rules"
-        },
-        {
-          "include": "#rule-list-innards"
+          "include": "#nesting-at-rules"
         },
         {
           "include": "$self"
