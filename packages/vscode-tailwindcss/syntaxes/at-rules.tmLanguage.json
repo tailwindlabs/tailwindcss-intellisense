@@ -82,7 +82,7 @@
           "include": "#source-fn"
         },
         {
-          "match": "[^\\s;]+?",
+          "match": "[^\\s;]+",
           "name": "variable.parameter.tailwind.tailwind"
         }
       ]
@@ -103,7 +103,7 @@
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{]+?",
+          "match": "[^\\s{]+",
           "name": "variable.parameter.screen.tailwind"
         },
         {
@@ -144,7 +144,7 @@
           "include": "source.css#comment-block"
         },
         {
-          "match": "[^\\s{;,]+?",
+          "match": "[^\\s{;,]+",
           "name": "variable.parameter.layer.tailwind"
         },
         {
@@ -189,8 +189,30 @@
       },
       "end": "(?<=}|;)(?!\\G)",
       "patterns": [
+        { "include": "#theme-options" },
         {
-          "include": "source.css#rule-list"
+          "match": "[^{\\s]+",
+          "name": "invalid.illegal.theme-option.css"
+        },
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.theme.begin.bracket.curly.tailwind"
+            }
+          },
+          "end": "}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.theme.end.bracket.curly.tailwind"
+            }
+          },
+          "name": "meta.at-rule.theme.body.tailwind",
+          "patterns": [
+            {
+              "include": "#property-list"
+            }
+          ]
         }
       ]
     },
@@ -204,7 +226,7 @@
           "name": "punctuation.definition.keyword.tailwind"
         }
       },
-      "end": ";",
+      "end": ";|(?=[@{])",
       "endCaptures": {
         "0": {
           "name": "punctuation.terminator.rule.css"
@@ -258,7 +280,14 @@
           "name": "invalid.illegal.invalid-source.css"
         },
         {
+          "match": "not(?=\\s)",
+          "name": "support.constant.not.css"
+        },
+        {
           "include": "source.css#string"
+        },
+        {
+          "include": "#inline-fn"
         }
       ]
     },
@@ -303,7 +332,7 @@
           "include": "source.css#commas"
         },
         {
-          "match": "[^\\s{,]+?",
+          "match": "[^\\s{,]+",
           "name": "variable.parameter.variants.tailwind"
         },
         {
@@ -341,7 +370,7 @@
       "end": "(?<=})(?!\\G)",
       "patterns": [
         {
-          "match": "[^\\s{,]+?",
+          "match": "[^\\s{,]+",
           "name": "variable.parameter.utility.tailwind"
         },
         {
@@ -360,14 +389,14 @@
           "name": "meta.at-rule.utility.body.tailwind",
           "patterns": [
             {
-              "include": "source.css#rule-list"
+              "include": "source.css#rule-list-innards"
             }
           ]
         }
       ]
     },
     {
-      "begin": "(?i)((@)variant)(?=[\\s{(]|$)",
+      "begin": "(?i)((@)(?:custom-)?variant)(?=[\\s{(]|$)",
       "beginCaptures": {
         "1": {
           "name": "keyword.control.at-rule.variant.tailwind"
@@ -379,7 +408,7 @@
       "end": "(?<=[};])(?!\\G)",
       "patterns": [
         {
-          "match": "[^\\s({;,]+?",
+          "match": "[^\\s({;,]+",
           "name": "variable.parameter.variant.tailwind"
         },
         {
@@ -561,6 +590,66 @@
         }
       ]
     },
+    "inline-fn": {
+      "patterns": [
+        {
+          "begin": "(?i)(?:\\s*)(?<![\\w@-])(inline)([(])",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.inline.css"
+            },
+            "2": {
+              "name": "punctuation.section.function.begin.bracket.round.css"
+            }
+          },
+          "end": "[)]",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.function.end.bracket.round.css"
+            }
+          },
+          "patterns": [
+            {
+              "match": "none(?=[)])",
+              "name": "support.constant.none.css"
+            },
+            {
+              "include": "source.css#string"
+            }
+          ]
+        }
+      ]
+    },
+    "theme-options": {
+      "patterns": [
+        {
+          "match": "\\s+"
+        },
+        {
+          "match": "reference",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "inline",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "static",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "default",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "match": "deprecated",
+          "name": "support.constant.theme-option.css"
+        },
+        {
+          "include": "#prefix-meta-fn"
+        }
+      ]
+    },
     "theme-meta-fn": {
       "patterns": [
         {
@@ -580,33 +669,10 @@
             }
           },
           "patterns": [
+            { "include": "#theme-options" },
             {
-              "match": "\\s+",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "reference",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "inline",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "static",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "default",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "deprecated",
-              "name": "variable.other.css"
-            },
-            {
-              "match": "[^)]+",
-              "name": "invalid.illegal.invalid-source.css"
+              "match": "[^)\\s]+",
+              "name": "invalid.illegal.theme-option.css"
             }
           ]
         }
@@ -633,11 +699,11 @@
           "patterns": [
             {
               "match": "[a-z]+",
-              "name": "variable.other.css"
+              "name": "variable.parameter.prefix.css"
             },
             {
               "match": "[^a-z]+",
-              "name": "invalid.illegal.invalid-source.css"
+              "name": "invalid.illegal.prefix.css"
             }
           ]
         }

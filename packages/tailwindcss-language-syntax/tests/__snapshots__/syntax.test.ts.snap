@@ -1,0 +1,1259 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`@config statement 1`] = `
+"
+@config "./foo";
+^^^^^^^^^^^^^^^^  7: source.css.tailwind
+^^^^^^^           2: keyword.control.at-rule.config.tailwind
+^                 1: punctuation.definition.keyword.tailwind
+        ^^^^^^^   3: string.quoted.double.css
+        ^         1: punctuation.definition.string.begin.css
+              ^   1: punctuation.definition.string.end.css
+               ^  1: punctuation.terminator.rule.css
+
+@config "./bar";
+^^^^^^^^^^^^^^^^  7: source.css.tailwind
+^^^^^^^           2: keyword.control.at-rule.config.tailwind
+^                 1: punctuation.definition.keyword.tailwind
+        ^^^^^^^   3: string.quoted.double.css
+        ^         1: punctuation.definition.string.begin.css
+              ^   1: punctuation.definition.string.end.css
+               ^  1: punctuation.terminator.rule.css
+"
+`;
+
+exports[`@custom-variant 1`] = `
+"
+@custom-variant dark (&:is(.dark, .dark *));
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 21: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
+^                                             1: punctuation.definition.keyword.css
+                ^^^^                          1: variable.parameter.variant.tailwind
+                     ^^^^^^^^^^^^^^^^^^^^^^  15: meta.selector.tailwind
+                     ^                        1: punctuation.section.variant.begin.bracket.paren.tailwind
+                       ^^^                    2: entity.other.attribute-name.pseudo-class.css
+                       ^   ^      ^           3: punctuation.definition.entity.css
+                          ^                   1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^  ^^^^^       4: entity.other.attribute-name.class.css
+                                ^             1: punctuation.separator.list.comma.css
+                                        ^     1: entity.name.tag.wildcard.css
+                                         ^    1: punctuation.section.function.end.bracket.round.css
+                                          ^   1: punctuation.section.variant.end.bracket.paren.tailwind
+
+@custom-variant dark {
+^^^^^^^^^^^^^^^^^^^^^^                        6: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
+^                                             1: punctuation.definition.keyword.css
+                ^^^^                          1: variable.parameter.variant.tailwind
+                     ^                        1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
+
+  &:is(.dark, .dark *) {
+^^^^^^^^^^^^^^^^^^^^^^^^                     15: source.css.tailwind meta.at-rule.variant.body.tailwind
+   ^^^^^^^^^^^^^^^^^^^                       12: meta.selector.css
+   ^^^                                        2: entity.other.attribute-name.pseudo-class.css
+   ^   ^      ^                               3: punctuation.definition.entity.css
+      ^                                       1: punctuation.section.function.begin.bracket.round.css
+       ^^^^^  ^^^^^                           4: entity.other.attribute-name.class.css
+            ^                                 1: punctuation.separator.list.comma.css
+                    ^                         1: entity.name.tag.wildcard.css
+                     ^                        1: punctuation.section.function.end.bracket.round.css
+                       ^                      1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    @slot;
+^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+     ^^^^                                     1: meta.property-name.css
+         ^                                    1: punctuation.terminator.rule.css
+
+  }
+^^^                                           2: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+  ^                                           1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                                             1: source.css.tailwind meta.at-rule.variant.body.tailwind punctuation.section.variant.end.bracket.curly.tailwind
+
+@custom-variant around {
+^^^^^^^^^^^^^^^^^^^^^^^^                      6: source.css.tailwind
+^^^^^^^^^^^^^^^                               2: keyword.control.at-rule.variant.tailwind
+^                                             1: punctuation.definition.keyword.css
+                ^^^^^^                        1: variable.parameter.variant.tailwind
+                       ^                      1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
+
+  color: '';
+^^^^^^^^^^^^^                                 2: source.css.tailwind meta.at-rule.variant.body.tailwind
+  ^^^^^^^^^^^                                 1: meta.selector.css
+
+  &::before,
+^^^^^^^^^^^^                                  4: source.css.tailwind meta.at-rule.variant.body.tailwind meta.selector.css
+   ^^^^^^^^                                   2: entity.other.attribute-name.pseudo-element.css
+   ^^                                         1: punctuation.definition.entity.css
+           ^                                  1: punctuation.separator.list.comma.css
+
+  &::after {
+^^^^^^^^^^^^                                  5: source.css.tailwind meta.at-rule.variant.body.tailwind
+^^^^^^^^^^                                    3: meta.selector.css
+   ^^^^^^^                                    2: entity.other.attribute-name.pseudo-element.css
+   ^^                                         1: punctuation.definition.entity.css
+           ^                                  1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    @slot;
+^^^^^^^^^^                                    3: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+     ^^^^                                     1: meta.property-name.css
+         ^                                    1: punctuation.terminator.rule.css
+
+  }
+^^^                                           2: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+  ^                                           1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                                             1: source.css.tailwind meta.at-rule.variant.body.tailwind punctuation.section.variant.end.bracket.curly.tailwind
+"
+`;
+
+exports[`@import 1`] = `
+"
+@import './test.css';
+^^^^^^^^^^^^^^^^^^^^^                                      7: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                    ^                                      1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@import './test.css' prefix(tw);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                          12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^^                                1: support.function.prefix.css
+                           ^                               1: punctuation.section.function.begin.bracket.round.css
+                            ^^                             1: variable.parameter.prefix.css
+                              ^                            1: punctuation.section.function.end.bracket.round.css
+                               ^                           1: punctuation.terminator.rule.css
+
+@import './test.css' layer(utilities) prefix(tw);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         17: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.layer.css
+                          ^                 ^              2: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^^^^                       1: support.constant.layer-name.css
+                                    ^          ^           2: punctuation.section.function.end.bracket.round.css
+                                      ^^^^^^               1: support.function.prefix.css
+                                             ^^            1: variable.parameter.prefix.css
+                                                ^          1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@import './test.css' source(none);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                        12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^^                                1: support.function.source.css
+                           ^                               1: punctuation.section.function.begin.bracket.round.css
+                            ^^^^                           1: support.constant.none.css
+                                ^                          1: punctuation.section.function.end.bracket.round.css
+                                 ^                         1: punctuation.terminator.rule.css
+
+@import './test.css' source('./foo');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                     14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^        ^^^^^^^                        6: string.quoted.single.css
+        ^                   ^                              2: punctuation.definition.string.begin.css
+                   ^              ^                        2: punctuation.definition.string.end.css
+                     ^^^^^^                                1: support.function.source.css
+                           ^                               1: punctuation.section.function.begin.bracket.round.css
+                                   ^                       1: punctuation.section.function.end.bracket.round.css
+                                    ^                      1: punctuation.terminator.rule.css
+
+@import './test.css' layer(utilities) source('./foo');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    19: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                         ^^^^^^^       6: string.quoted.single.css
+        ^                                    ^             2: punctuation.definition.string.begin.css
+                   ^                               ^       2: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.layer.css
+                          ^                 ^              2: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^^^^                       1: support.constant.layer-name.css
+                                    ^               ^      2: punctuation.section.function.end.bracket.round.css
+                                      ^^^^^^               1: support.function.source.css
+                                                     ^     1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@import './test.css' theme(static);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                       12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.theme.css
+                          ^                                1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^                          1: support.constant.theme-option.css
+                                 ^                         1: punctuation.section.function.end.bracket.round.css
+                                  ^                        1: punctuation.terminator.rule.css
+
+@import './test.css' theme(static default inline);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        16: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.theme.css
+                          ^                                1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^ ^^^^^^^ ^^^^^^           3: support.constant.theme-option.css
+                                                ^          1: punctuation.section.function.end.bracket.round.css
+                                                 ^         1: punctuation.terminator.rule.css
+
+@import './test.css' theme(reference deprecated);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.theme.css
+                          ^                                1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^^^^ ^^^^^^^^^^            2: support.constant.theme-option.css
+                                               ^           1: punctuation.section.function.end.bracket.round.css
+                                                ^          1: punctuation.terminator.rule.css
+
+@import './test.css' theme(prefix(tw) reference);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^         17: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.theme.css
+                          ^      ^                         2: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^                          1: support.function.prefix.css
+                                  ^^                       1: variable.parameter.prefix.css
+                                    ^          ^           2: punctuation.section.function.end.bracket.round.css
+                                      ^^^^^^^^^            1: support.constant.theme-option.css
+                                                ^          1: punctuation.terminator.rule.css
+
+@import './test.css' theme(default invalid reference);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    16: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                                                    2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^                                       3: string.quoted.single.css
+        ^                                                  1: punctuation.definition.string.begin.css
+                   ^                                       1: punctuation.definition.string.end.css
+                     ^^^^^                                 1: support.function.theme.css
+                          ^                                1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^^         ^^^^^^^^^       2: support.constant.theme-option.css
+                                   ^^^^^^^                 1: invalid.illegal.theme-option.css
+                                                    ^      1: punctuation.section.function.end.bracket.round.css
+                                                     ^     1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@reference './test.css';
+^^^^^^^^^^^^^^^^^^^^^^^^                                   7: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                       ^                                   1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@reference './test.css' prefix(tw);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                       12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^^                             1: support.function.prefix.css
+                              ^                            1: punctuation.section.function.begin.bracket.round.css
+                               ^^                          1: variable.parameter.prefix.css
+                                 ^                         1: punctuation.section.function.end.bracket.round.css
+                                  ^                        1: punctuation.terminator.rule.css
+
+@reference './test.css' layer(utilities) prefix(tw);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      17: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.layer.css
+                             ^                 ^           2: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^^^^                    1: support.constant.layer-name.css
+                                       ^          ^        2: punctuation.section.function.end.bracket.round.css
+                                         ^^^^^^            1: support.function.prefix.css
+                                                ^^         1: variable.parameter.prefix.css
+                                                   ^       1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@reference './test.css' source(none);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                     12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^^                             1: support.function.source.css
+                              ^                            1: punctuation.section.function.begin.bracket.round.css
+                               ^^^^                        1: support.constant.none.css
+                                   ^                       1: punctuation.section.function.end.bracket.round.css
+                                    ^                      1: punctuation.terminator.rule.css
+
+@reference './test.css' source('./foo');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                  14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^        ^^^^^^^                     6: string.quoted.single.css
+           ^                   ^                           2: punctuation.definition.string.begin.css
+                      ^              ^                     2: punctuation.definition.string.end.css
+                        ^^^^^^                             1: support.function.source.css
+                              ^                            1: punctuation.section.function.begin.bracket.round.css
+                                      ^                    1: punctuation.section.function.end.bracket.round.css
+                                       ^                   1: punctuation.terminator.rule.css
+
+@reference './test.css' layer(utilities) source('./foo');
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 19: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                         ^^^^^^^    6: string.quoted.single.css
+           ^                                    ^          2: punctuation.definition.string.begin.css
+                      ^                               ^    2: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.layer.css
+                             ^                 ^           2: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^^^^                    1: support.constant.layer-name.css
+                                       ^               ^   2: punctuation.section.function.end.bracket.round.css
+                                         ^^^^^^            1: support.function.source.css
+                                                        ^  1: punctuation.terminator.rule.css
+
+
+^                                                          1: source.css.tailwind
+
+@reference './test.css' theme(static);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                    12: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.theme.css
+                             ^                             1: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^                       1: support.constant.theme-option.css
+                                    ^                      1: punctuation.section.function.end.bracket.round.css
+                                     ^                     1: punctuation.terminator.rule.css
+
+@reference './test.css' theme(static default inline);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     16: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.theme.css
+                             ^                             1: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^ ^^^^^^^ ^^^^^^        3: support.constant.theme-option.css
+                                                   ^       1: punctuation.section.function.end.bracket.round.css
+                                                    ^      1: punctuation.terminator.rule.css
+
+@reference './test.css' theme(reference deprecated);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      14: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.theme.css
+                             ^                             1: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^^^^ ^^^^^^^^^^         2: support.constant.theme-option.css
+                                                  ^        1: punctuation.section.function.end.bracket.round.css
+                                                   ^       1: punctuation.terminator.rule.css
+
+@reference './test.css' theme(prefix(tw) reference);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      17: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.theme.css
+                             ^      ^                      2: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^                       1: support.function.prefix.css
+                                     ^^                    1: variable.parameter.prefix.css
+                                       ^          ^        2: punctuation.section.function.end.bracket.round.css
+                                         ^^^^^^^^^         1: support.constant.theme-option.css
+                                                   ^       1: punctuation.terminator.rule.css
+
+@reference './test.css' theme(default invalid reference);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 16: source.css.tailwind meta.at-rule.import.css
+^^^^^^^^^^                                                 2: keyword.control.at-rule.import.css
+^                                                          1: punctuation.definition.keyword.css
+           ^^^^^^^^^^^^                                    3: string.quoted.single.css
+           ^                                               1: punctuation.definition.string.begin.css
+                      ^                                    1: punctuation.definition.string.end.css
+                        ^^^^^                              1: support.function.theme.css
+                             ^                             1: punctuation.section.function.begin.bracket.round.css
+                              ^^^^^^^         ^^^^^^^^^    2: support.constant.theme-option.css
+                                      ^^^^^^^              1: invalid.illegal.theme-option.css
+                                                       ^   1: punctuation.section.function.end.bracket.round.css
+                                                        ^  1: punctuation.terminator.rule.css
+"
+`;
+
+exports[`@layer 1`] = `
+"
+@layer theme, base, components, utilities;
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 14: source.css.tailwind
+^^^^^^                                      2: keyword.control.at-rule.layer.tailwind
+^                                           1: punctuation.definition.keyword.css
+       ^^^^^  ^^^^  ^^^^^^^^^^  ^^^^^^^^^   4: variable.parameter.layer.tailwind
+            ^     ^           ^             3: punctuation.separator.list.comma.css
+                                         ^  1: punctuation.terminator.rule.css
+
+@layer utilities {
+^^^^^^^^^^^^^^^^^^                          6: source.css.tailwind
+^^^^^^                                      2: keyword.control.at-rule.layer.tailwind
+^                                           1: punctuation.definition.keyword.css
+       ^^^^^^^^^                            1: variable.parameter.layer.tailwind
+                 ^                          1: meta.at-rule.layer.body.tailwind punctuation.section.layer.begin.bracket.curly.tailwind
+
+  .custom {
+^^^^^^^^^^^                                 5: source.css.tailwind meta.at-rule.layer.body.tailwind
+  ^^^^^^^                                   2: meta.selector.css entity.other.attribute-name.class.css
+  ^                                         1: punctuation.definition.entity.css
+          ^                                 1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    width: 12px;
+^^^^^^^^^^^^^^^^                            7: source.css.tailwind meta.at-rule.layer.body.tailwind meta.property-list.css
+    ^^^^^                                   1: meta.property-name.css support.type.property-name.css
+         ^                                  1: punctuation.separator.key-value.css
+           ^^^^                             2: meta.property-value.css constant.numeric.css
+             ^^                             1: keyword.other.unit.px.css
+               ^                            1: punctuation.terminator.rule.css
+
+  }
+^^^                                         2: source.css.tailwind meta.at-rule.layer.body.tailwind meta.property-list.css
+  ^                                         1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                                           1: source.css.tailwind meta.at-rule.layer.body.tailwind punctuation.section.layer.end.bracket.curly.tailwind
+"
+`;
+
+exports[`@plugin statement 1`] = `
+"
+@plugin "./foo";
+^^^^^^^^^^^^^^^^  7: source.css.tailwind
+^^^^^^^           2: keyword.control.at-rule.plugin.tailwind
+^                 1: punctuation.definition.keyword.tailwind
+        ^^^^^^^   3: string.quoted.double.css
+        ^         1: punctuation.definition.string.begin.css
+              ^   1: punctuation.definition.string.end.css
+               ^  1: punctuation.terminator.rule.css
+
+@plugin "./bar";
+^^^^^^^^^^^^^^^^  7: source.css.tailwind
+^^^^^^^           2: keyword.control.at-rule.plugin.tailwind
+^                 1: punctuation.definition.keyword.tailwind
+        ^^^^^^^   3: string.quoted.double.css
+        ^         1: punctuation.definition.string.begin.css
+              ^   1: punctuation.definition.string.end.css
+               ^  1: punctuation.terminator.rule.css
+"
+`;
+
+exports[`@plugin with options 1`] = `
+"
+@import 'tailwindcss';
+^^^^^^^^^^^^^^^^^^^^^^  7: source.css.tailwind meta.at-rule.import.css
+^^^^^^^                 2: keyword.control.at-rule.import.css
+^                       1: punctuation.definition.keyword.css
+        ^^^^^^^^^^^^^   3: string.quoted.single.css
+        ^               1: punctuation.definition.string.begin.css
+                    ^   1: punctuation.definition.string.end.css
+                     ^  1: punctuation.terminator.rule.css
+
+@plugin "testing" {
+^^^^^^^^^^^^^^^^^^^     8: source.css.tailwind
+^^^^^^^                 2: keyword.control.at-rule.plugin.tailwind
+^                       1: punctuation.definition.keyword.tailwind
+        ^^^^^^^^^       3: string.quoted.double.css
+        ^               1: punctuation.definition.string.begin.css
+                ^       1: punctuation.definition.string.end.css
+                  ^     1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+  color: red;
+^^^^^^^^^^^^^           6: source.css.tailwind meta.property-list.css
+  ^^^^^                 1: meta.property-name.css support.type.property-name.css
+       ^                1: punctuation.separator.key-value.css
+         ^^^            1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+            ^           1: punctuation.terminator.rule.css
+
+}
+^                       1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+
+
+^                       1: source.css.tailwind
+
+html,
+^^^^^                   2: source.css.tailwind meta.selector.css
+^^^^                    1: entity.name.tag.css
+    ^                   1: punctuation.separator.list.comma.css
+
+body {
+^^^^^^                  3: source.css.tailwind
+^^^^                    1: meta.selector.css entity.name.tag.css
+     ^                  1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+  color: red;
+^^^^^^^^^^^^^           6: source.css.tailwind meta.property-list.css
+  ^^^^^                 1: meta.property-name.css support.type.property-name.css
+       ^                1: punctuation.separator.key-value.css
+         ^^^            1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+            ^           1: punctuation.terminator.rule.css
+
+}
+^                       1: source.css.tailwind meta.property-list.css punctuation.section.property-list.end.bracket.curly.css
+"
+`;
+
+exports[`@source 1`] = `
+"
+@source "./dir";
+^^^^^^^^^^^^^^^^                                             7: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^^^^^                                              3: string.quoted.double.css
+        ^                                                    1: punctuation.definition.string.begin.css
+              ^                                              1: punctuation.definition.string.end.css
+               ^                                             1: punctuation.terminator.rule.css
+
+@source "./file.ts";
+^^^^^^^^^^^^^^^^^^^^                                         7: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^^^^^^^^^                                          3: string.quoted.double.css
+        ^                                                    1: punctuation.definition.string.begin.css
+                  ^                                          1: punctuation.definition.string.end.css
+                   ^                                         1: punctuation.terminator.rule.css
+
+@source "./dir/**/file-{a,b}.ts";
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                            7: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^^^^^^^^^^^^^^^^^^^^^^                             3: string.quoted.double.css
+        ^                                                    1: punctuation.definition.string.begin.css
+                               ^                             1: punctuation.definition.string.end.css
+                                ^                            1: punctuation.terminator.rule.css
+
+@source not "./dir";
+^^^^^^^^^^^^^^^^^^^^                                         9: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
+            ^^^^^^^                                          3: string.quoted.double.css
+            ^                                                1: punctuation.definition.string.begin.css
+                  ^                                          1: punctuation.definition.string.end.css
+                   ^                                         1: punctuation.terminator.rule.css
+
+@source not "./file.ts";
+^^^^^^^^^^^^^^^^^^^^^^^^                                     9: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
+            ^^^^^^^^^^^                                      3: string.quoted.double.css
+            ^                                                1: punctuation.definition.string.begin.css
+                      ^                                      1: punctuation.definition.string.end.css
+                       ^                                     1: punctuation.terminator.rule.css
+
+@source not "./dir/**/file-{a,b}.ts";
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                        9: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
+            ^^^^^^^^^^^^^^^^^^^^^^^^                         3: string.quoted.double.css
+            ^                                                1: punctuation.definition.string.begin.css
+                                   ^                         1: punctuation.definition.string.end.css
+                                    ^                        1: punctuation.terminator.rule.css
+
+
+^                                                            1: source.css.tailwind
+
+@source inline("flex");
+^^^^^^^^^^^^^^^^^^^^^^^                                     10: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^^^^                                               1: support.function.inline.css
+              ^                                              1: punctuation.section.function.begin.bracket.round.css
+               ^^^^^^                                        3: string.quoted.double.css
+               ^                                             1: punctuation.definition.string.begin.css
+                    ^                                        1: punctuation.definition.string.end.css
+                     ^                                       1: punctuation.section.function.end.bracket.round.css
+                      ^                                      1: punctuation.terminator.rule.css
+
+@source inline("flex bg-red-{50,{100..900..100},950}");
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     10: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^^^^                                               1: support.function.inline.css
+              ^                                              1: punctuation.section.function.begin.bracket.round.css
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^        3: string.quoted.double.css
+               ^                                             1: punctuation.definition.string.begin.css
+                                                    ^        1: punctuation.definition.string.end.css
+                                                     ^       1: punctuation.section.function.end.bracket.round.css
+                                                      ^      1: punctuation.terminator.rule.css
+
+@source not inline("flex");
+^^^^^^^^^^^^^^^^^^^^^^^^^^^                                 12: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
+            ^^^^^^                                           1: support.function.inline.css
+                  ^                                          1: punctuation.section.function.begin.bracket.round.css
+                   ^^^^^^                                    3: string.quoted.double.css
+                   ^                                         1: punctuation.definition.string.begin.css
+                        ^                                    1: punctuation.definition.string.end.css
+                         ^                                   1: punctuation.section.function.end.bracket.round.css
+                          ^                                  1: punctuation.terminator.rule.css
+
+@source not inline("flex bg-red-{50,{100..900..100},950}");
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 12: source.css.tailwind
+^^^^^^^                                                      2: keyword.control.at-rule.source.tailwind
+^                                                            1: punctuation.definition.keyword.tailwind
+        ^^^                                                  1: support.constant.not.css
+            ^^^^^^                                           1: support.function.inline.css
+                  ^                                          1: punctuation.section.function.begin.bracket.round.css
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    3: string.quoted.double.css
+                   ^                                         1: punctuation.definition.string.begin.css
+                                                        ^    1: punctuation.definition.string.end.css
+                                                         ^   1: punctuation.section.function.end.bracket.round.css
+                                                          ^  1: punctuation.terminator.rule.css
+"
+`;
+
+exports[`@tailwind 1`] = `
+"
+@tailwind base;
+^^^^^^^^^^^^^^^                        5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^                         1: variable.parameter.tailwind.tailwind
+              ^                        1: punctuation.terminator.tailwind.tailwind
+
+@tailwind components;
+^^^^^^^^^^^^^^^^^^^^^                  5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^^^^                   1: variable.parameter.tailwind.tailwind
+                    ^                  1: punctuation.terminator.tailwind.tailwind
+
+@tailwind utilities;
+^^^^^^^^^^^^^^^^^^^^                   5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^^^                    1: variable.parameter.tailwind.tailwind
+                   ^                   1: punctuation.terminator.tailwind.tailwind
+
+@tailwind utilities source(none);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     10: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^^^                    1: variable.parameter.tailwind.tailwind
+                    ^^^^^^             1: support.function.source.css
+                          ^            1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^        1: support.constant.none.css
+                               ^       1: punctuation.section.function.end.bracket.round.css
+                                ^      1: punctuation.terminator.tailwind.tailwind
+
+@tailwind utilities source("./**/*");
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 12: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^^^                    1: variable.parameter.tailwind.tailwind
+                    ^^^^^^             1: support.function.source.css
+                          ^            1: punctuation.section.function.begin.bracket.round.css
+                           ^^^^^^^^    3: string.quoted.double.css
+                           ^           1: punctuation.definition.string.begin.css
+                                  ^    1: punctuation.definition.string.end.css
+                                   ^   1: punctuation.section.function.end.bracket.round.css
+                                    ^  1: punctuation.terminator.tailwind.tailwind
+
+@tailwind screens;
+^^^^^^^^^^^^^^^^^^                     5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^                      1: variable.parameter.tailwind.tailwind
+                 ^                     1: punctuation.terminator.tailwind.tailwind
+
+@tailwind variants;
+^^^^^^^^^^^^^^^^^^^                    5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^^                     1: variable.parameter.tailwind.tailwind
+                  ^                    1: punctuation.terminator.tailwind.tailwind
+
+@tailwind unknown;
+^^^^^^^^^^^^^^^^^^                     5: source.css.tailwind meta.at-rule.tailwind.css
+^^^^^^^^^                              2: keyword.control.at-rule.tailwind.tailwind
+^                                      1: punctuation.definition.keyword.css
+          ^^^^^^^                      1: variable.parameter.tailwind.tailwind
+                 ^                     1: punctuation.terminator.tailwind.tailwind
+"
+`;
+
+exports[`@theme 1`] = `
+"
+@theme {
+^^^^^^^^                               4: source.css.tailwind
+^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
+^                                      1: punctuation.definition.keyword.css
+       ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
+
+  --color: red;
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
+         ^                             1: punctuation.separator.key-value.css
+           ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^                        1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
+
+@theme static {
+^^^^^^^^^^^^^^^                        6: source.css.tailwind
+^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
+^                                      1: punctuation.definition.keyword.css
+       ^^^^^^                          1: support.constant.theme-option.css
+              ^                        1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
+
+  --color: red;
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
+         ^                             1: punctuation.separator.key-value.css
+           ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^                        1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
+
+@theme inline deprecated {
+^^^^^^^^^^^^^^^^^^^^^^^^^^             8: source.css.tailwind
+^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
+^                                      1: punctuation.definition.keyword.css
+       ^^^^^^ ^^^^^^^^^^               2: support.constant.theme-option.css
+                         ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
+
+  --color: red;
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
+         ^                             1: punctuation.separator.key-value.css
+           ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^                        1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
+
+@theme prefix(tw) inline {
+^^^^^^^^^^^^^^^^^^^^^^^^^^            11: source.css.tailwind
+^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
+^                                      1: punctuation.definition.keyword.css
+       ^^^^^^                          1: support.function.prefix.css
+             ^                         1: punctuation.section.function.begin.bracket.round.css
+              ^^                       1: variable.parameter.prefix.css
+                ^                      1: punctuation.section.function.end.bracket.round.css
+                  ^^^^^^               1: support.constant.theme-option.css
+                         ^             1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
+
+  --color: red;
+^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^                              1: meta.property-name.css
+         ^                             1: punctuation.separator.key-value.css
+           ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^                        1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
+
+
+^                                      1: source.css.tailwind
+
+@theme {
+^^^^^^^^                               4: source.css.tailwind
+^^^^^^                                 2: keyword.control.at-rule.theme.tailwind
+^                                      1: punctuation.definition.keyword.css
+       ^                               1: meta.at-rule.theme.body.tailwind punctuation.section.theme.begin.bracket.curly.tailwind
+
+  --spacing: initial;
+^^^^^^^^^^^^^^^^^^^^^                  6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^                            1: meta.property-name.css
+           ^                           1: punctuation.separator.key-value.css
+             ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
+                    ^                  1: punctuation.terminator.rule.css
+
+  --color-*: initial;
+^^^^^^^^^^^^^^^^^^^^^                  7: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^                             1: meta.property-name.css
+           ^                           1: punctuation.separator.key-value.css
+             ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
+                    ^                  1: punctuation.terminator.rule.css
+
+  --animate-pulse: 1s pulse infinite;
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^^^^^^^                      1: meta.property-name.css
+                 ^                     1: punctuation.separator.key-value.css
+                   ^^^^^^^^^^^^^^^^^   4: meta.property-value.css
+                   ^^                  2: constant.numeric.css
+                    ^                  1: keyword.other.unit.s.css
+                            ^^^^^^^^   1: support.constant.property-value.css
+                                    ^  1: punctuation.terminator.rule.css
+
+
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind
+
+  @keyframes pulse {
+^^^^^^^^^^^^^^^^^^^^^                  5: source.css.tailwind meta.at-rule.theme.body.tailwind
+   ^^^^^^^^^ ^^^^^                     2: meta.property-name.css
+
+    0%,
+^^^^^^^^                               1: source.css.tailwind meta.at-rule.theme.body.tailwind
+
+    100% {
+^^^^^^^^^^^                            1: source.css.tailwind meta.at-rule.theme.body.tailwind
+
+      opacity: 0;
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind
+      ^^^^^^^                          1: meta.property-name.css support.type.property-name.css
+             ^                         1: punctuation.separator.key-value.css
+               ^                       1: meta.property-value.css constant.numeric.css
+                ^                      1: punctuation.terminator.rule.css
+
+    }
+^^^^^                                  2: source.css.tailwind meta.at-rule.theme.body.tailwind
+    ^                                  1: punctuation.section.theme.end.bracket.curly.tailwind
+
+    50% {
+^^^^^^^^^                              2: source.css.tailwind
+        ^                              1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+      opacity: 1;
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.property-list.css
+      ^^^^^^^                          1: meta.property-name.css support.type.property-name.css
+             ^                         1: punctuation.separator.key-value.css
+               ^                       1: meta.property-value.css constant.numeric.css
+                ^                      1: punctuation.terminator.rule.css
+
+    }
+^^^^^                                  2: source.css.tailwind meta.property-list.css
+    ^                                  1: punctuation.section.property-list.end.bracket.curly.css
+
+  }
+^^^^                                   1: source.css.tailwind
+
+}
+^^                                     1: source.css.tailwind
+"
+`;
+
+exports[`@utility 1`] = `
+"
+@utility custom {
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind
+^^^^^^^^                               2: keyword.control.at-rule.utility.tailwind
+^                                      1: punctuation.definition.keyword.css
+         ^^^^^^                        1: variable.parameter.utility.tailwind
+                ^                      1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  width: 12px;
+^^^^^^^^^^^^^^                         7: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                1: meta.property-name.css support.type.property-name.css
+       ^                               1: punctuation.separator.key-value.css
+         ^^^^                          2: meta.property-value.css constant.numeric.css
+           ^^                          1: keyword.other.unit.px.css
+             ^                         1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+
+
+^                                      1: source.css.tailwind
+
+@utility functional-* {
+^^^^^^^^^^^^^^^^^^^^^^^                6: source.css.tailwind
+^^^^^^^^                               2: keyword.control.at-rule.utility.tailwind
+^                                      1: punctuation.definition.keyword.css
+         ^^^^^^^^^^^^                  1: variable.parameter.utility.tailwind
+                      ^                1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  width: calc(--value(number) * 1px);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 17: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                1: meta.property-name.css support.type.property-name.css
+       ^                               1: punctuation.separator.key-value.css
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^  12: meta.property-value.css meta.function.calc.css
+         ^^^^                          1: support.function.calc.css
+             ^       ^                 2: punctuation.section.function.begin.bracket.round.css
+              ^^^^^^^                  1: support.function.value.tailwind
+                      ^^^^^^           1: support.constant.utility.data-type.css
+                            ^      ^   2: punctuation.section.function.end.bracket.round.css
+                              ^        1: keyword.operator.arithmetic.css
+                                ^^^    2: constant.numeric.css
+                                 ^^    1: keyword.other.unit.px.css
+                                    ^  1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+"
+`;
+
+exports[`@variant 1`] = `
+"
+@variant dark {
+^^^^^^^^^^^^^^^     6: source.css.tailwind
+^^^^^^^^            2: keyword.control.at-rule.variant.tailwind
+^                   1: punctuation.definition.keyword.css
+         ^^^^       1: variable.parameter.variant.tailwind
+              ^     1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
+
+  .foo {
+^^^^^^^^            5: source.css.tailwind meta.at-rule.variant.body.tailwind
+  ^^^^              2: meta.selector.css entity.other.attribute-name.class.css
+  ^                 1: punctuation.definition.entity.css
+       ^            1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    color: white;
+^^^^^^^^^^^^^^^^^   6: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+    ^^^^^           1: meta.property-name.css support.type.property-name.css
+         ^          1: punctuation.separator.key-value.css
+           ^^^^^    1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+                ^   1: punctuation.terminator.rule.css
+
+  }
+^^^                 2: source.css.tailwind meta.at-rule.variant.body.tailwind meta.property-list.css
+  ^                 1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                   1: source.css.tailwind meta.at-rule.variant.body.tailwind punctuation.section.variant.end.bracket.curly.tailwind
+
+
+^                   1: source.css.tailwind
+
+.bar {
+^^^^^^              4: source.css.tailwind
+^^^^                2: meta.selector.css entity.other.attribute-name.class.css
+^                   1: punctuation.definition.entity.css
+     ^              1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+  @variant dark {
+^^^^^^^^^^^^^^^^^   7: source.css.tailwind meta.property-list.css
+  ^^^^^^^^          2: keyword.control.at-rule.variant.tailwind
+  ^                 1: punctuation.definition.keyword.css
+           ^^^^     1: variable.parameter.variant.tailwind
+                ^   1: meta.at-rule.variant.body.tailwind punctuation.section.variant.begin.bracket.curly.tailwind
+
+    color: white;
+^^^^^^^^^^^^^^^^^^  2: source.css.tailwind meta.property-list.css meta.at-rule.variant.body.tailwind
+    ^^^^^^^^^^^^^^  1: meta.selector.css
+
+  }
+^^^^                1: source.css.tailwind meta.property-list.css meta.at-rule.variant.body.tailwind meta.selector.css
+
+}
+^^                  1: source.css.tailwind meta.property-list.css meta.at-rule.variant.body.tailwind meta.selector.css
+"
+`;
+
+exports[`--value(…) 1`] = `
+"
+@utility functional-* {
+^^^^^^^^^^^^^^^^^^^^^^^                                   6: source.css.tailwind
+^^^^^^^^                                                  2: keyword.control.at-rule.utility.tailwind
+^                                                         1: punctuation.definition.keyword.css
+         ^^^^^^^^^^^^                                     1: variable.parameter.utility.tailwind
+                      ^                                   1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  width: --value(
+^^^^^^^^^^^^^^^^^                                         6: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                                   1: meta.property-name.css support.type.property-name.css
+       ^                                                  1: punctuation.separator.key-value.css
+         ^^^^^^^^                                         2: meta.property-value.css
+         ^^^^^^^                                          1: support.function.value.tailwind
+                ^                                         1: punctuation.section.function.begin.bracket.round.css
+
+    --size,
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: variable.theme-namespace.css
+          ^                                               1: punctuation.separator.list.comma.css
+
+    'literal',
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^                                             3: string.quoted.single.css
+    ^                                                     1: punctuation.definition.string.begin.css
+            ^                                             1: punctuation.definition.string.end.css
+             ^                                            1: punctuation.separator.list.comma.css
+
+    integer,
+^^^^^^^^^^^^                                              3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.separator.list.comma.css
+
+    number,
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.separator.list.comma.css
+
+    percentage,
+^^^^^^^^^^^^^^^                                           3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^^                                            1: support.constant.utility.data-type.css
+              ^                                           1: punctuation.separator.list.comma.css
+
+    ratio,
+^^^^^^^^^^                                                3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^                                                 1: support.constant.utility.data-type.css
+         ^                                                1: punctuation.separator.list.comma.css
+
+    [integer],
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^                                              1: support.constant.utility.data-type.css
+            ^                                             1: punctuation.definition.arbitrary.end.bracket.square.css
+             ^                                            1: punctuation.separator.list.comma.css
+
+    [number],
+^^^^^^^^^^^^^                                             5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.definition.arbitrary.end.bracket.square.css
+            ^                                             1: punctuation.separator.list.comma.css
+
+    [percentage],
+^^^^^^^^^^^^^^^^^                                         5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^^^^                                           1: support.constant.utility.data-type.css
+               ^                                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                ^                                         1: punctuation.separator.list.comma.css
+
+    [ratio]
+^^^^^^^^^^^                                               4: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.definition.arbitrary.end.bracket.square.css
+
+  );
+^^^^                                                      3: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^                                                       2: meta.property-value.css
+  ^                                                       1: punctuation.section.function.end.bracket.round.css
+   ^                                                      1: punctuation.terminator.rule.css
+
+
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
+
+  height: --modifier(
+^^^^^^^^^^^^^^^^^^^^^                                     6: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^                                                  1: meta.property-name.css support.type.property-name.css
+        ^                                                 1: punctuation.separator.key-value.css
+          ^^^^^^^^^^^                                     2: meta.property-value.css
+          ^^^^^^^^^^                                      1: support.function.modifier.tailwind
+                    ^                                     1: punctuation.section.function.begin.bracket.round.css
+
+    --size,
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: variable.theme-namespace.css
+          ^                                               1: punctuation.separator.list.comma.css
+
+    'literal',
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^                                             3: string.quoted.single.css
+    ^                                                     1: punctuation.definition.string.begin.css
+            ^                                             1: punctuation.definition.string.end.css
+             ^                                            1: punctuation.separator.list.comma.css
+
+    integer,
+^^^^^^^^^^^^                                              3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.separator.list.comma.css
+
+    number,
+^^^^^^^^^^^                                               3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.separator.list.comma.css
+
+    percentage,
+^^^^^^^^^^^^^^^                                           3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^^^^^^                                            1: support.constant.utility.data-type.css
+              ^                                           1: punctuation.separator.list.comma.css
+
+    ratio,
+^^^^^^^^^^                                                3: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^^^^^                                                 1: support.constant.utility.data-type.css
+         ^                                                1: punctuation.separator.list.comma.css
+
+    [integer],
+^^^^^^^^^^^^^^                                            5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^                                              1: support.constant.utility.data-type.css
+            ^                                             1: punctuation.definition.arbitrary.end.bracket.square.css
+             ^                                            1: punctuation.separator.list.comma.css
+
+    [number],
+^^^^^^^^^^^^^                                             5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^                                               1: support.constant.utility.data-type.css
+           ^                                              1: punctuation.definition.arbitrary.end.bracket.square.css
+            ^                                             1: punctuation.separator.list.comma.css
+
+    [percentage],
+^^^^^^^^^^^^^^^^^                                         5: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^^^^^^                                           1: support.constant.utility.data-type.css
+               ^                                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                ^                                         1: punctuation.separator.list.comma.css
+
+    [ratio]
+^^^^^^^^^^^                                               4: source.css.tailwind meta.at-rule.utility.body.tailwind meta.property-value.css
+    ^                                                     1: punctuation.definition.arbitrary.begin.bracket.square.css
+     ^^^^^                                                1: support.constant.utility.data-type.css
+          ^                                               1: punctuation.definition.arbitrary.end.bracket.square.css
+
+  );
+^^^^                                                      3: source.css.tailwind meta.at-rule.utility.body.tailwind
+^^^                                                       2: meta.property-value.css
+  ^                                                       1: punctuation.section.function.end.bracket.round.css
+   ^                                                      1: punctuation.terminator.rule.css
+
+
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind
+
+  color: --alpha(--value([color]) / --modifier(number));
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 21: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^                                                   1: meta.property-name.css support.type.property-name.css
+       ^                                                  1: punctuation.separator.key-value.css
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  16: meta.property-value.css
+         ^^^^^^^                                          1: support.function.alpha.tailwind
+                ^       ^                     ^           3: punctuation.section.function.begin.bracket.round.css
+                 ^^^^^^^                                  1: support.function.value.tailwind
+                         ^                                1: punctuation.definition.arbitrary.begin.bracket.square.css
+                          ^^^^^                ^^^^^^     2: support.constant.utility.data-type.css
+                               ^                          1: punctuation.definition.arbitrary.end.bracket.square.css
+                                ^                    ^^   3: punctuation.section.function.end.bracket.round.css
+                                  ^                       1: variable.parameter.alpha.tailwind
+                                    ^^^^^^^^^^            1: support.function.modifier.tailwind
+                                                       ^  1: punctuation.terminator.rule.css
+
+}
+^                                                         1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+"
+`;
+
+exports[`legacy: @responsive 1`] = `
+"
+@responsive {
+^^^^^^^^^^^^^    4: source.css.tailwind
+^^^^^^^^^^^      2: keyword.control.at-rule.responsive.tailwind
+^                1: punctuation.definition.keyword.css
+            ^    1: meta.at-rule.responsive.body.tailwind punctuation.section.responsive.begin.bracket.curly.tailwind
+
+  .foo {
+^^^^^^^^         5: source.css.tailwind meta.at-rule.responsive.body.tailwind
+  ^^^^           2: meta.selector.css entity.other.attribute-name.class.css
+  ^              1: punctuation.definition.entity.css
+       ^         1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    color: red;
+^^^^^^^^^^^^^^^  6: source.css.tailwind meta.at-rule.responsive.body.tailwind meta.property-list.css
+    ^^^^^        1: meta.property-name.css support.type.property-name.css
+         ^       1: punctuation.separator.key-value.css
+           ^^^   1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^  1: punctuation.terminator.rule.css
+
+  }
+^^^              2: source.css.tailwind meta.at-rule.responsive.body.tailwind meta.property-list.css
+  ^              1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                1: source.css.tailwind meta.at-rule.responsive.body.tailwind punctuation.section.responsive.end.bracket.curly.tailwind
+"
+`;
+
+exports[`legacy: @screen 1`] = `
+"
+@screen sm {
+^^^^^^^^^^^^     6: source.css.tailwind
+^^^^^^^          2: keyword.control.at-rule.screen.tailwind
+^                1: punctuation.definition.keyword.css
+        ^^       1: variable.parameter.screen.tailwind
+           ^     1: meta.at-rule.screen.body.tailwind punctuation.section.screen.begin.bracket.curly.tailwind
+
+  .foo {
+^^^^^^^^         5: source.css.tailwind meta.at-rule.screen.body.tailwind
+  ^^^^           2: meta.selector.css entity.other.attribute-name.class.css
+  ^              1: punctuation.definition.entity.css
+       ^         1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    color: red;
+^^^^^^^^^^^^^^^  6: source.css.tailwind meta.at-rule.screen.body.tailwind meta.property-list.css
+    ^^^^^        1: meta.property-name.css support.type.property-name.css
+         ^       1: punctuation.separator.key-value.css
+           ^^^   1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^  1: punctuation.terminator.rule.css
+
+  }
+^^^              2: source.css.tailwind meta.at-rule.screen.body.tailwind meta.property-list.css
+  ^              1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                1: source.css.tailwind meta.at-rule.screen.body.tailwind punctuation.section.screen.end.bracket.curly.tailwind
+"
+`;
+
+exports[`legacy: @variants 1`] = `
+"
+@variants hover, focus {
+^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind
+^^^^^^^^^                 2: keyword.control.at-rule.variants.tailwind
+^                         1: punctuation.definition.keyword.css
+          ^^^^^  ^^^^^    2: variable.parameter.variants.tailwind
+               ^          1: punctuation.separator.list.comma.css
+                       ^  1: meta.at-rule.variants.body.tailwind punctuation.section.variants.begin.bracket.curly.tailwind
+
+  .foo {
+^^^^^^^^                  5: source.css.tailwind meta.at-rule.variants.body.tailwind
+  ^^^^                    2: meta.selector.css entity.other.attribute-name.class.css
+  ^                       1: punctuation.definition.entity.css
+       ^                  1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
+
+    color: red;
+^^^^^^^^^^^^^^^           6: source.css.tailwind meta.at-rule.variants.body.tailwind meta.property-list.css
+    ^^^^^                 1: meta.property-name.css support.type.property-name.css
+         ^                1: punctuation.separator.key-value.css
+           ^^^            1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
+              ^           1: punctuation.terminator.rule.css
+
+  }
+^^^                       2: source.css.tailwind meta.at-rule.variants.body.tailwind meta.property-list.css
+  ^                       1: punctuation.section.property-list.end.bracket.curly.css
+
+}
+^                         1: source.css.tailwind meta.at-rule.variants.body.tailwind punctuation.section.variants.end.bracket.curly.tailwind
+"
+`;
