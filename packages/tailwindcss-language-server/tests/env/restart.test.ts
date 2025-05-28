@@ -190,3 +190,79 @@ defineTest({
     expect(ids3).not.toContainEqual(expect.toBeOneOf(ids2))
   },
 })
+
+defineTest({
+  name: 'Creating a CSS config in an empty folder initalizes a project',
+  fs: {
+    'app.css': css`
+      /* this file is not a Tailwind CSS config yet */
+    `,
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({ root, log: true }),
+  }),
+  handle: async ({ root, client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="text-primary">',
+    })
+
+    // <div class="text-primary">
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
+
+    expect(hover).toEqual(null)
+
+    // Create a CSS config file
+    await fs.writeFile(
+      `${root}/app.css`,
+      css`
+        @import 'tailwindcss';
+
+        @theme {
+          --color-primary: #c0ffee;
+        }
+      `,
+    )
+
+    // Create a CSS config file
+    // Notify the server of the config change
+    let didRestart = Promise.race([
+      new Promise((resolve) => {
+        client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Did not restart in time')), 5000),
+      ),
+    ])
+
+    await client.notifyChangedFiles({
+      changed: [`${root}/app.css`],
+    })
+
+    await didRestart
+
+    // TODO: Sending a shutdown request immediately after a restart
+    // gets lost
+    // await client.shutdown()
+
+    // <div class="text-primary">
+    //             ^
+    hover = await doc.hover({ line: 0, character: 13 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .text-primary {
+            color: var(--color-primary) /* #c0ffee */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 24 },
+      },
+    })
+  },
+})
