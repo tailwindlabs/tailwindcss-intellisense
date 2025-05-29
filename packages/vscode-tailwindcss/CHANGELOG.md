@@ -4,6 +4,7 @@
 
 - Simplify completion details for border and outline utilities ([#1384](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1384))
 - Fix error initializing a new project when editing a CSS file ([#1387](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1387))
+- Improve syntax highlighting for CSS ([#1367](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1367))
 
 # 0.14.19
 
