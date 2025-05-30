@@ -1,6 +1,6 @@
 import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
+import { isVueDoc, isHtmlDoc, isSvelteDoc, isAstroDoc } from './html'
 import type { State } from './state'
 import { indexToPosition } from './find'
 import { isJsDoc } from './js'
@@ -134,8 +134,25 @@ let vueStates = {
   },
 }
 
+let astroStates = {
+  ...states,
+  main: {
+    htmlBlockStart: { push: 'htmlBlock' },
+    ...states.main,
+    jsBlockStart: { match: '---', push: 'script' },
+  },
+  script: {
+    htmlBlockStart: { match: '---', push: 'html' },
+    ...text,
+  },
+  html: {
+    ...text,
+  },
+}
+
 let defaultLexer = moo.states(states)
 let vueLexer = moo.states(vueStates)
+let astroLexer = moo.states(astroStates)
 
 let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000 })
 
@@ -157,13 +174,15 @@ export function getLanguageBoundaries(
 
   let isJs = isJsDoc(state, doc)
 
-  let defaultType = isVueDoc(doc)
-    ? 'none'
-    : isHtmlDoc(state, doc) || isSvelteDoc(doc)
-      ? 'html'
-      : isJs
-        ? 'jsx'
-        : null
+  let defaultType: string | null = null
+
+  if (isVueDoc(doc) || isAstroDoc(doc)) {
+    defaultType = 'none'
+  } else if (isHtmlDoc(state, doc) || isSvelteDoc(doc)) {
+    defaultType = 'html'
+  } else if (isJs) {
+    defaultType = 'jsx'
+  }
 
   if (defaultType === null) {
     cache.set(cacheKey, null)
@@ -172,17 +191,28 @@ export function getLanguageBoundaries(
 
   text = getTextWithoutComments(text, isJs ? 'js' : 'html')
 
-  let lexer = defaultType === 'none' ? vueLexer : defaultLexer
+  let lexer = defaultLexer
+
+  if (defaultType === 'none') {
+    if (isVueDoc(doc)) {
+      lexer = vueLexer
+    } else if (isAstroDoc(doc)) {
+      lexer = astroLexer
+    }
+  }
+
   lexer.reset(text)
 
   let type = defaultType
   let boundaries: LanguageBoundary[] = [
     { type: defaultType, range: { start: { line: 0, character: 0 }, end: undefined } },
   ]
+
   let offset = 0
 
   try {
     for (let token of lexer) {
+      console.log({ token })
       if (!token.type.startsWith('nested')) {
         if (token.type.endsWith('BlockStart')) {
           let position = indexToPosition(text, offset)
