@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Bump bundled CSS language service ([#1395](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1395))
 
 ## 0.14.20
 
