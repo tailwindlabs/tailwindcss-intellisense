@@ -225,8 +225,8 @@ importers:
         specifier: ^3.0.9
         version: 3.0.9(@types/node@18.19.43)
       vscode-css-languageservice:
-        specifier: 6.3.5
-        version: 6.3.5
+        specifier: 6.3.6
+        version: 6.3.6
       vscode-jsonrpc:
         specifier: 8.2.0
         version: 8.2.0
@@ -2865,8 +2865,8 @@ packages:
       jsdom:
         optional: true
 
-  vscode-css-languageservice@6.3.5:
-    resolution: {integrity: sha512-ehEIMXYPYEz/5Svi2raL9OKLpBt5dSAdoCFoLpo0TVFKrVpDemyuQwS3c3D552z/qQCg3pMp8oOLMObY6M3ajQ==}
+  vscode-css-languageservice@6.3.6:
+    resolution: {integrity: sha512-fU4h8mT3KlvfRcbF74v/M+Gzbligav6QMx4AD/7CbclWPYOpGb9kgIswfpZVJbIcOEJJACI9iYizkNwdiAqlHw==}
 
   vscode-emmet-helper-bundled@0.0.1:
     resolution: {integrity: sha512-EhZ0Wt8MbdrKF3NUMfaUDhFPTdRnl1tyqYS7KOcNtsSNTV285IV+XPDtNQyw5rwYsULEfb6n+fK1DRufJQlPYw==}
@@ -5273,7 +5273,7 @@ snapshots:
       - supports-color
       - terser
 
-  vscode-css-languageservice@6.3.5:
+  vscode-css-languageservice@6.3.6:
     dependencies:
       '@vscode/l10n': 0.0.18
       vscode-languageserver-textdocument: 1.0.12
