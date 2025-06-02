@@ -124,16 +124,24 @@ export class TW {
 
   private getWorkspaceFolders(): WorkspaceFolder[] {
     if (this.initializeParams.workspaceFolders?.length) {
-      return this.initializeParams.workspaceFolders.map((folder) => ({
-        uri: URI.parse(folder.uri).fsPath,
-        name: folder.name,
-      }))
+      return this.initializeParams.workspaceFolders.flatMap((folder) => {
+        let uri = URI.parse(folder.uri)
+
+        return [
+          {
+            uri: uri.fsPath,
+            name: folder.name,
+          },
+        ]
+      })
     }
 
     if (this.initializeParams.rootUri) {
+      let uri = URI.parse(this.initializeParams.rootUri)
+
       return [
         {
-          uri: URI.parse(this.initializeParams.rootUri).fsPath,
+          uri: uri.fsPath,
           name: 'Root',
         },
       ]
