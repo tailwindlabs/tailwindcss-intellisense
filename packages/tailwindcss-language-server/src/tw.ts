@@ -995,6 +995,15 @@ export class TW {
     let matchedPriority: number = Infinity
 
     let uri = URI.parse(document.uri)
+
+    if (uri.scheme !== 'file') {
+      console.debug(`Cannot get project for a non-file document. They are unsupported.`, {
+        uri: uri.toString(),
+      })
+
+      return null
+    }
+
     let fsPath = uri.fsPath
     let normalPath = uri.path
 
