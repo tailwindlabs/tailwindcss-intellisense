@@ -126,6 +126,10 @@ export class TW {
     if (this.initializeParams.workspaceFolders?.length) {
       return this.initializeParams.workspaceFolders.flatMap((folder) => {
         let uri = URI.parse(folder.uri)
+        if (uri.scheme !== 'file') {
+          console.warn(`Non-file workspace folder will be ignored: ${folder.uri}`)
+          return []
+        }
 
         return [
           {
@@ -138,6 +142,11 @@ export class TW {
 
     if (this.initializeParams.rootUri) {
       let uri = URI.parse(this.initializeParams.rootUri)
+
+      if (uri.scheme !== 'file') {
+        console.warn(`Non-file workspace folder will be ignored: ${uri.toString()}`)
+        return []
+      }
 
       return [
         {
@@ -155,6 +164,8 @@ export class TW {
         },
       ]
     }
+
+    console.warn(`No workspace folders detected`)
 
     return []
   }
