@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Bump bundled CSS language service ([#1395](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1395))
+- Simplify completion details for more utilities ([#1397](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1397))
 
 ## 0.14.20
 
