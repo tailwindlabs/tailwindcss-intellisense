@@ -122,14 +122,23 @@ export class TW {
     await this.initPromise
   }
 
+  private validateFolderUri(uri: URI): boolean {
+    if (uri.scheme !== 'file') {
+      console.warn(
+        `The workspace folder [${uri.toString()}] will be ignored: it does not use the file scheme.`,
+      )
+      return false
+    }
+
+    return true
+  }
+
   private getWorkspaceFolders(): WorkspaceFolder[] {
     if (this.initializeParams.workspaceFolders?.length) {
       return this.initializeParams.workspaceFolders.flatMap((folder) => {
         let uri = URI.parse(folder.uri)
-        if (uri.scheme !== 'file') {
-          console.warn(`Non-file workspace folder will be ignored: ${folder.uri}`)
-          return []
-        }
+
+        if (!this.validateFolderUri(uri)) return []
 
         return [
           {
@@ -143,10 +152,7 @@ export class TW {
     if (this.initializeParams.rootUri) {
       let uri = URI.parse(this.initializeParams.rootUri)
 
-      if (uri.scheme !== 'file') {
-        console.warn(`Non-file workspace folder will be ignored: ${uri.toString()}`)
-        return []
-      }
+      if (!this.validateFolderUri(uri)) return []
 
       return [
         {
@@ -157,9 +163,13 @@ export class TW {
     }
 
     if (this.initializeParams.rootPath) {
+      let uri = URI.file(this.initializeParams.rootPath)
+
+      if (!this.validateFolderUri(uri)) return []
+
       return [
         {
-          uri: URI.file(this.initializeParams.rootPath).fsPath,
+          uri: uri.fsPath,
           name: 'Root',
         },
       ]
