@@ -2306,9 +2306,13 @@ export async function resolveCompletionItem(
           }
         })
 
+        let ignoredValues = new Set([
+          'var(--tw-border-style)',
+          'var(--tw-outline-style)',
+        ])
+
         base.walkDecls((node) => {
-          if (node.value === 'var(--tw-border-style)') return
-          if (node.value === 'var(--tw-outline-style)') return
+          if (ignoredValues.has(node.value)) return
 
           decls.push(node)
         })

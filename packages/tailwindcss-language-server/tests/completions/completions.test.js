@@ -983,7 +983,7 @@ defineTest({
 })
 
 defineTest({
-  name: 'Completions for outline and border utilities have simplified details',
+  name: 'Completions for several utilities have simplified details',
   fs: {
     'app.css': css`
       @import 'tailwindcss';
@@ -993,24 +993,30 @@ defineTest({
   handle: async ({ client }) => {
     let document = await client.open({
       lang: 'html',
-      text: html`<div class="border-0 outline-0"></div>`,
+      text: html`<div class=""></div>`,
     })
 
-    // <div class="border-0 outline-0"></div>
-    //                    ^
-    let completionA = await document.completions({ line: 0, character: 20 })
+    // <div class=""></div>
+    //            ^
+    let list = await document.completions({ line: 0, character: 12 })
+    let items = list?.items ?? []
 
-    // <div class="border-0 outline-0"></div>
-    //                              ^
-    let completionB = await document.completions({ line: 0, character: 30 })
+    let map = {
+      'border-0': 'border-width: 0px;',
+      'outline-0': 'outline-width: 0px;',
+    }
 
-    let border = completionA?.items.find((item) => item.label === 'border-0')
-    let outline = completionB?.items.find((item) => item.label === 'outline-0')
+    let requests = await Promise.all(
+      Object.keys(map).map(async (label) => {
+        let item = items.find((item) => item.label === label)
+        if (!item) throw new Error(`Item not found for label: ${label}`)
 
-    let borderResolved = await client.conn.sendRequest('completionItem/resolve', border)
-    let outlineResolved = await client.conn.sendRequest('completionItem/resolve', outline)
+        let resolved = await client.conn.sendRequest('completionItem/resolve', item)
 
-    expect(borderResolved).toMatchObject({ detail: 'border-width: 0px;' })
-    expect(outlineResolved).toMatchObject({ detail: 'outline-width: 0px;' })
+        return [label, resolved.detail]
+      }),
+    )
+
+    expect(Object.fromEntries(requests)).toEqual(map)
   },
 })
