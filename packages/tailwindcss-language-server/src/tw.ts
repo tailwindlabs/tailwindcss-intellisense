@@ -130,6 +130,13 @@ export class TW {
       return false
     }
 
+    if (uri.fsPath === '/' || uri.fsPath === '\\\\') {
+      console.warn(
+        `The workspace folder [${uri.toString()}] will be ignored: it starts at the root of the filesystem which is most likely an error.`,
+      )
+      return false
+    }
+
     return true
   }
 
