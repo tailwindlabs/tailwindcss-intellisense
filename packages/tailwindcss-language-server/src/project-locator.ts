@@ -382,14 +382,18 @@ export class ProjectLocator {
     if (indexPath && themePath) graph.connect(indexPath, themePath)
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
-    // Sort the graph so potential "roots" appear first
-    // The entire concept of roots needs to be rethought because it's not always
-    // clear what the root of a project is. Even when imports are present a file
-    // may import a file that is the actual "root" of the project.
     let roots = Array.from(graph.roots())
 
     roots.sort((a, b) => {
-      return a.meta.root === b.meta.root ? 0 : a.meta.root ? -1 : 1
+      return (
+        // Sort the graph so potential "roots" appear first
+        // The entire concept of roots needs to be rethought because it's not always
+        // clear what the root of a project is. Even when imports are present a file
+        // may import a file that is the actual "root" of the project.
+        Number(b.meta.root) - Number(a.meta.root) ||
+        // Otherwise stylesheets are kept in discovery order
+        0
+      )
     })
 
     for (let root of roots) {
