@@ -25,6 +25,7 @@ test('replacing CSS variables with their fallbacks (when they have them)', () =>
 
   let state: State = {
     enabled: true,
+    features: [],
     designSystem: {
       theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
@@ -102,6 +103,7 @@ test('recursive theme replacements', () => {
 
   let state: State = {
     enabled: true,
+    features: [],
     designSystem: {
       theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
@@ -142,6 +144,7 @@ test('recursive theme replacements (inlined)', () => {
 
   let state: State = {
     enabled: true,
+    features: [],
     designSystem: {
       theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
@@ -184,6 +187,7 @@ test('Inlining calc expressions using the design system', () => {
 
   let state: State = {
     enabled: true,
+    features: [],
     designSystem: {
       theme: { prefix: null } as any,
       resolveThemeValue: (name) => map.get(name) ?? null,
