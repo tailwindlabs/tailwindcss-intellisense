@@ -531,6 +531,28 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'Stylesheets that only have URL imports are not considered roots',
+  fs: {
+    'a/fonts.css': css`
+      @import 'https://example.com/fonts/some-font.css';
+      .a {
+        color: red;
+      }
+    `,
+    'src/app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  expected: [
+    {
+      version: '4.1.1 (bundled)',
+      config: '/src/app.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({

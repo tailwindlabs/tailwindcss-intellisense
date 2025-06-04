@@ -49,7 +49,8 @@ const HAS_TAILWIND = /@tailwind\s*[^;]+;/
 const HAS_COMMON_DIRECTIVE = /@(config|apply)\s*[^;{]+[;{]/
 
 // If it's got imports at all it could be either
-const HAS_IMPORT = /@import\s*['"]/
+// Note: We only care about non-url imports
+const HAS_NON_URL_IMPORT = /@import\s*['"](?!([a-z]+:|\/\/))/
 
 /**
  * Determine the likely Tailwind version used by the given file
@@ -128,7 +129,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
   }
 
   // Files that import other files could be either and are potentially roots
-  if (HAS_IMPORT.test(content)) {
+  if (HAS_NON_URL_IMPORT.test(content)) {
     return {
       root: true,
       versions: ['4', '3'],
