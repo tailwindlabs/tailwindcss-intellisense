@@ -2313,7 +2313,7 @@ export async function resolveCompletionItem(
           decls.push(node)
         })
 
-        item.detail = await jit.stringifyDecls(state, postcss.rule({ nodes: decls }))
+        item.detail = await jit.stringifyDecls(state, postcss.rule({ selectors: [], nodes: decls }))
       } else {
         item.detail = `${rules.length} rules`
       }
