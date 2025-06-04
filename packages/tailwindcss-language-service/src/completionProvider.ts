@@ -2320,17 +2320,6 @@ export async function resolveCompletionItem(
           'var(--tw-translate-x) var(--tw-translate-y) var(--tw-translate-z)',
           'var(--tw-scale-x) var(--tw-scale-y)',
           'var(--tw-scale-x) var(--tw-scale-y) var(--tw-scale-z)',
-
-          // 'var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y)',
-          // 'var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)',
-
-          // 'var(--tw-border-spacing-x) var(--tw-border-spacing-y)',
-          // 'var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)',
-          // 'var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)',
-
-          // 'linear-gradient(var(--tw-gradient-stops))',
-          // 'radial-gradient(var(--tw-gradient-stops))',
-          // 'conic-gradient(var(--tw-gradient-stops))',
         ])
 
         base.walkDecls((node) => {
