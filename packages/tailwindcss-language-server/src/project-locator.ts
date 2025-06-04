@@ -729,7 +729,7 @@ class FileEntry {
    * Determine which Tailwind versions this file might be using
    */
   async resolvePossibleVersions() {
-    this.meta = this.content ? analyzeStylesheet(this.content) : null
+    this.meta ??= this.content ? analyzeStylesheet(this.content) : null
   }
 
   /**
