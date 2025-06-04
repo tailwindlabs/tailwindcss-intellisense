@@ -2,6 +2,7 @@ import { expect, test } from 'vitest'
 import {
   addThemeValues,
   evaluateExpression,
+  inlineThemeValues,
   replaceCssCalc,
   replaceCssVarsWithFallbacks,
 } from './index'
@@ -122,6 +123,42 @@ test('recursive theme replacements', () => {
   expect(replaceCssVarsWithFallbacks(state, 'var(--mutual-b)')).toBe(
     'calc(calc(var(--mutual-b) * 1) + 1)',
   )
+})
+
+test('recursive theme replacements (inlined)', () => {
+  let map = new Map<string, string>([
+    ['--color-a', 'var(--color-a)'],
+    ['--color-b', 'rgb(var(--color-b))'],
+    ['--color-c', 'rgb(var(--channel) var(--channel) var(--channel))'],
+    ['--channel', '255'],
+
+    ['--color-d', 'rgb(var(--indirect) var(--indirect) var(--indirect))'],
+    ['--indirect', 'var(--channel)'],
+    ['--channel', '255'],
+
+    ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
+    ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
+  ])
+
+  let state: State = {
+    enabled: true,
+    designSystem: {
+      theme: { prefix: null } as any,
+      resolveThemeValue: (name) => map.get(name) ?? null,
+    } as DesignSystem,
+  }
+
+  expect(inlineThemeValues('var(--color-a)', state)).toBe('var(--color-a)')
+  expect(inlineThemeValues('var(--color-b)', state)).toBe('rgb(var(--color-b))')
+  expect(inlineThemeValues('var(--color-c)', state)).toBe('rgb(255 255 255)')
+
+  // This one is wrong but fixing it without breaking the infinite recursion guard is complex
+  expect(inlineThemeValues('var(--color-d)', state)).toBe(
+    'rgb(255 var(--indirect) var(--indirect))',
+  )
+
+  expect(inlineThemeValues('var(--mutual-a)', state)).toBe('calc(calc(var(--mutual-a) + 1) * 1)')
+  expect(inlineThemeValues('var(--mutual-b)', state)).toBe('calc(calc(var(--mutual-b) * 1) + 1)')
 })
 
 test('Evaluating CSS calc expressions', () => {

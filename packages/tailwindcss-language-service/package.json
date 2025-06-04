@@ -29,7 +29,7 @@
     "dset": "3.1.4",
     "line-column": "1.0.2",
     "moo": "0.5.1",
-    "postcss": "8.4.31",
+    "postcss": "8.5.4",
     "postcss-selector-parser": "6.0.2",
     "postcss-value-parser": "4.2.0",
     "semver": "7.7.1",
@@ -48,11 +48,12 @@
     "@types/node": "^18.19.33",
     "@types/stringify-object": "^4.0.5",
     "dedent": "^1.5.3",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.25.5",
     "esbuild-node-externals": "^1.9.0",
     "minimist": "^1.2.8",
     "tslib": "2.2.0",
     "typescript": "^5.8.3",
-    "vitest": "^3.0.9"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.1"
   }
 }

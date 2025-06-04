@@ -27,19 +27,13 @@ jobs:
         run: pnpm install
 
       - name: Run syntax tests
-        run: |
-          cd packages/tailwindcss-language-syntax &&
-          pnpm run build &&
-          pnpm run test
+        working-directory: packages/tailwindcss-language-syntax
+        run: pnpm run build && pnpm run test
 
       - name: Run service tests
-        run: |
-          cd packages/tailwindcss-language-service &&
-          pnpm run build &&
-          pnpm run test
+        working-directory: packages/tailwindcss-language-service
+        run: pnpm run build && pnpm run test
 
-      - name: Run tests
-        run: |
-          cd packages/tailwindcss-language-server &&
-          pnpm run build &&
-          pnpm run test
+      - name: Run server tests
+        working-directory: packages/tailwindcss-language-server
+        run: pnpm run build && pnpm run test
