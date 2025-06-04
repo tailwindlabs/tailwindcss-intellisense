@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Bump bundled CSS language service ([#1395](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1395))
+- Fix infinite loop when resolving completion details with recursive theme keys ([#1400](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1400))
 
 ## 0.14.20
 
