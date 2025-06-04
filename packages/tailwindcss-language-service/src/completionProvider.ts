@@ -2304,14 +2304,52 @@ export async function resolveCompletionItem(
           if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
             rule.remove()
           }
+
+          if (
+            rule.name === 'supports' &&
+            rule.params === '(background-image: linear-gradient(in lab, red, red))'
+          ) {
+            rule.remove()
+          }
         })
 
+        let ignoredValues = new Set([
+          'var(--tw-border-style)',
+          'var(--tw-outline-style)',
+          'var(--tw-translate-x) var(--tw-translate-y)',
+          'var(--tw-translate-x) var(--tw-translate-y) var(--tw-translate-z)',
+          'var(--tw-scale-x) var(--tw-scale-y)',
+          'var(--tw-scale-x) var(--tw-scale-y) var(--tw-scale-z)',
+        ])
+
         base.walkDecls((node) => {
-          if (node.value === 'var(--tw-border-style)') return
-          if (node.value === 'var(--tw-outline-style)') return
+          if (ignoredValues.has(node.value)) return
 
           decls.push(node)
         })
+
+        // TODO: Hardcoding this list is really unfortunate. We should be able
+        // to handle this in Tailwind CSS itself.
+        function isOtherDecl(node: postcss.Declaration) {
+          if (node.prop === '--tw-leading') return false
+          if (node.prop === '--tw-duration') return false
+          if (node.prop === '--tw-ease') return false
+          if (node.prop === '--tw-font-weight') return false
+          if (node.prop === '--tw-gradient-via-stops') return false
+          if (node.prop === '--tw-gradient-stops') return false
+          if (node.prop === '--tw-tracking') return false
+          if (node.prop === '--tw-space-x-reverse' && node.value === '0') return false
+          if (node.prop === '--tw-space-y-reverse' && node.value === '0') return false
+          if (node.prop === '--tw-divide-x-reverse' && node.value === '0') return false
+          if (node.prop === '--tw-divide-y-reverse' && node.value === '0') return false
+
+          return true
+        }
+
+        // We want to remove these decls from details *as long as they're not the only one*
+        if (decls.some(isOtherDecl)) {
+          decls = decls.filter(isOtherDecl)
+        }
 
         item.detail = await jit.stringifyDecls(state, postcss.rule({ selectors: [], nodes: decls }))
       } else {

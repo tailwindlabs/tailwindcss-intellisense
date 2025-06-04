@@ -983,7 +983,7 @@ defineTest({
 })
 
 defineTest({
-  name: 'Completions for outline and border utilities have simplified details',
+  name: 'Completions for several utilities have simplified details',
   fs: {
     'app.css': css`
       @import 'tailwindcss';
@@ -993,24 +993,59 @@ defineTest({
   handle: async ({ client }) => {
     let document = await client.open({
       lang: 'html',
-      text: html`<div class="border-0 outline-0"></div>`,
+      text: html`<div class=""></div>`,
     })
 
-    // <div class="border-0 outline-0"></div>
-    //                    ^
-    let completionA = await document.completions({ line: 0, character: 20 })
+    // <div class=""></div>
+    //            ^
+    let list = await document.completions({ line: 0, character: 12 })
+    let items = list?.items ?? []
 
-    // <div class="border-0 outline-0"></div>
-    //                              ^
-    let completionB = await document.completions({ line: 0, character: 30 })
+    let map = {
+      'border-0': 'border-width: 0px;',
+      'outline-0': 'outline-width: 0px;',
+      'leading-0': 'line-height: 0rem /* 0px */;',
+      'duration-1000': 'transition-duration: 1000ms;',
+      'font-bold': 'font-weight: 700;',
+      'ease-linear': 'transition-timing-function: linear;',
+      'ease-initial': '--tw-ease: initial;',
 
-    let border = completionA?.items.find((item) => item.label === 'border-0')
-    let outline = completionB?.items.find((item) => item.label === 'outline-0')
+      'space-x-0':
+        'margin-inline-start: calc(0rem /* 0px */ * var(--tw-space-x-reverse)); margin-inline-end: calc(0rem /* 0px */ * calc(1 - var(--tw-space-x-reverse)));',
+      'space-y-0':
+        'margin-block-start: calc(0rem /* 0px */ * var(--tw-space-y-reverse)); margin-block-end: calc(0rem /* 0px */ * calc(1 - var(--tw-space-y-reverse)));',
+      'divide-x-0':
+        'border-inline-start-width: calc(0px * var(--tw-divide-x-reverse)); border-inline-end-width: calc(0px * calc(1 - var(--tw-divide-x-reverse)));',
+      'divide-y-0':
+        'border-top-width: calc(0px * var(--tw-divide-y-reverse)); border-bottom-width: calc(0px * calc(1 - var(--tw-divide-y-reverse)));',
 
-    let borderResolved = await client.conn.sendRequest('completionItem/resolve', border)
-    let outlineResolved = await client.conn.sendRequest('completionItem/resolve', outline)
+      'tracking-wide': 'letter-spacing: 0.025em;',
 
-    expect(borderResolved).toMatchObject({ detail: 'border-width: 0px;' })
-    expect(outlineResolved).toMatchObject({ detail: 'outline-width: 0px;' })
+      'from-red-500': '--tw-gradient-from: oklch(63.7% 0.237 25.331);',
+      'via-red-500': '--tw-gradient-via: oklch(63.7% 0.237 25.331);',
+      'to-red-500': '--tw-gradient-to: oklch(63.7% 0.237 25.331);',
+
+      'scale-100': '--tw-scale-x: 100%; --tw-scale-y: 100%; --tw-scale-z: 100%;',
+      'scale-z-100': '--tw-scale-z: 100%;',
+
+      'translate-1': '--tw-translate-x: 0.25rem /* 4px */; --tw-translate-y: 0.25rem /* 4px */;',
+      'translate-z-1': '--tw-translate-z: 0.25rem /* 4px */;',
+
+      'bg-conic-0':
+        '--tw-gradient-position: from 0deg in oklab; background-image: conic-gradient(var(--tw-gradient-stops));',
+    }
+
+    let requests = await Promise.all(
+      Object.keys(map).map(async (label) => {
+        let item = items.find((item) => item.label === label)
+        if (!item) throw new Error(`Item not found for label: ${label}`)
+
+        let resolved = await client.conn.sendRequest('completionItem/resolve', item)
+
+        return [label, resolved.detail]
+      }),
+    )
+
+    expect(Object.fromEntries(requests)).toEqual(map)
   },
 })
