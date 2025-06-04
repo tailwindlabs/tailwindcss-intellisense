@@ -122,31 +122,67 @@ export class TW {
     await this.initPromise
   }
 
+  private validateFolderUri(uri: URI): boolean {
+    if (uri.scheme !== 'file') {
+      console.warn(
+        `The workspace folder [${uri.toString()}] will be ignored: it does not use the file scheme.`,
+      )
+      return false
+    }
+
+    if (uri.fsPath === '/' || uri.fsPath === '\\\\') {
+      console.warn(
+        `The workspace folder [${uri.toString()}] will be ignored: it starts at the root of the filesystem which is most likely an error.`,
+      )
+      return false
+    }
+
+    return true
+  }
+
   private getWorkspaceFolders(): WorkspaceFolder[] {
     if (this.initializeParams.workspaceFolders?.length) {
-      return this.initializeParams.workspaceFolders.map((folder) => ({
-        uri: URI.parse(folder.uri).fsPath,
-        name: folder.name,
-      }))
+      return this.initializeParams.workspaceFolders.flatMap((folder) => {
+        let uri = URI.parse(folder.uri)
+
+        if (!this.validateFolderUri(uri)) return []
+
+        return [
+          {
+            uri: uri.fsPath,
+            name: folder.name,
+          },
+        ]
+      })
     }
 
     if (this.initializeParams.rootUri) {
+      let uri = URI.parse(this.initializeParams.rootUri)
+
+      if (!this.validateFolderUri(uri)) return []
+
       return [
         {
-          uri: URI.parse(this.initializeParams.rootUri).fsPath,
+          uri: uri.fsPath,
           name: 'Root',
         },
       ]
     }
 
     if (this.initializeParams.rootPath) {
+      let uri = URI.file(this.initializeParams.rootPath)
+
+      if (!this.validateFolderUri(uri)) return []
+
       return [
         {
-          uri: URI.file(this.initializeParams.rootPath).fsPath,
+          uri: uri.fsPath,
           name: 'Root',
         },
       ]
     }
+
+    console.warn(`No workspace folders detected`)
 
     return []
   }
@@ -976,6 +1012,15 @@ export class TW {
     let matchedPriority: number = Infinity
 
     let uri = URI.parse(document.uri)
+
+    if (uri.scheme !== 'file') {
+      console.debug(`Cannot get project for a non-file document. They are unsupported.`, {
+        uri: uri.toString(),
+      })
+
+      return null
+    }
+
     let fsPath = uri.fsPath
     let normalPath = uri.path
 
