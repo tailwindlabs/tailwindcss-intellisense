@@ -532,6 +532,41 @@ testLocator({
 })
 
 testLocator({
+  name: 'Stylesheets that import Tailwind CSS indirectly are picked over ones that dont',
+  fs: {
+    'a/foo.css': css`
+      @import './bar.css';
+      .a {
+        color: red;
+      }
+    `,
+    'a/bar.css': css`
+      .b {
+        color: red;
+      }
+    `,
+    'src/app.css': css`
+      @import './tw.css';
+    `,
+    'src/tw.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  expected: [
+    {
+      version: '4.1.1 (bundled)',
+      config: '/src/app.css',
+      content: [],
+    },
+    {
+      version: '4.1.1 (bundled)',
+      config: '/a/foo.css',
+      content: [],
+    },
+  ],
+})
+
+testLocator({
   name: 'Stylesheets that only have URL imports are not considered roots',
   fs: {
     'a/fonts.css': css`
