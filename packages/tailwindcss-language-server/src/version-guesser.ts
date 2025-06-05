@@ -10,6 +10,11 @@ export interface TailwindStylesheet {
    * The likely Tailwind version used by the given file
    */
   versions: TailwindVersion[]
+
+  /**
+   * Whether or not this stylesheet explicitly imports Tailwind CSS
+   */
+  explicitImport: boolean
 }
 
 // It's likely this is a v4 file if it has a v4 import:
@@ -44,7 +49,8 @@ const HAS_TAILWIND = /@tailwind\s*[^;]+;/
 const HAS_COMMON_DIRECTIVE = /@(config|apply)\s*[^;{]+[;{]/
 
 // If it's got imports at all it could be either
-const HAS_IMPORT = /@import\s*['"]/
+// Note: We only care about non-url imports
+const HAS_NON_URL_IMPORT = /@import\s*['"](?!([a-z]+:|\/\/))/
 
 /**
  * Determine the likely Tailwind version used by the given file
@@ -60,6 +66,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: true,
       versions: ['4'],
+      explicitImport: true,
     }
   }
 
@@ -71,6 +78,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       return {
         root: true,
         versions: ['4'],
+        explicitImport: false,
       }
     }
 
@@ -78,6 +86,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // This file MUST be imported by another file to be a valid root
       root: false,
       versions: ['4'],
+      explicitImport: false,
     }
   }
 
@@ -87,6 +96,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // This file MUST be imported by another file to be a valid root
       root: false,
       versions: ['4'],
+      explicitImport: false,
     }
   }
 
@@ -96,6 +106,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // Roots are only a valid concept in v4
       root: false,
       versions: ['3'],
+      explicitImport: false,
     }
   }
 
@@ -104,6 +115,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: true,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
@@ -112,14 +124,16 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: false,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
   // Files that import other files could be either and are potentially roots
-  if (HAS_IMPORT.test(content)) {
+  if (HAS_NON_URL_IMPORT.test(content)) {
     return {
       root: true,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
@@ -127,5 +141,6 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
   return {
     root: false,
     versions: [],
+    explicitImport: false,
   }
 }

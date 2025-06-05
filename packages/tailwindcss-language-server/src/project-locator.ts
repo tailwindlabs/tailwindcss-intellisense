@@ -345,6 +345,17 @@ export class ProjectLocator {
     // Resolve all @source directives
     await Promise.all(imports.map((file) => file.resolveSourceDirectives()))
 
+    let byRealPath: Record<string, FileEntry> = {}
+    for (let file of imports) byRealPath[file.realpath] = file
+
+    // TODO: Link every entry in the import graph
+    // This breaks things tho
+    // for (let file of imports) file.deps = file.deps.map((dep) => byRealPath[dep.realpath] ?? dep)
+
+    // Check if each file has a direct or indirect tailwind import
+    // TODO: Remove the `byRealPath` argument and use linked deps instead
+    await Promise.all(imports.map((file) => file.resolveImportsTailwind(byRealPath)))
+
     // Create a graph of all the CSS files that might (indirectly) use Tailwind
     let graph = new Graph<FileEntry>()
 
@@ -382,14 +393,20 @@ export class ProjectLocator {
     if (indexPath && themePath) graph.connect(indexPath, themePath)
     if (indexPath && utilitiesPath) graph.connect(indexPath, utilitiesPath)
 
-    // Sort the graph so potential "roots" appear first
-    // The entire concept of roots needs to be rethought because it's not always
-    // clear what the root of a project is. Even when imports are present a file
-    // may import a file that is the actual "root" of the project.
     let roots = Array.from(graph.roots())
 
     roots.sort((a, b) => {
-      return a.meta.root === b.meta.root ? 0 : a.meta.root ? -1 : 1
+      return (
+        // Sort the graph so potential "roots" appear first
+        // The entire concept of roots needs to be rethought because it's not always
+        // clear what the root of a project is. Even when imports are present a file
+        // may import a file that is the actual "root" of the project.
+        Number(b.meta.root) - Number(a.meta.root) ||
+        // Move stylesheets with an explicit tailwindcss import before others
+        Number(b.importsTailwind) - Number(a.importsTailwind) ||
+        // Otherwise stylesheets are kept in discovery order
+        0
+      )
     })
 
     for (let root of roots) {
@@ -725,7 +742,31 @@ class FileEntry {
    * Determine which Tailwind versions this file might be using
    */
   async resolvePossibleVersions() {
-    this.meta = this.content ? analyzeStylesheet(this.content) : null
+    this.meta ??= this.content ? analyzeStylesheet(this.content) : null
+  }
+
+  /**
+   * Determine if this entry or any of its dependencies import a Tailwind CSS
+   * stylesheet
+   */
+  importsTailwind: boolean | null = null
+
+  resolveImportsTailwind(byPath: Record<string, FileEntry>) {
+    // Already calculated so nothing to do
+    if (this.importsTailwind !== null) return
+
+    // We import it directly
+    let self = byPath[this.realpath]
+
+    if (this.meta?.explicitImport || self?.meta?.explicitImport) {
+      this.importsTailwind = true
+      return
+    }
+
+    // Maybe one of our deps does
+    for (let dep of this.deps) dep.resolveImportsTailwind(byPath)
+
+    this.importsTailwind = this.deps.some((dep) => dep.importsTailwind)
   }
 
   /**
