@@ -3,6 +3,8 @@
 ## Prerelease
 
 - Bump bundled CSS language service ([#1395](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1395))
+- Fix high CPU usage when given non-file URI workspace folders ([#1396](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1396))
+- Ignore workspace folders that are the filesystem root ([#1396](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1396))
 - Fix infinite loop when resolving completion details with recursive theme keys ([#1400](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1400))
 - Simplify completion details for more utilities ([#1397](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1397))
 - Improve project stylesheet detection ([#1401](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1401))
