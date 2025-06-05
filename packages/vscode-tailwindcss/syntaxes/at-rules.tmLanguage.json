@@ -1,7 +1,10 @@
 {
   "scopeName": "tailwindcss.at-rules.injection",
   "fileTypes": [],
-  "injectionSelector": "L:source.css -comment -source.css.scss",
+  "injectionSelector": [
+    "L:source.css -comment -source.css.scss",
+    "L:source.css.tailwind -comment -source.css.scss"
+  ],
   "name": "TailwindCSS",
   "patterns": [
     {
@@ -210,7 +213,7 @@
           "name": "meta.at-rule.theme.body.tailwind",
           "patterns": [
             {
-              "include": "#property-list"
+              "include": "source.css.tailwind#nesting-at-rules"
             }
           ]
         }
