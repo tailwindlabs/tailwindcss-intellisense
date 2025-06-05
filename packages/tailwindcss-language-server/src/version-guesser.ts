@@ -10,6 +10,11 @@ export interface TailwindStylesheet {
    * The likely Tailwind version used by the given file
    */
   versions: TailwindVersion[]
+
+  /**
+   * Whether or not this stylesheet explicitly imports Tailwind CSS
+   */
+  explicitImport: boolean
 }
 
 // It's likely this is a v4 file if it has a v4 import:
@@ -60,6 +65,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: true,
       versions: ['4'],
+      explicitImport: true,
     }
   }
 
@@ -71,6 +77,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       return {
         root: true,
         versions: ['4'],
+        explicitImport: false,
       }
     }
 
@@ -78,6 +85,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // This file MUST be imported by another file to be a valid root
       root: false,
       versions: ['4'],
+      explicitImport: false,
     }
   }
 
@@ -87,6 +95,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // This file MUST be imported by another file to be a valid root
       root: false,
       versions: ['4'],
+      explicitImport: false,
     }
   }
 
@@ -96,6 +105,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
       // Roots are only a valid concept in v4
       root: false,
       versions: ['3'],
+      explicitImport: false,
     }
   }
 
@@ -104,6 +114,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: true,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
@@ -112,6 +123,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: false,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
@@ -120,6 +132,7 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
     return {
       root: true,
       versions: ['4', '3'],
+      explicitImport: false,
     }
   }
 
@@ -127,5 +140,6 @@ export function analyzeStylesheet(content: string): TailwindStylesheet {
   return {
     root: false,
     versions: [],
+    explicitImport: false,
   }
 }

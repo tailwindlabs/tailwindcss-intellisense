@@ -499,6 +499,38 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'Stylesheets that import Tailwind CSS are picked over ones that dont',
+  fs: {
+    'a/foo.css': css`
+      @import './bar.css';
+      .a {
+        color: red;
+      }
+    `,
+    'a/bar.css': css`
+      .b {
+        color: red;
+      }
+    `,
+    'src/app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  expected: [
+    {
+      version: '4.1.1 (bundled)',
+      config: '/src/app.css',
+      content: [],
+    },
+    {
+      version: '4.1.1 (bundled)',
+      config: '/a/foo.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({
