@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.14.21
+
 - Bump bundled CSS language service ([#1395](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1395))
 - Fix high CPU usage when given non-file URI workspace folders ([#1396](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1396))
 - Ignore workspace folders that are the filesystem root ([#1396](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1396))
