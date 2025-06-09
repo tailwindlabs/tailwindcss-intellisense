@@ -26,10 +26,10 @@ For example: npm, yarn
 
 For example: macOS, Windows
 
-**Tailwind config**
+**Tailwind CSS Stylesheet (v4) or config file (v3)**
 
 ```js
-// Paste the contents of your Tailwind config file here
+// Paste the contents of your CSS file or config file here
 ```
 
 **VS Code settings**
