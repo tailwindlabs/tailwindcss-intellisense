@@ -3,6 +3,7 @@ import { withFixture } from '../common'
 import { css, defineTest } from '../../src/testing'
 import { createClient } from '../utils/client'
 
+// TODO: Find a way to test these in the language service
 withFixture('basic', (c) => {
   async function testHover(
     name,
@@ -177,6 +178,7 @@ withFixture('basic', (c) => {
   })
 })
 
+// TODO: Remove. This are all tested in the language service now
 withFixture('v4/basic', (c) => {
   async function testHover(
     name,
@@ -554,6 +556,7 @@ withFixture('v4/path-mappings', (c) => {
   })
 })
 
+// TODO: Remove. This is tested in the language service now
 defineTest({
   name: 'Can hover showing theme values used in var(…) and theme(…) functions',
   fs: {
