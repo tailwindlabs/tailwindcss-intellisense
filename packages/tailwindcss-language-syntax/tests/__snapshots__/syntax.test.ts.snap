@@ -833,46 +833,55 @@ exports[`@theme 1`] = `
 ^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind
 
   @keyframes pulse {
-^^^^^^^^^^^^^^^^^^^^^                  5: source.css.tailwind meta.at-rule.theme.body.tailwind
-   ^^^^^^^^^ ^^^^^                     2: meta.property-name.css
+^^^^^^^^^^^^^^^^^^^^                   7: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^^^^^^^^                     4: meta.at-rule.keyframes.header.css
+  ^^^^^^^^^^                           2: keyword.control.at-rule.keyframes.css
+  ^                                    1: punctuation.definition.keyword.css
+             ^^^^^                     1: variable.parameter.keyframe-list.css
+                   ^                   1: meta.at-rule.keyframes.body.css punctuation.section.keyframes.begin.bracket.curly.css
 
     0%,
-^^^^^^^^                               1: source.css.tailwind meta.at-rule.theme.body.tailwind
+^^^^^^^^                               3: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css
+    ^^                                 1: entity.other.keyframe-offset.percentage.css
 
     100% {
-^^^^^^^^^^^                            1: source.css.tailwind meta.at-rule.theme.body.tailwind
+^^^^^^^^^^                             4: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css
+    ^^^^                               1: entity.other.keyframe-offset.percentage.css
+         ^                             1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
 
       opacity: 0;
-^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css meta.property-list.css
       ^^^^^^^                          1: meta.property-name.css support.type.property-name.css
              ^                         1: punctuation.separator.key-value.css
                ^                       1: meta.property-value.css constant.numeric.css
                 ^                      1: punctuation.terminator.rule.css
 
     }
-^^^^^                                  2: source.css.tailwind meta.at-rule.theme.body.tailwind
-    ^                                  1: punctuation.section.theme.end.bracket.curly.tailwind
+^^^^^                                  2: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css meta.property-list.css
+    ^                                  1: punctuation.section.property-list.end.bracket.curly.css
 
     50% {
-^^^^^^^^^                              2: source.css.tailwind
+^^^^^^^^^                              4: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css
+    ^^^                                1: entity.other.keyframe-offset.percentage.css
         ^                              1: meta.property-list.css punctuation.section.property-list.begin.bracket.curly.css
 
       opacity: 1;
-^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.property-list.css
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css meta.property-list.css
       ^^^^^^^                          1: meta.property-name.css support.type.property-name.css
              ^                         1: punctuation.separator.key-value.css
                ^                       1: meta.property-value.css constant.numeric.css
                 ^                      1: punctuation.terminator.rule.css
 
     }
-^^^^^                                  2: source.css.tailwind meta.property-list.css
+^^^^^                                  2: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css meta.property-list.css
     ^                                  1: punctuation.section.property-list.end.bracket.curly.css
 
   }
-^^^^                                   1: source.css.tailwind
+^^^                                    2: source.css.tailwind meta.at-rule.theme.body.tailwind meta.at-rule.keyframes.body.css
+  ^                                    1: punctuation.section.keyframes.end.bracket.curly.css
 
 }
-^^                                     1: source.css.tailwind
+^                                      1: source.css.tailwind meta.at-rule.theme.body.tailwind punctuation.section.theme.end.bracket.curly.tailwind
 
 
 ^                                      1: source.css.tailwind

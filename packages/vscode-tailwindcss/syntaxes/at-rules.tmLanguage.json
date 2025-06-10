@@ -540,6 +540,9 @@
         {
           "match": ";",
           "name": "punctuation.terminator.rule.css"
+        },
+        {
+          "include": "source.css#at-rules"
         }
       ]
     },
