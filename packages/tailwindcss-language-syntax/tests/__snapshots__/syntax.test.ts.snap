@@ -733,7 +733,7 @@ exports[`@theme 1`] = `
 
   --color: red;
 ^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^                              1: meta.property-name.css
+  ^^^^^^^                              1: variable.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
@@ -750,7 +750,7 @@ exports[`@theme 1`] = `
 
   --color: red;
 ^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^                              1: meta.property-name.css
+  ^^^^^^^                              1: variable.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
@@ -767,7 +767,7 @@ exports[`@theme 1`] = `
 
   --color: red;
 ^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^                              1: meta.property-name.css
+  ^^^^^^^                              1: variable.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
@@ -788,7 +788,7 @@ exports[`@theme 1`] = `
 
   --color: red;
 ^^^^^^^^^^^^^^^                        6: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^                              1: meta.property-name.css
+  ^^^^^^^                              1: variable.css
          ^                             1: punctuation.separator.key-value.css
            ^^^                         1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
               ^                        1: punctuation.terminator.rule.css
@@ -807,21 +807,21 @@ exports[`@theme 1`] = `
 
   --spacing: initial;
 ^^^^^^^^^^^^^^^^^^^^^                  6: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^^                            1: meta.property-name.css
+  ^^^^^^^^^                            1: variable.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
                     ^                  1: punctuation.terminator.rule.css
 
   --color-*: initial;
 ^^^^^^^^^^^^^^^^^^^^^                  7: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^                             1: meta.property-name.css
+  ^^^^^^^^                             1: variable.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^^^^                   1: meta.property-value.css support.constant.property-value.css
                     ^                  1: punctuation.terminator.rule.css
 
   --animate-pulse: 1s pulse infinite;
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  9: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^^^^^^^^                      1: meta.property-name.css
+  ^^^^^^^^^^^^^^^                      1: variable.css
                  ^                     1: punctuation.separator.key-value.css
                    ^^^^^^^^^^^^^^^^^   4: meta.property-value.css
                    ^^                  2: constant.numeric.css
@@ -899,8 +899,8 @@ exports[`@theme 1`] = `
                 ^^                     1: punctuation.definition.comment.end.css
 
   --color-1: red;
-^^^^^^^^^^^^^^^^^                      7: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^                             1: meta.property-name.css
+^^^^^^^^^^^^^^^^^                      6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^                            1: variable.css
            ^                           1: punctuation.separator.key-value.css
              ^^^                       1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
                 ^                      1: punctuation.terminator.rule.css
@@ -915,8 +915,8 @@ exports[`@theme 1`] = `
                 ^^                     1: punctuation.definition.comment.end.css
 
   --color-2: green;
-^^^^^^^^^^^^^^^^^^^                    7: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^                             1: meta.property-name.css
+^^^^^^^^^^^^^^^^^^^                    6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^                            1: variable.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^^                     1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
                   ^                    1: punctuation.terminator.rule.css
@@ -931,8 +931,8 @@ exports[`@theme 1`] = `
                 ^^                     1: punctuation.definition.comment.end.css
 
   --color-2: blue;
-^^^^^^^^^^^^^^^^^^                     7: source.css.tailwind meta.at-rule.theme.body.tailwind
-  ^^^^^^^^                             1: meta.property-name.css
+^^^^^^^^^^^^^^^^^^                     6: source.css.tailwind meta.at-rule.theme.body.tailwind
+  ^^^^^^^^^                            1: variable.css
            ^                           1: punctuation.separator.key-value.css
              ^^^^                      1: meta.property-value.css support.constant.color.w3c-standard-color-name.css
                  ^                     1: punctuation.terminator.rule.css
