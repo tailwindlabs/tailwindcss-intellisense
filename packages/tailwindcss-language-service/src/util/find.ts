@@ -3,7 +3,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DocumentClassName, DocumentClassList, State, DocumentHelperFunction } from './state'
 import lineColumn from 'line-column'
 import { isCssContext, isCssDoc } from './css'
-import { isHtmlContext, isVueDoc } from './html'
+import { isAstroDoc, isHtmlContext, isVueDoc } from './html'
 import { isWithinRange } from './isWithinRange'
 import { isJsContext } from './js'
 import { dedupeByRange, flatten } from './array'
@@ -605,6 +605,26 @@ export async function findClassNameAtPosition(
           return await findClassListsInRange(state, doc, range, 'css', true, lang)
         }
 
+        if (type === 'html') {
+          return await findClassListsInRange(state, doc, range, 'html')
+        }
+
+        if (type === 'js' || type === 'jsx') {
+          return await findClassListsInRange(state, doc, range, 'jsx')
+        }
+
+        return []
+      }),
+    )
+
+    classNames = dedupeByRange(flatten(groups)).flatMap((classList) =>
+      getClassNamesInClassList(classList, state.blocklist),
+    )
+  } else if (isAstroDoc(doc)) {
+    let boundaries = getLanguageBoundaries(state, doc)
+
+    let groups = await Promise.all(
+      boundaries.map(async ({ type, range }) => {
         if (type === 'html') {
           return await findClassListsInRange(state, doc, range, 'html')
         }
