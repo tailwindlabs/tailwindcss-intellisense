@@ -32,6 +32,7 @@ export interface TestConfig<Extras extends {}, TestInput extends Record<string, 
   name: string
   inputs?: TestInput[]
 
+  skipNPM?: boolean
   fs?: Storage
   debug?: boolean
   prepare?(utils: TestUtils<TestInput>): Promise<Extras>
@@ -70,7 +71,10 @@ async function setup<T, I>(config: TestConfig<T, I>, input: I): Promise<TestUtil
 
   if (config.fs) {
     await prepareFileSystem(baseDir, config.fs)
-    await installDependencies(baseDir, config.fs)
+
+    if (!config.skipNPM) {
+      await installDependencies(baseDir, config.fs)
+    }
   }
 
   onTestFinished(async (ctx) => {

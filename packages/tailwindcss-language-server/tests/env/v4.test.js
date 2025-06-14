@@ -856,3 +856,42 @@ defineTest({
     })
   },
 })
+
+defineTest({
+  name: 'Matches files in a workspace when only one config exists and is nested in a package',
+  skipNPM: true,
+  fs: {
+    'some-dir/package.json': json`{"type": "commonjs"}`,
+    'some-dir/tailwind.config.js': js`
+      module.exports = { content: [] }
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      name: 'files/index.html',
+      lang: 'html',
+      text: html`<div class="bg-[#000]"></div>`,
+    })
+
+    // <div class="bg-[#000]"></div>
+    //             ^
+    let hover = await doc.hover({ line: 0, character: 13 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-\[\#000\] {
+            --tw-bg-opacity: 1;
+            background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1)) /* #000000 */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 21 },
+      },
+    })
+  },
+})

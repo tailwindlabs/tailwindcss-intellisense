@@ -22,10 +22,17 @@ export interface ProjectConfig {
   folder: string
 
   /** The path to the config file (if it exists) */
-  configPath?: string
+  configPath: string
 
   /** The list of documents that are related to this project */
-  documentSelector?: DocumentSelector[]
+  documentSelector: DocumentSelector[]
+
+  /**
+   * Additional selectors that should be matched with this project
+   *
+   * These are *never* reset
+   */
+  additionalSelectors: DocumentSelector[]
 
   /** Whether or not this project was explicitly defined by the user */
   isUserConfigured: boolean
@@ -65,7 +72,7 @@ export class ProjectLocator {
     }
 
     if (projects.length === 1) {
-      projects[0].documentSelector.push({
+      projects[0].additionalSelectors.push({
         pattern: normalizePath(path.join(this.base, '**')),
         priority: DocumentSelectorPriority.ROOT_DIRECTORY,
       })
@@ -83,6 +90,10 @@ export class ProjectLocator {
       }
 
       for (let selector of project.documentSelector) {
+        selector.pattern = normalizeDriveLetter(selector.pattern)
+      }
+
+      for (let selector of project.additionalSelectors) {
         selector.pattern = normalizeDriveLetter(selector.pattern)
       }
     }
@@ -132,6 +143,7 @@ export class ProjectLocator {
         priority: DocumentSelectorPriority.USER_CONFIGURED,
         pattern: selector,
       })),
+      additionalSelectors: [],
       tailwind,
     }
   }
@@ -214,6 +226,7 @@ export class ProjectLocator {
       isUserConfigured: false,
       configPath: config.path,
       documentSelector: selectors,
+      additionalSelectors: [],
       tailwind,
     }
   }
