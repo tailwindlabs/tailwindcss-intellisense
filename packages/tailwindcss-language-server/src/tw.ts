@@ -351,7 +351,7 @@ export class TW {
       return {
         folder: workspace.folder,
         config: workspace.config.path,
-        selectors: workspace.documentSelector,
+        selectors: [...workspace.documentSelector, ...workspace.additionalSelectors],
         user: workspace.isUserConfigured,
         tailwind: workspace.tailwind,
       }
