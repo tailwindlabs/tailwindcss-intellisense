@@ -22,10 +22,10 @@ export interface ProjectConfig {
   folder: string
 
   /** The path to the config file (if it exists) */
-  configPath?: string
+  configPath: string
 
   /** The list of documents that are related to this project */
-  documentSelector?: DocumentSelector[]
+  documentSelector: DocumentSelector[]
 
   /** Whether or not this project was explicitly defined by the user */
   isUserConfigured: boolean
