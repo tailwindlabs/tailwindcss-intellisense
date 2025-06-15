@@ -3,60 +3,36 @@ import type { Hover, MarkupContent, Position, Range } from 'vscode-languageserve
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
 import { isCssContext } from './util/css'
-import {
-  findAll,
-  findClassNameAtPosition,
-  findHelperFunctionsInRange,
-  indexToPosition,
-} from './util/find'
+import { findAll, indexToPosition } from './util/find'
 import { validateApply } from './util/validateApply'
 import { getClassNameParts } from './util/getClassNameAtPosition'
 import * as jit from './util/jit'
 import { validateConfigPath } from './diagnostics/getInvalidConfigPathDiagnostics'
 import { isWithinRange } from './util/isWithinRange'
-import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { addPixelEquivalentsToValue } from './util/pixelEquivalents'
 import { getTextWithoutComments } from './util/doc'
 import braces from 'braces'
 import { absoluteRange } from './util/absoluteRange'
 import { segment } from './util/segment'
+import type { Document } from './documents/document'
 
-export async function doHover(
-  state: State,
-  document: TextDocument,
-  position: Position,
-): Promise<Hover> {
+export async function doHover(doc: Document, position: Position): Promise<Hover> {
   return (
-    (await provideClassNameHover(state, document, position)) ||
-    (await provideThemeDirectiveHover(state, document, position)) ||
-    (await provideCssHelperHover(state, document, position)) ||
-    (await provideSourceGlobHover(state, document, position))
+    (await provideClassNameHover(doc, position)) ||
+    (await provideThemeDirectiveHover(doc, position)) ||
+    (await provideCssHelperHover(doc, position)) ||
+    (await provideSourceGlobHover(doc, position))
   )
 }
 
-async function provideCssHelperHover(
-  state: State,
-  document: TextDocument,
-  position: Position,
-): Promise<Hover> {
-  if (!isCssContext(state, document, position)) {
-    return null
-  }
-
-  const settings = await state.editor.getConfiguration(document.uri)
-
-  let helperFns = findHelperFunctionsInRange(document, {
-    start: { line: position.line, character: 0 },
-    end: { line: position.line + 1, character: 0 },
-  })
-
-  for (let helperFn of helperFns) {
+async function provideCssHelperHover(doc: Document, position: Position): Promise<Hover> {
+  for (let helperFn of doc.helperFnsAt(position)) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
 
-    if (helperFn.helper === 'var' && !state.v4) continue
+    if (helperFn.helper === 'var' && !doc.state.v4) continue
 
     let validated = validateConfigPath(
-      state,
+      doc.state,
       helperFn.path,
       helperFn.helper === 'theme' ? ['theme'] : [],
     )
@@ -65,13 +41,13 @@ async function provideCssHelperHover(
     let value = validated.isValid ? stringifyConfigValue(validated.value) : null
     if (value === null) return null
 
-    if (settings.tailwindCSS.showPixelEquivalents) {
-      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
+    if (doc.settings.tailwindCSS.showPixelEquivalents) {
+      value = addPixelEquivalentsToValue(value, doc.settings.tailwindCSS.rootFontSize)
     }
 
     let lines = ['```plaintext', value, '```']
 
-    if (state.v4 && helperFn.path.startsWith('--')) {
+    if (doc.state.v4 && helperFn.path.startsWith('--')) {
       lines = [
         //
         '```css',
@@ -91,14 +67,11 @@ async function provideCssHelperHover(
   return null
 }
 
-async function provideClassNameHover(
-  state: State,
-  document: TextDocument,
-  position: Position,
-): Promise<Hover> {
-  let className = await findClassNameAtPosition(state, document, position)
-  if (className === null) return null
+async function provideClassNameHover(doc: Document, position: Position): Promise<Hover> {
+  let className = Array.from(doc.classNamesAt(position))[0]
+  if (!className) return null
 
+  let state = doc.state
   if (state.v4) {
     let root = state.designSystem.compile([className.className])[0]
 
@@ -109,7 +82,7 @@ async function provideClassNameHover(
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, root, document.uri),
+        value: await jit.stringifyRoot(state, root, doc.uri),
       },
       range: className.range,
     }
@@ -125,7 +98,7 @@ async function provideClassNameHover(
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, root, document.uri),
+        value: await jit.stringifyRoot(state, root, doc.uri),
       },
       range: className.range,
     }
@@ -134,14 +107,14 @@ async function provideClassNameHover(
   const parts = getClassNameParts(state, className.className)
   if (!parts) return null
 
-  if (isCssContext(state, document, position)) {
+  if (isCssContext(state, doc.storage, position)) {
     let validated = validateApply(state, parts)
     if (validated === null || validated.isApplyable === false) {
       return null
     }
   }
 
-  const settings = await state.editor.getConfiguration(document.uri)
+  const settings = await state.editor.getConfiguration(doc.uri)
 
   const css = stringifyCss(
     className.className,
@@ -167,11 +140,10 @@ function markdown(lines: string[]): MarkupContent {
   }
 }
 
-async function provideSourceGlobHover(
-  state: State,
-  document: TextDocument,
-  position: Position,
-): Promise<Hover> {
+async function provideSourceGlobHover(doc: Document, position: Position): Promise<Hover> {
+  let state = doc.state
+  let document = doc.storage
+
   if (!isCssContext(state, document, position)) {
     return null
   }
@@ -230,11 +202,10 @@ async function provideSourceGlobHover(
 const PATTERN_AT_THEME = /@(?<directive>theme)\s+(?<parts>[^{]+)\s*\{/dg
 const PATTERN_IMPORT_THEME = /@(?<directive>import)\s*[^;]+?theme\((?<parts>[^)]+)\)/dg
 
-async function provideThemeDirectiveHover(
-  state: State,
-  document: TextDocument,
-  position: Position,
-): Promise<Hover> {
+async function provideThemeDirectiveHover(doc: Document, position: Position): Promise<Hover> {
+  let state = doc.state
+  let document = doc.storage
+
   if (!state.v4) return null
 
   let range = {

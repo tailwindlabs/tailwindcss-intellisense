@@ -1,5 +1,7 @@
 import type { Range } from 'vscode-languageserver'
 import { rangesEqual } from './rangesEqual'
+import { Span } from './state'
+import { spansEqual } from './spans-equal'
 
 export function dedupe<T>(arr: Array<T>): Array<T> {
   return arr.filter((value, index, self) => self.indexOf(value) === index)
@@ -13,6 +15,13 @@ export function dedupeByRange<T extends { range: Range }>(arr: Array<T>): Array<
   return arr.filter(
     (classList, classListIndex) =>
       classListIndex === arr.findIndex((c) => rangesEqual(c.range, classList.range)),
+  )
+}
+
+export function dedupeBySpan<T extends { span: Span }>(arr: Array<T>): Array<T> {
+  return arr.filter(
+    (classList, classListIndex) =>
+      classListIndex === arr.findIndex((c) => spansEqual(c.span, classList.span)),
   )
 }
 
