@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
-import { jsx, createDocument, html } from './test-utils'
+import { jsx, createDocument, html, astro } from './test-utils'
 
 test('regex literals are ignored when determining language boundaries', ({ expect }) => {
   let file = createDocument({
@@ -185,6 +185,51 @@ test('Vue files detect <template>, <script>, and <style> as separate boundaries'
       range: {
         start: { line: 10, character: 0 },
         end: { line: 13, character: 16 },
+      },
+    },
+  ])
+})
+
+test('Astro files default to HTML', ({ expect }) => {
+  let file = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    content: html`<div class="border-gray-200"></div>`,
+  })
+
+  let boundaries = getLanguageBoundaries(file.state, file.doc)
+
+  expect(boundaries).toEqual([
+    {
+      type: 'none',
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 35 },
+      },
+    },
+  ])
+})
+
+test.only('Astro files front matter is pared as JS', ({ expect }) => {
+  let file = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    content: astro`
+      ---
+      console.log('test')
+      ---
+      <div class="border-gray-200"></div>
+    `,
+  })
+
+  let boundaries = getLanguageBoundaries(file.state, file.doc)
+
+  expect(boundaries).toEqual([
+    {
+      type: 'none',
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 3, character: 35 },
       },
     },
   ])
