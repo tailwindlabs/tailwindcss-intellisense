@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.14.22
+
 - Fix matching files when config is not in the workspace root ([#1412](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1412))
 
 ## 0.14.21
