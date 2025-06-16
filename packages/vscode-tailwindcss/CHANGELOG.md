@@ -2,14 +2,13 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Highlight CSS variables correctly inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
+- Highlight comments inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
+- Highlight at-rules inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
 
 ## 0.14.22
 
 - Fix matching files when config is not in the workspace root ([#1412](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1412))
-- Highlight CSS variables correctly inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
-- Highlight comments inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
-- Highlight at-rules inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
 
 ## 0.14.21
 
