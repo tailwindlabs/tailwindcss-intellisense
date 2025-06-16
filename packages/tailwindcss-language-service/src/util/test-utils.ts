@@ -9,6 +9,7 @@ export const ts: Dedent = dedent
 export const tsx: Dedent = dedent
 export const css: Dedent = dedent
 export const html: Dedent = dedent
+export const astro: Dedent = dedent
 export const pug: Dedent = dedent
 
 export function createDocument({

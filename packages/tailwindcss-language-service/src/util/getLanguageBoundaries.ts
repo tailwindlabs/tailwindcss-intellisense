@@ -1,6 +1,6 @@
 import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { isVueDoc, isHtmlDoc, isSvelteDoc } from './html'
+import { isVueDoc, isHtmlDoc, isSvelteDoc, isAstroDoc } from './html'
 import type { State } from './state'
 import { indexToPosition } from './find'
 import { isJsDoc } from './js'
@@ -134,8 +134,21 @@ let vueStates = {
   },
 }
 
+let astroStates = {
+  ...states,
+  main: {
+    frontmatterBlockStart: { match: /^[\s\n]*---/, push: 'frontmatterScript' },
+    ...states.main,
+  },
+  frontmatterScript: {
+    frontmatterBlockEnd: { match: /\s*---(?=\s)/, pop: 1 },
+    ...text,
+  },
+}
+
 let defaultLexer = moo.states(states)
 let vueLexer = moo.states(vueStates)
+let astroLexer = moo.states(astroStates)
 
 let cache = new Cache<string, LanguageBoundary[] | null>({ max: 25, maxAge: 1000 })
 
@@ -161,7 +174,7 @@ export function getLanguageBoundaries(
 
   if (isVueDoc(doc)) {
     defaultType = 'none'
-  } else if (isHtmlDoc(state, doc) || isSvelteDoc(doc)) {
+  } else if (isHtmlDoc(state, doc) || isSvelteDoc(doc) || isAstroDoc(doc)) {
     defaultType = 'html'
   } else if (isJs) {
     defaultType = 'jsx'
@@ -179,6 +192,10 @@ export function getLanguageBoundaries(
   if (defaultType === 'none') {
     if (isVueDoc(doc)) {
       lexer = vueLexer
+    }
+  } else if (defaultType === 'html') {
+    if (isAstroDoc(doc)) {
+      lexer = astroLexer
     }
   }
 
@@ -199,6 +216,11 @@ export function getLanguageBoundaries(
             boundaries[boundaries.length - 1].range.end = position
           }
           type = token.type.replace(/BlockStart$/, '')
+
+          if (lexer === astroLexer && type === 'frontmatter') {
+            type = 'js'
+          }
+
           boundaries.push({ type, range: { start: position, end: undefined } })
         } else if (token.type.endsWith('BlockEnd')) {
           let position = indexToPosition(text, offset)
