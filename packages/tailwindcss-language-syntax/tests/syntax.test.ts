@@ -36,6 +36,21 @@ test('@theme', async ({ expect }) => {
         }
       }
     }
+
+    @theme {
+      /** Comment 0 */
+
+      /** Comment 1 */
+      --color-1: red;
+
+      /** Comment 2 */
+      --color-2: green;
+
+      /** Comment 3 */
+      --color-2: blue;
+
+      /** Comment 4 */
+    }
   `)
 
   expect(result.toString()).toMatchSnapshot()

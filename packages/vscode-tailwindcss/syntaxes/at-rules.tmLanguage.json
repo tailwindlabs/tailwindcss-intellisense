@@ -495,6 +495,16 @@
     "property-list": {
       "patterns": [
         {
+          "include": "source.css#comment-block"
+        },
+        {
+          "include": "source.css#escapes"
+        },
+        {
+          "match": "(?x) (?<![\\w-])\n--\n(?:[-a-zA-Z_]    | [^\\x00-\\x7F])     # First letter\n(?:[-a-zA-Z0-9_] | [^\\x00-\\x7F]      # Remainder of identifier\n  |\\\\(?:[0-9a-fA-F]{1,6}|.)\n)*",
+          "name": "variable.css"
+        },
+        {
           "begin": "(?<![-a-zA-Z])(?=[-a-zA-Z])",
           "end": "$|(?![-a-zA-Z])",
           "name": "meta.property-name.css",
@@ -530,6 +540,9 @@
         {
           "match": ";",
           "name": "punctuation.terminator.rule.css"
+        },
+        {
+          "include": "source.css#at-rules"
         }
       ]
     },
