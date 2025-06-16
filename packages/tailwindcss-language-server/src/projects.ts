@@ -1174,7 +1174,7 @@ export async function createProjectService(
 
     state,
     documentSelector() {
-      return documentSelector
+      return [...documentSelector, ...projectConfig.additionalSelectors]
     },
     tryInit,
     async dispose() {
