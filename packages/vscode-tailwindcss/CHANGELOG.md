@@ -5,6 +5,7 @@
 - Highlight CSS variables correctly inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
 - Highlight comments inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
 - Highlight at-rules inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
+- Detect class functions and class attributes inside Astro code fences ([#1386](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1386))
 
 ## 0.14.22
 
