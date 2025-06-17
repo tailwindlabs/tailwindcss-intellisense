@@ -5,8 +5,8 @@ import { doValidate } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'
 import {
   type DiagnosticKind,
-  isInvalidApplyDiagnostic,
   type AugmentedDiagnostic,
+  isInvalidApplyDiagnostic,
   isCssConflictDiagnostic,
   isInvalidConfigPathDiagnostic,
   isInvalidTailwindDirectiveDiagnostic,
@@ -26,7 +26,8 @@ async function getDiagnosticsFromCodeActionParams(
   only?: DiagnosticKind[],
 ): Promise<AugmentedDiagnostic[]> {
   if (!document) return []
-  let diagnostics = await doValidate(state, document, only)
+  let report = await doValidate(state, document, only)
+  let diagnostics = report.items as AugmentedDiagnostic[]
 
   return params.context.diagnostics
     .map((diagnostic) => {

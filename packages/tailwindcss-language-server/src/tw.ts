@@ -691,7 +691,7 @@ export class TW {
     console.log(`[Global] Initialized ${enabledProjectCount} projects`)
 
     this.disposables.push(
-      this.connection.onDidChangeConfiguration(async ({ settings }) => {
+      this.connection.onDidChangeConfiguration(async () => {
         let previousExclude = globalSettings.tailwindCSS.files.exclude
 
         this.settingsCache.clear()
@@ -704,7 +704,7 @@ export class TW {
         }
 
         for (let [, project] of this.projects) {
-          project.onUpdateSettings(settings)
+          project.onUpdateSettings()
         }
       }),
     )

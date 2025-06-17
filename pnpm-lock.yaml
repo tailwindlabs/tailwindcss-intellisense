@@ -345,12 +345,18 @@ importers:
       '@types/node':
         specifier: ^18.19.33
         version: 18.19.43
+      '@types/picomatch':
+        specifier: ^2.3.3
+        version: 2.3.4
       '@types/stringify-object':
         specifier: ^4.0.5
         version: 4.0.5
       dedent:
         specifier: ^1.5.3
         version: 1.5.3
+      deepmerge:
+        specifier: 4.2.2
+        version: 4.2.2
       esbuild:
         specifier: ^0.25.5
         version: 0.25.5
@@ -360,6 +366,12 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      picomatch:
+        specifier: ^4.0.1
+        version: 4.0.2
+      tailwindcss-v4:
+        specifier: npm:tailwindcss@4.1.1
+        version: tailwindcss@4.1.1
       tslib:
         specifier: 2.2.0
         version: 2.2.0
@@ -372,6 +384,9 @@ importers:
       vitest:
         specifier: ^3.2.1
         version: 3.2.1(@types/node@18.19.43)(jiti@2.3.3)(yaml@2.5.0)
+      vscode-uri:
+        specifier: 3.0.2
+        version: 3.0.2
 
   packages/tailwindcss-language-syntax:
     devDependencies:
