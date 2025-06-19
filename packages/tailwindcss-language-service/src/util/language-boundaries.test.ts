@@ -210,7 +210,7 @@ test('Astro files default to HTML', ({ expect }) => {
   ])
 })
 
-test('Astro files front matter is pared as JS', ({ expect }) => {
+test('Astro files front matter is parsed as JS', ({ expect }) => {
   let file = createDocument({
     name: 'file.astro',
     lang: 'astro',
