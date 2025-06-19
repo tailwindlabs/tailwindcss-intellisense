@@ -20,6 +20,10 @@ export function isSvelteDoc(doc: TextDocument): boolean {
   return doc.languageId === 'svelte'
 }
 
+export function isAstroDoc(doc: TextDocument): boolean {
+  return doc.languageId === 'astro'
+}
+
 export function isHtmlContext(state: State, doc: TextDocument, position: Position): boolean {
   let str = doc.getText({
     start: { line: 0, character: 0 },

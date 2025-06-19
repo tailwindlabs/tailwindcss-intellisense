@@ -4,7 +4,7 @@ import {
   findClassNameAtPosition,
   findHelperFunctionsInDocument,
 } from './find'
-import { js, html, pug, createDocument, css } from './test-utils'
+import { js, html, pug, createDocument, css, astro } from './test-utils'
 import type { Range } from 'vscode-languageserver-textdocument'
 
 const range = (startLine: number, startCol: number, endLine: number, endCol: number): Range => ({
@@ -1041,6 +1041,43 @@ test('Can find helper functions in CSS', async ({ expect }) => {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(18, 36, 18, 56), path: range(18, 37, 18, 40) },
+    },
+  ])
+})
+
+test('class functions work inside astro code fences', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: astro`
+      ---
+      let x = clsx("relative flex bg-red-500")
+      ---
+      <div class="relative flex bg-red-500"></div>
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'html')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative flex bg-red-500',
+      range: {
+        start: { line: 3, character: 12 },
+        end: { line: 3, character: 36 },
+      },
+    },
+    {
+      classList: 'relative flex bg-red-500',
+      range: {
+        start: { line: 1, character: 14 },
+        end: { line: 1, character: 38 },
+      },
     },
   ])
 })

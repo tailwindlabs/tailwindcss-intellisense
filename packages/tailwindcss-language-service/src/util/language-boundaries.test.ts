@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import { getLanguageBoundaries } from './getLanguageBoundaries'
-import { jsx, createDocument, html } from './test-utils'
+import { jsx, createDocument, html, astro } from './test-utils'
 
 test('regex literals are ignored when determining language boundaries', ({ expect }) => {
   let file = createDocument({
@@ -185,6 +185,70 @@ test('Vue files detect <template>, <script>, and <style> as separate boundaries'
       range: {
         start: { line: 10, character: 0 },
         end: { line: 13, character: 16 },
+      },
+    },
+  ])
+})
+
+test('Astro files default to HTML', ({ expect }) => {
+  let file = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    content: html`<div class="border-gray-200"></div>`,
+  })
+
+  let boundaries = getLanguageBoundaries(file.state, file.doc)
+
+  expect(boundaries).toEqual([
+    {
+      type: 'html',
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 35 },
+      },
+    },
+  ])
+})
+
+test('Astro files front matter is parsed as JS', ({ expect }) => {
+  let file = createDocument({
+    name: 'file.astro',
+    lang: 'astro',
+    content: astro`
+      ---
+      console.log('test')
+      ---
+      <div class="border-gray-200"></div>
+    `,
+  })
+
+  let boundaries = getLanguageBoundaries(file.state, file.doc)
+
+  expect(boundaries).toEqual([
+    // This block just shouldn't be here
+    {
+      type: 'html',
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    },
+    {
+      type: 'js',
+      range: {
+        // This should probably be 0:3 instead of 0:0
+        start: { line: 0, character: 0 },
+
+        // This should probably be 2:0 instead of 1:19
+        end: { line: 1, character: 19 },
+      },
+    },
+    {
+      type: 'html',
+      range: {
+        // This should probably be 2:3 instead of 1:19
+        start: { line: 1, character: 19 },
+        end: { line: 3, character: 35 },
       },
     },
   ])
