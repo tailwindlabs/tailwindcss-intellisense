@@ -147,7 +147,7 @@
           "name": "punctuation.separator.list.comma.css"
         },
         {
-          "match": "(--[^,\\s]+)",
+          "match": "(--[^,\\s)]+)",
           "name": "variable.theme-namespace.css"
         },
         { "include": "#utility-data-type-bare" },
