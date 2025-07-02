@@ -183,8 +183,25 @@ test('@utility', async ({ expect }) => {
     }
 
     @utility tab-* {
+      tab-size: --value(--);
+      font-size: 12px;
+    }
+
+    @utility tab-* {
       tab-size: --value(--tab-size);
       font-size: 12px;
+    }
+
+    @utility tab-* {
+      tab-size: --value(--tab-size-*);
+      font-size: 12px;
+    }
+    
+    @utility tab-* {
+      & {
+        tab-size: --value(--tab-size-*);
+        font-size: 16px;
+      }
     }
   `)
 
