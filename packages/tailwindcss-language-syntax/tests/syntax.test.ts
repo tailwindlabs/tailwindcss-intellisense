@@ -181,6 +181,21 @@ test('@utility', async ({ expect }) => {
     @utility functional-* {
       width: calc(--value(number) * 1px);
     }
+
+    @utility tab-* {
+      tab-size: --value(--);
+      font-size: 12px;
+    }
+
+    @utility tab-* {
+      tab-size: --value(--tab-size);
+      font-size: 12px;
+    }
+
+    @utility tab-* {
+      tab-size: --value(--tab-size-*);
+      font-size: 12px;
+    }
   `)
 
   expect(result.toString()).toMatchSnapshot()

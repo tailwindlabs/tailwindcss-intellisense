@@ -1007,6 +1007,102 @@ exports[`@utility 1`] = `
 
 }
 ^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+
+
+^                                      1: source.css.tailwind
+
+@utility tab-* {
+^^^^^^^^^^^^^^^^                       6: source.css.tailwind
+^^^^^^^^                               2: keyword.control.at-rule.utility.tailwind
+^                                      1: punctuation.definition.keyword.css
+         ^^^^^                         1: variable.parameter.utility.tailwind
+               ^                       1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  tab-size: --value(--);
+^^^^^^^^^^^^^^^^^^^^^^^^               9: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^                             1: meta.property-name.css support.type.property-name.css
+          ^                            1: punctuation.separator.key-value.css
+            ^^^^^^^^^^^                4: meta.property-value.css
+            ^^^^^^^                    1: support.function.value.tailwind
+                   ^                   1: punctuation.section.function.begin.bracket.round.css
+                    ^^                 1: variable.parameter.value.tailwind
+                      ^                1: punctuation.section.function.end.bracket.round.css
+                       ^               1: punctuation.terminator.rule.css
+
+  font-size: 12px;
+^^^^^^^^^^^^^^^^^^                     7: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^^                            1: meta.property-name.css support.type.property-name.css
+           ^                           1: punctuation.separator.key-value.css
+             ^^^^                      2: meta.property-value.css constant.numeric.css
+               ^^                      1: keyword.other.unit.px.css
+                 ^                     1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+
+
+^                                      1: source.css.tailwind
+
+@utility tab-* {
+^^^^^^^^^^^^^^^^                       6: source.css.tailwind
+^^^^^^^^                               2: keyword.control.at-rule.utility.tailwind
+^                                      1: punctuation.definition.keyword.css
+         ^^^^^                         1: variable.parameter.utility.tailwind
+               ^                       1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  tab-size: --value(--tab-size);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^       9: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^                             1: meta.property-name.css support.type.property-name.css
+          ^                            1: punctuation.separator.key-value.css
+            ^^^^^^^^^^^^^^^^^^^        4: meta.property-value.css
+            ^^^^^^^                    1: support.function.value.tailwind
+                   ^                   1: punctuation.section.function.begin.bracket.round.css
+                    ^^^^^^^^^^         1: variable.theme-namespace.css
+                              ^        1: punctuation.section.function.end.bracket.round.css
+                               ^       1: punctuation.terminator.rule.css
+
+  font-size: 12px;
+^^^^^^^^^^^^^^^^^^                     7: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^^                            1: meta.property-name.css support.type.property-name.css
+           ^                           1: punctuation.separator.key-value.css
+             ^^^^                      2: meta.property-value.css constant.numeric.css
+               ^^                      1: keyword.other.unit.px.css
+                 ^                     1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
+
+
+^                                      1: source.css.tailwind
+
+@utility tab-* {
+^^^^^^^^^^^^^^^^                       6: source.css.tailwind
+^^^^^^^^                               2: keyword.control.at-rule.utility.tailwind
+^                                      1: punctuation.definition.keyword.css
+         ^^^^^                         1: variable.parameter.utility.tailwind
+               ^                       1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
+
+  tab-size: --value(--tab-size-*);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     9: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^                             1: meta.property-name.css support.type.property-name.css
+          ^                            1: punctuation.separator.key-value.css
+            ^^^^^^^^^^^^^^^^^^^^^      4: meta.property-value.css
+            ^^^^^^^                    1: support.function.value.tailwind
+                   ^                   1: punctuation.section.function.begin.bracket.round.css
+                    ^^^^^^^^^^^^       1: variable.theme-namespace.css
+                                ^      1: punctuation.section.function.end.bracket.round.css
+                                 ^     1: punctuation.terminator.rule.css
+
+  font-size: 12px;
+^^^^^^^^^^^^^^^^^^                     7: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^^                            1: meta.property-name.css support.type.property-name.css
+           ^                           1: punctuation.separator.key-value.css
+             ^^^^                      2: meta.property-value.css constant.numeric.css
+               ^^                      1: keyword.other.unit.px.css
+                 ^                     1: punctuation.terminator.rule.css
+
+}
+^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
 "
 `;
 
