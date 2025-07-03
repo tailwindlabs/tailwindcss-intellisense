@@ -4,6 +4,10 @@
 
 - Nothing yet!
 
+## 0.14.24
+
+- Fix highlighting when theme namespaces are used inside `--value()` and `--modifier()` ([#1420](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1420))
+
 ## 0.14.23
 
 - Highlight CSS variables correctly inside `@theme` ([#1409](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1409))
