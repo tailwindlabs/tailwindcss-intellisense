@@ -815,6 +815,39 @@ defineTest({
 })
 
 defineTest({
+  name: 'v4: class completions show colors when using prefixes',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: '<div class="tw:">',
+    })
+
+    // <div class="tw:">
+    //               ^
+    let completion = await document.completions({ line: 0, character: 15 })
+
+    expect(completion).toEqual({
+      isIncomplete: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({
+          label: 'bg-black',
+
+          // And it's shown as a color
+          kind: CompletionItemKind.Color,
+          documentation: '#000000',
+        }),
+      ]),
+    })
+  },
+})
+
+defineTest({
   name: 'v4: Completions show inside class functions in JS/TS files',
   fs: {
     'app.css': css`

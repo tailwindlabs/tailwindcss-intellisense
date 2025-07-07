@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Ensure color swatches show up in completions when using a prefix in v4 ([#1422](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1422))
 
 ## 0.14.24
 

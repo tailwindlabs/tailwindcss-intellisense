@@ -216,6 +216,16 @@ export function getColor(state: State, className: string): culori.Color | Keywor
 
     let color = getColorFromRoot(state, css)
 
+    let prefix = state.designSystem.theme.prefix ?? ''
+
+    // TODO: Either all consumers of this API should assume there's no prefix
+    // or pass in correctly prefixed classes
+    if (prefix && !color && !className.startsWith(prefix + ':')) {
+      className = `${prefix}:${className}`
+      css = state.designSystem.compile([className])[0]
+      color = getColorFromRoot(state, css)
+    }
+
     return color
   }
 
