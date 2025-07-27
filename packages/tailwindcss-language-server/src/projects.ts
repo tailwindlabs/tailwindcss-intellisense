@@ -56,6 +56,7 @@ import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/cod
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
+import { scanCssFilesForCustomClasses } from '@tailwindcss/language-service/src/util/css-class-scanner'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
@@ -1069,6 +1070,22 @@ export async function createProjectService(
     }
     state.variants = getVariants(state)
 
+    // Scan CSS files for custom classes (v3 projects)
+    const cssFiles = Array.from(state.dependencies ?? []).filter((dep) => dep.endsWith('.css'))
+
+    // Also scan the main CSS file if it's a CSS config
+    if (state.isCssConfig && state.configPath) {
+      cssFiles.push(state.configPath)
+    }
+
+    if (cssFiles.length > 0) {
+      try {
+        await scanCssFilesForCustomClasses(state, cssFiles)
+      } catch (error) {
+        console.error('Error scanning CSS files for custom classes:', error)
+      }
+    }
+
     let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
     state.screens = isObject(screens) ? Object.keys(screens) : []
 
@@ -1150,7 +1167,20 @@ export async function createProjectService(
       state.variants = getVariants(state)
       state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
+      // Scan CSS files for custom classes
       let deps = designSystem.dependencies()
+      const cssFiles = Array.from(deps).filter((dep) => dep.endsWith('.css'))
+
+      // Also scan the main CSS file
+      cssFiles.push(state.configPath)
+
+      if (cssFiles.length > 0) {
+        try {
+          await scanCssFilesForCustomClasses(state, cssFiles)
+        } catch (error) {
+          console.error('Error scanning CSS files for custom classes:', error)
+        }
+      }
 
       for (let dep of deps) {
         dependencies.add(dep)
