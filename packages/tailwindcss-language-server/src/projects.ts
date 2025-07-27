@@ -24,6 +24,7 @@ import { URI } from 'vscode-uri'
 import { showError, showWarning, SilentError } from './util/error'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import * as fsPromises from 'node:fs/promises'
 import findUp from 'find-up'
 import picomatch from 'picomatch'
 import { resolveFrom, setPnpApi } from './util/resolveFrom'
@@ -1076,6 +1077,24 @@ export async function createProjectService(
     // Also scan the main CSS file if it's a CSS config
     if (state.isCssConfig && state.configPath) {
       cssFiles.push(state.configPath)
+    }
+
+    // Also scan CSS files in the project directory for custom classes
+    try {
+      const projectDir = path.dirname(state.configPath)
+      const projectFiles = await fsPromises.readdir(projectDir)
+      const projectCssFiles = projectFiles
+        .filter((file) => file.endsWith('.css'))
+        .map((file) => path.join(projectDir, file))
+
+      // Add project CSS files that aren't already in dependencies
+      for (const cssFile of projectCssFiles) {
+        if (!cssFiles.includes(cssFile)) {
+          cssFiles.push(cssFile)
+        }
+      }
+    } catch (error) {
+      console.error('Error scanning project directory for CSS files:', error)
     }
 
     if (cssFiles.length > 0) {

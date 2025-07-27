@@ -554,6 +554,84 @@ withFixture('v4/path-mappings', (c) => {
   })
 })
 
+withFixture('custom-classes', (c) => {
+  async function testHover(
+    name,
+    { text, lang, position, exact = false, expected, expectedRange, settings },
+  ) {
+    test(name, async ({ expect }) => {
+      let textDocument = await c.openDocument({ text, lang, settings })
+      let res = await c.sendRequest('textDocument/hover', {
+        textDocument,
+        position,
+      })
+
+      if (!exact && expected) {
+        expected = {
+          contents: {
+            language: 'css',
+            value: expected,
+          },
+          range: expectedRange,
+        }
+      }
+
+      expect(res).toEqual(expected)
+    })
+  }
+
+  testHover('custom button class', {
+    text: '<div class="custom-button">',
+    position: { line: 0, character: 13 },
+    expected:
+      '.custom-button {\n' +
+      '  background-color: #1a9dd9;\n' +
+      '  color: white;\n' +
+      '  padding: 0.5rem 1rem;\n' +
+      '  border-radius: 0.25rem;\n' +
+      '  font-weight: 600;\n' +
+      '}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 25 },
+    },
+  })
+
+  testHover('typography h3 class', {
+    text: '<div class="typography-h3">',
+    position: { line: 0, character: 13 },
+    expected:
+      '.typography-h3 {\n' +
+      '  font-family: Montserrat;\n' +
+      '  font-size: 48px;\n' +
+      '  font-style: normal;\n' +
+      '  font-weight: 700;\n' +
+      '  line-height: 116.7%;\n' +
+      '}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 25 },
+    },
+  })
+
+  testHover('card class', {
+    text: '<div class="card">',
+    position: { line: 0, character: 13 },
+    expected:
+      '.card {\n' +
+      '  background-color: white;\n' +
+      '  border: 1px solid #e5e7eb;\n' +
+      '  border-radius: 0.5rem;\n' +
+      '  padding: 1.5rem;\n' +
+      '  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);\n' +
+      '}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 16 },
+    },
+  })
+})
+
 defineTest({
   name: 'Can hover showing theme values used in var(…) and theme(…) functions',
   fs: {

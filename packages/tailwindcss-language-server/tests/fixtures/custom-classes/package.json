@@ -1,0 +1,7 @@
+{
+  "name": "custom-classes-test",
+  "version": "1.0.0",
+  "dependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
