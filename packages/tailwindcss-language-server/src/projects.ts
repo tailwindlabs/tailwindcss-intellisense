@@ -24,7 +24,6 @@ import { URI } from 'vscode-uri'
 import { showError, showWarning, SilentError } from './util/error'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
-import * as fsPromises from 'node:fs/promises'
 import findUp from 'find-up'
 import picomatch from 'picomatch'
 import { resolveFrom, setPnpApi } from './util/resolveFrom'
@@ -57,7 +56,6 @@ import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/cod
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
-import { scanCssFilesForCustomClasses } from '@tailwindcss/language-service/src/util/css-class-scanner'
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
@@ -1071,40 +1069,6 @@ export async function createProjectService(
     }
     state.variants = getVariants(state)
 
-    // Scan CSS files for custom classes (v3 projects)
-    const cssFiles = Array.from(state.dependencies ?? []).filter((dep) => dep.endsWith('.css'))
-
-    // Also scan the main CSS file if it's a CSS config
-    if (state.isCssConfig && state.configPath) {
-      cssFiles.push(state.configPath)
-    }
-
-    // Also scan CSS files in the project directory for custom classes
-    try {
-      const projectDir = path.dirname(state.configPath)
-      const projectFiles = await fsPromises.readdir(projectDir)
-      const projectCssFiles = projectFiles
-        .filter((file) => file.endsWith('.css'))
-        .map((file) => path.join(projectDir, file))
-
-      // Add project CSS files that aren't already in dependencies
-      for (const cssFile of projectCssFiles) {
-        if (!cssFiles.includes(cssFile)) {
-          cssFiles.push(cssFile)
-        }
-      }
-    } catch (error) {
-      console.error('Error scanning project directory for CSS files:', error)
-    }
-
-    if (cssFiles.length > 0) {
-      try {
-        await scanCssFilesForCustomClasses(state, cssFiles)
-      } catch (error) {
-        console.error('Error scanning CSS files for custom classes:', error)
-      }
-    }
-
     let screens = dlv(state.config, 'theme.screens', dlv(state.config, 'screens', {}))
     state.screens = isObject(screens) ? Object.keys(screens) : []
 
@@ -1186,20 +1150,7 @@ export async function createProjectService(
       state.variants = getVariants(state)
       state.blocklist = Array.from(designSystem.invalidCandidates ?? [])
 
-      // Scan CSS files for custom classes
       let deps = designSystem.dependencies()
-      const cssFiles = Array.from(deps).filter((dep) => dep.endsWith('.css'))
-
-      // Also scan the main CSS file
-      cssFiles.push(state.configPath)
-
-      if (cssFiles.length > 0) {
-        try {
-          await scanCssFilesForCustomClasses(state, cssFiles)
-        } catch (error) {
-          console.error('Error scanning CSS files for custom classes:', error)
-        }
-      }
 
       for (let dep of deps) {
         dependencies.add(dep)
