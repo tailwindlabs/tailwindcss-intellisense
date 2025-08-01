@@ -1081,3 +1081,30 @@ test('class functions work inside astro code fences', async ({ expect }) => {
     },
   ])
 })
+
+test('classFunctions are detected inside of arrays in javascript just after opening bracket', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.js',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['cn'],
+      },
+    },
+    content: js`
+      const list = [cn('relative')]
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative',
+      range: {
+        start: { line: 0, character: 18 },
+        end: { line: 0, character: 26 },
+      },
+    },
+  ])
+})
