@@ -406,7 +406,7 @@ export function findHelperFunctionsInRange(
   let text = getTextWithoutComments(doc, 'css', range)
 
   // Find every instance of a helper function
-  let matches = findAll(/\b(?<helper>config|theme|--theme|var)\(/g, text)
+  let matches = findAll(/\b(?<![-$%#.])(?<helper>config|theme|--theme|var)\(/g, text)
 
   // Eliminate matches that are attached to an `@import`
   matches = matches.filter((match) => {
