@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Match class functions that appear after an opening square bracket ([#1428](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1428))
 
 ## 0.14.25
 
