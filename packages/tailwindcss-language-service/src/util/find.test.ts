@@ -914,6 +914,9 @@ test('Can find helper functions in CSS', async ({ expect }) => {
       .a { color: from-config(theme(foo / 0.5, default)); }
       .a { color: from-config(theme("foo" / 0.5)); }
       .a { color: from-config(theme("foo" / 0.5, default)); }
+
+      /* nested helpers */
+      .a { color: config(theme(foo)); }
     `,
   })
 
@@ -963,19 +966,9 @@ test('Can find helper functions in CSS', async ({ expect }) => {
 
     // Nested
     {
-      helper: 'config',
-      path: 'theme(foo)',
-      ranges: { full: range(11, 30, 11, 40), path: range(11, 30, 11, 40) },
-    },
-    {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(11, 36, 11, 39), path: range(11, 36, 11, 39) },
-    },
-    {
-      helper: 'config',
-      path: 'theme(foo, default)',
-      ranges: { full: range(12, 30, 12, 49), path: range(12, 30, 12, 49) },
     },
     {
       helper: 'theme',
@@ -983,19 +976,9 @@ test('Can find helper functions in CSS', async ({ expect }) => {
       ranges: { full: range(12, 36, 12, 48), path: range(12, 36, 12, 39) },
     },
     {
-      helper: 'config',
-      path: 'theme("foo")',
-      ranges: { full: range(13, 30, 13, 42), path: range(13, 30, 13, 42) },
-    },
-    {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(13, 36, 13, 41), path: range(13, 37, 13, 40) },
-    },
-    {
-      helper: 'config',
-      path: 'theme("foo", default)',
-      ranges: { full: range(14, 30, 14, 51), path: range(14, 30, 14, 51) },
     },
     {
       helper: 'theme',
@@ -1003,19 +986,9 @@ test('Can find helper functions in CSS', async ({ expect }) => {
       ranges: { full: range(14, 36, 14, 50), path: range(14, 37, 14, 40) },
     },
     {
-      helper: 'config',
-      path: 'theme(foo / 0.5)',
-      ranges: { full: range(15, 30, 15, 46), path: range(15, 30, 15, 46) },
-    },
-    {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(15, 36, 15, 45), path: range(15, 36, 15, 39) },
-    },
-    {
-      helper: 'config',
-      path: 'theme(foo / 0.5, default)',
-      ranges: { full: range(16, 30, 16, 55), path: range(16, 30, 16, 55) },
     },
     {
       helper: 'theme',
@@ -1023,25 +996,98 @@ test('Can find helper functions in CSS', async ({ expect }) => {
       ranges: { full: range(16, 36, 16, 54), path: range(16, 36, 16, 39) },
     },
     {
-      helper: 'config',
-      path: 'theme("foo" / 0.5)',
-      ranges: { full: range(17, 30, 17, 48), path: range(17, 30, 17, 48) },
-    },
-    {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(17, 36, 17, 47), path: range(17, 37, 17, 40) },
-    },
-    {
-      helper: 'config',
-      path: 'theme("foo" / 0.5, default)',
-      ranges: { full: range(18, 30, 18, 57), path: range(18, 30, 18, 57) },
     },
     {
       helper: 'theme',
       path: 'foo',
       ranges: { full: range(18, 36, 18, 56), path: range(18, 37, 18, 40) },
     },
+
+    // Nested helpers
+    {
+      helper: 'config',
+      path: 'theme(foo)',
+      ranges: { full: range(21, 25, 21, 35), path: range(21, 25, 21, 35) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(21, 31, 21, 34), path: range(21, 31, 21, 34) },
+    },
+  ])
+})
+
+test('Helper functions can start with --', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .a { color: --theme(foo); }
+      .a { color: --theme(--theme(foo)); }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(1, 26, 1, 29), path: range(1, 26, 1, 29) },
+    },
+    {
+      helper: 'theme',
+      path: '--theme(foo)',
+      ranges: { full: range(2, 26, 2, 38), path: range(2, 26, 2, 38) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(2, 34, 2, 37), path: range(2, 34, 2, 37) },
+    },
+  ])
+})
+
+test('Can find helper functions in SCSS', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.scss',
+    lang: 'scss',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .foo {
+        color: config(foo);
+        @include my-config($foo: bar);
+        @include .my-config($foo: bar);
+        @include $my-config($foo: bar);
+        @include %my-config($foo: bar);
+        @include #my-config($foo: bar);
+      }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    // The first function matches
+    {
+      helper: 'config',
+      path: 'foo',
+      ranges: { full: range(2, 22, 2, 25), path: range(2, 22, 2, 25) },
+    },
+
+    // The rest don't
   ])
 })
 
@@ -1082,7 +1128,9 @@ test('class functions work inside astro code fences', async ({ expect }) => {
   ])
 })
 
-test('classFunctions are detected inside of arrays in javascript just after opening bracket', async ({ expect }) => {
+test('classFunctions are detected inside of arrays in javascript just after opening bracket', async ({
+  expect,
+}) => {
   let file = createDocument({
     name: 'file.js',
     lang: 'javascript',

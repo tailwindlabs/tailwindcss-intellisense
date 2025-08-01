@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Match class functions that appear after an opening square bracket ([#1428](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1428))
+- Don't match helper functions when part of a larger function name ([#1429](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1429))
 
 ## 0.14.25
 
