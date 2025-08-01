@@ -1020,6 +1020,42 @@ test('Can find helper functions in CSS', async ({ expect }) => {
   ])
 })
 
+test('Helper functions can start with --', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .a { color: --theme(foo); }
+      .a { color: --theme(--theme(foo)); }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(1, 26, 1, 29), path: range(1, 26, 1, 29) },
+    },
+    {
+      helper: 'theme',
+      path: '--theme(foo)',
+      ranges: { full: range(2, 26, 2, 38), path: range(2, 26, 2, 38) },
+    },
+    {
+      helper: 'theme',
+      path: 'foo',
+      ranges: { full: range(2, 34, 2, 37), path: range(2, 34, 2, 37) },
+    },
+  ])
+})
+
 test('Can find helper functions in SCSS', async ({ expect }) => {
   let file = createDocument({
     name: 'file.scss',
