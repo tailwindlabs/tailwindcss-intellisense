@@ -24,6 +24,7 @@
     "pretest": "node tests/prepare.mjs"
   },
   "bin": {
+    "css-language-server": "./bin/css-language-server",
     "tailwindcss-language-server": "./bin/tailwindcss-language-server"
   },
   "files": [
