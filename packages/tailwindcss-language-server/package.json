@@ -13,11 +13,10 @@
   },
   "homepage": "https://github.com/tailwindlabs/tailwindcss-intellisense/tree/HEAD/packages/tailwindcss-language-server#readme",
   "scripts": {
-    "build": "pnpm run clean && pnpm run _esbuild && pnpm run _esbuild:css && pnpm run hashbang",
+    "build": "pnpm run clean && pnpm run _esbuild && pnpm run _esbuild:css",
     "_esbuild": "node ../../esbuild.mjs src/server.ts --outfile=bin/tailwindcss-language-server --minify",
     "_esbuild:css": "node ../../esbuild.mjs src/language/css.ts --outfile=bin/css-language-server --minify",
     "clean": "rimraf bin",
-    "hashbang": "node scripts/hashbang.mjs",
     "create-notices-file": "node scripts/createNoticesFile.mjs",
     "prepublishOnly": "pnpm run build",
     "test": "vitest",

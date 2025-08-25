@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import './lib/env'
 import { createConnection } from 'vscode-languageserver/node'
 // @ts-ignore
