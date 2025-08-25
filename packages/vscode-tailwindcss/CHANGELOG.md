@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Publish our fork of the CSS language server ([#1437](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1437))
 
 ## 0.14.26
 
