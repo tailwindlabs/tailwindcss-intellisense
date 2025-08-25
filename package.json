@@ -4,8 +4,10 @@
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
     "@types/culori": "^2.1.0",
+    "@types/license-checker": "^25.0.6",
     "culori": "^4.0.1",
     "esbuild": "^0.25.5",
+    "license-checker": "25.0.1",
     "minimist": "^1.2.8",
     "prettier": "^3.2.5",
     "semver": "^7.7.1"
