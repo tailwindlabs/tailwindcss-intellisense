@@ -14,12 +14,18 @@ importers:
       '@types/culori':
         specifier: ^2.1.0
         version: 2.1.1
+      '@types/license-checker':
+        specifier: ^25.0.6
+        version: 25.0.6
       culori:
         specifier: ^4.0.1
         version: 4.0.1
       esbuild:
         specifier: ^0.25.5
         version: 0.25.5
+      license-checker:
+        specifier: 25.0.1
+        version: 25.0.1
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
@@ -98,9 +104,6 @@ importers:
       '@types/find-up':
         specifier: ^4.0.0
         version: 4.0.0
-      '@types/license-checker':
-        specifier: ^25.0.6
-        version: 25.0.6
       '@types/node':
         specifier: ^18.19.33
         version: 18.19.43
@@ -164,9 +167,6 @@ importers:
       klona:
         specifier: 2.0.4
         version: 2.0.4
-      license-checker:
-        specifier: 25.0.1
-        version: 25.0.1
       minimist:
         specifier: ^1.2.8
         version: 1.2.8

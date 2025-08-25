@@ -1,9 +1,13 @@
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
 import esbuild from 'esbuild'
-import fs from 'fs'
-import { createRequire } from 'module'
 import minimist from 'minimist'
+import checker from 'license-checker'
 
 const require = createRequire(import.meta.url)
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const args = minimist(process.argv.slice(2), {
   boolean: ['watch', 'minify'],
@@ -31,7 +35,7 @@ let ctx = await esbuild.context({
 
         build.onLoad({ filter: /.*/, namespace: 'css' }, async (args) => ({
           contents: `
-              export default ${JSON.stringify(await fs.promises.readFile(args.path, 'utf8'))}
+              export default ${JSON.stringify(await fs.readFile(args.path, 'utf8'))}
             `,
         }))
       },
@@ -70,6 +74,86 @@ let ctx = await esbuild.context({
         let opts = build.initialOptions
         opts.loader = opts.loader || {}
         opts.loader['.node'] = 'file'
+      },
+    },
+    {
+      name: 'generate-notices',
+      async setup() {
+        let exclude = [
+          /^@types\//,
+          'esbuild',
+          'rimraf',
+          'prettier',
+          'typescript',
+          'license-checker',
+        ]
+
+        let allLicenses = {
+          ...(await getLicenses(path.resolve(__dirname, 'packages/tailwindcss-language-server'))),
+          ...(await getLicenses(path.resolve(__dirname, 'packages/tailwindcss-language-service'))),
+        }
+
+        let allDeps = [
+          ...(await getDeps(path.resolve(__dirname, 'packages/tailwindcss-language-server'), true)),
+          ...(await getDeps(path.resolve(__dirname, 'packages/tailwindcss-language-service'))),
+        ]
+
+        function isExcluded(name) {
+          for (let pattern of exclude) {
+            if (typeof pattern === 'string') {
+              if (name === pattern) {
+                return true
+              }
+            } else if (pattern.test(name)) {
+              return true
+            }
+          }
+
+          return false
+        }
+
+        async function getDeps(dir, dev = false) {
+          let pkg = JSON.parse(await fs.readFile(path.resolve(dir, 'package.json'), 'utf-8'))
+
+          let deps = Object.entries(pkg['dependencies'] ?? {})
+
+          if (dev) deps.push(...Object.entries(pkg['devDependencies'] ?? {}))
+
+          return deps.map(([name, version]) => `${name}@${version}`)
+        }
+
+        function getLicenses(dir) {
+          return new Promise((resolve, reject) => {
+            checker.init({ start: dir }, (err, packages) => {
+              if (err) return reject(err)
+              return resolve(packages)
+            })
+          })
+        }
+
+        let contents = []
+
+        for (let pkg in allLicenses) {
+          if (!allDeps.includes(pkg)) continue
+
+          let parts = pkg.split('@')
+          let name = parts.slice(0, parts.length - 1).join('@')
+          if (isExcluded(name)) continue
+
+          let license = allLicenses[pkg].licenseFile
+            ? (await fs.readFile(allLicenses[pkg].licenseFile, 'utf-8')).trim()
+            : undefined
+
+          if (!license) continue
+
+          contents.push(`${pkg}\n\n${license}`)
+        }
+
+        await fs.writeFile(
+          path.resolve(__dirname, 'packages/tailwindcss-language-server/ThirdPartyNotices.txt'),
+          contents.join(`\n\n${'='.repeat(80)}\n\n`),
+          'utf-8',
+        )
       },
     },
   ],
