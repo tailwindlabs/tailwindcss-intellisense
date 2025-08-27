@@ -188,24 +188,36 @@ export function completionsFromClassList(
             // },
           }),
         )
-      } else {
-        let resultingVariants = [...existingVariants, variant.name]
+      }
 
-        let selectors: string[] = []
+      let hasDefault = false
+      let resultingVariants = [...existingVariants, variant.name]
 
-        try {
-          selectors = variant.selectors()
-        } catch (err) {
-          // If the selectors function fails we don't want to crash the whole completion process
-          console.log('Error while trying to get selectors for variant')
-          console.log({
-            variant,
-            err,
-          })
+      let selectors: string[] = []
 
-          continue
-        }
+      try {
+        selectors = variant.selectors()
+        hasDefault = true
+      } catch (err) {
+        // If the selectors function fails we don't want to crash the whole completion process
+        console.log('Error while trying to get selectors for variant')
+        console.log({
+          variant,
+          err,
+        })
 
+        continue
+      }
+
+      // Commentary:
+      // The check for `selectors.length` was previously omitted because of the `force` variant that
+      // existed before the v4.0 release. It was used to place a utility after other base utilities
+      // and before any using variants. It was dropped before v4.0. An empty selector set is a good
+      // marker for "this outputs nothing" and as such should be omitted from suggestions.
+      //
+      // This does mean that the force variant won't be suggested if IntelliSense is used with
+      // earlier pre-release versions but this is fine.
+      if (hasDefault && selectors.length > 0) {
         items.push(
           variantItem({
             label: `${variant.name}${sep}`,
