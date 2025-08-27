@@ -1082,3 +1082,72 @@ defineTest({
     expect(Object.fromEntries(requests)).toEqual(map)
   },
 })
+
+defineTest({
+  name: 'Completions show for variants that support default values *and* arbitrary values',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+      @plugin "./plugin.js";
+    `,
+    'plugin.js': js`
+      export default function ({ matchVariant }) {
+        matchVariant('foo', (value) => ':is(' + value + ')', {
+          values: {
+            DEFAULT: 'default',
+            a: 'a',
+          }
+        })
+
+        matchVariant('bar', (value) => {
+          if (!value) return []
+          return ':is(' + value + ')'
+        }, {
+          values: {
+            a: 'a',
+          }
+        })
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'html',
+      text: html`<div class=""></div>`,
+    })
+
+    // <div class=""></div>
+    //            ^
+    let list = await document.completions({ line: 0, character: 12 })
+    let items = list?.items ?? []
+
+    // The default version of this variant is suggested
+    let item1 = items.find((item) => item.label.startsWith('foo:'))
+    expect(item1?.detail).toEqual(':is(default)')
+
+    // As are any values
+    // TODO: This test requires Tailwind CSS v4.1.13
+    // let item2 = items.find((item) => item.label.startsWith('foo-a:'))
+    // expect(item2?.detail).toEqual(':is(a)')
+
+    // Ditto with arbitrary values
+    let item3 = items.find((item) => item.label.startsWith('foo-[]:'))
+    expect(item3).toBeDefined()
+    expect(item3?.detail).toEqual(undefined)
+
+    // This variant doesn't have a default so it's omitted
+    let item4 = items.find((item) => item.label.startsWith('bar:'))
+    expect(item4).not.toBeDefined()
+
+    // But does have a value so it is
+    // TODO: This test requires Tailwind CSS v4.1.13
+    // let item5 = items.find((item) => item.label.startsWith('bar-a:'))
+    // expect(item5?.detail).toEqual(':is(a)')
+
+    // And it supports arbitrary values so it should be as well
+    let item6 = items.find((item) => item.label.startsWith('bar-[]:'))
+    expect(item6).toBeDefined()
+    expect(item6?.detail).toEqual(undefined)
+  },
+})
