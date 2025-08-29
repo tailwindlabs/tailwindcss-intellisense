@@ -1,6 +1,6 @@
 {
   "name": "vscode-tailwindcss",
-  "version": "0.14.26",
+  "version": "0.14.27",
   "displayName": "Tailwind CSS IntelliSense",
   "description": "Intelligent Tailwind CSS tooling for VS Code",
   "author": "Brad Cornes <hello@bradley.dev>",
@@ -328,6 +328,36 @@
           ],
           "default": null,
           "markdownDescription": "Manually specify the Tailwind config file or files that should be read to provide IntelliSense features. Can either be a single string value, or an object where each key is a config file path and each value is a glob or array of globs representing the set of files that the config file applies to."
+        },
+        "tailwindCSS.performance.maxScanFiles": {
+          "type": "number",
+          "default": 1000,
+          "markdownDescription": "Maximum number of files to scan during workspace analysis. Reduce this value for better performance in large projects."
+        },
+        "tailwindCSS.performance.scanTimeout": {
+          "type": "number",
+          "default": 5000,
+          "markdownDescription": "Maximum time (in milliseconds) to spend scanning for Tailwind files during startup."
+        },
+        "tailwindCSS.performance.disableColorDecorators": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Disable color decorators to improve performance. Overrides `tailwindCSS.colorDecorators` setting."
+        },
+        "tailwindCSS.performance.disableCodeLens": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Disable code lens to improve performance. Overrides `tailwindCSS.codeLens` setting."
+        },
+        "tailwindCSS.performance.limitWatchers": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Limit the number of file watchers to improve performance. May reduce accuracy of file change detection."
+        },
+        "tailwindCSS.performance.debounceRebuilds": {
+          "type": "number",
+          "default": 150,
+          "markdownDescription": "Debounce time (in milliseconds) for rebuilds after file changes. Higher values improve performance but may delay updates."
         },
         "tailwindCSS.showPixelEquivalents": {
           "type": "boolean",

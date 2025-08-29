@@ -27,6 +27,7 @@ import * as fs from 'node:fs'
 import findUp from 'find-up'
 import picomatch from 'picomatch'
 import { resolveFrom, setPnpApi } from './util/resolveFrom'
+import debounce from 'debounce'
 import type { AtRule, Container, Node, Result } from 'postcss'
 import Hook from './lib/hook'
 import * as semver from '@tailwindcss/language-service/src/util/semver'
@@ -55,7 +56,7 @@ import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
-import { debounce } from 'debounce'
+
 import { getModuleDependencies } from './util/getModuleDependencies'
 import assert from 'node:assert'
 // import postcssLoadConfig from 'postcss-load-config'
@@ -286,6 +287,19 @@ export async function createProjectService(
     )
   }
 
+  // Get debounce settings from configuration
+  let debounceTime = 150 // Default debounce time
+  try {
+    const settings = await getConfiguration()
+    debounceTime = settings?.tailwindCSS?.performance?.debounceRebuilds ?? 150
+  } catch (error) {
+    // Use default if settings unavailable
+  }
+
+  // Create debounced functions to reduce rebuild frequency
+  const debouncedInit = debounce(() => tryInit(), debounceTime)
+  const debouncedRebuild = debounce(() => tryRebuild(), debounceTime)
+
   async function onFileEvents(
     changes: Array<{ file: string; type: FileChangeType }>,
   ): Promise<void> {
@@ -344,9 +358,9 @@ export async function createProjectService(
     }
 
     if (needsInit) {
-      tryInit()
+      debouncedInit()
     } else if (needsRebuild) {
-      tryRebuild()
+      debouncedRebuild()
     }
   }
 

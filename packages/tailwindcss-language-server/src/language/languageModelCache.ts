@@ -9,6 +9,7 @@ export interface LanguageModelCache<T> {
   get(document: TextDocument): T
   onDocumentRemoved(document: TextDocument): void
   dispose(): void
+  forceCleanup(): void
 }
 
 export function getLanguageModelCache<T>(
@@ -26,12 +27,19 @@ export function getLanguageModelCache<T>(
     cleanupInterval = setInterval(() => {
       let cutoffTime = Date.now() - cleanupIntervalTimeInSec * 1000
       let uris = Object.keys(languageModels)
+      let cleanedCount = 0
+
       for (let uri of uris) {
         let languageModelInfo = languageModels[uri]
         if (languageModelInfo.cTime < cutoffTime) {
           delete languageModels[uri]
           nModels--
+          cleanedCount++
         }
+      }
+
+      if (cleanedCount > 0) {
+        console.log(`[Cache] Cleaned ${cleanedCount} expired language model entries`)
       }
     }, cleanupIntervalTimeInSec * 1000)
   }
@@ -77,6 +85,24 @@ export function getLanguageModelCache<T>(
       if (languageModels[uri]) {
         delete languageModels[uri]
         nModels--
+      }
+    },
+    forceCleanup() {
+      let cutoffTime = Date.now() - cleanupIntervalTimeInSec * 1000
+      let uris = Object.keys(languageModels)
+      let cleanedCount = 0
+
+      for (let uri of uris) {
+        let languageModelInfo = languageModels[uri]
+        if (languageModelInfo.cTime < cutoffTime) {
+          delete languageModels[uri]
+          nModels--
+          cleanedCount++
+        }
+      }
+
+      if (cleanedCount > 0) {
+        console.log(`[Cache] Force cleaned ${cleanedCount} language model entries`)
       }
     },
     dispose() {

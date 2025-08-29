@@ -74,6 +74,14 @@ export type TailwindCssSettings = {
   files: {
     exclude: string[]
   }
+  performance: {
+    maxScanFiles: number
+    scanTimeout: number
+    disableColorDecorators: boolean
+    disableCodeLens: boolean
+    limitWatchers: boolean
+    debounceRebuilds: number
+  }
 }
 
 export type Settings = {
@@ -245,6 +253,14 @@ export function getDefaultTailwindSettings(): Settings {
       experimental: {
         classRegex: [],
         configFile: null,
+      },
+      performance: {
+        maxScanFiles: 1000,
+        scanTimeout: 5000,
+        disableColorDecorators: false,
+        disableCodeLens: false,
+        limitWatchers: false,
+        debounceRebuilds: 150,
       },
     },
   }

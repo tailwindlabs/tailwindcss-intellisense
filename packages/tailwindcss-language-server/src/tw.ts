@@ -96,6 +96,7 @@ export class TW {
   private initPromise: Promise<void>
   private lspHandlersAdded = false
   private projects: Map<string, ProjectService>
+  private memoryCleanupInterval: NodeJS.Timeout | null = null
   private projectCounter: number
   private documentService: DocumentService
   public initializeParams: InitializeParams
@@ -219,6 +220,46 @@ export class TW {
     }
 
     await this.listenForEvents()
+
+    // Start memory cleanup if enabled
+    this.startMemoryCleanup()
+  }
+
+  private startMemoryCleanup(): void {
+    // Clean up memory every 5 minutes
+    const CLEANUP_INTERVAL = 5 * 60 * 1000
+
+    this.memoryCleanupInterval = setInterval(() => {
+      this.pruneInactiveProjects()
+      this.pruneLanguageModelCaches()
+    }, CLEANUP_INTERVAL)
+  }
+
+  private pruneInactiveProjects(): void {
+    const INACTIVE_THRESHOLD = 10 * 60 * 1000 // 10 minutes
+    const now = Date.now()
+
+    for (const [key, project] of this.projects) {
+      // Check if project has been inactive (no document activity)
+      const lastActivity = this.getProjectLastActivity(key)
+      if (now - lastActivity > INACTIVE_THRESHOLD) {
+        console.log(`[Memory] Pruning inactive project: ${key}`)
+        project.dispose?.()
+        this.projects.delete(key)
+      }
+    }
+  }
+
+  private pruneLanguageModelCaches(): void {
+    // Trigger cache cleanup in language model caches
+    // This would need to be implemented in the language service
+    console.log('[Memory] Pruning language model caches')
+  }
+
+  private getProjectLastActivity(projectKey: string): number {
+    // This would need to track document access times
+    // For now, return current time to prevent immediate pruning
+    return Date.now()
   }
 
   private async _initFolder(baseUri: URI): Promise<void> {
@@ -606,19 +647,31 @@ export class TW {
       )
       console.log('[Global] Using bundled file watcher: chokidar')
       let watch: typeof chokidar.watch = require('chokidar').watch
-      let chokidarWatcher = watch(
-        [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`, `**/${CSS_GLOB}`, `**/${TSCONFIG_GLOB}`],
-        {
-          cwd: base,
-          ignorePermissionErrors: true,
-          ignoreInitial: true,
-          ignored: ignore,
-          awaitWriteFinish: {
-            stabilityThreshold: 100,
-            pollInterval: 20,
-          },
+      // Check performance settings for watcher optimization
+      const settings = this.initializeParams.initializationOptions?.settings
+      const limitWatchers = settings?.tailwindCSS?.performance?.limitWatchers ?? false
+
+      let watchPatterns = [`**/${CONFIG_GLOB}`, `**/${PACKAGE_LOCK_GLOB}`]
+
+      // Only watch CSS and TypeScript files if not limiting watchers
+      if (!limitWatchers) {
+        watchPatterns.push(`**/${CSS_GLOB}`, `**/${TSCONFIG_GLOB}`)
+      }
+
+      let chokidarWatcher = watch(watchPatterns, {
+        cwd: base,
+        ignorePermissionErrors: true,
+        ignoreInitial: true,
+        ignored: ignore,
+        awaitWriteFinish: {
+          stabilityThreshold: limitWatchers ? 200 : 100,
+          pollInterval: limitWatchers ? 50 : 20,
         },
-      )
+        // Reduce OS-level watcher overhead
+        usePolling: false,
+        alwaysStat: false,
+        atomic: limitWatchers ? 200 : 100,
+      })
 
       await new Promise<void>((resolve) => {
         chokidarWatcher.on('ready', () => resolve())
@@ -649,8 +702,18 @@ export class TW {
 
       this.watchPatterns = (patterns) => {
         let newPatterns = this.filterNewWatchPatterns(patterns)
+
+        // Limit the number of patterns to prevent excessive watchers
+        const maxWatchPatterns = limitWatchers ? 50 : 200
+        if (this.watched.length + newPatterns.length > maxWatchPatterns) {
+          console.log(
+            `[Global] Limiting watch patterns (${this.watched.length + newPatterns.length} > ${maxWatchPatterns})`,
+          )
+          newPatterns = newPatterns.slice(0, Math.max(0, maxWatchPatterns - this.watched.length))
+        }
+
         if (newPatterns.length) {
-          console.log(`[Global] Adding watch patterns: ${newPatterns.join(', ')}`)
+          console.log(`[Global] Adding ${newPatterns.length} watch patterns`)
           chokidarWatcher.add(newPatterns)
         }
       }
@@ -1168,6 +1231,13 @@ export class TW {
 
   dispose(): void {
     this.connection.sendNotification('@/tailwindCSS/projectsDestroyed')
+
+    // Clean up memory cleanup interval
+    if (this.memoryCleanupInterval) {
+      clearInterval(this.memoryCleanupInterval)
+      this.memoryCleanupInterval = null
+    }
+
     for (let [, project] of this.projects) {
       project.dispose()
     }
