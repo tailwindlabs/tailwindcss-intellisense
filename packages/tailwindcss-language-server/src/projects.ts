@@ -404,6 +404,7 @@ export async function createProjectService(
   }
 
   async function init() {
+    const startTime = process.hrtime.bigint()
     log('Initializing...')
 
     clearRequireCache()
@@ -818,10 +819,14 @@ export async function createProjectService(
       applyComplexClasses.default.__patched = true
     }
 
+    const elapsed = process.hrtime.bigint() - startTime
+    log(`✅ Initialization completed in ${(Number(elapsed) / 1e6).toFixed(2)}ms`)
+
     await tryRebuild()
   }
 
   async function rebuild() {
+    const startTime = process.hrtime.bigint()
     log('Building...')
 
     clearRequireCache()
@@ -1092,6 +1097,9 @@ export async function createProjectService(
     refreshDiagnostics()
 
     updateCapabilities()
+
+    const elapsed = process.hrtime.bigint() - startTime
+    log(`✅ Build completed in ${(Number(elapsed) / 1e6).toFixed(2)}ms`)
 
     let isTestMode = params.initializationOptions?.testMode ?? false
     if (!isTestMode) return
