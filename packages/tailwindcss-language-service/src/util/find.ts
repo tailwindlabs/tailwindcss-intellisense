@@ -557,6 +557,15 @@ export function findHelperFunctionsInRange(
     // Re-slice
     path = text.slice(pathStart, pathEnd)
 
+    // The `--theme(…)` function has an optional `inline` modifier that can appear at the end
+    // NOTE: The non-dashed `theme(…)` function does not have this
+    //
+    // TODO: We should validate that this modifier is `inline` and issue a diagnostic if its not
+    if (path.endsWith(' inline') && match.groups.helper === '--theme') {
+      path = path.slice(0, -7)
+      pathEnd -= 7
+    }
+
     fns.push({
       helper,
       path,

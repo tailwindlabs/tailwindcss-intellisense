@@ -1156,3 +1156,37 @@ test('classFunctions are detected inside of arrays in javascript just after open
     },
   ])
 })
+
+test("--theme's inline helper is not considered part of the path", async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: `
+      .a { color: --theme(--my-color inline); }
+      .a { color: theme(--my-color inline); }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: '--my-color',
+      ranges: { full: range(1, 26, 1, 43), path: range(1, 26, 1, 36) },
+    },
+
+    // This is on purpose:
+    // The `theme()` function doesn't have an inline option only `--theme()`.
+    {
+      helper: 'theme',
+      path: '--my-color inline',
+      ranges: { full: range(2, 24, 2, 41), path: range(2, 24, 2, 41) },
+    },
+  ])
+})
