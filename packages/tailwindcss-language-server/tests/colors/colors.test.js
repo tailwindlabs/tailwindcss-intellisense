@@ -246,6 +246,21 @@ withFixture('v4/basic', (c) => {
     ],
   })
 
+  testColors('oklch colors are parsed with percentages and angles', {
+    text: '<div class="bg-[oklch(62.75%_64.75%_30deg)]">',
+    expected: [
+      {
+        range: { start: { line: 0, character: 12 }, end: { line: 0, character: 43 } },
+        color: {
+          alpha: 1,
+          red: 1,
+          green: 0,
+          blue: 0,
+        },
+      },
+    ],
+  })
+
   testColors('gradient utilities show colors', {
     text: '<div class="from-black from-black/50 via-black via-black/50 to-black to-black/50">',
     expected: [

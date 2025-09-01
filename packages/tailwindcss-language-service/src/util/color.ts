@@ -50,7 +50,7 @@ function getKeywordColor(value: unknown): KeywordColor | null {
 
 // https://github.com/khalilgharbaoui/coloregex
 const colorRegex = new RegExp(
-  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgba?|hsla?|(?:ok)?(?:lab|lch))\\(\\s*(-?[\\d.]+(%|deg|rad|grad|turn)?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+%?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
+  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgba?|hsla?|(?:ok)?(?:lab|lch))\\(\\s*(-?[\\d.]+(%|deg|rad|grad|turn)?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+(%|deg|rad|grad|turn)?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
     namedColors,
   ).join('|')})(?:$|\\s|\\)|,)`,
   'gi',
