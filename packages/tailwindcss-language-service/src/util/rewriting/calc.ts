@@ -13,7 +13,14 @@ export function evaluateExpression(str: string): string | null {
     randomSeed: 1,
 
     // Limit precision to keep values environment independent
-    precision: 4,
+    //
+    // This is mostly to limit displayed numbers to a reasonable length. Ideally
+    // we could perform any calcs with "infinite" precision and only then round
+    // numbers back for display purposes.
+    //
+    // This is short of the 7 digits that 32-bit floats provide. JS does store
+    // numbers as doubles so maybe this can be bumped to like 12–15?
+    precision: 6,
   })
 
   // The result array is the same shape as the original so we're guaranteed to

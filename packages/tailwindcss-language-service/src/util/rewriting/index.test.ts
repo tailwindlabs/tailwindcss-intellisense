@@ -173,10 +173,18 @@ test('Evaluating CSS calc expressions', () => {
   )
 
   expect(replaceCssCalc('calc(1.25 / 0.875)', (node) => evaluateExpression(node.value))).toBe(
-    '1.4286',
+    '1.428571',
   )
 
   expect(replaceCssCalc('calc(1/4 * 100%)', (node) => evaluateExpression(node.value))).toBe('25%')
+
+  expect(replaceCssCalc('calc(0.12345rem * 0.5)', (node) => evaluateExpression(node.value))).toBe(
+    '0.061725rem',
+  )
+
+  expect(
+    replaceCssCalc('calc(0.12345789rem * 0.5)', (node) => evaluateExpression(node.value)),
+  ).toBe('0.061729rem')
 })
 
 test('Inlining calc expressions using the design system', () => {
