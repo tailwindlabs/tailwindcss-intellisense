@@ -29,11 +29,6 @@ function replaceWithStyleRule(delta = 0) {
  * errors for things that aren't actually errors.
  */
 export function rewriteCss(css: string) {
-  // Remove inline `@layer` directives
-  // TODO: This should be unnecessary once we have updated the bundled CSS
-  // language service
-  css = css.replace(/@layer\s+[^;{]+(;|$)/g, '')
-
   css = css.replace(/@screen(\s+[^{]+){/g, replaceWithAtRule(-2))
   css = css.replace(/@variants(\s+[^{]+){/g, replaceWithAtRule())
   css = css.replace(/@responsive(\s*){/g, replaceWithAtRule())
@@ -47,7 +42,6 @@ export function rewriteCss(css: string) {
 
   css = css.replace(/@(custom-variant)(\s+[^{]+){/g, replaceWithStyleRule())
   css = css.replace(/@(variant)(\s+[^{]+){/g, replaceWithStyleRule())
-  css = css.replace(/@layer(\s+[^{]{2,}){/g, replaceWithAtRule(-3))
   css = css.replace(/@reference\s*([^;]{2,})/g, '@import    $1')
 
   css = css.replace(
