@@ -619,17 +619,6 @@ defineTest({
     // Symbols show up for @custom-variant
     expect(await doc.symbols()).toMatchObject([
       {
-        kind: SymbolKind.Module,
-        name: '@layer base',
-        location: {
-          uri: '{workspace:default}/file-1.css',
-          range: {
-            start: { line: 0, character: 0 },
-            end: { line: 4, character: 1 },
-          },
-        },
-      },
-      {
         kind: SymbolKind.Class,
         name: '.foo',
         location: {
@@ -637,17 +626,6 @@ defineTest({
           range: {
             start: { line: 1, character: 2 },
             end: { line: 3, character: 3 },
-          },
-        },
-      },
-      {
-        kind: SymbolKind.Module,
-        name: '@layer utilities',
-        location: {
-          uri: '{workspace:default}/file-1.css',
-          range: {
-            start: { line: 5, character: 0 },
-            end: { line: 9, character: 1 },
           },
         },
       },

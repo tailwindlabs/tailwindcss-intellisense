@@ -228,8 +228,8 @@ importers:
         specifier: ^3.2.1
         version: 3.2.1(@types/node@18.19.43)(jiti@2.3.3)(yaml@2.5.0)
       vscode-css-languageservice:
-        specifier: 6.3.6
-        version: 6.3.6
+        specifier: 6.3.7
+        version: 6.3.7
       vscode-jsonrpc:
         specifier: 8.2.0
         version: 8.2.0
@@ -2648,8 +2648,8 @@ packages:
       jsdom:
         optional: true
 
-  vscode-css-languageservice@6.3.6:
-    resolution: {integrity: sha512-fU4h8mT3KlvfRcbF74v/M+Gzbligav6QMx4AD/7CbclWPYOpGb9kgIswfpZVJbIcOEJJACI9iYizkNwdiAqlHw==}
+  vscode-css-languageservice@6.3.7:
+    resolution: {integrity: sha512-5TmXHKllPzfkPhW4UE9sODV3E0bIOJPOk+EERKllf2SmAczjfTmYeq5txco+N3jpF8KIZ6loj/JptpHBQuVQRA==}
 
   vscode-emmet-helper-bundled@0.0.1:
     resolution: {integrity: sha512-EhZ0Wt8MbdrKF3NUMfaUDhFPTdRnl1tyqYS7KOcNtsSNTV285IV+XPDtNQyw5rwYsULEfb6n+fK1DRufJQlPYw==}
@@ -4868,7 +4868,7 @@ snapshots:
       - tsx
       - yaml
 
-  vscode-css-languageservice@6.3.6:
+  vscode-css-languageservice@6.3.7:
     dependencies:
       '@vscode/l10n': 0.0.18
       vscode-languageserver-textdocument: 1.0.12

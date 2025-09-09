@@ -96,7 +96,7 @@
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.1",
-    "vscode-css-languageservice": "6.3.6",
+    "vscode-css-languageservice": "6.3.7",
     "vscode-jsonrpc": "8.2.0",
     "vscode-languageclient": "8.1.0",
     "vscode-languageserver": "8.1.0",

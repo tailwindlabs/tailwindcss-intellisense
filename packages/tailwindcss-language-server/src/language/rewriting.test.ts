@@ -1,19 +1,24 @@
 import { describe, expect, test } from 'vitest'
 import { rewriteCss } from './rewriting'
-import dedent from 'dedent'
 
-// TODO: Remove once the bundled CSS language service is updated
-test('@layer statements are removed', () => {
+// https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1457
+test('@layer statements inside comments do not break', () => {
   let input = [
     //
-    '@layer theme, base, components, utilities;',
-    '@import "tailwindcss";',
+    '/* @layer',
+    '*/',
+    '@import "./path/to/a/file.css";',
+    '',
+    '@source "./**/*.{ts,tsx}";',
   ]
 
   let output = [
     //
-    '', // wrong
-    '@import "tailwindcss" ;',
+    '/* @layer',
+    '*/',
+    '@import "./path/to/a/file.css" ;', // wrong
+    '',
+    '@source "./**/*.{ts,tsx}";',
   ]
 
   expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
@@ -31,7 +36,7 @@ test('@layer blocks', () => {
 
   let output = [
     //
-    '@media(℘)        {',
+    '@layer utilities {',
     '  .foo {',
     '    color: red;',
     '  }',
