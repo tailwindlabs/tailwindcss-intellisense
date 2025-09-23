@@ -41,6 +41,22 @@ let ctx = await esbuild.context({
       },
     },
     {
+      name: 'patch-jiti',
+      setup(build) {
+        // TODO: Switch to rolldown and see if we can chunk split this instead?
+        build.onLoad({ filter: /jiti\/lib\/jiti\.mjs$/ }, async (args) => {
+          let original = await fs.readFile(args.path, 'utf8')
+
+          return {
+            contents: original.replace(
+              'createRequire(import.meta.url)("../dist/babel.cjs")',
+              'require("../dist/babel.cjs")',
+            ),
+          }
+        })
+      },
+    },
+    {
       // https://github.com/evanw/esbuild/issues/1051#issuecomment-806325487
       name: 'native-node-modules',
       setup(build) {
