@@ -164,6 +164,42 @@ test('recursive theme replacements (inlined)', () => {
   expect(inlineThemeValues('var(--mutual-b)', state)).toBe('calc(calc(var(--mutual-b) * 1) + 1)')
 })
 
+test('pixel equivalents work with theme variables containing dots', () => {
+  let map = new Map([
+    ['--font-size-sm', '0.875rem'],
+    ['--font-size.md', '1rem'],
+    ['--font-size.lg', '1.125rem'],
+    ['--spacing-4', '1rem'],
+    ['--spacing.8', '2rem'],
+  ])
+
+  let state = {
+    designSystem: {
+      theme: { prefix: null } as any,
+      resolveThemeValue: (name) => map.get(name) ?? null,
+    } as DesignSystem,
+  } as State
+
+  let settings = { rootFontSize: 16 } as TailwindCssSettings
+
+  // Test that dotted variables are resolved correctly
+  expect(addThemeValues('var(--font-size-sm)', state, settings)).toBe(
+    'var(--font-size-sm) /* 0.875rem = 14px */',
+  )
+  expect(addThemeValues('var(--font-size\\.md)', state, settings)).toBe(
+    'var(--font-size\\.md) /* 1rem = 16px */',
+  )
+  expect(addThemeValues('var(--font-size\\.lg)', state, settings)).toBe(
+    'var(--font-size\\.lg) /* 1.125rem = 18px */',
+  )
+  expect(addThemeValues('var(--spacing-4)', state, settings)).toBe(
+    'var(--spacing-4) /* 1rem = 16px */',
+  )
+  expect(addThemeValues('var(--spacing.8)', state, settings)).toBe(
+    'var(--spacing.8) /* 2rem = 32px */',
+  )
+})
+
 test('Evaluating CSS calc expressions', () => {
   expect(replaceCssCalc('calc(1px + 1px)', (node) => evaluateExpression(node.value))).toBe('2px')
   expect(replaceCssCalc('calc(1px * 4)', (node) => evaluateExpression(node.value))).toBe('4px')
