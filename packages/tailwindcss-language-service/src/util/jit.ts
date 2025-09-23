@@ -1,8 +1,6 @@
 import type { State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
-import { addPixelEquivalentsToValue } from './pixelEquivalents'
-import { addEquivalents } from './equivalents'
-import { addThemeValues, inlineThemeValues } from './rewriting'
+import { createProcessor } from './rewriting'
 
 export function bigSign(bigIntValue: number | bigint): number {
   // @ts-ignore
@@ -45,8 +43,14 @@ export async function stringifyRoot(state: State, root: Root, uri?: string): Pro
 
   let css = clone.toString()
 
-  css = addThemeValues(css, state, settings.tailwindCSS)
-  css = addEquivalents(css, settings.tailwindCSS)
+  let process = createProcessor({
+    style: 'user-presentable',
+    fontSize: settings.tailwindCSS.showPixelEquivalents ? settings.tailwindCSS.rootFontSize : null,
+    variables: new Map(),
+    state,
+  })
+
+  css = process(css)
 
   let identSize = state.v4 ? 2 : 4
   let identPattern = state.v4 ? /^(?:  )+/gm : /^(?:    )+/gm
@@ -68,15 +72,17 @@ export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2)
 export async function stringifyDecls(state: State, rule: Rule, uri?: string): Promise<string> {
   let settings = await state.editor.getConfiguration(uri)
 
+  let process = createProcessor({
+    style: 'full-evaluation',
+    fontSize: settings.tailwindCSS.showPixelEquivalents ? settings.tailwindCSS.rootFontSize : null,
+    variables: new Map(),
+    state,
+  })
+
   let result = []
 
   rule.walkDecls(({ prop, value }) => {
-    // In v4 we inline theme values into declarations (this is a no-op in v3)
-    value = inlineThemeValues(value, state).trim()
-
-    if (settings.tailwindCSS.showPixelEquivalents) {
-      value = addPixelEquivalentsToValue(value, settings.tailwindCSS.rootFontSize)
-    }
+    value = process(value).trim()
 
     result.push(`${prop}: ${value};`)
   })

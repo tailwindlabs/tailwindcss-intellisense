@@ -1,243 +1,225 @@
 import { expect, test } from 'vitest'
-import {
-  addThemeValues,
-  evaluateExpression,
-  inlineThemeValues,
-  replaceCssCalc,
-  replaceCssVarsWithFallbacks,
-} from './index'
-import { State, TailwindCssSettings } from '../state'
-import { DesignSystem } from '../v4'
+import { createProcessor } from './process'
+
+// Cyclic variables
+// None of these should ever get replaced
+// ['--color-a', 'var(--color-a)'],
+// ['--color-b', 'rgb(var(--color-b))'],
+// ['--color-c', 'rgb(var(--color-c) var(--color-c) var(--color-c))'],
+
+// ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
+// ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
+
+// ['--circle-cw-1', 'var(--circle-cw-2)'],
+// ['--circle-cw-2', 'var(--circle-cw-3)'],
+// ['--circle-cw-3', 'var(--circle-cw-1)'],
+
+// ['--circle-ccw-1', 'var(--circle-ccw-3)'],
+// ['--circle-ccw-2', 'var(--circle-ccw-1)'],
+// ['--circle-ccw-3', 'var(--circle-ccw-2)'],
+
+// // None of these are cyclic and should all have replacements
+// ['--color-d', 'rgb(var(--channel) var(--channel) var(--channel))'],
+// ['--color-e', 'rgb(var(--indirect) var(--indirect) var(--indirect))'],
+// ['--indirect', 'var(--channel)'],
+// ['--channel', '255'],
 
 test('replacing CSS variables with their fallbacks (when they have them)', () => {
-  let map = new Map<string, string>([
-    ['--known', 'blue'],
-    ['--level-1', 'var(--known)'],
-    ['--level-2', 'var(--level-1)'],
-    ['--level-3', 'var(--level-2)'],
+  let process = createProcessor({
+    style: 'full-evaluation',
+    fontSize: 16,
+    variables: new Map<string, string>([
+      ['--known', 'blue'],
+      ['--level-1', 'var(--known)'],
+      ['--level-2', 'var(--level-1)'],
+      ['--level-3', 'var(--level-2)'],
 
-    ['--circular-1', 'var(--circular-3)'],
-    ['--circular-2', 'var(--circular-1)'],
-    ['--circular-3', 'var(--circular-2)'],
+      ['--circular-1', 'var(--circular-3)'],
+      ['--circular-2', 'var(--circular-1)'],
+      ['--circular-3', 'var(--circular-2)'],
 
-    ['--escaped\\,name', 'green'],
-  ])
+      ['--escaped\\,name', 'green'],
+    ]),
+  })
 
-  let state: State = {
-    enabled: true,
-    features: [],
-    designSystem: {
-      theme: { prefix: null } as any,
-      resolveThemeValue: (name) => map.get(name) ?? null,
-    } as DesignSystem,
-  }
+  expect(process('var(--foo, red)')).toBe(' red')
+  expect(process('var(--foo, )')).toBe(' ')
 
-  expect(replaceCssVarsWithFallbacks(state, 'var(--foo, red)')).toBe(' red')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--foo, )')).toBe(' ')
+  expect(process('rgb(var(--foo, 255 0 0))')).toBe('rgb( 255 0 0)')
+  expect(process('rgb(var(--foo, var(--bar)))')).toBe('rgb( var(--bar))')
 
-  expect(replaceCssVarsWithFallbacks(state, 'rgb(var(--foo, 255 0 0))')).toBe('rgb( 255 0 0)')
-  expect(replaceCssVarsWithFallbacks(state, 'rgb(var(--foo, var(--bar)))')).toBe('rgb( var(--bar))')
+  expect(process('rgb(var(var(--bar, var(--baz), var(--qux), var(--thing))))')).toBe(
+    'rgb( var(--qux), var(--thing))',
+  )
 
-  expect(
-    replaceCssVarsWithFallbacks(
-      state,
-      'rgb(var(var(--bar, var(--baz), var(--qux), var(--thing))))',
-    ),
-  ).toBe('rgb(var( var(--baz), var(--qux), var(--thing)))')
+  expect(process('rgb(var(--one, var(--bar, var(--baz), var(--qux), var(--thing))))')).toBe(
+    'rgb(  var(--baz), var(--qux), var(--thing))',
+  )
 
   expect(
-    replaceCssVarsWithFallbacks(
-      state,
-      'rgb(var(--one, var(--bar, var(--baz), var(--qux), var(--thing))))',
+    process(
+      'color-mix(in srgb, var(--color-primary, oklch(0 0 0 / 2.5)), var(--color-secondary, oklch(0 0 0 / 2.5)) 50%)',
     ),
-  ).toBe('rgb(  var(--baz), var(--qux), var(--thing))')
+  ).toBe('rgb(0, 0, 0)')
 
   expect(
-    replaceCssVarsWithFallbacks(
-      state,
-      'color-mix(in srgb, var(--color-primary, oklch(0 0 0 / 2.5)), var(--color-secondary, oklch(0 0 0 / 2.5)), 50%)',
+    process(
+      'color-mix(in oklch, var(--color-primary, oklch(0.64 0.2935 27 / 0.5)), var(--color-secondary, oklch(0.64 0.2195 247.76)) 50%)',
     ),
-  ).toBe('color-mix(in srgb,  oklch(0 0 0 / 2.5),  oklch(0 0 0 / 2.5), 50%)')
+  ).toBe('rgba(197, 73, 234, 0.75)')
 
   // Known theme keys are replaced with their values
-  expect(replaceCssVarsWithFallbacks(state, 'var(--known)')).toBe('blue')
+  expect(process('var(--known)')).toBe('blue')
 
   // Escaped commas are not treated as separators
-  expect(replaceCssVarsWithFallbacks(state, 'var(--escaped\\,name)')).toBe('green')
+  expect(process('var(--escaped\\,name)')).toBe('green')
 
   // Values from the theme take precedence over fallbacks
-  expect(replaceCssVarsWithFallbacks(state, 'var(--known, red)')).toBe('blue')
+  expect(process('var(--known, red)')).toBe('blue')
 
   // Unknown theme keys use a fallback if provided
-  expect(replaceCssVarsWithFallbacks(state, 'var(--unknown, red)')).toBe(' red')
+  expect(process('var(--unknown, red)')).toBe(' red')
 
   // Unknown theme keys without fallbacks are not replaced
-  expect(replaceCssVarsWithFallbacks(state, 'var(--unknown)')).toBe('var(--unknown)')
+  expect(process('var(--unknown)')).toBe('var(--unknown)')
 
   // Fallbacks are replaced recursively
-  expect(replaceCssVarsWithFallbacks(state, 'var(--unknown,var(--unknown-2,red))')).toBe('red')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--level-1)')).toBe('blue')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--level-2)')).toBe('blue')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--level-3)')).toBe('blue')
+  expect(process('var(--unknown,var(--unknown-2,red))')).toBe('red')
+  expect(process('var(--level-1)')).toBe('blue')
+  expect(process('var(--level-2)')).toBe('blue')
+  expect(process('var(--level-3)')).toBe('blue')
 
   // Circular replacements don't cause infinite loops
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-1)')).toBe('var(--circular-1)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-2)')).toBe('var(--circular-2)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--circular-3)')).toBe('var(--circular-3)')
+  expect(process('var(--circular-1)')).toBe('var(--circular-3)')
+  expect(process('var(--circular-2)')).toBe('var(--circular-1)')
+  expect(process('var(--circular-3)')).toBe('var(--circular-2)')
 })
 
 test('recursive theme replacements', () => {
-  let map = new Map<string, string>([
-    ['--color-a', 'var(--color-a)'],
-    ['--color-b', 'rgb(var(--color-b))'],
-    ['--color-c', 'rgb(var(--channel) var(--channel) var(--channel))'],
-    ['--channel', '255'],
+  let process = createProcessor({
+    style: 'full-evaluation',
+    fontSize: 16,
+    variables: new Map<string, string>([
+      // Cyclic variables
+      ['--color-a', 'var(--color-a)'],
+      ['--color-b', 'rgb(var(--color-b))'],
+      ['--color-c', 'rgb(var(--color-c) var(--color-c) var(--color-c))'],
 
-    ['--color-d', 'rgb(var(--indirect) var(--indirect) var(--indirect))'],
-    ['--indirect', 'var(--channel)'],
-    ['--channel', '255'],
+      ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
+      ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
 
-    ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
-    ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
-  ])
+      ['--circle-cw-1', 'var(--circle-cw-2)'],
+      ['--circle-cw-2', 'var(--circle-cw-3)'],
+      ['--circle-cw-3', 'var(--circle-cw-1)'],
 
-  let state: State = {
-    enabled: true,
-    features: [],
-    designSystem: {
-      theme: { prefix: null } as any,
-      resolveThemeValue: (name) => map.get(name) ?? null,
-    } as DesignSystem,
-  }
+      ['--circle-ccw-1', 'var(--circle-ccw-3)'],
+      ['--circle-ccw-2', 'var(--circle-ccw-1)'],
+      ['--circle-ccw-3', 'var(--circle-ccw-2)'],
+    ]),
+  })
 
-  expect(replaceCssVarsWithFallbacks(state, 'var(--color-a)')).toBe('var(--color-a)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--color-b)')).toBe('rgb(var(--color-b))')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--color-c)')).toBe('rgb(255 255 255)')
+  expect(process('var(--color-a)')).toBe('var(--color-a)')
+  expect(process('var(--color-b)')).toBe('rgb(var(--color-b))')
+  expect(process('var(--color-c)')).toBe('rgb(var(--color-c) var(--color-c) var(--color-c))')
 
-  // This one is wrong but fixing it without breaking the infinite recursion guard is complex
-  expect(replaceCssVarsWithFallbacks(state, 'var(--color-d)')).toBe(
-    'rgb(255 var(--indirect) var(--indirect))',
-  )
+  expect(process('var(--mutual-a)')).toBe('calc(var(--mutual-b) * 1)')
+  expect(process('var(--mutual-b)')).toBe('calc(var(--mutual-a) + 1)')
 
-  expect(replaceCssVarsWithFallbacks(state, 'var(--mutual-a)')).toBe(
-    'calc(calc(var(--mutual-a) + 1) * 1)',
-  )
-  expect(replaceCssVarsWithFallbacks(state, 'var(--mutual-b)')).toBe(
-    'calc(calc(var(--mutual-b) * 1) + 1)',
-  )
-})
+  expect(process('var(--circle-cw-1)')).toBe('var(--circle-cw-2)')
+  expect(process('var(--circle-cw-2)')).toBe('var(--circle-cw-3)')
+  expect(process('var(--circle-cw-3)')).toBe('var(--circle-cw-1)')
 
-test('recursive theme replacements (inlined)', () => {
-  let map = new Map<string, string>([
-    ['--color-a', 'var(--color-a)'],
-    ['--color-b', 'rgb(var(--color-b))'],
-    ['--color-c', 'rgb(var(--channel) var(--channel) var(--channel))'],
-    ['--channel', '255'],
-
-    ['--color-d', 'rgb(var(--indirect) var(--indirect) var(--indirect))'],
-    ['--indirect', 'var(--channel)'],
-    ['--channel', '255'],
-
-    ['--mutual-a', 'calc(var(--mutual-b) * 1)'],
-    ['--mutual-b', 'calc(var(--mutual-a) + 1)'],
-  ])
-
-  let state: State = {
-    enabled: true,
-    features: [],
-    designSystem: {
-      theme: { prefix: null } as any,
-      resolveThemeValue: (name) => map.get(name) ?? null,
-    } as DesignSystem,
-  }
-
-  expect(inlineThemeValues('var(--color-a)', state)).toBe('var(--color-a)')
-  expect(inlineThemeValues('var(--color-b)', state)).toBe('rgb(var(--color-b))')
-  expect(inlineThemeValues('var(--color-c)', state)).toBe('rgb(255 255 255)')
-
-  // This one is wrong but fixing it without breaking the infinite recursion guard is complex
-  expect(inlineThemeValues('var(--color-d)', state)).toBe(
-    'rgb(255 var(--indirect) var(--indirect))',
-  )
-
-  expect(inlineThemeValues('var(--mutual-a)', state)).toBe('calc(calc(var(--mutual-a) + 1) * 1)')
-  expect(inlineThemeValues('var(--mutual-b)', state)).toBe('calc(calc(var(--mutual-b) * 1) + 1)')
+  expect(process('var(--circle-ccw-1)')).toBe('var(--circle-ccw-3)')
+  expect(process('var(--circle-ccw-2)')).toBe('var(--circle-ccw-1)')
+  expect(process('var(--circle-ccw-3)')).toBe('var(--circle-ccw-2)')
 })
 
 test('Evaluating CSS calc expressions', () => {
-  expect(replaceCssCalc('calc(1px + 1px)', (node) => evaluateExpression(node.value))).toBe('2px')
-  expect(replaceCssCalc('calc(1px * 4)', (node) => evaluateExpression(node.value))).toBe('4px')
-  expect(replaceCssCalc('calc(1px / 4)', (node) => evaluateExpression(node.value))).toBe('0.25px')
-  expect(replaceCssCalc('calc(1rem + 1px)', (node) => evaluateExpression(node.value))).toBe(
-    'calc(1rem + 1px)',
-  )
+  let process = createProcessor({
+    style: 'full-evaluation',
+    fontSize: 16,
+    variables: new Map(),
+  })
 
-  expect(replaceCssCalc('calc(1.25 / 0.875)', (node) => evaluateExpression(node.value))).toBe(
-    '1.428571',
-  )
-
-  expect(replaceCssCalc('calc(1/4 * 100%)', (node) => evaluateExpression(node.value))).toBe('25%')
-
-  expect(replaceCssCalc('calc(0.12345rem * 0.5)', (node) => evaluateExpression(node.value))).toBe(
-    '0.061725rem',
-  )
-
-  expect(
-    replaceCssCalc('calc(0.12345789rem * 0.5)', (node) => evaluateExpression(node.value)),
-  ).toBe('0.061729rem')
+  expect(process('calc(1/4 * 100%)')).toBe('25%')
+  expect(process('calc(1px + 1px)')).toBe('2px')
+  expect(process('calc(1px * 4)')).toBe('4px')
+  expect(process('calc(1px / 4)')).toBe('0.25px')
+  expect(process('calc(1rem + 1px)')).toBe('calc(1rem + 1px)')
+  expect(process('calc(1.25 / 0.875)')).toBe('1.428571')
+  expect(process('calc(1/4 * 100%)')).toBe('25%')
+  expect(process('calc(0.12345rem * 0.5)')).toBe('0.061725rem')
+  expect(process('calc(0.12345789rem * 0.5)')).toBe('0.061729rem')
 })
 
 test('Inlining calc expressions using the design system', () => {
-  let map = new Map<string, string>([
-    ['--spacing', '0.25rem'],
-    ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
-  ])
+  let process = createProcessor({
+    style: 'user-presentable',
 
-  let state: State = {
-    enabled: true,
-    features: [],
-    designSystem: {
-      theme: { prefix: null } as any,
-      resolveThemeValue: (name) => map.get(name) ?? null,
-    } as DesignSystem,
-  }
-
-  let settings: TailwindCssSettings = {
-    rootFontSize: 10,
-  } as any
+    fontSize: 10,
+    variables: new Map([
+      ['--spacing', '0.25rem'],
+      ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
+    ]),
+  })
 
   // Inlining calc expressions
   // + pixel equivalents
-  expect(addThemeValues('calc(var(--spacing) * 4)', state, settings)).toBe(
-    'calc(var(--spacing) * 4) /* 1rem = 10px */',
-  )
+  expect(process('calc(var(--spacing) * 4)')).toBe('calc(var(--spacing) * 4) /* 1rem = 10px */')
 
-  expect(addThemeValues('calc(var(--spacing) / 4)', state, settings)).toBe(
+  expect(process('calc(var(--spacing) / 4)')).toBe(
     'calc(var(--spacing) / 4) /* 0.0625rem = 0.625px */',
   )
 
-  expect(addThemeValues('calc(var(--spacing) * 1)', state, settings)).toBe(
-    'calc(var(--spacing) * 1) /* 0.25rem = 2.5px */',
-  )
+  expect(process('calc(var(--spacing) * 1)')).toBe('calc(var(--spacing) * 1) /* 0.25rem = 2.5px */')
 
-  expect(addThemeValues('calc(var(--spacing) * -1)', state, settings)).toBe(
+  expect(process('calc(var(--spacing) * -1)')).toBe(
     'calc(var(--spacing) * -1) /* -0.25rem = -2.5px */',
   )
 
-  expect(addThemeValues('calc(var(--spacing) + 1rem)', state, settings)).toBe(
+  expect(process('calc(var(--spacing) + 1rem)')).toBe(
     'calc(var(--spacing) + 1rem) /* 1.25rem = 12.5px */',
   )
 
-  expect(addThemeValues('calc(var(--spacing) - 1rem)', state, settings)).toBe(
+  expect(process('calc(var(--spacing) - 1rem)')).toBe(
     'calc(var(--spacing) - 1rem) /* -0.75rem = -7.5px */',
   )
 
-  expect(addThemeValues('calc(var(--spacing) + 1px)', state, settings)).toBe(
+  expect(process('calc(var(--spacing) + 1px)')).toBe(
     'calc(var(--spacing) /* 0.25rem = 2.5px */ + 1px)',
   )
 
   // Color equivalents
-  expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
+  expect(process('var(--color-red-500)')).toBe(
     'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
   )
+})
+
+test('wip', () => {
+  let process = createProcessor({
+    style: 'full-evaluation',
+    fontSize: 16,
+    variables: new Map([
+      ['--known', '1px solid var(--level-1)'],
+      ['--level-1', 'a theme(--level-2) a'],
+      ['--level-2', 'b var(--level-3) b'],
+      ['--level-3', 'c theme(--level-4) c'],
+      ['--level-4', 'd var(--level-5) d'],
+      ['--level-5', 'e light-dark(var(--level-6), blue) e'],
+      ['--level-6', 'f calc(3 * var(--idk, 7px)) f'],
+
+      ['--a', '0.5'],
+      ['--b', '255'],
+      ['--c', '50%'],
+      ['--known-2', 'color-mix(in srgb, rgb(0 var(--b) 0 / var(--a)) var(--c), transparent)'],
+    ]),
+  })
+
+  expect(process('var(--known)')).toBe('1px solid a b c d e f 21px f e d c b a')
+  expect(process('var(--known-2)')).toBe('rgba(0, 255, 0, 0.25)')
+
+  expect(process('var(--tw-text-shadow-alpha)')).toBe('100%')
+  expect(process('var(--tw-drop-shadow-alpha)')).toBe('100%')
+  expect(process('var(--tw-shadow-alpha)')).toBe('100%')
+  expect(process('1rem')).toBe('1rem /* 1rem = 16px */')
 })

@@ -8,7 +8,7 @@ import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
 import postcss from 'postcss'
-import { replaceCssVarsWithFallbacks } from './rewriting'
+import { createProcessor } from './rewriting'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -64,9 +64,16 @@ function getColorsInString(state: State, str: string): (culori.Color | KeywordCo
     return getKeywordColor(color) ?? tryParseColor(color)
   }
 
-  str = replaceCssVarsWithFallbacks(state, str)
-  str = removeColorMixWherePossible(str)
-  str = resolveLightDark(str)
+  // @ts-ignore
+  state.processColors ??= createProcessor({
+    style: 'full-evaluation',
+    fontSize: null,
+    variables: new Map(),
+    state,
+  })
+
+  // @ts-ignore
+  str = state.processColors(str)
 
   let possibleColors = str.matchAll(colorRegex)
 
