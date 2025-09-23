@@ -191,6 +191,7 @@ test('Inlining calc expressions using the design system', () => {
   let map = new Map<string, string>([
     ['--spacing', '0.25rem'],
     ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
+    ['--font-size.md', '1rem'],
   ])
 
   let state: State = {
@@ -239,5 +240,10 @@ test('Inlining calc expressions using the design system', () => {
   // Color equivalents
   expect(addThemeValues('var(--color-red-500)', state, settings)).toBe(
     'var(--color-red-500) /* oklch(0.637 0.237 25.331) = #fb2c36 */',
+  )
+
+  // Variables containing dots
+  expect(addThemeValues('var(--font-size\\.md)', state, settings)).toBe(
+    'var(--font-size\\.md) /* 1rem = 10px */',
   )
 })

@@ -7,6 +7,7 @@
 - Show color swatches for OKLCH colors with units in all positions ([#1442](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1442))
 - Fix incorrect diagnostic for `--theme(--some-var inline)` ([#1443](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1443))
 - Bump precision of evaluated calc expressions ([#1449](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1449))
+- Fix theme lookup when variable names contain escaped dots ([#1466](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1466))
 
 ## 0.14.26
 

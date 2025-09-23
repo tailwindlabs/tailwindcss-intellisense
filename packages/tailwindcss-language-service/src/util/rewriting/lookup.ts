@@ -8,5 +8,9 @@ export function resolveVariableValue(design: DesignSystem, name: string): string
     name = `--${name.slice(prefix.length + 3)}`
   }
 
+  // Variables have to escape the `.` but the theme system in v4 does not store
+  // the values with escapes so name lookups will fail.
+  name = name.replaceAll('\\.', '.')
+
   return design.resolveThemeValue?.(name, true) ?? null
 }
