@@ -478,7 +478,7 @@ This is necessary, as the default `aspectRatio` values are overwritten by this p
 
 ================================================================================
 
-@tailwindcss/container-queries@0.1.0
+@tailwindcss/container-queries@0.1.1
 
 # @tailwindcss/container-queries
 
@@ -509,47 +509,68 @@ module.exports = {
 
 ## Usage
 
-```html
-<!-- Container queries without a specific container name -->
-<div class="@container">
-  <!-- Container query with a size of `lg` defined in your tailwind.config.js file -->
-  <div class="@lg:underline"></div>
-  <div class="@[1024px]:underline"></div>
-</div>
+Start by marking an element as a container using the `@container` class, and then applying styles based on the size of that container using the container variants like `@md:`, `@lg:`, and `@xl:`:
 
-<!-- Container queries that apply for a defined container name -->
-<div class="@container/sidebar">
-  <div class="@lg/sidebar:underline"></div>
-  <div class="@[1024px]/sidebar:underline"></div>
+```html
+<div class="@container">
+  <div class="@lg:underline">
+    <!-- This text will be underlined when the container is larger than `32rem` -->
+  </div>
 </div>
 ```
 
-### Container types
+By default we provide [container sizes](#configuration) from `@xs` (`20rem`) to `@7xl` (`80rem`).
 
-| Class                       | css                                                     |
-| --------------------------- | ------------------------------------------------------- |
-| `@container`                | `container-type: inline-size;`                          |
-| `@container/sidebar`        | `container-type: inline-size; container-name: sidebar;` |
-| `@container-normal`         | `container-type: normal;`                               |
-| `@container-normal/sidebar` | `container-type: inline-size; container-name: sidebar;` |
+### Named containers
+
+You can optionally name containers using a `@container/{name}` class, and then include that name in the container variants using classes like `@lg/{name}:underline`:
+
+```html
+<div class="@container/main">
+  <!-- ... -->
+  <div class="@lg/main:underline">
+    <!-- This text will be underlined when the "main" container is larger than `32rem` -->
+  </div>
+</div>
+```
+
+### Arbitrary container sizes
+
+In addition to using one of the [container sizes](#configuration) provided by default, you can also create one-off sizes using any arbitrary value:
+
+```html
+<div class="@container">
+  <div class="@[17.5rem]:underline"></div>
+    <!-- This text will be underlined when the container is larger than `17.5rem` -->
+  </div>
+</div>
+```
+
+### Removing a container
+
+To stop an element from acting as a container, use the `@container-normal` class.
+
+<div class="@container xl:@container-normal">
+  <!-- ... -->
+</div>
 
 ## Configuration
 
 By default we ship with the following configured values:
 
-| Name  | Value   |
-| ----- | ------- |
-| `xs`  | `20rem` |
-| `sm`  | `24rem` |
-| `md`  | `28rem` |
-| `lg`  | `32rem` |
-| `xl`  | `36rem` |
-| `2xl` | `42rem` |
-| `3xl` | `48rem` |
-| `4xl` | `56rem` |
-| `5xl` | `64rem` |
-| `6xl` | `72rem` |
-| `7xl` | `80rem` |
+| Name   | CSS                             |
+| ------ | ------------------------------- |
+| `@xs`  | `@container (min-width: 20rem)` |
+| `@sm`  | `@container (min-width: 24rem)` |
+| `@md`  | `@container (min-width: 28rem)` |
+| `@lg`  | `@container (min-width: 32rem)` |
+| `@xl`  | `@container (min-width: 36rem)` |
+| `@2xl` | `@container (min-width: 42rem)` |
+| `@3xl` | `@container (min-width: 48rem)` |
+| `@4xl` | `@container (min-width: 56rem)` |
+| `@5xl` | `@container (min-width: 64rem)` |
+| `@6xl` | `@container (min-width: 72rem)` |
+| `@7xl` | `@container (min-width: 80rem)` |
 
 You can configure which values are available for this plugin under the `containers` key in your `tailwind.config.js` file:
 
@@ -559,12 +580,7 @@ module.exports = {
   theme: {
     extend: {
       containers: {
-        xs: '20rem',
-        sm: '24rem',
-        md: '28rem',
-        lg: '32rem',
-        xl: '36rem',
-        // etc...
+        '2xs': '16rem',
       },
     },
   },
@@ -573,7 +589,7 @@ module.exports = {
 
 ================================================================================
 
-@tailwindcss/forms@0.5.3
+@tailwindcss/forms@0.5.10
 
 MIT License
 
@@ -599,7 +615,7 @@ SOFTWARE.
 
 ================================================================================
 
-@tailwindcss/line-clamp@0.4.2
+@tailwindcss/line-clamp@0.4.4
 
 MIT License
 
@@ -625,7 +641,7 @@ SOFTWARE.
 
 ================================================================================
 
-@tailwindcss/typography@0.5.7
+@tailwindcss/typography@0.5.19
 
 MIT License
 
@@ -1342,7 +1358,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ================================================================================
 
-tailwindcss@3.4.17
+tailwindcss@3.4.18
 
 MIT License
 
@@ -1394,7 +1410,7 @@ THE SOFTWARE.
 
 ================================================================================
 
-vscode-css-languageservice@6.3.6
+vscode-css-languageservice@6.3.7
 
 The MIT License (MIT)
 
