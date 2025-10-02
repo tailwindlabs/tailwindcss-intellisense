@@ -364,7 +364,7 @@ testLocator({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "^3.4.17"
+          "tailwindcss": "3.4.18"
         }
       }
     `,
@@ -379,7 +379,7 @@ testLocator({
   },
   expected: [
     {
-      version: '3.4.17',
+      version: '3.4.18',
       config: '/tailwind.admin.config.js',
       content: ['/src/**/*.{html,js}'],
     },
@@ -455,7 +455,7 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/src/a/b/c/index.css',
       content: [],
     },
@@ -487,12 +487,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/index.css',
       content: [],
     },
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/src/vendor/c.css',
       content: [],
     },
@@ -519,12 +519,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/src/app.css',
       content: [],
     },
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/a/foo.css',
       content: [],
     },
@@ -554,12 +554,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/src/app.css',
       content: [],
     },
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/a/foo.css',
       content: [],
     },
@@ -581,7 +581,7 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.1 (bundled)',
+      version: '4.1.14 (bundled)',
       config: '/src/app.css',
       content: [],
     },
