@@ -1,6 +1,7 @@
 import * as rpc from 'vscode-jsonrpc/node'
 import * as proc from 'node:child_process'
 import * as path from 'node:path'
+import * as fs from 'node:fs/promises'
 import { type ScanOptions, type ScanResult } from './oxide'
 
 /**
@@ -32,7 +33,32 @@ export class OxideSession {
 
     // TODO: Can we find a way to not require a build first?
     // let module = path.resolve(path.dirname(__filename), './oxide-helper.ts')
-    let module = path.resolve(path.dirname(__filename), '../bin/oxide-helper.js')
+
+    let modulePaths = [
+      // Separate Language Server package
+      '../bin/oxide-helper.js',
+
+      // Bundled with the VSCode extension
+      '../dist/oxide-helper.js',
+    ]
+
+    let module: string | null = null
+
+    for (let relativePath of modulePaths) {
+      let filepath = path.resolve(path.dirname(__filename), relativePath)
+
+      if (
+        await fs.access(filepath).then(
+          () => true,
+          () => false,
+        )
+      ) {
+        module = filepath
+        break
+      }
+    }
+
+    if (!module) throw new Error('unable to load')
 
     let helper = proc.fork(module)
     let connection = rpc.createMessageConnection(
