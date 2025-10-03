@@ -964,6 +964,7 @@ export async function createProjectService(
         projectConfig.config,
         state.features,
         resolver,
+        undefined,
         originalConfig,
       )
     }
