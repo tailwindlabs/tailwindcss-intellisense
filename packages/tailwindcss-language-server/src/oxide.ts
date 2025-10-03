@@ -111,14 +111,14 @@ interface SourceEntry {
   negated: boolean
 }
 
-interface ScanOptions {
+export interface ScanOptions {
   oxidePath: string
   oxideVersion: string
   basePath: string
   sources: Array<SourceEntry>
 }
 
-interface ScanResult {
+export interface ScanResult {
   files: Array<string>
   globs: Array<GlobEntry>
 }
