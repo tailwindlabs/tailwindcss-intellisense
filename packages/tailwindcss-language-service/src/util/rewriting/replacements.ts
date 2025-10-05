@@ -76,6 +76,12 @@ export function replaceCssVars(
         })
 
         if (replacement !== null) {
+          // If we're replacing this variable with a reference back it *itself*
+          // we should skip over it
+          if (replacement.includes(`var(${varName})`) || replacement.includes(`var(${varName},`)) {
+            break
+          }
+
           str = str.slice(0, i) + replacement + str.slice(j + 1)
         }
 
