@@ -2,7 +2,8 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix infinite recursion in theme variable lookups ([#1473](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1473))
+- Fix infinite recursion when replacing unbalanced calc expressions ([#1473](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1473))
 
 ## 0.14.27
 
