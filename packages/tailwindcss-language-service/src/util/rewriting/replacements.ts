@@ -121,7 +121,7 @@ export function replaceCssCalc(str: string, replace: CssCalcReplacer): string {
 
     let depth = 0
 
-    for (let j = i + 5; i < str.length; ++j) {
+    for (let j = i + 5; j < str.length; ++j) {
       if (str[j] === '(') {
         depth++
       } else if (str[j] === ')' && depth > 0) {
