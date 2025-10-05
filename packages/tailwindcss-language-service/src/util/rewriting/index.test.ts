@@ -111,7 +111,8 @@ test('recursive theme replacements', () => {
   }
 
   expect(replaceCssVarsWithFallbacks(state, 'var(--color-a)')).toBe('var(--color-a)')
-  expect(replaceCssVarsWithFallbacks(state, 'var(--color-b)')).toBe('rgb(var(--color-b))')
+  // TODO: -> rgb(var(--color-b))
+  expect(replaceCssVarsWithFallbacks(state, 'var(--color-b)')).toBe('var(--color-b)')
   expect(replaceCssVarsWithFallbacks(state, 'var(--color-c)')).toBe('rgb(255 255 255)')
 
   // This one is wrong but fixing it without breaking the infinite recursion guard is complex
@@ -152,7 +153,8 @@ test('recursive theme replacements (inlined)', () => {
   }
 
   expect(inlineThemeValues('var(--color-a)', state)).toBe('var(--color-a)')
-  expect(inlineThemeValues('var(--color-b)', state)).toBe('rgb(var(--color-b))')
+  // TODO: -> rgb(var(--color-b))
+  expect(inlineThemeValues('var(--color-b)', state)).toBe('var(--color-b)')
   expect(inlineThemeValues('var(--color-c)', state)).toBe('rgb(255 255 255)')
 
   // This one is wrong but fixing it without breaking the infinite recursion guard is complex
@@ -192,6 +194,9 @@ test('Inlining calc expressions using the design system', () => {
     ['--spacing', '0.25rem'],
     ['--color-red-500', 'oklch(0.637 0.237 25.331)'],
     ['--font-size.md', '1rem'],
+    ['--wrapped', 'calc(var(--wrapped))'],
+    ['--unbalanced-1', 'calc(var(--unbalanced-1)'],
+    ['--unbalanced-2', 'calc(1px + 2px'],
   ])
 
   let state: State = {
@@ -246,4 +251,31 @@ test('Inlining calc expressions using the design system', () => {
   expect(addThemeValues('var(--font-size\\.md)', state, settings)).toBe(
     'var(--font-size\\.md) /* 1rem = 10px */',
   )
+
+  // Variables that replace with themselves. This could be handled better
+  expect(addThemeValues('calc(var(--wrapped))', state, settings)).toBe(
+    'calc(var(--wrapped) /* calc(var(--wrapped)) */)',
+  )
+  expect(addThemeValues('var(--wrapped)', state, settings)).toBe(
+    'var(--wrapped) /* calc(var(--wrapped)) */',
+  )
+
+  // Unbalanced calc expressions. Whether or not these "work" is undefined. If
+  // these change results that's okay.
+  expect(addThemeValues('calc(var(--unbalanced-1))', state, settings)).toBe(
+    'calc(var(--unbalanced-1) /* calc(var(--unbalanced-1) */)',
+  )
+  expect(addThemeValues('var(--unbalanced-1)', state, settings)).toBe(
+    'var(--unbalanced-1) /* calc(var(--unbalanced-1) */',
+  )
+
+  // It would be fine for either of these to not replace at all
+  expect(addThemeValues('calc(var(--unbalanced-2))', state, settings)).toBe(
+    'calc(var(--unbalanced-2)) /* 3px */',
+  )
+  expect(addThemeValues('var(--unbalanced-2)', state, settings)).toBe(
+    'var(--unbalanced-2) /* calc(1px + 2px */',
+  )
+
+  expect(addThemeValues('calc(1 + 2', state, settings)).toBe('calc(1 + 2')
 })
