@@ -183,6 +183,17 @@ Class variants not in the recommended order (applies in [JIT mode](https://tailw
 
 Usage of class names that have been blocklisted via `@source not inline(…)`. **Default: `warning`**
 
+#### `tailwindCSS.lint.suggestCanonicalClasses`
+
+Detect usage of class names that are not in the most optimal form. **Default: `warning`**
+
+Some examples of the changes this makes:
+
+| Class                           | Canonical Form |
+| ------------------------------- | -------------- |
+| `[color:red]/100`               | `text-[red]`   |
+| `[@media_print]:[display:flex]` | `print:flex`   |
+
 ### `tailwindCSS.inspectPort`
 
 Enable the Node.js inspector agent for the language server and listen on the specified port. **Default: `null`**

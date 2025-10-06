@@ -43,6 +43,9 @@ export interface DesignSystem {
 
   // Added in v4.0.0-alpha.26
   invalidCandidates?: Set<string>
+
+  // Added in v4.1.15
+  canonicalizeCandidates?(classes: string[]): string[]
 }
 
 export interface DesignSystem {

@@ -10,6 +10,7 @@ import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDire
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
 import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
 import { getUsedBlocklistedClassDiagnostics } from './getUsedBlocklistedClassDiagnostics'
+import { getSuggestCanonicalClassesDiagnostics } from './canonical-classes'
 
 export async function doValidate(
   state: State,
@@ -24,6 +25,7 @@ export async function doValidate(
     DiagnosticKind.InvalidSourceDirective,
     DiagnosticKind.RecommendedVariantOrder,
     DiagnosticKind.UsedBlocklistedClass,
+    DiagnosticKind.SuggestCanonicalClasses,
   ],
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
@@ -56,6 +58,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.UsedBlocklistedClass)
           ? await getUsedBlocklistedClassDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.SuggestCanonicalClasses)
+          ? await getSuggestCanonicalClassesDiagnostics(state, document, settings)
           : []),
       ]
     : []

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import { expect, test } from 'vitest'
 import { withFixture } from '../common'
-import { css, defineTest } from '../../src/testing'
+import { css, defineTest, json } from '../../src/testing'
 import { createClient } from '../utils/client'
 
 withFixture('basic', (c) => {
@@ -421,6 +421,64 @@ defineTest({
           end: { line: 0, character: 37 },
         },
         severity: 2,
+      },
+    ])
+  },
+})
+
+defineTest({
+  name: 'Shows warning when using non-canonical classes',
+  fs: {
+    // TODO: Drop this when the embedded version of tailwindcss is v4.1.15
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "0.0.0-insiders.efe084b"
+        }
+      }
+    `,
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      settings: {
+        tailwindCSS: {
+          lint: { suggestCanonicalClasses: 'warning' },
+        },
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="[@media_print]:flex [color:red]/50">',
+    })
+
+    let diagnostics = await doc.diagnostics()
+
+    expect(diagnostics).toEqual([
+      {
+        code: 'suggestCanonicalClasses',
+        message: 'The class `[@media_print]:flex` can be written as `print:flex`',
+        range: {
+          start: { line: 0, character: 12 },
+          end: { line: 0, character: 31 },
+        },
+        severity: 2,
+        suggestions: ['print:flex'],
+      },
+      {
+        code: 'suggestCanonicalClasses',
+        message: 'The class `[color:red]/50` can be written as `text-[red]/50`',
+        range: {
+          start: { line: 0, character: 32 },
+          end: { line: 0, character: 46 },
+        },
+        severity: 2,
+        suggestions: ['text-[red]/50'],
       },
     ])
   },
