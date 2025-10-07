@@ -4,6 +4,7 @@
 
 - Fix infinite recursion in theme variable lookups ([#1473](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1473))
 - Fix infinite recursion when replacing unbalanced calc expressions ([#1473](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1473))
+- Add diagnostic to suggest canonical classes by default ([#1475](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1475))
 
 ## 0.14.27
 
