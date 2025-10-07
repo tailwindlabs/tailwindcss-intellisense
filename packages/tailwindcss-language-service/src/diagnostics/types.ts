@@ -11,6 +11,7 @@ export enum DiagnosticKind {
   InvalidSourceDirective = 'invalidSourceDirective',
   RecommendedVariantOrder = 'recommendedVariantOrder',
   UsedBlocklistedClass = 'usedBlocklistedClass',
+  SuggestCanonicalClasses = 'suggestCanonicalClasses',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -111,6 +112,17 @@ export function isUsedBlocklistedClass(
   return diagnostic.code === DiagnosticKind.UsedBlocklistedClass
 }
 
+export type SuggestCanonicalClassesDiagnostic = Diagnostic & {
+  code: DiagnosticKind.SuggestCanonicalClasses
+  suggestions: string[]
+}
+
+export function isSuggestCanonicalClasses(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is SuggestCanonicalClassesDiagnostic {
+  return diagnostic.code === DiagnosticKind.SuggestCanonicalClasses
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -121,3 +133,4 @@ export type AugmentedDiagnostic =
   | InvalidSourceDirectiveDiagnostic
   | RecommendedVariantOrderDiagnostic
   | UsedBlocklistedClassDiagnostic
+  | SuggestCanonicalClassesDiagnostic

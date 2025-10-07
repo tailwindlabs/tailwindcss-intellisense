@@ -38,9 +38,14 @@ export interface DesignSystem {
   getClassList(): ClassEntry[]
   getVariants(): VariantEntry[]
 
-  // Optional because it did not exist in earlier v4 alpha versions
+  // Added in v4.0.0-alpha.24
   resolveThemeValue?(path: string, forceInline?: boolean): string | undefined
+
+  // Added in v4.0.0-alpha.26
   invalidCandidates?: Set<string>
+
+  // Added in v4.1.15
+  canonicalizeCandidates?(classes: string[]): string[]
 }
 
 export interface DesignSystem {

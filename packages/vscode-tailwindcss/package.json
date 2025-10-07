@@ -316,6 +316,17 @@
           "markdownDescription": "Usage of class names that have been blocklisted via `@source not inline(…)`",
           "scope": "language-overridable"
         },
+        "tailwindCSS.lint.suggestCanonicalClasses": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "Indicate when utilities may be written in a more optimal form",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.experimental.classRegex": {
           "type": "array",
           "scope": "language-overridable"
