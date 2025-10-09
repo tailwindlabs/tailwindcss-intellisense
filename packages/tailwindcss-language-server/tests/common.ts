@@ -91,6 +91,18 @@ export async function init(
     projectDetails = project
   })
 
+  // TODO: This shouldn't be needed
+  // The server should either delay requests *or*
+  // openDocument shouldn't return until the project its a part of has been
+  // built otherwise all requests will return nothing and it's not something
+  // we can await directly right now
+  //
+  // Like maybe documentReady should be delayed by project build state?
+  // because otherwise the document isn't really ready anyway
+  let projectBuilt = new Promise<void>((resolve) => {
+    client.conn.onNotification('@/tailwindCSS/projectReloaded', () => resolve())
+  })
+
   return {
     client,
     fixtureUri(fixture: string) {
@@ -129,6 +141,8 @@ export async function init(
         uri,
         settings,
       })
+
+      await projectBuilt
 
       return {
         get uri() {
