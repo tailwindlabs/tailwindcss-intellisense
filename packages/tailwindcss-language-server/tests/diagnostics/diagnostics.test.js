@@ -433,7 +433,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "0.0.0-insiders.efe084b"
+          "tailwindcss": "0.0.0-insiders.249bed0"
         }
       }
     `,
@@ -447,6 +447,7 @@ defineTest({
       settings: {
         tailwindCSS: {
           lint: { suggestCanonicalClasses: 'warning' },
+          rootFontSize: 16,
         },
       },
     }),
@@ -454,7 +455,7 @@ defineTest({
   handle: async ({ client }) => {
     let doc = await client.open({
       lang: 'html',
-      text: '<div class="[@media_print]:flex [color:red]/50">',
+      text: '<div class="[@media_print]:flex [color:red]/50 mt-[16px]">',
     })
 
     let diagnostics = await doc.diagnostics()
@@ -479,6 +480,16 @@ defineTest({
         },
         severity: 2,
         suggestions: ['text-[red]/50'],
+      },
+      {
+        code: 'suggestCanonicalClasses',
+        message: 'The class `mt-[16px]` can be written as `mt-4`',
+        range: {
+          start: { line: 0, character: 47 },
+          end: { line: 0, character: 56 },
+        },
+        severity: 2,
+        suggestions: ['mt-4'],
       },
     ])
   },
