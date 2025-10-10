@@ -433,7 +433,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "0.0.0-insiders.efe084b"
+          "tailwindcss": "0.0.0-insiders.249bed0"
         }
       }
     `,
