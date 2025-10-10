@@ -2,7 +2,8 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Offload content detection to separate process ([#1471](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1471))
+- Suggest canonical classes when pixels and rem values match based on the root font size ([#1476](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1476))
 
 ## 0.14.28
 
