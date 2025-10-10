@@ -16,6 +16,7 @@ import { normalizeDriveLetter, normalizePath, pathToFileURL } from './utils'
 import postcss from 'postcss'
 import * as oxide from './oxide'
 import { analyzeStylesheet, TailwindStylesheet } from './version-guesser'
+import { OxideSession } from './oxide-session'
 
 export interface ProjectConfig {
   /** The folder that contains the project */
@@ -60,7 +61,10 @@ export class ProjectLocator {
     let configs = await this.findConfigs()
 
     // Create a project for each of the config files
-    let results = await Promise.allSettled(configs.map((config) => this.createProject(config)))
+    let session = new OxideSession()
+    let results = await Promise.allSettled(
+      configs.map((config) => this.createProject(config, session)),
+    )
     let projects: ProjectConfig[] = []
 
     for (let result of results) {
@@ -97,6 +101,8 @@ export class ProjectLocator {
         selector.pattern = normalizeDriveLetter(selector.pattern)
       }
     }
+
+    await session.stop()
 
     return projects
   }
@@ -148,7 +154,10 @@ export class ProjectLocator {
     }
   }
 
-  private async createProject(config: ConfigEntry): Promise<ProjectConfig | null> {
+  private async createProject(
+    config: ConfigEntry,
+    session: OxideSession,
+  ): Promise<ProjectConfig | null> {
     let tailwind = await this.detectTailwindVersion(config)
 
     let possibleVersions = config.entries.flatMap((entry) => entry.meta?.versions ?? [])
@@ -218,7 +227,12 @@ export class ProjectLocator {
     // Look for the package root for the config
     config.packageRoot = await getPackageRoot(path.dirname(config.path), this.base)
 
-    let selectors = await calculateDocumentSelectors(config, tailwind.features, this.resolver)
+    let selectors = await calculateDocumentSelectors(
+      config,
+      tailwind.features,
+      this.resolver,
+      session,
+    )
 
     return {
       config,
@@ -520,10 +534,11 @@ function contentSelectorsFromConfig(
   entry: ConfigEntry,
   features: Feature[],
   resolver: Resolver,
+  session: OxideSession,
   actualConfig?: any,
 ): AsyncIterable<DocumentSelector> {
   if (entry.type === 'css') {
-    return contentSelectorsFromCssConfig(entry, resolver)
+    return contentSelectorsFromCssConfig(entry, resolver, session)
   }
 
   if (entry.type === 'js') {
@@ -582,6 +597,7 @@ async function* contentSelectorsFromJsConfig(
 async function* contentSelectorsFromCssConfig(
   entry: ConfigEntry,
   resolver: Resolver,
+  session: OxideSession,
 ): AsyncIterable<DocumentSelector> {
   let auto = false
   for (let item of entry.content) {
@@ -606,6 +622,7 @@ async function* contentSelectorsFromCssConfig(
         entry.path,
         sources,
         resolver,
+        session,
       )) {
         yield {
           pattern,
@@ -621,6 +638,7 @@ async function* detectContentFiles(
   inputFile: string,
   sources: SourcePattern[],
   resolver: Resolver,
+  session: OxideSession,
 ): AsyncIterable<string> {
   try {
     let oxidePath = await resolver.resolveJsId('@tailwindcss/oxide', base)
@@ -628,7 +646,7 @@ async function* detectContentFiles(
     let oxidePackageJsonPath = await resolver.resolveJsId('@tailwindcss/oxide/package.json', base)
     let oxidePackageJson = JSON.parse(await fs.readFile(oxidePackageJsonPath, 'utf8'))
 
-    let result = await oxide.scan({
+    let result = await session.scan({
       oxidePath,
       oxideVersion: oxidePackageJson.version,
       basePath: base,
@@ -654,9 +672,21 @@ async function* detectContentFiles(
       base = normalizeDriveLetter(base)
       yield `${base}/${pattern}`
     }
-  } catch {
-    //
+  } catch (err) {
+    if (isResolutionError(err)) return
+
+    console.error(err)
   }
+}
+
+function isResolutionError(err: unknown): boolean {
+  return (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof err.message === 'string' &&
+    err.message.includes("Can't resolve")
+  )
 }
 
 type ContentItem =
@@ -812,8 +842,15 @@ export async function calculateDocumentSelectors(
   config: ConfigEntry,
   features: Feature[],
   resolver: Resolver,
+  session?: OxideSession,
   actualConfig?: any,
 ) {
+  let hasTemporarySession = false
+  if (!session) {
+    hasTemporarySession = true
+    session = new OxideSession()
+  }
+
   let selectors: DocumentSelector[] = []
 
   // selectors:
@@ -834,7 +871,13 @@ export async function calculateDocumentSelectors(
   })
 
   // - Content patterns from config
-  for await (let selector of contentSelectorsFromConfig(config, features, resolver, actualConfig)) {
+  for await (let selector of contentSelectorsFromConfig(
+    config,
+    features,
+    resolver,
+    session,
+    actualConfig,
+  )) {
     selectors.push(selector)
   }
 
@@ -875,6 +918,10 @@ export async function calculateDocumentSelectors(
     if (!a.pattern.startsWith('!') && z.pattern.startsWith('!')) return 1
     return 0
   })
+
+  if (hasTemporarySession) {
+    await session.stop()
+  }
 
   return selectors
 }
