@@ -75,8 +75,6 @@ export class ProjectLocator {
       }
     }
 
-    console.log(projects[0])
-
     if (projects.length === 1) {
       projects[0].additionalSelectors.push({
         pattern: normalizePath(path.join(this.base, '**')),
