@@ -45,7 +45,7 @@ export interface DesignSystem {
   invalidCandidates?: Set<string>
 
   // Added in v4.1.15
-  canonicalizeCandidates?(classes: string[]): string[]
+  canonicalizeCandidates?(classes: string[], options: { rem?: number }): string[]
 }
 
 export interface DesignSystem {

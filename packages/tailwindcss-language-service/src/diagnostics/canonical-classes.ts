@@ -37,7 +37,9 @@ export async function getSuggestCanonicalClassesDiagnostics(
     // diagnostics in a given class list.
 
     for (let className of classNames) {
-      let canonicalized = state.designSystem.canonicalizeCandidates([className.className])[0]
+      let canonicalized = state.designSystem.canonicalizeCandidates([className.className], {
+        rem: settings.tailwindCSS.rootFontSize,
+      })[0]
       let isCanonical = canonicalized === className.className
 
       if (isCanonical) continue
