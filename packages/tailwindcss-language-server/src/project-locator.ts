@@ -673,8 +673,20 @@ async function* detectContentFiles(
       yield `${base}/${pattern}`
     }
   } catch (err) {
-    console.log({ err })
+    if (isResolutionError(err)) return
+
+    console.error(err)
   }
+}
+
+function isResolutionError(err: unknown): boolean {
+  return (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof err.message === 'string' &&
+    err.message.includes("Can't resolve")
+  )
 }
 
 type ContentItem =
