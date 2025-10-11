@@ -146,6 +146,17 @@ export interface State {
   pluginVersions?: string
   completionItemData?: Record<string, any>
   features: Feature[]
+  customCssClasses?: Array<{
+    label: string
+    kind: import('vscode-languageserver').CompletionItemKind
+    detail: string
+    sortText: string
+    data: {
+      _type: string
+      source: string
+      declarations: Record<string, string>
+    }
+  }>
   // postcssPlugins?: { before: any[]; after: any[] }
 }
 
