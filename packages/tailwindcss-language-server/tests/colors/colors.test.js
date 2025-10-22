@@ -349,7 +349,7 @@ defineTest({
 
     expect(c.project).toMatchObject({
       tailwind: {
-        version: '4.1.14',
+        version: '4.1.15',
         isDefaultVersion: true,
       },
     })
@@ -388,7 +388,7 @@ defineTest({
 
     expect(c.project).toMatchObject({
       tailwind: {
-        version: '4.1.14',
+        version: '4.1.15',
         isDefaultVersion: true,
       },
     })
