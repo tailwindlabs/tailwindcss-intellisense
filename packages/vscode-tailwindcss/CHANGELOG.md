@@ -2,6 +2,10 @@
 
 ## Prerelease
 
+- Nothing yet!
+
+## 0.14.29
+
 - Offload content detection to separate process ([#1471](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1471))
 - Suggest canonical classes when pixels and rem values match based on the root font size ([#1476](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1476))
 - Fix completion edit range being incorrect when part before cursor ends with `-[` ([#1480](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1480))
