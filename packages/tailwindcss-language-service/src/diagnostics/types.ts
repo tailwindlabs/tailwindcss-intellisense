@@ -12,6 +12,7 @@ export enum DiagnosticKind {
   RecommendedVariantOrder = 'recommendedVariantOrder',
   UsedBlocklistedClass = 'usedBlocklistedClass',
   SuggestCanonicalClasses = 'suggestCanonicalClasses',
+  UnknownClasses = 'unknownClasses',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -123,6 +124,16 @@ export function isSuggestCanonicalClasses(
   return diagnostic.code === DiagnosticKind.SuggestCanonicalClasses
 }
 
+export type UnknownClassesDiagnostic = Diagnostic & {
+  code: DiagnosticKind.UnknownClasses
+}
+
+export function isUnknownClasses(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is UnknownClassesDiagnostic {
+  return diagnostic.code === DiagnosticKind.UnknownClasses
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -134,3 +145,4 @@ export type AugmentedDiagnostic =
   | RecommendedVariantOrderDiagnostic
   | UsedBlocklistedClassDiagnostic
   | SuggestCanonicalClassesDiagnostic
+  | UnknownClassesDiagnostic

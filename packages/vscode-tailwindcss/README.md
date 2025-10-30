@@ -194,6 +194,10 @@ Some examples of the changes this makes:
 | `[color:red]/100`               | `text-[red]`   |
 | `[@media_print]:[display:flex]` | `print:flex`   |
 
+#### `tailwindCSS.lint.unknownClasses`
+
+Detect usage of class names that are not known to Tailwind CSS.
+
 ### `tailwindCSS.inspectPort`
 
 Enable the Node.js inspector agent for the language server and listen on the specified port. **Default: `null`**

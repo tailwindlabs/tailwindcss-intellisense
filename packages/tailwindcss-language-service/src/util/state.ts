@@ -67,6 +67,7 @@ export type TailwindCssSettings = {
     recommendedVariantOrder: DiagnosticSeveritySetting
     usedBlocklistedClass: DiagnosticSeveritySetting
     suggestCanonicalClasses: DiagnosticSeveritySetting
+    unknownClasses: DiagnosticSeveritySetting
   }
   experimental: {
     classRegex: string[] | [string, string][]
@@ -207,6 +208,7 @@ export function getDefaultTailwindSettings(): Settings {
         recommendedVariantOrder: 'warning',
         usedBlocklistedClass: 'warning',
         suggestCanonicalClasses: 'warning',
+        unknownClasses: 'ignore',
       },
       showPixelEquivalents: true,
       includeLanguages: {},
