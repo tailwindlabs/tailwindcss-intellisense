@@ -227,7 +227,7 @@ export async function loadDesignSystem(
     // - Replace `candidatesToCss` with a `candidatesToAst` API
     // First step would be to convert to a PostCSS AST by transforming the nodes directly
     // Then it would be to drop the PostCSS AST representation entirely in all v4 code paths
-    compile(classes: string[]): (postcss.Root | null)[] {
+    compile(classes: string[]): postcss.Root[] {
       let css = design.candidatesToCss(classes)
       let errors: any[] = []
 
