@@ -31,6 +31,7 @@ export function getInvalidSourceDiagnostics(
   function add(diag: Omit<InvalidSourceDirectiveDiagnostic, 'code' | 'severity'>) {
     diagnostics.push({
       code: DiagnosticKind.InvalidSourceDirective,
+      source: 'tailwindcss',
       severity:
         severity === 'error'
           ? 1 /* DiagnosticSeverity.Error */

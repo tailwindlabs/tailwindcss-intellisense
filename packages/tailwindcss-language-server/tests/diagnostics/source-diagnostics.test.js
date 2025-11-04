@@ -32,6 +32,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 1, character: 35 },
@@ -40,6 +41,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 2, character: 35 },
@@ -48,6 +50,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 3, character: 35 },
@@ -56,6 +59,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 4, character: 33 },
@@ -64,6 +68,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 5, character: 33 },
@@ -72,6 +77,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: 'The source directive requires a path to a directory.',
         range: {
           start: { line: 6, character: 33 },
@@ -90,6 +96,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: '`source(no)` is invalid. Did you mean `source(none)`?',
         range: {
           start: { line: 1, character: 35 },
@@ -98,6 +105,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message: '`source(no)` is invalid. Did you mean `source(none)`?',
         range: {
           start: { line: 2, character: 33 },
@@ -127,6 +135,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message:
           'POSIX-style paths are required with `source(…)` but `C:\\absolute\\path` is a Windows-style path.',
         range: {
@@ -136,6 +145,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidSourceDirective',
+        source: 'tailwindcss',
         message:
           'POSIX-style paths are required with `source(…)` but `C:relative.txt` is a Windows-style path.',
         range: {

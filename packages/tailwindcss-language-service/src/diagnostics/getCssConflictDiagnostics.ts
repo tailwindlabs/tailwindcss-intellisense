@@ -60,6 +60,7 @@ export async function getCssConflictDiagnostics(
       for (let [className, conflictingClassNames] of findConflicts(classNames, groups)) {
         diagnostics.push({
           code: DiagnosticKind.CssConflict,
+          source: 'tailwindcss',
           className,
           otherClassNames: conflictingClassNames,
           range: className.range,
@@ -144,6 +145,7 @@ export async function getCssConflictDiagnostics(
 
         diagnostics.push({
           code: DiagnosticKind.CssConflict,
+          source: 'tailwindcss',
           className,
           otherClassNames: conflictingClassNames,
           range: className.range,
@@ -198,6 +200,7 @@ export async function getCssConflictDiagnostics(
 
       diagnostics.push({
         code: DiagnosticKind.CssConflict,
+        source: 'tailwindcss',
         className,
         otherClassNames: conflictingClassNames,
         range: className.range,

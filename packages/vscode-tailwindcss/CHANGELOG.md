@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Add a source to all emitted diagnostics ([#1491](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1491))
 
 ## 0.14.29
 

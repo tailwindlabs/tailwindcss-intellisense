@@ -199,6 +199,7 @@ export function getInvalidConfigPathDiagnostics(
 
     diagnostics.push({
       code: DiagnosticKind.InvalidConfigPath,
+      source: 'tailwindcss',
       range: helperFn.ranges.path,
       severity:
         severity === 'error'

@@ -73,6 +73,7 @@ export function getInvalidVariantDiagnostics(
 
         diagnostics.push({
           code: DiagnosticKind.InvalidVariant,
+          source: 'tailwindcss',
           range: absoluteRange(
             {
               start: indexToPosition(text, variantStartIndex),
