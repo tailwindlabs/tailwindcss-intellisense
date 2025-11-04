@@ -3,6 +3,7 @@
   "expected": [
     {
       "code": "cssConflict",
+      "source": "Tailwind CSS",
       "className": {
         "className": "sm:uppercase",
         "classList": {
@@ -56,6 +57,7 @@
     },
     {
       "code": "cssConflict",
+      "source": "Tailwind CSS",
       "className": {
         "className": "sm:lowercase",
         "classList": {
