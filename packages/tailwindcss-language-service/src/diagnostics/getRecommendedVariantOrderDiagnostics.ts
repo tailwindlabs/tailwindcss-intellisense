@@ -38,7 +38,7 @@ export async function getRecommendedVariantOrderDiagnostics(
       if (!equalExact(variants, sortedVariants)) {
         diagnostics.push({
           code: DiagnosticKind.RecommendedVariantOrder,
-          source: 'Tailwind CSS',
+          source: 'tailwindcss',
           suggestions: [
             [...sortedVariants, className.className.substr(offset)].join(state.separator),
           ],

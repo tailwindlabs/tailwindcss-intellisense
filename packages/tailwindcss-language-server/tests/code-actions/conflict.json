@@ -7,7 +7,7 @@
       "diagnostics": [
         {
           "code": "cssConflict",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "className": {
             "className": "lowercase",
             "classList": {
@@ -86,7 +86,7 @@
       "diagnostics": [
         {
           "code": "cssConflict",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "className": {
             "className": "uppercase",
             "classList": {

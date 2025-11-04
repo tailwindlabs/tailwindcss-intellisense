@@ -4,7 +4,7 @@
   "expected": [
     {
       "code": "cssConflict",
-      "source": "Tailwind CSS",
+      "source": "tailwindcss",
       "className": {
         "className": "uppercase",
         "classList": {
@@ -60,7 +60,7 @@
     },
     {
       "code": "cssConflict",
-      "source": "Tailwind CSS",
+      "source": "tailwindcss",
       "className": {
         "className": "lowercase",
         "classList": {

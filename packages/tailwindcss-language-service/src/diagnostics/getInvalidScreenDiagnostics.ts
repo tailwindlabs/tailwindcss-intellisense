@@ -48,7 +48,7 @@ export function getInvalidScreenDiagnostics(
 
       diagnostics.push({
         code: DiagnosticKind.InvalidScreen,
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: absoluteRange(
           {
             start: indexToPosition(

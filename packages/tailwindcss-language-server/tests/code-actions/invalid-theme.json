@@ -8,7 +8,7 @@
       "diagnostics": [
         {
           "code": "invalidConfigPath",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "range": {
             "start": { "line": 0, "character": 21 },
             "end": { "line": 0, "character": 35 }

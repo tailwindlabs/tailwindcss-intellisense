@@ -7,7 +7,7 @@
       "diagnostics": [
         {
           "code": "recommendedVariantOrder",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "suggestions": ["focus:hover:uppercase"],
           "range": {
             "start": { "line": 0, "character": 12 },

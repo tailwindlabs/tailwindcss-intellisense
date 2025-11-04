@@ -8,7 +8,7 @@
       "diagnostics": [
         {
           "code": "invalidScreen",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "range": {
             "start": { "line": 0, "character": 8 },
             "end": { "line": 0, "character": 13 }

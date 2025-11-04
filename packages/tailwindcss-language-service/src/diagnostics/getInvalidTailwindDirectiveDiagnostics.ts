@@ -51,7 +51,7 @@ export function getInvalidTailwindDirectiveDiagnostics(
 
       diagnostics.push({
         code: DiagnosticKind.InvalidTailwindDirective,
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: absoluteRange(
           {
             start: indexToPosition(text, match.index + match[0].length - layerName.length),

@@ -8,7 +8,7 @@
       "diagnostics": [
         {
           "code": "invalidVariant",
-          "source": "Tailwind CSS",
+          "source": "tailwindcss",
           "range": {
             "start": { "line": 0, "character": 10 },
             "end": { "line": 0, "character": 16 }

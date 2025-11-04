@@ -95,7 +95,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 36 } },
         severity: 1,
         message: "'--color-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
@@ -110,7 +110,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 37 } },
         severity: 1,
         message: "'--colors-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
@@ -125,7 +125,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 42 } },
         severity: 1,
         message: "'--font-obliqueness-90' does not exist in your theme.",
@@ -146,7 +146,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 35 } },
         severity: 1,
         message: "'colors.red.901' does not exist in your theme config.",
@@ -198,7 +198,7 @@ withFixture('v4/with-prefix', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 36 } },
         severity: 1,
         message: "'--color-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
@@ -213,7 +213,7 @@ withFixture('v4/with-prefix', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 37 } },
         severity: 1,
         message: "'--colors-red-901' does not exist in your theme. Did you mean '--color-red-900'?",
@@ -228,7 +228,7 @@ withFixture('v4/with-prefix', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 42 } },
         severity: 1,
         message: "'--font-obliqueness-90' does not exist in your theme.",
@@ -249,7 +249,7 @@ withFixture('v4/with-prefix', (c) => {
     expected: [
       {
         code: 'invalidConfigPath',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         range: { start: { line: 0, character: 21 }, end: { line: 0, character: 35 } },
         severity: 1,
         message: "'colors.red.901' does not exist in your theme config.",
@@ -288,7 +288,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'cssConflict',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: "'max-w-4xl' applies the same CSS properties as 'max-w-6xl'.",
         className: {
           className: 'max-w-4xl',
@@ -307,7 +307,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'cssConflict',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: "'max-w-6xl' applies the same CSS properties as 'max-w-4xl'.",
         className: {
           className: 'max-w-6xl',
@@ -339,7 +339,7 @@ withFixture('v4/basic', (c) => {
     expected: [
       {
         code: 'invalidTailwindDirective',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message:
           "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
         suggestions: [],
@@ -351,7 +351,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidTailwindDirective',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message:
           "'@tailwind preflight' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.",
         suggestions: [],
@@ -363,7 +363,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidTailwindDirective',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message:
           "'@tailwind components' is no longer available in v4. Use '@tailwind utilities' instead.",
         suggestions: ['utilities'],
@@ -375,7 +375,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidTailwindDirective',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message:
           "'@tailwind screens' is no longer available in v4. Use '@tailwind utilities' instead.",
         suggestions: ['utilities'],
@@ -387,7 +387,7 @@ withFixture('v4/basic', (c) => {
       },
       {
         code: 'invalidTailwindDirective',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message:
           "'@tailwind variants' is no longer available in v4. Use '@tailwind utilities' instead.",
         suggestions: ['utilities'],
@@ -421,7 +421,7 @@ defineTest({
     expect(diagnostics).toEqual([
       {
         code: 'usedBlocklistedClass',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: 'The class "flex" will not be generated as it has been blocklisted',
         range: {
           start: { line: 0, character: 12 },
@@ -431,7 +431,7 @@ defineTest({
       },
       {
         code: 'usedBlocklistedClass',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: 'The class "hover:flex" will not be generated as it has been blocklisted',
         range: {
           start: { line: 0, character: 27 },
@@ -480,7 +480,7 @@ defineTest({
     expect(diagnostics).toEqual([
       {
         code: 'suggestCanonicalClasses',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: 'The class `[@media_print]:flex` can be written as `print:flex`',
         range: {
           start: { line: 0, character: 12 },
@@ -491,7 +491,7 @@ defineTest({
       },
       {
         code: 'suggestCanonicalClasses',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: 'The class `[color:red]/50` can be written as `text-[red]/50`',
         range: {
           start: { line: 0, character: 32 },
@@ -502,7 +502,7 @@ defineTest({
       },
       {
         code: 'suggestCanonicalClasses',
-        source: 'Tailwind CSS',
+        source: 'tailwindcss',
         message: 'The class `mt-[16px]` can be written as `mt-4`',
         range: {
           start: { line: 0, character: 47 },
