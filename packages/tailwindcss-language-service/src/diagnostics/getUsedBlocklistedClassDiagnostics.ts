@@ -27,6 +27,7 @@ export async function getUsedBlocklistedClassDiagnostics(
 
       diagnostics.push({
         code: DiagnosticKind.UsedBlocklistedClass,
+        source: 'Tailwind CSS',
         range: className.range,
         severity:
           severity === 'error'

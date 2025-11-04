@@ -46,6 +46,7 @@ export async function getSuggestCanonicalClassesDiagnostics(
 
       diagnostics.push({
         code: DiagnosticKind.SuggestCanonicalClasses,
+        source: 'Tailwind CSS',
         range: className.range,
         severity:
           severity === 'error'

@@ -23,6 +23,7 @@ export async function getInvalidApplyDiagnostics(
 
     return {
       code: DiagnosticKind.InvalidApply,
+      source: 'Tailwind CSS',
       severity:
         severity === 'error'
           ? 1 /* DiagnosticSeverity.Error */
