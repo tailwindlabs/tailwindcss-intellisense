@@ -2,26 +2,36 @@ import type { State, Settings, DocumentClassName } from '../util/state'
 import { type InvalidClassDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { visit } from './getCssConflictDiagnostics'
+import { getClassNameDecls } from '../util/getClassNameDecls'
+import * as jit from '../util/jit'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 function isClassValid(state: State, className: string): boolean {
-  if (!state.v4) return true // Only check for v4
+  if (state.v4) {
+    // V4: Use design system compilation
+    let roots = state.designSystem.compile([className])
+    let hasDeclarations = false
 
-  let roots = state.designSystem.compile([className])
-  let hasDeclarations = false
-
-  visit([roots[0]], (node) => {
-    if ((node.type === 'rule' || node.type === 'atrule') && node.nodes) {
-      for (let child of node.nodes) {
-        if (child.type === 'decl') {
-          hasDeclarations = true
-          break
+    visit([roots[0]], (node) => {
+      if ((node.type === 'rule' || node.type === 'atrule') && node.nodes) {
+        for (let child of node.nodes) {
+          if (child.type === 'decl') {
+            hasDeclarations = true
+            break
+          }
         }
       }
-    }
-  })
-
-  return hasDeclarations
+    })
+    return hasDeclarations
+  } else if (state.jit) {
+    // JIT: Try to generate rules
+    let { rules } = jit.generateRules(state, [className])
+    return rules.length > 0
+  } else {
+    // Static: Check if decls exist
+    let decls = getClassNameDecls(state, className)
+    return !!decls
+  }
 }
 
 export async function getInvalidClassDiagnostics(
