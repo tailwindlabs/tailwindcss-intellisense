@@ -10,7 +10,7 @@ export function provideInvalidClassCodeActions(
 ): CodeAction[] {
   return [
     {
-      title: `Remove invalid class '${diagnostic.className.className}'`,
+      title: `Remove unknown utility class '${diagnostic.className.className}'`,
       kind: 'quickfix',
       diagnostics: [diagnostic],
       edit: {
