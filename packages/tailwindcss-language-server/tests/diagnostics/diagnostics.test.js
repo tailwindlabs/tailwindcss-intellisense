@@ -38,7 +38,14 @@ withFixture('basic', (c) => {
   testFixture('invalid-screen/simple')
   testFixture('invalid-theme/simple')
   testFixture('invalid-class/simple')
-  testFixture('invalid-class/valid-classes')
+  testFixture('invalid-class/whitespace-negative')
+  testFixture('invalid-class/variants')
+  testFixture('invalid-class/jsx-concat-positive')
+  testFixture('invalid-class/jsx-template-literal')
+  testFixture('invalid-class/css')
+  testFixture('invalid-class/css-multi-prop')
+  testFixture('invalid-class/css-multi-rule')
+  testFixture('invalid-class/vue-style-lang-sass')
 })
 
 withFixture('v4/basic', (c) => {
@@ -91,7 +98,14 @@ withFixture('v4/basic', (c) => {
   // testFixture('css-conflict/css-multi-prop')
   // testFixture('invalid-screen/simple')
   testFixture('invalid-class/simple')
-  testFixture('invalid-class/valid-classes')
+  testFixture('invalid-class/whitespace-negative')
+  testFixture('invalid-class/variants')
+  testFixture('invalid-class/jsx-concat-positive')
+  testFixture('invalid-class/jsx-template-literal')
+  testFixture('invalid-class/css')
+  testFixture('invalid-class/css-multi-prop')
+  testFixture('invalid-class/css-multi-rule')
+  testFixture('invalid-class/vue-style-lang-sass')
 
   testInline('simple typos in theme keys (in key)', {
     code: '.test { color: theme(--color-red-901) }',

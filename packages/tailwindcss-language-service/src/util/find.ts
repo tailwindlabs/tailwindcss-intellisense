@@ -40,7 +40,7 @@ export function getClassNamesInClassList(
   const names: DocumentClassName[] = []
   let index = 0
   for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 0 && parts[i] && !blocklist.includes(parts[i])) {
+    if (i % 2 === 0 && parts[i] && parts[i] !== '$' && !blocklist.includes(parts[i])) {
       const start = indexToPosition(classList, index)
       const end = indexToPosition(classList, index + parts[i].length)
       names.push({
