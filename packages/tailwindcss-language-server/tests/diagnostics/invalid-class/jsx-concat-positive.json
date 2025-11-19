@@ -1,0 +1,58 @@
+{
+  "code": "<div className={`nonexistent ${'px-4'}`}>",
+  "language": "javascriptreact",
+  "expected": [
+    {
+      "className": {
+        "classList": {
+          "classList": "nonexistent $",
+          "range": {
+            "end": {
+              "character": 30,
+              "line": 0
+            },
+            "start": {
+              "character": 17,
+              "line": 0
+            }
+          }
+        },
+        "className": "nonexistent",
+        "range": {
+          "end": {
+            "character": 28,
+            "line": 0
+          },
+          "start": {
+            "character": 17,
+            "line": 0
+          }
+        },
+        "relativeRange": {
+          "end": {
+            "character": 11,
+            "line": 0
+          },
+          "start": {
+            "character": 0,
+            "line": 0
+          }
+        }
+      },
+      "code": "invalidClass",
+      "message": "Unknown utility class 'nonexistent'.",
+      "range": {
+        "end": {
+          "character": 28,
+          "line": 0
+        },
+        "start": {
+          "character": 17,
+          "line": 0
+        }
+      },
+      "severity": 3,
+      "source": "tailwindcss"
+    }
+  ]
+}
