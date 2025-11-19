@@ -37,6 +37,7 @@ withFixture('basic', (c) => {
   testFixture('css-conflict/vue-style-lang-sass')
   testFixture('invalid-screen/simple')
   testFixture('invalid-theme/simple')
+  testFixture('invalid-class/simple')
 })
 
 withFixture('v4/basic', (c) => {
@@ -88,6 +89,7 @@ withFixture('v4/basic', (c) => {
   // testFixture('css-conflict/css-multi-rule')
   // testFixture('css-conflict/css-multi-prop')
   // testFixture('invalid-screen/simple')
+  testFixture('invalid-class/simple')
 
   testInline('simple typos in theme keys (in key)', {
     code: '.test { color: theme(--color-red-901) }',
@@ -323,6 +325,17 @@ withFixture('v4/basic', (c) => {
             },
           },
         ],
+      },
+      {
+        code: 'invalidClass',
+        source: 'tailwindcss',
+        message: "Unknown utility class 'foo'.",
+        className: {
+          className: 'foo',
+          classList: {
+            classList: 'foo max-w-4xl max-w-6xl hover:underline',
+          },
+        },
       },
     ],
   })

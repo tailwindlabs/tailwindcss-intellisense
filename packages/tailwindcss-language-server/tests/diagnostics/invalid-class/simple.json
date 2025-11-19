@@ -1,0 +1,27 @@
+{
+  "code": "<div class=\"px-4 nonexistent-class\"></div>",
+  "expected": [
+    {
+      "code": "invalidClass",
+      "source": "tailwindcss",
+      "className": {
+        "className": "nonexistent-class",
+        "classList": {
+          "classList": "px-4 nonexistent-class",
+          "range": {
+            "start": { "line": 0, "character": 12 },
+            "end": { "line": 0, "character": 34 }
+          }
+        },
+        "relativeRange": {
+          "start": { "line": 0, "character": 5 },
+          "end": { "line": 0, "character": 22 }
+        },
+        "range": { "start": { "line": 0, "character": 17 }, "end": { "line": 0, "character": 34 } }
+      },
+      "range": { "start": { "line": 0, "character": 17 }, "end": { "line": 0, "character": 34 } },
+      "severity": 3,
+      "message": "Unknown utility class 'nonexistent-class'."
+    }
+  ]
+}

@@ -6,23 +6,30 @@ import { getClassNameDecls } from '../util/getClassNameDecls'
 import * as jit from '../util/jit'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
+function isCustomProperty(property: string): boolean {
+  return property.startsWith('--')
+}
+
 function isClassValid(state: State, className: string): boolean {
   if (state.v4) {
     // V4: Use design system compilation
     let roots = state.designSystem.compile([className])
     let hasDeclarations = false
+    let hasNonCustomProperties = false
 
     visit([roots[0]], (node) => {
       if ((node.type === 'rule' || node.type === 'atrule') && node.nodes) {
         for (let child of node.nodes) {
           if (child.type === 'decl') {
             hasDeclarations = true
-            break
+            if (!isCustomProperty(child.prop)) {
+              hasNonCustomProperties = true
+            }
           }
         }
       }
     })
-    return hasDeclarations
+    return hasDeclarations && hasNonCustomProperties
   } else if (state.jit) {
     // JIT: Try to generate rules
     let { rules } = jit.generateRules(state, [className])
@@ -61,7 +68,7 @@ export async function getInvalidClassDiagnostics(
               : severity === 'warning'
               ? 2 /* DiagnosticSeverity.Warning */
               : 3 /* DiagnosticSeverity.Information */,
-          message: `'${className.className}' is not a recognized Tailwind CSS utility class.`,
+          message: `Unknown utility class '${className.className}'.`,
         })
       }
     })
