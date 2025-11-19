@@ -208,7 +208,7 @@ export function getDefaultTailwindSettings(): Settings {
         recommendedVariantOrder: 'warning',
         usedBlocklistedClass: 'warning',
         suggestCanonicalClasses: 'warning',
-        invalidClass: 'warning',
+        invalidClass: 'info',
       },
       showPixelEquivalents: true,
       includeLanguages: {},

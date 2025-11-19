@@ -1,4 +1,4 @@
-import type { State, Settings, DocumentClassName } from '../util/state'
+import type { State, Settings } from '../util/state'
 import { type InvalidClassDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { visit } from './getCssConflictDiagnostics'
