@@ -61,7 +61,7 @@ export async function getInvalidClassDiagnostics(
               : severity === 'warning'
               ? 2 /* DiagnosticSeverity.Warning */
               : 3 /* DiagnosticSeverity.Information */,
-          message: `'${className.className}' is not a recognized Tailwind CSS class.`,
+          message: `'${className.className}' is not a recognized Tailwind CSS utility class.`,
         })
       }
     })

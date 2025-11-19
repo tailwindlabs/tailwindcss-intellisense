@@ -14,11 +14,13 @@ import {
   isInvalidVariantDiagnostic,
   isRecommendedVariantOrderDiagnostic,
   isSuggestCanonicalClasses,
+  isInvalidClassDiagnostic,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
 import { provideInvalidApplyCodeActions } from './provideInvalidApplyCodeActions'
 import { provideSuggestionCodeActions } from './provideSuggestionCodeActions'
+import { provideInvalidClassCodeActions } from './provideInvalidClassCodeActions'
 
 async function getDiagnosticsFromCodeActionParams(
   state: State,
@@ -68,6 +70,10 @@ export async function doCodeActions(
 
       if (isCssConflictDiagnostic(diagnostic)) {
         return provideCssConflictCodeActions(state, params, diagnostic)
+      }
+
+      if (isInvalidClassDiagnostic(diagnostic)) {
+        return provideInvalidClassCodeActions(state, params, diagnostic)
       }
 
       if (
