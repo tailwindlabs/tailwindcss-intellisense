@@ -38,6 +38,7 @@ withFixture('basic', (c) => {
   testFixture('invalid-screen/simple')
   testFixture('invalid-theme/simple')
   testFixture('invalid-class/simple')
+  testFixture('invalid-class/valid-classes')
 })
 
 withFixture('v4/basic', (c) => {
@@ -90,6 +91,7 @@ withFixture('v4/basic', (c) => {
   // testFixture('css-conflict/css-multi-prop')
   // testFixture('invalid-screen/simple')
   testFixture('invalid-class/simple')
+  testFixture('invalid-class/valid-classes')
 
   testInline('simple typos in theme keys (in key)', {
     code: '.test { color: theme(--color-red-901) }',
