@@ -35,9 +35,7 @@ function isClassValid(state: State, className: string): boolean {
     let { rules } = jit.generateRules(state, [className])
     return rules.length > 0
   } else {
-    // Static: Check if decls exist
-    let decls = getClassNameDecls(state, className)
-    return !!decls
+    return false
   }
 }
 
