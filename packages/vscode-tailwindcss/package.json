@@ -335,7 +335,7 @@
             "warning",
             "error"
           ],
-          "default": "info",
+          "default": "ignore",
           "markdownDescription": "Classes that are not recognized as valid Tailwind CSS classes",
           "scope": "language-overridable"
         },
