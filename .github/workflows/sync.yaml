@@ -1,0 +1,76 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Runs at 3 AM UTC daily
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  sync-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+
+      - name: Detect Upstream Repository
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use GitHub CLI to get the parent repository URL
+          PARENT_URL=$(gh repo view ${{ github.repository }} --json parent --jq '.parent.url')
+          
+          if [ -z "$PARENT_URL" ] || [ "$PARENT_URL" == "null" ]; then
+            echo "Error: This repository is not a fork. Cannot sync."
+            exit 1
+          fi
+          
+          echo "Detected upstream: $PARENT_URL"
+          
+          git remote add upstream $PARENT_URL
+          git fetch upstream
+
+          # Detect upstream default branch (main vs master)
+          DEFAULT_BRANCH=$(git remote show upstream | grep 'HEAD branch' | cut -d' ' -f5)
+          echo "Detected upstream default branch: $DEFAULT_BRANCH"
+          
+          # Output variables for next steps
+          echo "url=$PARENT_URL" >> $GITHUB_OUTPUT
+          echo "branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Prepare Merge Branch
+        env:
+          TARGET_BRANCH: ${{ steps.upstream.outputs.branch }}
+        run: |
+          git checkout -b upstream-sync
+          
+          # Merge upstream. 'recursive' handles file additions well.
+          git merge upstream/$TARGET_BRANCH --allow-unrelated-histories -m "chore: sync with upstream"
+
+          # Push to your fork (updates PR if exists)
+          git push -f origin upstream-sync
+
+      - name: Create PR & Auto-Merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ steps.upstream.outputs.branch }}
+        run: |
+          gh pr create \
+            --base $BASE_BRANCH \
+            --head upstream-sync \
+            --title "chore: sync with upstream" \
+            --body "Automated sync from ${{ steps.upstream.outputs.url }}." \
+            --label "upstream-sync" || echo "PR already exists"
+
+          # Enable auto-merge
+          gh pr merge upstream-sync --auto --merge
