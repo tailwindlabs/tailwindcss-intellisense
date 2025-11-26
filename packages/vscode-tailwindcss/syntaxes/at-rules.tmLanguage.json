@@ -389,7 +389,7 @@
           "name": "meta.at-rule.utility.body.tailwind",
           "patterns": [
             {
-              "include": "source.css#rule-list-innards"
+              "include": "#property-list"
             }
           ]
         }

@@ -1116,8 +1116,9 @@ exports[`@utility 1`] = `
 
   @apply flex;
 ^^^^^^^^^^^^^^                         5: source.css.tailwind meta.at-rule.utility.body.tailwind
-   ^^^^^ ^^^^                          2: meta.property-name.css
-         ^^^^                          1: support.type.property-name.css
+  ^^^^^^^^^^^^                         4: meta.at-rule.header.css
+  ^^^^^^                               2: keyword.control.at-rule.css
+  ^                                    1: punctuation.definition.keyword.css
              ^                         1: punctuation.terminator.rule.css
 
 }
