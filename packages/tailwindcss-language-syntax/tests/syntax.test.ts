@@ -196,6 +196,16 @@ test('@utility', async ({ expect }) => {
       tab-size: --value(--tab-size-*);
       font-size: 12px;
     }
+
+    @utility foo {
+      @apply flex;
+    }
+
+    @utility foo {
+      & {
+        color: red;
+      }
+    }
   `)
 
   expect(result.toString()).toMatchSnapshot()
