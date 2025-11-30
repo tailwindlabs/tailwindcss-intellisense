@@ -1,0 +1,60 @@
+# This workflow builds and publishes the extension to OpenVSX.
+# It runs when a new tag (v*) is pushed.
+name: Release to OpenVSX
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+      - "**/v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      EXTENSION_PATH: packages/vscode-tailwindcss
+      PUBLISHER_NAME: TimsExperiments
+      OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Everything
+        run: pnpm -r run build
+
+      # Updates the 'publisher' field in package.json to match the environment variable.
+      # The upstream package.json has the original publisher. We need to publish under YOUR publisher ID.
+      - name: Patch to ${{ env.PUBLISHER_NAME }}
+        run: |
+          cd ${{ env.EXTENSION_PATH }}
+
+          jq '.publisher = "${{ env.PUBLISHER_NAME }}"' package.json > package.json.tmp && mv package.json.tmp package.json
+
+          echo "Publisher verified as:"
+          grep '"publisher":' package.json
+
+      # Runs 'vsce package' to create the file and 'ovsx publish' to upload it.
+      # This creates the .vsix artifact and uploads it to the OpenVSX registry.
+      - name: Build & Publish
+        env:
+          OVSX_PAT: ${{ env.OPEN_VSX_TOKEN }}
+        run: |
+          cd ${{ env.EXTENSION_PATH }}
+
+          pnpm dlx vsce package
+
+          pnpm dlx ovsx publish -p $OVSX_PAT || echo "Publish failed or version already exists."

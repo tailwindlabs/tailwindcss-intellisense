@@ -1,0 +1,38 @@
+# This workflow checks if the version in package.json already has a corresponding git tag.
+# It runs on Pull Requests.
+name: Check Version
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    env:
+      EXTENSION_PATH: packages/vscode-tailwindcss
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Calculates the tag from package.json and checks if it exists in refs/tags/.
+      # This informs the user if the current version is already tagged, which would prevent a new release.
+      - name: Check Version Tag
+        run: |
+          cd ${{ env.EXTENSION_PATH }} || exit 1
+          VERSION=$(jq -r .version package.json)
+
+          if [ "${{ env.EXTENSION_PATH }}" == "." ] || [ "${{ env.EXTENSION_PATH }}" == "./" ]; then
+            TAG="v$VERSION"
+          else
+            CLEAN_PATH=$(echo "${{ env.EXTENSION_PATH }}" | sed 's/^\.\///' | sed 's/\/$//')
+            TAG="$CLEAN_PATH/v$VERSION"
+          fi
+
+          echo "Checking for tag: $TAG"
+
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::warning::Tag $TAG already exists! This PR will NOT trigger a release when merged unless the version is bumped."
+          else
+            echo "::notice::Tag $TAG does not exist. Merging this PR will trigger a release for version $VERSION."
+          fi

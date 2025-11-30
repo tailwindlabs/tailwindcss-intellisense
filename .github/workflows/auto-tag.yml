@@ -1,0 +1,60 @@
+# This workflow automatically creates a git tag when a version change is detected in package.json.
+# It runs on pushes to the main/master branch.
+name: Auto Tag Release
+on:
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: auto-tag-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      EXTENSION_PATH: packages/vscode-tailwindcss
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Reads package.json, calculates the expected tag format (vX.Y.Z), and outputs it.
+      # We need to know the current version in package.json to determine if a tag is missing.
+      - name: Get Version and Tag
+        id: version
+        run: |
+          cd ${{ env.EXTENSION_PATH }} || exit 1
+          VERSION=$(jq -r .version package.json)
+
+          if [ "${{ env.EXTENSION_PATH }}" == "." ] || [ "${{ env.EXTENSION_PATH }}" == "./" ]; then
+            TAG="v$VERSION"
+          else
+            # Clean path for tag name (remove leading ./ and trailing /)
+            CLEAN_PATH=$(echo "${{ env.EXTENSION_PATH }}" | sed 's/^\.\///' | sed 's/\/$//')
+            TAG="$CLEAN_PATH/v$VERSION"
+          fi
+
+          echo "Detected version: $VERSION"
+          echo "Calculated tag: $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      # Checks if the calculated tag exists. If not, creates and pushes it.
+      # This ensures we only create tags that don't exist yet, avoiding errors and duplicate releases.
+      - name: Check and Push Tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping."
+          else
+            echo "Tag $TAG does not exist. Creating..."
+            git config user.name "GitHub Action"
+            git config user.email "action@github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi

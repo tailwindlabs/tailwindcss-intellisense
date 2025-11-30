@@ -1,0 +1,84 @@
+# This workflow keeps your fork in sync with the upstream repository.
+# It runs on a schedule (daily) or can be triggered manually.
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # Runs at 3 AM UTC daily
+  workflow_dispatch:
+
+jobs:
+  sync-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+
+      # Uses 'gh repo view' to find the parent repository URL and default branch.
+      # This identifies the source repository we forked from, so we know where to pull changes from.
+      - name: Detect Upstream Repository
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use GitHub CLI to get the parent repository URL
+          PARENT_URL=$(gh repo view ${{ github.repository }} --json parent --jq '.parent.url')
+
+          if [ -z "$PARENT_URL" ] || [ "$PARENT_URL" == "null" ]; then
+            echo "Error: This repository is not a fork. Cannot sync."
+            exit 1
+          fi
+
+          echo "Detected upstream: $PARENT_URL"
+
+          git remote add upstream $PARENT_URL
+          git fetch upstream
+
+          # Detect upstream default branch (main vs master)
+          DEFAULT_BRANCH=$(git remote show upstream | grep 'HEAD branch' | cut -d' ' -f5)
+          echo "Detected upstream default branch: $DEFAULT_BRANCH"
+
+          # Output variables for next steps
+          echo "url=$PARENT_URL" >> $GITHUB_OUTPUT
+          echo "branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+
+      # Creates a new branch 'upstream-sync', merges upstream changes into it, and pushes to origin.
+      # This safely merges upstream changes without affecting the main branch immediately (in case of conflicts).
+      - name: Prepare Merge Branch
+        env:
+          TARGET_BRANCH: ${{ steps.upstream.outputs.branch }}
+        run: |
+          git checkout -b upstream-sync
+
+          # Merge upstream. 'recursive' handles file additions well.
+          git merge upstream/$TARGET_BRANCH --allow-unrelated-histories -m "chore: sync with upstream"
+
+          # Push to your fork (updates PR if exists)
+          git push --force-with-lease origin upstream-sync
+
+      # Opens a PR from 'upstream-sync' to the default branch and enables auto-merge.
+      # This proposes the changes to the default branch and automatically merges them if checks pass.
+      - name: Create PR & Auto-Merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_BRANCH: ${{ steps.upstream.outputs.branch }}
+        run: |
+          gh pr create \
+            --base $BASE_BRANCH \
+            --head upstream-sync \
+            --title "chore: sync with upstream" \
+            --body "Automated sync from ${{ steps.upstream.outputs.url }}." \
+            --label "upstream-sync" || echo "PR already exists"
+
+          # Enable auto-merge
+          gh pr merge upstream-sync --auto --merge
