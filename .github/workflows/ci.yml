@@ -11,9 +11,9 @@ jobs:
       matrix:
         node: [18, 20, 22, 24]
         os:
-          - namespace-profile-default
-          - namespace-profile-macos-arm64
-          - namespace-profile-windows-amd64
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
 
     runs-on: ${{ matrix.os }}
     name: Run Tests - Node v${{ matrix.node }} / ${{ matrix.os }}
