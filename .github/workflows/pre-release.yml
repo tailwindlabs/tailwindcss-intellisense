@@ -1,8 +1,10 @@
 name: Publish pre-release
 concurrency: publish
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+
 jobs:
   publish:
     runs-on: ubuntu-latest
