@@ -455,7 +455,7 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/src/a/b/c/index.css',
       content: [],
     },
@@ -487,12 +487,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/index.css',
       content: [],
     },
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/src/vendor/c.css',
       content: [],
     },
@@ -519,12 +519,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/src/app.css',
       content: [],
     },
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/a/foo.css',
       content: [],
     },
@@ -554,12 +554,12 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/src/app.css',
       content: [],
     },
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/a/foo.css',
       content: [],
     },
@@ -581,7 +581,7 @@ testLocator({
   },
   expected: [
     {
-      version: '4.1.15 (bundled)',
+      version: '4.1.17 (bundled)',
       config: '/src/app.css',
       content: [],
     },

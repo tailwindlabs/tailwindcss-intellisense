@@ -446,14 +446,6 @@ defineTest({
 defineTest({
   name: 'Shows warning when using non-canonical classes',
   fs: {
-    // TODO: Drop this when the embedded version of tailwindcss is v4.1.15
-    'package.json': json`
-      {
-        "dependencies": {
-          "tailwindcss": "0.0.0-insiders.249bed0"
-        }
-      }
-    `,
     'app.css': css`
       @import 'tailwindcss';
     `,

@@ -89,7 +89,7 @@
     "rimraf": "3.0.2",
     "stack-trace": "0.0.10",
     "tailwindcss": "3.4.18",
-    "tailwindcss-v4": "npm:tailwindcss@4.1.15",
+    "tailwindcss-v4": "npm:tailwindcss@4.1.17",
     "tinyglobby": "^0.2.12",
     "tsconfck": "^3.1.4",
     "tsconfig-paths": "^4.2.0",

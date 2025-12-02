@@ -204,8 +204,8 @@ importers:
         specifier: 3.4.18
         version: 3.4.18
       tailwindcss-v4:
-        specifier: npm:tailwindcss@4.1.15
-        version: tailwindcss@4.1.15
+        specifier: npm:tailwindcss@4.1.17
+        version: tailwindcss@4.1.17
       tinyglobby:
         specifier: ^0.2.12
         version: 0.2.12
@@ -2434,8 +2434,8 @@ packages:
     engines: {node: '>=14.0.0'}
     hasBin: true
 
-  tailwindcss@4.1.15:
-    resolution: {integrity: sha512-k2WLnWkYFkdpRv+Oby3EBXIyQC8/s1HOFMBUViwtAh6Z5uAozeUSMQlIsn/c6Q2iJzqG6aJT3wdPaRNj70iYxQ==}
+  tailwindcss@4.1.17:
+    resolution: {integrity: sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q==}
 
   tapable@2.2.1:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
@@ -4674,7 +4674,7 @@ snapshots:
     transitivePeerDependencies:
       - ts-node
 
-  tailwindcss@4.1.15: {}
+  tailwindcss@4.1.17: {}
 
   tapable@2.2.1: {}
 
