@@ -3,6 +3,7 @@
 ## Prerelease
 
 - Add a source to all emitted diagnostics ([#1491](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1491))
+- Improve performance in large files ([#1507](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1507))
 
 ## 0.14.29
 
