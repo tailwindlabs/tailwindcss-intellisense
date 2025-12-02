@@ -1,4 +1,4 @@
-import type { Range, Position } from 'vscode-languageserver'
+import { type Range, type Position, LRUCache } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DocumentClassName, DocumentClassList, State, DocumentHelperFunction } from './state'
 import lineColumn from 'line-column'
@@ -591,8 +591,20 @@ export function findHelperFunctionsInRange(
   return fns
 }
 
+let lineTableCache = new LRUCache<string, ReturnType<typeof lineColumn>>(20)
+
+function createLineTable(str: string) {
+  let existing = lineTableCache.get(str)
+  if (existing) return existing
+
+  let table = lineColumn(str + '\n')
+  lineTableCache.set(str, table)
+  return table
+}
+
 export function indexToPosition(str: string, index: number): Position {
-  const { line, col } = lineColumn(str + '\n').fromIndex(index) ?? { line: 1, col: 1 }
+  let table = createLineTable(str)
+  let { line, col } = table.fromIndex(index) ?? { line: 1, col: 1 }
   return { line: line - 1, character: col - 1 }
 }
 
