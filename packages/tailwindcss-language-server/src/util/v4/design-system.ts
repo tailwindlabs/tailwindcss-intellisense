@@ -13,6 +13,7 @@ import { plugins } from './plugins'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
+const COMPILE_CACHE = Symbol('LSP_COMPILE_CACHE')
 
 export async function isMaybeV4(css: string): Promise<boolean> {
   // Look for:
@@ -215,6 +216,11 @@ export async function loadDesignSystem(
     }),
   })
 
+  // This object doesn't exist in older versions but we can patch it in so it
+  // seems like it always existed.
+  design.storage ??= {}
+  design.storage[COMPILE_CACHE] = {}
+
   // Step 4: Augment the design system with some additional APIs that the LSP needs
   Object.assign(design, {
     dependencies: () => dependencies,
@@ -227,23 +233,40 @@ export async function loadDesignSystem(
     // - Replace `candidatesToCss` with a `candidatesToAst` API
     // First step would be to convert to a PostCSS AST by transforming the nodes directly
     // Then it would be to drop the PostCSS AST representation entirely in all v4 code paths
-    compile(classes: string[]): (postcss.Root | null)[] {
-      let css = design.candidatesToCss(classes)
+    compile(classes: string[]): postcss.Root[] {
+      // 1. Compile any uncached classes
+      let cache = design.storage[COMPILE_CACHE] as Record<string, postcss.Root>
+      let uncached = classes.filter((name) => cache[name] === undefined)
+
+      let css = design.candidatesToCss(uncached)
       let errors: any[] = []
 
-      let roots = css.map((str) => {
-        if (str === null) return postcss.root()
+      for (let [idx, cls] of uncached.entries()) {
+        let str = css[idx]
+
+        if (str === null) {
+          cache[cls] = postcss.root()
+          continue
+        }
 
         try {
-          return postcss.parse(str.trimEnd())
+          cache[cls] = postcss.parse(str.trimEnd())
         } catch (err) {
           errors.push(err)
-          return postcss.root()
+          cache[cls] = postcss.root()
+          continue
         }
-      })
+      }
 
       if (errors.length > 0) {
         console.error(JSON.stringify(errors))
+      }
+
+      // 2. Pull all the classes from the cache
+      let roots: postcss.Root[] = []
+
+      for (let cls of classes) {
+        roots.push(cache[cls].clone())
       }
 
       return roots

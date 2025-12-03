@@ -50,6 +50,10 @@ export interface DesignSystem {
 
   // Added in v4.1.15
   canonicalizeCandidates?(classes: string[], options?: CanonicalizeOptions): string[]
+
+  // Added in v4.1.16
+  // We can patch it into any design system if it doesn't exist though
+  storage?: Record<symbol, any>
 }
 
 export interface DesignSystem {
