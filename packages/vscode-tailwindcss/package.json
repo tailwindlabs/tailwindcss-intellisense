@@ -65,6 +65,11 @@
         "command": "tailwindCSS.sortSelection",
         "title": "Tailwind CSS: Sort Selection",
         "enablement": "editorHasSelection && (resourceScheme == file || resourceScheme == vscode-remote) && tailwindCSS.activeTextEditorSupportsClassSorting"
+      },
+      {
+        "command": "tailwindCSS.applyAllCanonicalClasses",
+        "title": "Tailwind CSS: Apply All Canonical Class Suggestions",
+        "enablement": "editorTextFocus && (resourceScheme == file || resourceScheme == vscode-remote)"
       }
     ],
     "grammars": [

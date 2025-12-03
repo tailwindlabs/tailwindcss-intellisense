@@ -14,6 +14,9 @@ import {
   SymbolInformation,
   Position,
   Range,
+  languages,
+  WorkspaceEdit,
+  TextEdit,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -201,6 +204,79 @@ export async function activate(context: ExtensionContext) {
         await sortSelection()
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${(error as any)?.message}`)
+      }
+    }),
+  )
+
+  async function applyAllCanonicalClasses(): Promise<void> {
+    if (!Window.activeTextEditor) {
+      return
+    }
+
+    let { document } = Window.activeTextEditor
+    let folder = Workspace.getWorkspaceFolder(document.uri)
+
+    if (!folder || isExcluded(document.uri.fsPath, folder)) {
+      return
+    }
+
+    // Get all diagnostics for the current document
+    let allDiagnostics = languages.getDiagnostics(document.uri)
+
+    // Filter for SuggestCanonicalClasses diagnostics
+    // The diagnostic code will be 'suggestCanonicalClasses' based on DiagnosticKind enum
+    let canonicalDiagnostics = allDiagnostics.filter(
+      (diagnostic) => diagnostic.code === 'suggestCanonicalClasses',
+    )
+
+    if (canonicalDiagnostics.length === 0) {
+      Window.showInformationMessage('No canonical class suggestions found in this document.')
+      return
+    }
+
+    // Create a workspace edit to apply all suggestions
+    let workspaceEdit = new WorkspaceEdit()
+    let edits: TextEdit[] = []
+
+    // Sort diagnostics by position (from end to start) to avoid range invalidation
+    canonicalDiagnostics.sort((a, b) => {
+      if (a.range.start.line !== b.range.start.line) {
+        return b.range.start.line - a.range.start.line
+      }
+      return b.range.start.character - a.range.start.character
+    })
+
+    for (let diagnostic of canonicalDiagnostics) {
+      // Access the canonical class suggestion directly from the suggestions property
+      // Type assertion needed since languages.getDiagnostics returns vscode.Diagnostic
+      let canonicalClass = (diagnostic as any).suggestions?.[0]
+      if (canonicalClass) {
+        edits.push(TextEdit.replace(diagnostic.range, canonicalClass))
+      }
+    }
+
+    workspaceEdit.set(document.uri, edits)
+
+    // Apply the workspace edit
+    let success = await Workspace.applyEdit(workspaceEdit)
+
+    if (success) {
+      let count = edits.length
+      Window.showInformationMessage(
+        `Applied ${count} canonical class suggestion${count === 1 ? '' : 's'}.`,
+      )
+    } else {
+      Window.showWarningMessage('Failed to apply canonical class suggestions.')
+    }
+  }
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.applyAllCanonicalClasses', async () => {
+      try {
+        await applyAllCanonicalClasses()
+      } catch (error) {
+        let message = error instanceof Error ? error.message : 'Unknown error'
+        Window.showWarningMessage(`Couldn't apply canonical class suggestions: ${message}`)
       }
     }),
   )
