@@ -1,6 +1,6 @@
 import postcss from 'postcss'
-import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
+import type { Rule } from '../../css'
 
 export interface Theme {
   // Prefix didn't exist for earlier Tailwind versions
