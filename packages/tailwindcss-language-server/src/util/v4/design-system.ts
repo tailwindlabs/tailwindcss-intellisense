@@ -230,12 +230,19 @@ export async function loadDesignSystem(
       let cache = design.storage[COMPILE_CACHE] as Record<string, AstNode[]>
       let uncached = classes.filter((name) => cache[name] === undefined)
 
-      let css = design.candidatesToCss(uncached)
+      let css = design.candidatesToAst
+        ? design.candidatesToAst(uncached)
+        : design.candidatesToCss(uncached)
 
       let errors: any[] = []
 
       for (let [idx, cls] of uncached.entries()) {
         let str = css[idx]
+
+        if (Array.isArray(str)) {
+          cache[cls] = str
+          continue
+        }
 
         if (str === null) {
           cache[cls] = []
