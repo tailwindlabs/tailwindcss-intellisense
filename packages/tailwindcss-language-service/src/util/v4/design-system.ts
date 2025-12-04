@@ -58,5 +58,5 @@ export interface DesignSystem {
 
 export interface DesignSystem {
   dependencies(): Set<string>
-  compile(classes: string[]): (postcss.Root | null)[]
+  compile(classes: string[]): AstNode[][]
 }

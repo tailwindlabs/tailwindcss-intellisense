@@ -7,8 +7,9 @@ import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
-import postcss from 'postcss'
 import { replaceCssVarsWithFallbacks } from './rewriting'
+import { AstNode } from '../css'
+import { walk, WalkAction } from './walk'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -158,36 +159,38 @@ function getColorFromDecls(
   return null
 }
 
-function getColorFromRoot(state: State, css: postcss.Root): culori.Color | KeywordColor | null {
-  // Remove any `@property` rules
-  css = css.clone()
-  css.walkAtRules((rule) => {
-    // Ignore declarations inside `@property` rules
-    if (rule.name === 'property') {
-      rule.remove()
-    }
-
-    // Ignore declarations @supports (-moz-orient: inline)
-    // this is a hack used for `@property` fallbacks in Firefox
-    if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
-      rule.remove()
-    }
-  })
-
+function getColorFromRoot(state: State, css: AstNode[]): culori.Color | KeywordColor | null {
   let decls: Record<string, string[]> = {}
 
-  let rule = postcss.rule({
-    selector: '.x',
-    nodes: [],
-  })
+  walk(css, (node) => {
+    if (node.kind === 'at-rule') {
+      // Skip over any `@property` rules
+      if (node.name === '@property') {
+        return WalkAction.Skip
+      }
 
-  css.walkDecls((decl) => {
-    rule.append(decl.clone())
-  })
+      // Ignore @supports (-moz-orient: inline)
+      // This is a hack used for `@property` fallbacks in Firefox
+      if (node.name === '@supports' && node.params === '(-moz-orient: inline)') {
+        return WalkAction.Skip
+      }
 
-  css.walkDecls((decl) => {
-    decls[decl.prop] ??= []
-    decls[decl.prop].push(decl.value)
+      if (
+        node.name === '@supports' &&
+        node.params === '(background-image: linear-gradient(in lab, red, red))'
+      ) {
+        return WalkAction.Skip
+      }
+
+      return WalkAction.Continue
+    }
+
+    if (node.kind === 'declaration' && node.value !== undefined) {
+      decls[node.property] ??= []
+      decls[node.property].push(node.value)
+    }
+
+    return WalkAction.Continue
   })
 
   return getColorFromDecls(state, decls)

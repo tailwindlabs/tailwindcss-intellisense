@@ -20,6 +20,7 @@ import { getTextWithoutComments } from './util/doc'
 import braces from 'braces'
 import { absoluteRange } from './util/absoluteRange'
 import { segment } from './util/segment'
+import { toPostCSSAst } from './css'
 
 export async function doHover(
   state: State,
@@ -101,15 +102,12 @@ async function provideClassNameHover(
 
   if (state.v4) {
     let root = state.designSystem.compile([className.className])[0]
-
-    if (root.nodes.length === 0) {
-      return null
-    }
+    if (root.length === 0) return null
 
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, root, document.uri),
+        value: await jit.stringifyRoot(state, toPostCSSAst(root), document.uri),
       },
       range: className.range,
     }

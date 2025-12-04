@@ -1,6 +1,5 @@
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
-import postcss from 'postcss'
 import { createJiti } from 'jiti'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -10,6 +9,7 @@ import { pathToFileURL } from '../../utils'
 import type { Jiti } from 'jiti/lib/types'
 import { assets } from './assets'
 import { plugins } from './plugins'
+import { AstNode, cloneAstNode, parse } from '@tailwindcss/language-service/src/css'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -225,35 +225,28 @@ export async function loadDesignSystem(
   Object.assign(design, {
     dependencies: () => dependencies,
 
-    // TODOs:
-    //
-    // 1. Remove PostCSS parsing — its roughly 60% of the processing time
-    // ex: compiling 19k classes take 650ms and 400ms of that is PostCSS
-    //
-    // - Replace `candidatesToCss` with a `candidatesToAst` API
-    // First step would be to convert to a PostCSS AST by transforming the nodes directly
-    // Then it would be to drop the PostCSS AST representation entirely in all v4 code paths
-    compile(classes: string[]): postcss.Root[] {
+    compile(classes: string[]): AstNode[][] {
       // 1. Compile any uncached classes
-      let cache = design.storage[COMPILE_CACHE] as Record<string, postcss.Root>
+      let cache = design.storage[COMPILE_CACHE] as Record<string, AstNode[]>
       let uncached = classes.filter((name) => cache[name] === undefined)
 
       let css = design.candidatesToCss(uncached)
+
       let errors: any[] = []
 
       for (let [idx, cls] of uncached.entries()) {
         let str = css[idx]
 
         if (str === null) {
-          cache[cls] = postcss.root()
+          cache[cls] = []
           continue
         }
 
         try {
-          cache[cls] = postcss.parse(str.trimEnd())
+          cache[cls] = parse(str.trimEnd())
         } catch (err) {
           errors.push(err)
-          cache[cls] = postcss.root()
+          cache[cls] = []
           continue
         }
       }
@@ -263,10 +256,10 @@ export async function loadDesignSystem(
       }
 
       // 2. Pull all the classes from the cache
-      let roots: postcss.Root[] = []
+      let roots: AstNode[][] = []
 
       for (let cls of classes) {
-        roots.push(cache[cls].clone())
+        roots.push(cache[cls].map(cloneAstNode))
       }
 
       return roots
