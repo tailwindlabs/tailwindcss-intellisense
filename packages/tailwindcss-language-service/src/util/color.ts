@@ -10,6 +10,7 @@ import namedColors from 'color-name'
 import { replaceCssVarsWithFallbacks } from './rewriting'
 import { AstNode } from '../css'
 import { walk, WalkAction } from './walk'
+import * as semver from 'semver'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -179,19 +180,29 @@ let isNumericUtility =
   /^-?((min-|max-)?[wh]|z|start|indent|flex|columns|order|rounded|row|col|size|basis|end|delay|duration|ease|font|top|left|bottom|right|leading|cursor|(backdrop-)?(opacity|brightness|sepia|saturate|hue-rotate|grayscale|contrast|blur)|(space|scale|skew|rotate|translate|border-spacing|gap)(-[xyz])?|(scroll-)?[pm][trblxyse]?)-/
 let isMaskUtility = /^-?mask-/
 
-function isLikelyColorless(className: string) {
+function isLikelyColorless(state: State, className: string) {
   if (isNegative.test(className)) return true
+  if (isNumericUtility.test(className)) return true
+
+  // TODO: Update version number to v4.1.18 when it's released
+  // v4.1.18 has an API that lets us access compiled candidate ASTs directly
+  // significantly improving performance.
+  //
+  // While the additional compilation overhead from the mask utilities still
+  // exists it is much smaller.
+  if (semver.gte(state.version, '4.1.17')) return false
+
   // TODO: This is **not** correct but is intentional because there are 5k mask utilities and a LOT of them are colors
   // This causes a massive slowdown when building the design system
   if (isMaskUtility.test(className)) return true
-  if (isNumericUtility.test(className)) return true
+
   return false
 }
 
 export function getColor(state: State, className: string): ParsedColor | null {
   if (state.v4) {
     // FIXME: This is a performance optimization and not strictly correct
-    if (isLikelyColorless(className)) return null
+    if (isLikelyColorless(state, className)) return null
 
     let css = state.designSystem.compile([className])[0]
     let color = getColorFromRoot(state, css)
