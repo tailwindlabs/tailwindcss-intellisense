@@ -14,9 +14,16 @@ export default defineConfig({
       name: 'force-inline-css',
       enforce: 'pre',
       resolveId(id) {
-        if (!id.includes('index.css')) return
         if (id.includes('?raw')) return
-        return this.resolve(`${id}?raw`)
+
+        if (
+          id.includes('index.css') ||
+          id.includes('theme.css') ||
+          id.includes('utilities.css') ||
+          id.includes('preflight.css')
+        ) {
+          return this.resolve(`${id}?raw`)
+        }
       },
     },
   ],
