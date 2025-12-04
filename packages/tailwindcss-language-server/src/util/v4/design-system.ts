@@ -271,12 +271,6 @@ export async function loadDesignSystem(
 
       return roots
     },
-
-    toCss(nodes: postcss.Root | postcss.Node[]): string {
-      return Array.isArray(nodes)
-        ? postcss.root({ nodes }).toString().trim()
-        : nodes.toString().trim()
-    },
   })
 
   return design

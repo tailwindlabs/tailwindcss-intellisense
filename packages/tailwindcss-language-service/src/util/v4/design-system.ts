@@ -59,5 +59,4 @@ export interface DesignSystem {
 export interface DesignSystem {
   dependencies(): Set<string>
   compile(classes: string[]): (postcss.Root | null)[]
-  toCss(nodes: postcss.Root | postcss.Node[]): string
 }
