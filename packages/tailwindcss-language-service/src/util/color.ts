@@ -191,7 +191,7 @@ function getColorFromRoot(state: State, css: AstNode[]): ParsedColor | null {
 
 let isNegative = /^-/
 let isNumericUtility =
-  /^-?((min-|max-)?[wh]|z|start|order|opacity|rounded|row|col|size|basis|end|duration|ease|font|top|left|bottom|right|inset|leading|cursor|(space|scale|skew|rotate)-[xyz]|gap(-[xy])?|(scroll-)?[pm][trblxyse]?)-/
+  /^-?((min-|max-)?[wh]|z|start|indent|flex|columns|order|rounded|row|col|size|basis|end|delay|duration|ease|font|top|left|bottom|right|leading|cursor|(backdrop-)?(opacity|brightness|sepia|saturate|hue-rotate|grayscale|contrast|blur)|(space|scale|skew|rotate|translate|border-spacing|gap)(-[xyz])?|(scroll-)?[pm][trblxyse]?)-/
 let isMaskUtility = /^-?mask-/
 
 function isLikelyColorless(className: string) {
