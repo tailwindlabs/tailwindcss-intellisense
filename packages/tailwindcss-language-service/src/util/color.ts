@@ -39,13 +39,12 @@ export type KeywordColor = 'transparent' | 'currentColor'
 
 function getKeywordColor(value: unknown): KeywordColor | null {
   if (typeof value !== 'string') return null
-  let lowercased = value.toLowerCase()
-  if (lowercased === 'transparent') {
-    return 'transparent'
-  }
-  if (lowercased === 'currentcolor') {
-    return 'currentColor'
-  }
+
+  value = value.toLowerCase()
+
+  if (value === 'transparent') return 'transparent'
+  if (value === 'currentcolor') return 'currentColor'
+
   return null
 }
 
@@ -122,11 +121,6 @@ function getColorFromDecls(
     ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str)),
   )
 
-  // check that all of the values are valid colors
-  // if (colors.some((color) => color instanceof TinyColor && !color.isValid)) {
-  //   return null
-  // }
-
   // check that all of the values are the same color, ignoring alpha
   const colorStrings = dedupe(
     colors.map((color) =>
@@ -138,9 +132,7 @@ function getColorFromDecls(
   }
 
   let keyword = getKeywordColor(colorStrings[0])
-  if (keyword) {
-    return keyword
-  }
+  if (keyword) return keyword
 
   const nonKeywordColors = colors.filter(
     (color): color is culori.Color => typeof color !== 'string',
@@ -216,7 +208,6 @@ export function getColor(state: State, className: string): culori.Color | Keywor
     if (isLikelyColorless(className)) return null
 
     let css = state.designSystem.compile([className])[0]
-
     let color = getColorFromRoot(state, css)
 
     let prefix = state.designSystem.theme.prefix ?? ''
@@ -279,13 +270,11 @@ export function getColor(state: State, className: string): culori.Color | Keywor
 
 export function getColorFromValue(value: unknown): culori.Color | KeywordColor | null {
   if (typeof value !== 'string') return null
-  const trimmedValue = value.trim()
-  if (trimmedValue.toLowerCase() === 'transparent') {
-    return 'transparent'
-  }
-  if (trimmedValue.toLowerCase() === 'currentcolor') {
-    return 'currentColor'
-  }
+
+  let trimmedValue = value.trim()
+  let keyword = getKeywordColor(trimmedValue)
+  if (keyword) return keyword
+
   if (
     !/^\s*(?:rgba?|hsla?|(?:ok)?(?:lab|lch))\s*\([^)]+\)\s*$/.test(trimmedValue) &&
     !/^\s*#[0-9a-f]+\s*$/i.test(trimmedValue) &&
