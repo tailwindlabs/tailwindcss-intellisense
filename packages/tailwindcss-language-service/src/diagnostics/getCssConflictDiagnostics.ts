@@ -9,6 +9,7 @@ import * as jit from '../util/jit'
 import * as postcss from 'postcss'
 import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import { walk, WalkAction } from '../util/walk'
 
 function isCustomProperty(property: string): boolean {
   return property.startsWith('--')
@@ -238,20 +239,6 @@ interface RuleEntry {
 
 type ClassDetails = Record<string, RuleEntry[]>
 
-export function visit(
-  nodes: postcss.AnyNode[],
-  cb: (node: postcss.AnyNode, path: postcss.AnyNode[]) => void,
-  path: postcss.AnyNode[] = [],
-): void {
-  for (let child of nodes) {
-    path = [...path, child]
-    cb(child, path)
-    if ('nodes' in child && child.nodes && child.nodes.length > 0) {
-      visit(child.nodes, cb, path)
-    }
-  }
-}
-
 function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDetails {
   const groups: Record<string, RuleEntry[]> = {}
 
@@ -261,34 +248,38 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
   for (let [idx, root] of roots.entries()) {
     let { className } = classes[idx]
 
-    visit([root], (node, path) => {
-      if (node.type !== 'rule' && node.type !== 'atrule') return
+    walk(root, (node, ctx) => {
+      if (node.kind !== 'rule' && node.kind !== 'at-rule') return WalkAction.Continue
 
       let properties: string[] = []
 
       for (let child of node.nodes ?? []) {
-        if (child.type !== 'decl') continue
-        properties.push(child.prop)
+        if (child.kind !== 'declaration') continue
+        properties.push(child.property)
       }
 
-      if (properties.length === 0) return
+      if (properties.length === 0) return WalkAction.Continue
 
       // We have to slice off the first `context` item because it's the class name and that's always different
+      let path = [...ctx.path(), node].slice(1)
+
       groups[className] ??= []
       groups[className].push({
         properties,
         context: path
           .map((node) => {
-            if (node.type === 'rule') {
+            if (node.kind === 'rule') {
               return node.selector
-            } else if (node.type === 'atrule') {
-              return `@${node.name} ${node.params}`
+            } else if (node.kind === 'at-rule') {
+              return `${node.name} ${node.params}`
             }
+
             return ''
           })
-          .filter(Boolean)
-          .slice(1),
+          .filter(Boolean),
       })
+
+      return WalkAction.Continue
     })
   }
 

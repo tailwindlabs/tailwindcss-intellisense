@@ -354,7 +354,7 @@ export async function activate(context: ExtensionContext) {
         module,
         transport: TransportKind.ipc,
         options: {
-          execArgv: ['--nolazy', `--inspect=6011`],
+          execArgv: ['--nolazy', `--inspect=${inspectPort ?? 6011}`],
         },
       },
     }
