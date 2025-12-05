@@ -36,6 +36,7 @@ const COLOR_PROPS = [
 ]
 
 export type KeywordColor = 'transparent' | 'currentColor'
+export type ParsedColor = KeywordColor | culori.Color
 
 function getKeywordColor(value: unknown): KeywordColor | null {
   if (typeof value !== 'string') return null
@@ -56,7 +57,7 @@ const colorRegex = new RegExp(
   'gi',
 )
 
-function getColorsInString(state: State, str: string): (culori.Color | KeywordColor)[] {
+function getColorsInString(state: State, str: string): ParsedColor[] {
   if (/(?:box|drop)-shadow/.test(str) && !/--tw-drop-shadow/.test(str)) return []
 
   function toColor(match: RegExpMatchArray) {
@@ -76,7 +77,7 @@ function getColorsInString(state: State, str: string): (culori.Color | KeywordCo
 function getColorFromDecls(
   state: State,
   decls: Record<string, string | string[]>,
-): culori.Color | KeywordColor | null {
+): ParsedColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
     if (prop === 'content') {
@@ -151,7 +152,7 @@ function getColorFromDecls(
   return null
 }
 
-function getColorFromRoot(state: State, css: AstNode[]): culori.Color | KeywordColor | null {
+function getColorFromRoot(state: State, css: AstNode[]): ParsedColor | null {
   let decls: Record<string, string[]> = {}
 
   walk(css, (node) => {
@@ -202,7 +203,7 @@ function isLikelyColorless(className: string) {
   return false
 }
 
-export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
+export function getColor(state: State, className: string): ParsedColor | null {
   if (state.v4) {
     // FIXME: This is a performance optimization and not strictly correct
     if (isLikelyColorless(className)) return null
@@ -268,7 +269,7 @@ export function getColor(state: State, className: string): culori.Color | Keywor
   return getColorFromDecls(state, removeMeta(item))
 }
 
-export function getColorFromValue(value: unknown): culori.Color | KeywordColor | null {
+export function getColorFromValue(value: unknown): ParsedColor | null {
   if (typeof value !== 'string') return null
 
   let trimmedValue = value.trim()
