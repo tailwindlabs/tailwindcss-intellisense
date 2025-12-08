@@ -7,8 +7,9 @@ import { getClassNameParts } from './getClassNameAtPosition'
 import * as jit from './jit'
 import * as culori from 'culori'
 import namedColors from 'color-name'
-import postcss from 'postcss'
 import { replaceCssVarsWithFallbacks } from './rewriting'
+import { AstNode } from '../css'
+import { walk, WalkAction } from './walk'
 
 const COLOR_PROPS = [
   'accent-color',
@@ -35,48 +36,33 @@ const COLOR_PROPS = [
 ]
 
 export type KeywordColor = 'transparent' | 'currentColor'
+export type ParsedColor = KeywordColor | culori.Color
 
 function getKeywordColor(value: unknown): KeywordColor | null {
   if (typeof value !== 'string') return null
-  let lowercased = value.toLowerCase()
-  if (lowercased === 'transparent') {
-    return 'transparent'
-  }
-  if (lowercased === 'currentcolor') {
-    return 'currentColor'
-  }
+
+  value = value.toLowerCase()
+
+  if (value === 'transparent') return 'transparent'
+  if (value === 'currentcolor') return 'currentColor'
+
   return null
 }
 
-// https://github.com/khalilgharbaoui/coloregex
-const colorRegex = new RegExp(
-  `(?:^|\\s|\\(|,)(#(?:[0-9a-f]{2}){2,4}|(#[0-9a-f]{3})|(rgba?|hsla?|(?:ok)?(?:lab|lch))\\(\\s*(-?[\\d.]+(%|deg|rad|grad|turn)?(\\s*[,/]\\s*|\\s+)+){2,3}\\s*([\\d.]+(%|deg|rad|grad|turn)?|var\\([^)]+\\))?\\)|transparent|currentColor|${Object.keys(
-    namedColors,
-  ).join('|')})(?:$|\\s|\\)|,)`,
-  'gi',
-)
-
-function getColorsInString(state: State, str: string): (culori.Color | KeywordColor)[] {
+function getColorsInString(state: State, str: string): ParsedColor[] {
   if (/(?:box|drop)-shadow/.test(str) && !/--tw-drop-shadow/.test(str)) return []
-
-  function toColor(match: RegExpMatchArray) {
-    let color = match[1].replace(/var\([^)]+\)/, '1')
-    return getKeywordColor(color) ?? tryParseColor(color)
-  }
 
   str = replaceCssVarsWithFallbacks(state, str)
   str = removeColorMixWherePossible(str)
   str = resolveLightDark(str)
 
-  let possibleColors = str.matchAll(colorRegex)
-
-  return Array.from(possibleColors, toColor).filter(Boolean)
+  return parseColors(str)
 }
 
 function getColorFromDecls(
   state: State,
   decls: Record<string, string | string[]>,
-): culori.Color | KeywordColor | null {
+): ParsedColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
     if (prop === 'content') {
@@ -121,11 +107,6 @@ function getColorFromDecls(
     ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str)),
   )
 
-  // check that all of the values are valid colors
-  // if (colors.some((color) => color instanceof TinyColor && !color.isValid)) {
-  //   return null
-  // }
-
   // check that all of the values are the same color, ignoring alpha
   const colorStrings = dedupe(
     colors.map((color) =>
@@ -137,9 +118,7 @@ function getColorFromDecls(
   }
 
   let keyword = getKeywordColor(colorStrings[0])
-  if (keyword) {
-    return keyword
-  }
+  if (keyword) return keyword
 
   const nonKeywordColors = colors.filter(
     (color): color is culori.Color => typeof color !== 'string',
@@ -158,36 +137,38 @@ function getColorFromDecls(
   return null
 }
 
-function getColorFromRoot(state: State, css: postcss.Root): culori.Color | KeywordColor | null {
-  // Remove any `@property` rules
-  css = css.clone()
-  css.walkAtRules((rule) => {
-    // Ignore declarations inside `@property` rules
-    if (rule.name === 'property') {
-      rule.remove()
-    }
-
-    // Ignore declarations @supports (-moz-orient: inline)
-    // this is a hack used for `@property` fallbacks in Firefox
-    if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
-      rule.remove()
-    }
-  })
-
+function getColorFromRoot(state: State, css: AstNode[]): ParsedColor | null {
   let decls: Record<string, string[]> = {}
 
-  let rule = postcss.rule({
-    selector: '.x',
-    nodes: [],
-  })
+  walk(css, (node) => {
+    if (node.kind === 'at-rule') {
+      // Skip over any `@property` rules
+      if (node.name === '@property') {
+        return WalkAction.Skip
+      }
 
-  css.walkDecls((decl) => {
-    rule.append(decl.clone())
-  })
+      // Ignore @supports (-moz-orient: inline)
+      // This is a hack used for `@property` fallbacks in Firefox
+      if (node.name === '@supports' && node.params === '(-moz-orient: inline)') {
+        return WalkAction.Skip
+      }
 
-  css.walkDecls((decl) => {
-    decls[decl.prop] ??= []
-    decls[decl.prop].push(decl.value)
+      if (
+        node.name === '@supports' &&
+        node.params === '(background-image: linear-gradient(in lab, red, red))'
+      ) {
+        return WalkAction.Skip
+      }
+
+      return WalkAction.Continue
+    }
+
+    if (node.kind === 'declaration' && node.value !== undefined) {
+      decls[node.property] ??= []
+      decls[node.property].push(node.value)
+    }
+
+    return WalkAction.Continue
   })
 
   return getColorFromDecls(state, decls)
@@ -195,25 +176,26 @@ function getColorFromRoot(state: State, css: postcss.Root): culori.Color | Keywo
 
 let isNegative = /^-/
 let isNumericUtility =
-  /^-?((min-|max-)?[wh]|z|start|order|opacity|rounded|row|col|size|basis|end|duration|ease|font|top|left|bottom|right|inset|leading|cursor|(space|scale|skew|rotate)-[xyz]|gap(-[xy])?|(scroll-)?[pm][trblxyse]?)-/
+  /^-?((min-|max-)?[wh]|z|start|indent|flex|columns|order|rounded|row|col|size|basis|end|delay|duration|ease|font|top|left|bottom|right|leading|cursor|(backdrop-)?(opacity|brightness|sepia|saturate|hue-rotate|grayscale|contrast|blur)|(space|scale|skew|rotate|translate|border-spacing|gap)(-[xyz])?|(scroll-)?[pm][trblxyse]?)-/
 let isMaskUtility = /^-?mask-/
 
 function isLikelyColorless(className: string) {
   if (isNegative.test(className)) return true
+  if (isNumericUtility.test(className)) return true
+
   // TODO: This is **not** correct but is intentional because there are 5k mask utilities and a LOT of them are colors
   // This causes a massive slowdown when building the design system
   if (isMaskUtility.test(className)) return true
-  if (isNumericUtility.test(className)) return true
+
   return false
 }
 
-export function getColor(state: State, className: string): culori.Color | KeywordColor | null {
+export function getColor(state: State, className: string): ParsedColor | null {
   if (state.v4) {
     // FIXME: This is a performance optimization and not strictly correct
     if (isLikelyColorless(className)) return null
 
     let css = state.designSystem.compile([className])[0]
-
     let color = getColorFromRoot(state, css)
 
     let prefix = state.designSystem.theme.prefix ?? ''
@@ -274,15 +256,13 @@ export function getColor(state: State, className: string): culori.Color | Keywor
   return getColorFromDecls(state, removeMeta(item))
 }
 
-export function getColorFromValue(value: unknown): culori.Color | KeywordColor | null {
+export function getColorFromValue(value: unknown): ParsedColor | null {
   if (typeof value !== 'string') return null
-  const trimmedValue = value.trim()
-  if (trimmedValue.toLowerCase() === 'transparent') {
-    return 'transparent'
-  }
-  if (trimmedValue.toLowerCase() === 'currentcolor') {
-    return 'currentColor'
-  }
+
+  let trimmedValue = value.trim()
+  let keyword = getKeywordColor(trimmedValue)
+  if (keyword) return keyword
+
   if (
     !/^\s*(?:rgba?|hsla?|(?:ok)?(?:lab|lch))\s*\([^)]+\)\s*$/.test(trimmedValue) &&
     !/^\s*#[0-9a-f]+\s*$/i.test(trimmedValue) &&
@@ -339,4 +319,228 @@ const LIGHT_DARK_REGEX = /light-dark\(\s*(.*?)\s*,\s*.*?\s*\)/g
 
 function resolveLightDark(str: string) {
   return str.replace(LIGHT_DARK_REGEX, (_, lightColor) => lightColor)
+}
+
+const COLOR_FNS = new Set([
+  //
+  'rgb',
+  'rgba',
+  'hwb',
+  'hsl',
+  'hsla',
+  'lab',
+  'lch',
+  'oklab',
+  'oklch',
+  'color',
+])
+
+const COLOR_NAMES = new Set([
+  ...Object.keys(namedColors).map((c) => c.toLowerCase()),
+  'transparent',
+  'currentcolor',
+])
+
+const CSS_VARS = /var\([^)]+\)/
+const COLOR_FN_ARGS =
+  /^\s*(?:(?:-?[\d.]+(?:%|deg|g?rad|turn)?|var\([^)]+\))(?:\s*[,/]\s*|\s+)){2,3}(?:-?[\d.]+(?:%|deg|g?rad|turn)?|var\([^)]+\))\s*$/i
+
+const POUND = 0x23
+const ZERO = 0x30
+const NINE = 0x39
+const DOUBLE_QUOTE = 0x22
+const SINGLE_QUOTE = 0x27
+const BACKSLASH = 0x5c
+const LOWER_A = 0x61
+const LOWER_F = 0x66
+const LOWER_Z = 0x7a
+const L_PAREN = 0x28
+const R_PAREN = 0x29
+const SPACE = 0x20
+const COMMA = 0x2c
+const DASH = 0x2d
+const LINE_BREAK = 0x0a
+const CARRIAGE_RETURN = 0xd
+const TAB = 0x09
+
+type Span = [start: number, end: number]
+
+function maybeFindColors(input: string): Span[] {
+  let colors: Span[] = []
+  let len = input.length
+
+  for (let i = 0; i < len; ++i) {
+    let char = input.charCodeAt(i)
+    let inner = char
+
+    if (char >= LOWER_A && char <= LOWER_Z) {
+      // Read until we don't have a named color character
+      let start = i
+      let end = i
+
+      for (let j = start + 1; j < len; j++) {
+        inner = input.charCodeAt(j)
+
+        if (inner >= ZERO && inner <= NINE) {
+          end = j // 0-9
+        } else if (inner >= LOWER_A && inner <= LOWER_Z) {
+          end = j // a-z
+        } else if (inner === DASH) {
+          end = j // -
+        } else if (inner === L_PAREN) {
+          // Start of a function
+          break
+        } else if (
+          inner === COMMA ||
+          inner === SPACE ||
+          inner === LINE_BREAK ||
+          inner === TAB ||
+          inner === CARRIAGE_RETURN ||
+          inner === R_PAREN
+        ) {
+          // (?=$|[\\s),])
+          break
+        } else {
+          end = i
+          break
+        }
+      }
+
+      let name = input.slice(start, end + 1)
+
+      if (COLOR_NAMES.has(name)) {
+        i = end
+        colors.push([start, end + 1])
+        continue
+      }
+
+      if (inner === L_PAREN && COLOR_FNS.has(name)) {
+        // Scan until the next balanced R_PAREN
+        let depth = 1
+        let argStart = end + 2
+
+        for (let j = argStart; j < len; ++j) {
+          inner = input.charCodeAt(j)
+
+          // The next character is escaped, so we skip it.
+          if (inner === BACKSLASH) {
+            j += 1
+          }
+
+          // Strings should be handled as-is until the end of the string. No need to
+          // worry about balancing parens, brackets, or curlies inside a string.
+          else if (inner === SINGLE_QUOTE || inner === DOUBLE_QUOTE) {
+            // Ensure we don't go out of bounds.
+            while (++j < len) {
+              let nextChar = input.charCodeAt(j)
+
+              // The next character is escaped, so we skip it.
+              if (nextChar === BACKSLASH) {
+                j += 1
+                continue
+              }
+
+              if (nextChar === char) {
+                break
+              }
+            }
+          }
+
+          // Track opening parens
+          else if (inner === L_PAREN) {
+            depth++
+          }
+
+          // Track closing parens
+          else if (inner === R_PAREN) {
+            depth--
+          }
+
+          if (depth > 0) continue
+
+          let args = input.slice(argStart, j)
+
+          if (!COLOR_FN_ARGS.test(args)) continue
+          colors.push([start, j + 1])
+          i = j + 1
+
+          break
+        }
+
+        continue
+      }
+
+      i = end
+    }
+
+    //
+    else if (char === POUND) {
+      // Read until we don't have a named color character
+      let start = i
+      let end = i
+
+      // i + 1     = first hex digit
+      // i + 1 + 8 = one past the last hex digit
+      let last = Math.min(start + 1 + 8, len)
+
+      for (let j = start + 1; j < last; j++) {
+        let inner = input.charCodeAt(j)
+
+        if (inner >= ZERO && inner <= NINE) {
+          end = j // 0-9
+        } else if (inner >= LOWER_A && inner <= LOWER_F) {
+          end = j // a-f
+        } else if (
+          inner === COMMA ||
+          inner === SPACE ||
+          inner === TAB ||
+          inner === LINE_BREAK ||
+          inner === CARRIAGE_RETURN ||
+          inner === R_PAREN
+        ) {
+          // (?=$|[\\s),])
+          break
+        } else {
+          end = start
+          break
+        }
+      }
+
+      let hexLen = end - start
+      i = end
+
+      if (hexLen === 3 || hexLen === 4 || hexLen === 6 || hexLen === 8) {
+        colors.push([start, end + 1])
+        continue
+      }
+    }
+  }
+
+  return colors
+}
+
+export function findColors(input: string): string[] {
+  return maybeFindColors(input.toLowerCase()).map(([start, end]) => input.slice(start, end))
+}
+
+export function parseColors(input: string): ParsedColor[] {
+  let colors: ParsedColor[] = []
+
+  for (let str of findColors(input)) {
+    str = str.replace(CSS_VARS, '1')
+
+    let keyword = getKeywordColor(str)
+    if (keyword) {
+      colors.push(keyword)
+      continue
+    }
+
+    let color = tryParseColor(str)
+    if (color) {
+      colors.push(color)
+      continue
+    }
+  }
+
+  return colors
 }

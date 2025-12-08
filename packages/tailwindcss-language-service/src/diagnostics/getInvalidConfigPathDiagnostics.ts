@@ -9,6 +9,7 @@ import { resolveKnownThemeKeys } from '../util/v4/theme-keys'
 import dlv from 'dlv'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { DesignSystem } from '../util/v4'
+import { walk, WalkAction } from '../util/walk'
 
 type ValidationResult =
   | { isValid: true; value: any }
@@ -224,12 +225,17 @@ function resolveThemeValue(design: DesignSystem, path: string) {
   //
   // Non-CSS representable values are not a concern here because the validation
   // only happens for calls in a CSS context.
-  let [root] = design.compile([candidate])
+  let root = design.compile([candidate])[0]
 
   let value: string | null = null
 
-  root.walkDecls((decl) => {
-    value = decl.value
+  walk(root, (node) => {
+    if (node.kind === 'declaration') {
+      value = node.value
+      return WalkAction.Stop
+    }
+
+    return WalkAction.Continue
   })
 
   return value

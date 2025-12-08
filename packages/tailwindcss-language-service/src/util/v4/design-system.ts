@@ -1,6 +1,6 @@
 import postcss from 'postcss'
-import type { Rule } from './ast'
 import type { NamedVariant } from './candidate'
+import type { AstNode, Rule } from '../../css'
 
 export interface Theme {
   // Prefix didn't exist for earlier Tailwind versions
@@ -54,10 +54,12 @@ export interface DesignSystem {
   // Added in v4.1.16
   // We can patch it into any design system if it doesn't exist though
   storage?: Record<symbol, any>
+
+  // Added in v4.1.18
+  candidatesToAst?(classes: string[]): AstNode[][]
 }
 
 export interface DesignSystem {
   dependencies(): Set<string>
-  compile(classes: string[]): (postcss.Root | null)[]
-  toCss(nodes: postcss.Root | postcss.Node[]): string
+  compile(classes: string[]): AstNode[][]
 }

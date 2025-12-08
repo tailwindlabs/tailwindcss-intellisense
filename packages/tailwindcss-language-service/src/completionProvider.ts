@@ -47,6 +47,8 @@ import { resolveKnownThemeKeys, resolveKnownThemeNamespaces } from './util/v4/th
 import { SEARCH_RANGE } from './util/constants'
 import { getLanguageBoundaries } from './util/getLanguageBoundaries'
 import { isWithinRange } from './util/isWithinRange'
+import { walk, WalkAction } from './util/walk'
+import { Declaration, toPostCSSAst } from './css'
 
 let isUtil = (className) =>
   Array.isArray(className.__info)
@@ -2296,35 +2298,11 @@ export async function resolveCompletionItem(
     let base = state.designSystem.compile([className])[0]
     let root = state.designSystem.compile([[...variants, className].join(state.separator)])[0]
 
-    let rules = root.nodes.filter((node) => node.type === 'rule')
+    let rules = root.filter((node) => node.kind === 'rule')
     if (rules.length === 0) return item
 
     if (!item.detail) {
       if (rules.length === 1) {
-        let decls: postcss.Declaration[] = []
-
-        // Remove any `@property` rules
-        base = base.clone()
-        base.walkAtRules((rule) => {
-          // Ignore declarations inside `@property` rules
-          if (rule.name === 'property') {
-            rule.remove()
-          }
-
-          // Ignore declarations @supports (-moz-orient: inline)
-          // this is a hack used for `@property` fallbacks in Firefox
-          if (rule.name === 'supports' && rule.params === '(-moz-orient: inline)') {
-            rule.remove()
-          }
-
-          if (
-            rule.name === 'supports' &&
-            rule.params === '(background-image: linear-gradient(in lab, red, red))'
-          ) {
-            rule.remove()
-          }
-        })
-
         let ignoredValues = new Set([
           'var(--tw-border-style)',
           'var(--tw-outline-style)',
@@ -2334,26 +2312,51 @@ export async function resolveCompletionItem(
           'var(--tw-scale-x) var(--tw-scale-y) var(--tw-scale-z)',
         ])
 
-        base.walkDecls((node) => {
-          if (ignoredValues.has(node.value)) return
+        let decls: Declaration[] = []
 
-          decls.push(node)
+        walk(base, (node) => {
+          if (node.kind === 'at-rule') {
+            // Ignore declarations inside `@property` rules
+            if (node.name === '@property') {
+              return WalkAction.Skip
+            }
+
+            // Ignore declarations @supports (-moz-orient: inline)
+            // this is a hack used for `@property` fallbacks in Firefox
+            if (node.name === '@supports' && node.params === '(-moz-orient: inline)') {
+              return WalkAction.Skip
+            }
+
+            if (
+              node.name === '@supports' &&
+              node.params === '(background-image: linear-gradient(in lab, red, red))'
+            ) {
+              return WalkAction.Skip
+            }
+          }
+
+          if (node.kind === 'declaration') {
+            if (ignoredValues.has(node.value)) return WalkAction.Continue
+            decls.push(node)
+          }
+
+          return WalkAction.Continue
         })
 
         // TODO: Hardcoding this list is really unfortunate. We should be able
         // to handle this in Tailwind CSS itself.
-        function isOtherDecl(node: postcss.Declaration) {
-          if (node.prop === '--tw-leading') return false
-          if (node.prop === '--tw-duration') return false
-          if (node.prop === '--tw-ease') return false
-          if (node.prop === '--tw-font-weight') return false
-          if (node.prop === '--tw-gradient-via-stops') return false
-          if (node.prop === '--tw-gradient-stops') return false
-          if (node.prop === '--tw-tracking') return false
-          if (node.prop === '--tw-space-x-reverse' && node.value === '0') return false
-          if (node.prop === '--tw-space-y-reverse' && node.value === '0') return false
-          if (node.prop === '--tw-divide-x-reverse' && node.value === '0') return false
-          if (node.prop === '--tw-divide-y-reverse' && node.value === '0') return false
+        function isOtherDecl(node: Declaration) {
+          if (node.property === '--tw-leading') return false
+          if (node.property === '--tw-duration') return false
+          if (node.property === '--tw-ease') return false
+          if (node.property === '--tw-font-weight') return false
+          if (node.property === '--tw-gradient-via-stops') return false
+          if (node.property === '--tw-gradient-stops') return false
+          if (node.property === '--tw-tracking') return false
+          if (node.property === '--tw-space-x-reverse' && node.value === '0') return false
+          if (node.property === '--tw-space-y-reverse' && node.value === '0') return false
+          if (node.property === '--tw-divide-x-reverse' && node.value === '0') return false
+          if (node.property === '--tw-divide-y-reverse' && node.value === '0') return false
 
           return true
         }
@@ -2363,7 +2366,10 @@ export async function resolveCompletionItem(
           decls = decls.filter(isOtherDecl)
         }
 
-        item.detail = await jit.stringifyDecls(state, postcss.rule({ selectors: [], nodes: decls }))
+        let root = toPostCSSAst([{ kind: 'rule', selector: '', nodes: decls }])
+        let rule = root.nodes[0] as postcss.Rule
+
+        item.detail = await jit.stringifyDecls(state, rule)
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -2373,8 +2379,9 @@ export async function resolveCompletionItem(
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
         value: [
+          //
           '```css',
-          await jit.stringifyRoot(state, postcss.root({ nodes: rules })),
+          await jit.stringifyRoot(state, toPostCSSAst(rules)),
           '```',
         ].join('\n'),
       }
