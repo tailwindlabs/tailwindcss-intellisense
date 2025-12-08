@@ -196,10 +196,12 @@ let isMaskUtility = /^-?mask-/
 
 function isLikelyColorless(className: string) {
   if (isNegative.test(className)) return true
+  if (isNumericUtility.test(className)) return true
+
   // TODO: This is **not** correct but is intentional because there are 5k mask utilities and a LOT of them are colors
   // This causes a massive slowdown when building the design system
   if (isMaskUtility.test(className)) return true
-  if (isNumericUtility.test(className)) return true
+
   return false
 }
 
