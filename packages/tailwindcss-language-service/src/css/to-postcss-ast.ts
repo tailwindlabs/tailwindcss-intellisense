@@ -1,5 +1,5 @@
 import * as postcss from 'postcss'
-import { atRule, comment, decl, styleRule, type AstNode } from './ast'
+import type { AstNode } from './ast'
 import type { Source, SourceLocation } from './source'
 import { DefaultMap } from '../util/default-map'
 import { createLineTable, LineTable } from '../util/line-table'
