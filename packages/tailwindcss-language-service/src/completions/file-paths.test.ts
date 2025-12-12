@@ -3,7 +3,7 @@ import { findFileDirective } from './file-paths'
 
 test('Detecting v3 directives that point to files', async () => {
   function find(text: string) {
-    return findFileDirective({ enabled: true, v4: false }, text)
+    return findFileDirective({ enabled: true, v4: false, features: [] }, text)
   }
 
   await expect(find('@config "./')).resolves.toEqual({
@@ -22,7 +22,7 @@ test('Detecting v3 directives that point to files', async () => {
 
 test('Detecting v4 directives that point to files', async () => {
   function find(text: string) {
-    return findFileDirective({ enabled: true, v4: true }, text)
+    return findFileDirective({ enabled: true, v4: true, features: [] }, text)
   }
 
   await expect(find('@config "./')).resolves.toEqual({
@@ -64,7 +64,7 @@ test('Detecting v4 directives that point to files', async () => {
 
 test('@source inline is ignored', async () => {
   function find(text: string) {
-    return findFileDirective({ enabled: true, v4: true }, text)
+    return findFileDirective({ enabled: true, v4: true, features: [] }, text)
   }
 
   await expect(find('@source inline("')).resolves.toEqual(null)
