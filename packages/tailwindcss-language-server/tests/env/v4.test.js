@@ -21,7 +21,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: true,
       },
     })
@@ -137,7 +137,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: true,
       },
     })
@@ -188,7 +188,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.1.17"
+          "tailwindcss": "4.1.18"
         }
       }
     `,
@@ -205,7 +205,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: false,
       },
     })
@@ -243,7 +243,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.1.17"
+          "tailwindcss": "4.1.18"
         }
       }
     `,
@@ -270,7 +270,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: false,
       },
     })
@@ -322,7 +322,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: true,
       },
     })
@@ -354,7 +354,7 @@ defineTest({
     'package.json': json`
       {
         "dependencies": {
-          "tailwindcss": "4.1.17"
+          "tailwindcss": "4.1.18"
         }
       }
     `,
@@ -831,7 +831,7 @@ defineTest({
 
     expect(await client.project()).toMatchObject({
       tailwind: {
-        version: '4.1.17',
+        version: '4.1.18',
         isDefaultVersion: true,
       },
     })
