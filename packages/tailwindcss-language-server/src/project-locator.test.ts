@@ -588,6 +588,22 @@ testLocator({
   ],
 })
 
+testLocator({
+  name: 'A stylesheet can be named tailwindcss.css',
+  fs: {
+    'src/tailwindcss.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  expected: [
+    {
+      version: '4.1.18 (bundled)',
+      config: '/src/tailwindcss.css',
+      content: [],
+    },
+  ],
+})
+
 // ---
 
 function testLocator({

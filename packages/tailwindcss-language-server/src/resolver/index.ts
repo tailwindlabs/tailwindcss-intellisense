@@ -170,6 +170,17 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     preferRelative: true,
   })
 
+  let absoluteCssResolver = ResolverFactory.createResolver({
+    fileSystem,
+    extensions: ['.css'],
+    mainFields: ['style'],
+    conditionNames: ['style'],
+    pnpApi,
+
+    // Used as a fallback when a file ends up importing itself
+    preferRelative: false,
+  })
+
   async function resolveId(
     resolver: BaseResolver,
     id: string,
@@ -235,7 +246,22 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
   }
 
   async function resolveCssId(id: string, base: string): Promise<string> {
-    return (await resolveId(cssResolver, id, base)) || id
+    // If the ID matches `tailwindcss` exactly we tell the CSS resolver to
+    // ignore relative file paths. This ensures that Tailwind CSS itself is
+    // found even when a stylesheet named `tailwindcss.css` exists.
+    //
+    // If someone needs to import that stylesheet it must be done by:
+    // - relative path: `@import "./tailwindcss"`
+    // - adding an extension: `@import "tailwindcss.css"`
+    //
+    // Ideally this code would only be in place if the _importer_ is
+    // `tailwindcss.css` but that data is not available. Only the base
+    // path is so we enable it all the time.
+    //
+    // https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1427
+    let resolver = id === 'tailwindcss' ? absoluteCssResolver : cssResolver
+
+    return (await resolveId(resolver, id, base)) || id
   }
 
   // Takes a path which may or may not be complete and returns the aliased path
