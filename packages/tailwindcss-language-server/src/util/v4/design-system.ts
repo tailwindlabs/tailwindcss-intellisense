@@ -10,6 +10,7 @@ import type { Jiti } from 'jiti/lib/types'
 import { assets } from './assets'
 import { plugins } from './plugins'
 import { AstNode, cloneAstNode, parse } from '@tailwindcss/language-service/src/css'
+import { walk, WalkAction } from '@tailwindcss/language-service/src/util/walk'
 
 const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
@@ -240,7 +241,26 @@ export async function loadDesignSystem(
         let str = css[idx]
 
         if (Array.isArray(str)) {
-          cache[cls] = str
+          let ast = str.map(cloneAstNode)
+
+          // Rewrite at-rules with zero nodes to act as if they have no body
+          //
+          // At a future time we'll only do this conditionally for earlier
+          // Tailwind CSS v4 versions. We have to clone the AST *first*
+          // because if the AST was shared with Tailwind CSS internals
+          // and we mutated it we could break things.
+          walk(ast, (node) => {
+            if (node.kind !== 'at-rule') return WalkAction.Continue
+            if (node.nodes === null) return WalkAction.Continue
+            if (node.nodes.length !== 0) return WalkAction.Continue
+
+            node.nodes = null
+
+            return WalkAction.Continue
+          })
+
+          cache[cls] = ast
+
           continue
         }
 
