@@ -277,6 +277,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
       }
 
       if (parent) {
+        parent.nodes ??= []
         parent.nodes.push(declaration)
       } else {
         ast.push(declaration)
@@ -303,6 +304,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
 
       // At-rule is nested inside of a rule, attach it to the parent.
       if (parent) {
+        parent.nodes ??= []
         parent.nodes.push(node)
       }
 
@@ -343,6 +345,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
       }
 
       if (parent) {
+        parent.nodes ??= []
         parent.nodes.push(declaration)
       } else {
         ast.push(declaration)
@@ -369,6 +372,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
 
       // Attach the rule to the parent in case it's nested.
       if (parent) {
+        parent.nodes ??= []
         parent.nodes.push(node)
       }
 
@@ -421,6 +425,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
 
           // At-rule is nested inside of a rule, attach it to the parent.
           if (parent) {
+            parent.nodes ??= []
             parent.nodes.push(node)
           }
 
@@ -460,6 +465,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
               node.dst = [source, bufferStart, i]
             }
 
+            parent.nodes ??= []
             parent.nodes.push(node)
           }
         }
@@ -548,7 +554,7 @@ export function parse(input: string, opts?: ParseOptions): AstNode[] {
   return ast
 }
 
-export function parseAtRule(buffer: string, nodes: AstNode[] = []): AtRule {
+export function parseAtRule(buffer: string, nodes: AstNode[] | null = []): AtRule {
   let name = buffer
   let params = ''
 

@@ -16,7 +16,7 @@ export type AtRule = {
   kind: 'at-rule'
   name: string
   params: string
-  nodes: AstNode[]
+  nodes: AstNode[] | null
 
   src?: SourceLocation
   dst?: SourceLocation
@@ -69,7 +69,7 @@ export function styleRule(selector: string, nodes: AstNode[] = []): StyleRule {
   }
 }
 
-export function atRule(name: string, params: string = '', nodes: AstNode[] = []): AtRule {
+export function atRule(name: string, params: string = '', nodes: AstNode[] | null = []): AtRule {
   return {
     kind: 'at-rule',
     name,
@@ -78,12 +78,12 @@ export function atRule(name: string, params: string = '', nodes: AstNode[] = [])
   }
 }
 
-export function rule(selector: string, nodes: AstNode[] = []): StyleRule | AtRule {
+export function rule(selector: string, nodes: AstNode[] | null = []): StyleRule | AtRule {
   if (selector.charCodeAt(0) === AT_SIGN) {
     return parseAtRule(selector, nodes)
   }
 
-  return styleRule(selector, nodes)
+  return styleRule(selector, nodes ?? [])
 }
 
 export function decl(property: string, value: string | undefined, important = false): Declaration {

@@ -16,7 +16,7 @@ export function cloneAstNode<T extends AstNode>(node: T): T {
         kind: node.kind,
         name: node.name,
         params: node.params,
-        nodes: node.nodes.map(cloneAstNode),
+        nodes: node.nodes?.map(cloneAstNode) ?? null,
         src: node.src,
         dst: node.dst,
       } satisfies AtRule as T
