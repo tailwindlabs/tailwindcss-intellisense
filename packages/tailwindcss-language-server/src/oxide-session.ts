@@ -1,8 +1,28 @@
 import * as rpc from 'vscode-jsonrpc/node'
 import * as proc from 'node:child_process'
 import * as path from 'node:path'
-import * as fs from 'node:fs/promises'
 import { type ScanOptions, type ScanResult } from './oxide'
+
+interface ServerHandle {
+  helper: proc.ChildProcess
+  connection: rpc.MessageConnection
+}
+
+/**
+ * The path to the Oxide helper process
+ *
+ * TODO:
+ * - Can we find a way to not require a build first — i.e. point to
+ *   `oxide-helper.ts` and have things "hot reload" during tests?
+ */
+const helperPath = process.env.TEST
+  ? // This first path is relative to the source file so running tests in Vitest
+    // result in the correct path — does still point to the built files.
+    path.resolve(path.dirname(__filename), '../bin/oxide-helper.js')
+  : // The second path is relative to the built file. This is the same for the
+    // language server *and* the extension since the file is named identically
+    // in both builds.
+    path.resolve(path.dirname(__filename), './oxide-helper.js')
 
 /**
  * This helper starts a session in which we can use Oxide in *another process*
@@ -19,75 +39,64 @@ import { type ScanOptions, type ScanResult } from './oxide'
  *   us sidestep the problem as the process will only be running as needed.
  */
 export class OxideSession {
-  helper: proc.ChildProcess | null = null
-  connection: rpc.MessageConnection | null = null
+  /**
+   * An object that represents the connection to the server
+   *
+   * This ensures that either everything is initialized or nothing is
+   */
+  private server: Promise<ServerHandle> | null = null
 
   public async scan(options: ScanOptions): Promise<ScanResult> {
-    await this.startIfNeeded()
+    let server = await this.startIfNeeded()
 
-    return await this.connection.sendRequest('scan', options)
+    return await server.connection.sendRequest('scan', options)
   }
 
-  async startIfNeeded(): Promise<void> {
-    if (this.connection) return
+  startIfNeeded(): Promise<ServerHandle> {
+    this.server ??= this.start()
 
-    // TODO: Can we find a way to not require a build first?
-    // let module = path.resolve(path.dirname(__filename), './oxide-helper.ts')
+    return this.server
+  }
 
-    let modulePaths = [
-      // Separate Language Server package
-      '../bin/oxide-helper.js',
+  private async start(): Promise<ServerHandle> {
+    // 1. Start the new process
+    let helper = proc.fork(helperPath)
 
-      // Bundled with the VSCode extension
-      '../dist/oxide-helper.js',
-    ]
+    // 2. If the process fails to spawn we want to throw
+    //
+    // We do end up caching the failed promise but that should be
+    // fine. It seems unlikely that, if this fails, trying again
+    // would "fix" whatever problem there was and succeed.
+    await new Promise((resolve, reject) => {
+      helper.on('spawn', resolve)
+      helper.on('error', reject)
+    })
 
-    let module: string | null = null
-
-    for (let relativePath of modulePaths) {
-      let filepath = path.resolve(path.dirname(__filename), relativePath)
-
-      if (
-        await fs.access(filepath).then(
-          () => true,
-          () => false,
-        )
-      ) {
-        module = filepath
-        break
-      }
-    }
-
-    if (!module) throw new Error('unable to load')
-
-    let helper = proc.fork(module)
+    // 3. Setup a channel to talk to the server
     let connection = rpc.createMessageConnection(
       new rpc.IPCMessageReader(helper),
       new rpc.IPCMessageWriter(helper),
     )
 
-    helper.on('disconnect', () => {
+    // 4. If the process exits we can tear down everything
+    helper.on('close', () => {
       connection.dispose()
-      this.connection = null
-      this.helper = null
+      this.server = null
     })
 
-    helper.on('exit', () => {
-      connection.dispose()
-      this.connection = null
-      this.helper = null
-    })
-
+    // 5. Start listening for messages
     connection.listen()
 
-    this.helper = helper
-    this.connection = connection
+    return { helper, connection }
   }
 
   async stop() {
-    if (!this.helper) return
+    if (!this.server) return
 
-    this.helper.disconnect()
-    this.helper.kill()
+    let server = await this.server
+
+    // We terminate the server because, if for some reason it gets stuck,
+    // we don't want it to stick around.
+    server.helper.kill()
   }
 }

@@ -10,5 +10,11 @@ let connection = rpc.createMessageConnection(
 
 let scanRequest = new rpc.RequestType<ScanOptions, ScanResult, void>('scan')
 connection.onRequest<ScanOptions, ScanResult, void>(scanRequest, (options) => scan(options))
-
 connection.listen()
+
+console.log('Listening for messages...')
+
+process.on('disconnect', () => {
+  console.log('Shutting down...')
+  process.exit(0)
+})
