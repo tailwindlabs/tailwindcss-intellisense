@@ -8,6 +8,10 @@ export default defineConfig({
     silent: 'passed-only',
   },
 
+  define: {
+    'process.env.TEST': '1',
+  },
+
   plugins: [
     tsconfigPaths(),
     {

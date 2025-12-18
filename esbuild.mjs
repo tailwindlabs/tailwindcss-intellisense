@@ -21,6 +21,9 @@ let ctx = await esbuild.context({
   platform: 'node',
   external: ['pnpapi', 'vscode', 'lightningcss', '@tailwindcss/oxide'],
   format: 'cjs',
+  define: {
+    'process.env.TEST': '0',
+  },
   outdir: args.outdir,
   outfile: args.outfile,
   minify: args.minify,
