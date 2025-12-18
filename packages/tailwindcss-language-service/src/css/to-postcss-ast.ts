@@ -1,5 +1,5 @@
 import * as postcss from 'postcss'
-import { atRule, comment, decl, styleRule, type AstNode } from './ast'
+import type { AstNode } from './ast'
 import type { Source, SourceLocation } from './source'
 import { DefaultMap } from '../util/default-map'
 import { createLineTable, LineTable } from '../util/line-table'
@@ -85,11 +85,15 @@ export function toPostCSSAst(ast: AstNode[], source?: postcss.Source): postcss.R
 
     // AtRule
     else if (node.kind === 'at-rule') {
-      let astNode = postcss.atRule({ name: node.name.slice(1), params: node.params })
+      let astNode = postcss.atRule({
+        name: node.name.slice(1),
+        params: node.params,
+        ...(node.nodes ? { nodes: [] } : {}),
+      })
       updateSource(astNode, node.src)
       astNode.raws.semicolon = true
       parent.append(astNode)
-      for (let child of node.nodes) {
+      for (let child of node.nodes ?? []) {
         transform(child, astNode)
       }
     }

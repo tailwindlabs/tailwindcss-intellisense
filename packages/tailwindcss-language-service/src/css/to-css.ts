@@ -91,7 +91,7 @@ export function toCss(ast: AstNode[], track?: boolean): string {
       // ```css
       // @layer base, components, utilities;
       // ```
-      if (node.nodes.length === 0) {
+      if (!node.nodes) {
         let css = `${indent}${node.name} ${node.params};\n`
 
         if (track) {

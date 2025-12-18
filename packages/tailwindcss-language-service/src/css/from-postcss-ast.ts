@@ -44,9 +44,9 @@ export function fromPostCSSAst(root: postcss.Root): AstNode[] {
 
     // AtRule
     else if (node.type === 'atrule') {
-      let astNode = atRule(`@${node.name}`, node.params)
+      let astNode = atRule(`@${node.name}`, node.params, node.nodes ? [] : null)
       astNode.src = toSource(node)
-      node.each((child) => transform(child, astNode.nodes))
+      node.each((child) => transform(child, astNode.nodes!))
       parent.push(astNode)
     }
 
