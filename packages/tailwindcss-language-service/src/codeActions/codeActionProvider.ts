@@ -4,7 +4,7 @@ import type { State } from '../util/state'
 import { doValidate } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'
 import {
-  type DiagnosticKind,
+  DiagnosticKind,
   isInvalidApplyDiagnostic,
   type AugmentedDiagnostic,
   isCssConflictDiagnostic,
@@ -18,6 +18,7 @@ import {
 import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
 import { provideInvalidApplyCodeActions } from './provideInvalidApplyCodeActions'
+import { provideFixAllSuggestionCodeAction } from './provideFixAllSuggestionCodeAction'
 import { provideSuggestionCodeActions } from './provideSuggestionCodeActions'
 
 async function getDiagnosticsFromCodeActionParams(
@@ -42,6 +43,17 @@ async function getDiagnosticsFromCodeActionParams(
     .filter(Boolean)
 }
 
+function getCodeActionContextInfo(params: CodeActionParams) {
+  let only = params.context.only
+  let isFixAllKind = (kind: string) => kind === 'source.fixAll' || kind.startsWith('source.fixAll.')
+
+  return {
+    onlyFixAll: !!only?.length && only.every(isFixAllKind),
+    includeFixAllKind: !only || only.some((kind) => kind === 'source' || isFixAllKind(kind)),
+    includeQuickFix: !only || only.includes('quickfix'),
+  }
+}
+
 export async function doCodeActions(
   state: State,
   params: CodeActionParams,
@@ -49,6 +61,46 @@ export async function doCodeActions(
 ): Promise<CodeAction[]> {
   if (!state.enabled) {
     return []
+  }
+
+  let { onlyFixAll, includeFixAllKind, includeQuickFix } = getCodeActionContextInfo(params)
+
+  let fixAllActions: CodeAction[] = []
+  let hasCanonicalContextDiagnostic = params.context.diagnostics.some(
+    (diagnostic) => diagnostic.code === DiagnosticKind.SuggestCanonicalClasses,
+  )
+
+  if (includeFixAllKind || (includeQuickFix && hasCanonicalContextDiagnostic)) {
+    let fixAllDiagnostics = await doValidate(state, document, [
+      DiagnosticKind.SuggestCanonicalClasses,
+    ])
+
+    let canonicalDiagnostics = fixAllDiagnostics.filter(isSuggestCanonicalClasses)
+
+    if (includeFixAllKind) {
+      fixAllActions = fixAllActions.concat(
+        provideFixAllSuggestionCodeAction(params, canonicalDiagnostics),
+      )
+    }
+
+    if (includeQuickFix && hasCanonicalContextDiagnostic) {
+      fixAllActions = fixAllActions.concat(
+        provideFixAllSuggestionCodeAction(
+          params,
+          canonicalDiagnostics,
+          'quickfix',
+          'Fix all canonical class suggestions',
+        ),
+      )
+    }
+  }
+
+  if (onlyFixAll) {
+    return fixAllActions
+  }
+
+  if (!includeQuickFix) {
+    return fixAllActions
   }
 
   let diagnostics = await getDiagnosticsFromCodeActionParams(
@@ -86,4 +138,5 @@ export async function doCodeActions(
   )
     .then(flatten)
     .then((x) => dedupeBy(x, (item) => JSON.stringify(item.edit)))
+    .then((x) => fixAllActions.concat(x))
 }
