@@ -1,7 +1,11 @@
 import { expect } from 'vitest'
 import { css, defineTest } from '../../src/testing'
 import { createClient } from '../utils/client'
-import { SymbolKind } from 'vscode-languageserver'
+import {
+  PublishDiagnosticsNotification,
+  PublishDiagnosticsParams,
+  SymbolKind,
+} from 'vscode-languageserver'
 
 defineTest({
   name: '@custom-variant',
@@ -711,5 +715,48 @@ defineTest({
     expect(completionsD).toEqual({ isIncomplete: false, items: [] })
     expect(completionsE).toEqual({ isIncomplete: false, items: [] })
     expect(completionsF).toEqual({ isIncomplete: false, items: [] })
+  },
+})
+
+defineTest({
+  name: 'Clients not supporting pull-model diagnostics will have them pushed',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+      capabilities(caps) {
+        // Disable pull-model diagnostics
+        delete caps.textDocument!.diagnostic
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let didPublishDiagnostics = new Promise<PublishDiagnosticsParams>((resolve) => {
+      client.conn.onNotification(PublishDiagnosticsNotification.type, resolve)
+    })
+
+    // We open a document so a project gets initialized
+    // This will cause the server to push diagnostics to the client
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      text: css`
+        @idonotexist {
+          color: red;
+        }
+      `,
+    })
+
+    let result = await didPublishDiagnostics
+
+    expect(result.uri).toEqual(doc.uri.toString())
+    expect(result.diagnostics).toEqual([
+      {
+        code: 'unknownAtRules',
+        source: 'tailwindcss',
+        message: 'Unknown at rule @idonotexist',
+        severity: 2,
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 12 } },
+      },
+    ])
   },
 })

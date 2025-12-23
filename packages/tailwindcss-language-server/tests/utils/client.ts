@@ -8,6 +8,7 @@ import {
   Diagnostic,
   DidChangeWatchedFilesNotification,
   Disposable,
+  DocumentDiagnosticRequest,
   DocumentLink,
   DocumentLinkRequest,
   DocumentSymbol,
@@ -372,6 +373,7 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
         dynamicRegistration: true,
       },
       definition: { dynamicRegistration: true },
+      diagnostic: { dynamicRegistration: true },
       documentHighlight: { dynamicRegistration: true },
       documentLink: { dynamicRegistration: true },
       documentSymbol: {
@@ -631,31 +633,6 @@ export async function createClientWorkspace({
         )
 
     let version = 1
-    let currentDiagnostics: Promise<Diagnostic[]> = Promise.resolve([])
-
-    async function requestDiagnostics(version: number) {
-      let start = process.hrtime.bigint()
-
-      trace('Waiting for diagnostics')
-      trace('- uri:', rewriteUri(uri))
-
-      currentDiagnostics = new Promise<Diagnostic[]>((resolve) => {
-        notifications.onPublishedDiagnostics(uri.toString(), (params) => {
-          // We recieved diagnostics for different version of this document
-          if (params.version !== undefined) {
-            if (params.version !== version) return
-          }
-
-          let elapsed = process.hrtime.bigint() - start
-
-          trace('Loaded diagnostics')
-          trace(`- uri:`, rewriteUri(params.uri))
-          trace(`- duration: %dms`, (Number(elapsed) / 1e6).toFixed(3))
-
-          resolve(params.diagnostics)
-        })
-      })
-    }
 
     async function reopen() {
       if (state === 'opened') throw new Error('Document is already open')
@@ -675,8 +652,6 @@ export async function createClientWorkspace({
 
       trace('Opening document')
       trace(`- uri:`, rewriteUri(uri))
-
-      await requestDiagnostics(version)
 
       state = 'opening'
 
@@ -715,7 +690,6 @@ export async function createClientWorkspace({
 
       if (desc.text) {
         version += 1
-        await requestDiagnostics(version)
         await conn.sendNotification(DidChangeTextDocumentNotification.type, {
           textDocument: { uri: uri.toString(), version },
           contentChanges: [{ text: desc.text }],
@@ -760,8 +734,18 @@ export async function createClientWorkspace({
       return list
     }
 
-    function diagnostics() {
-      return currentDiagnostics
+    async function diagnostics() {
+      let report = await conn.sendRequest(DocumentDiagnosticRequest.type, {
+        textDocument: {
+          uri: uri.toString(),
+        },
+      })
+
+      if (report.kind === 'unchanged') {
+        return []
+      }
+
+      return report.items
     }
 
     async function symbols() {
@@ -844,10 +828,6 @@ export async function createClientWorkspace({
 
 interface ClientNotifications {
   onDocumentReady(uri: string, handler: (params: DocumentReady) => void): Disposable
-  onPublishedDiagnostics(
-    uri: string,
-    handler: (params: PublishDiagnosticsParams) => void,
-  ): Disposable
   onProjectDetails(uri: string, handler: (params: ProjectDetails) => void): Disposable
 }
 
@@ -888,15 +868,6 @@ async function createDocumentNotifications(conn: ProtocolConnection): Promise<Cl
       return {
         dispose() {
           readyHandlers.get(uri)[index] = null
-        },
-      }
-    },
-
-    onPublishedDiagnostics: (uri, handler) => {
-      let index = diagnosticsHandlers.get(uri).push(handler) - 1
-      return {
-        dispose() {
-          diagnosticsHandlers.get(uri)[index] = null
         },
       }
     },

@@ -4,14 +4,12 @@ import { withFixture } from '../common'
 withFixture('v4/basic', (c) => {
   function runTest(name, { code, expected, language }) {
     test(name, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 

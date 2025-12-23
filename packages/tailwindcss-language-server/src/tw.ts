@@ -23,6 +23,8 @@ import type {
   CodeLens,
   ServerCapabilities,
   ClientCapabilities,
+  DocumentDiagnosticParams,
+  DocumentDiagnosticReport,
 } from 'vscode-languageserver/node'
 import {
   CompletionRequest,
@@ -36,6 +38,7 @@ import {
   TextDocumentSyncKind,
   CodeLensRequest,
   DidChangeConfigurationNotification,
+  DocumentDiagnosticRequest,
 } from 'vscode-languageserver/node'
 import { URI } from 'vscode-uri'
 import normalizePath from 'normalize-path'
@@ -735,6 +738,11 @@ export class TW {
 
     this.disposables.push(
       this.documentService.onDidChangeContent((change) => {
+        // Don't push diagnostics to clients supporting the pull model
+        if (this.initializeParams.capabilities.textDocument?.diagnostic) {
+          return
+        }
+
         this.getProject(change.document)?.provideDiagnostics(change.document)
       }),
     )
@@ -847,6 +855,11 @@ export class TW {
   }
 
   private refreshDiagnostics() {
+    // Don't push diagnostics to clients supporting the pull model
+    if (this.initializeParams.capabilities.textDocument?.diagnostic) {
+      return
+    }
+
     for (let doc of this.documentService.getAllDocuments()) {
       let project = this.getProject(doc)
       if (project) {
@@ -870,6 +883,10 @@ export class TW {
     this.connection.onCodeLens(this.onCodeLens.bind(this))
     this.connection.onDocumentLinks(this.onDocumentLinks.bind(this))
     this.connection.onRequest(this.onRequest.bind(this))
+
+    if (this.initializeParams.capabilities.textDocument.diagnostic) {
+      this.connection.languages.diagnostics.on(this.onDiagnostic.bind(this))
+    }
   }
 
   private onRequest(
@@ -934,6 +951,10 @@ export class TW {
 
     if (client.textDocument?.documentLink?.dynamicRegistration) {
       capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+    }
+
+    if (client.textDocument?.diagnostic?.dynamicRegistration) {
+      capabilities.add(DocumentDiagnosticRequest.type, undefined)
     }
 
     if (client.workspace?.didChangeConfiguration?.dynamicRegistration) {
@@ -1086,6 +1107,11 @@ export class TW {
     return this.getProject(params.textDocument)?.onCompletion(params) ?? null
   }
 
+  async onDiagnostic(params: DocumentDiagnosticParams): Promise<DocumentDiagnosticReport> {
+    await this.init()
+    return this.getProject(params.textDocument)?.onDiagnostic(params) ?? null
+  }
+
   async onCompletionResolve(item: CompletionItem): Promise<CompletionItem> {
     await this.init()
     return this.projects.get(item.data?._projectKey)?.onCompletionResolve(item) ?? null
@@ -1157,6 +1183,13 @@ export class TW {
 
     if (!client.textDocument?.documentLink?.dynamicRegistration) {
       capabilities.documentLinkProvider = {}
+    }
+
+    if (!client.textDocument?.diagnostic?.dynamicRegistration) {
+      capabilities.diagnosticProvider = {
+        interFileDependencies: false,
+        workspaceDiagnostics: false,
+      }
     }
 
     return capabilities
