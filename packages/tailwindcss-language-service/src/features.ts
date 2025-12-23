@@ -49,6 +49,10 @@ export function supportedFeatures(version: string, mod?: unknown): Feature[] {
       return ['css-at-theme', 'layer:base', 'content-list', 'source-inline', 'source-not']
     }
 
+    if (semver.gte(version, '4.0.0')) {
+      return ['css-at-theme', 'layer:base', 'content-list']
+    }
+
     if (semver.gte(version, '4.0.0-alpha.1')) {
       return ['css-at-theme', 'layer:base', 'content-list']
     }
