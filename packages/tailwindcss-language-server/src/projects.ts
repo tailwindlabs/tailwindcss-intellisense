@@ -51,7 +51,6 @@ import type {
   Variant,
   ClassEntry,
 } from '@tailwindcss/language-service/src/util/state'
-import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
@@ -85,6 +84,7 @@ import { supportedFeatures } from '@tailwindcss/language-service/src/features'
 import { loadDesignSystem } from './util/v4'
 import { readCssFile } from './util/css'
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
+import { getDocumentDiagnostics } from '@tailwindcss/language-service/src/diagnostics/diagnosticsProvider'
 
 const colorNames = Object.keys(namedColors)
 
@@ -1733,4 +1733,28 @@ function getContentDocumentSelectorFromConfigFile(
       pattern: normalizeDriveLetter(normalizePath(item)),
       priority: DocumentSelectorPriority.CONTENT_FILE,
     }))
+}
+
+async function provideDiagnostics(state: State, document: TextDocument) {
+  let connection = state.editor?.connection
+  if (!connection) return
+
+  // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics
+  //
+  // > When a file changes it is the server’s responsibility to re-compute diagnostics and push them to the client.
+  // > If the computed set is empty it has to push the empty array to clear former diagnostics.
+  //
+  // Because a document can go from included -> excluded we must push
+  // diagnostics for excluded documents
+  if (await isExcluded(state, document)) {
+    connection.sendDiagnostics({ uri: document.uri, diagnostics: [] })
+    return
+  }
+
+  let report = await getDocumentDiagnostics(state, document)
+
+  connection.sendDiagnostics({
+    uri: document.uri,
+    diagnostics: report.items ?? [],
+  })
 }
