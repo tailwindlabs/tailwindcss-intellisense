@@ -5,6 +5,8 @@ import { css, defineTest, json } from '../../src/testing'
 import { createClient } from '../utils/client'
 import {
   DocumentDiagnosticReport,
+  PublishDiagnosticsNotification,
+  PublishDiagnosticsParams,
 } from 'vscode-languageserver'
 
 withFixture('basic', (c) => {
@@ -495,6 +497,78 @@ defineTest({
         },
         severity: 2,
         suggestions: ['mt-4'],
+      },
+    ])
+  },
+})
+
+defineTest({
+  name: 'Clients not supporting pull-model diagnostics will have them pushed',
+  fs: {
+    'app.css': '@import "tailwindcss"',
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      capabilities(caps) {
+        // Disable pull-model diagnostics
+        delete caps.textDocument!.diagnostic
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let didPublishDiagnostics = new Promise<PublishDiagnosticsParams>((resolve) => {
+      client.conn.onNotification(PublishDiagnosticsNotification.type, resolve)
+    })
+
+    // We open a document so a project gets initialized
+    // This will cause the server to push diagnostics to the client
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="underline line-through">',
+    })
+
+    let result = await didPublishDiagnostics
+
+    expect(result.uri).toEqual(doc.uri.toString())
+    expect(result.diagnostics).toMatchObject([
+      {
+        code: 'cssConflict',
+        source: 'tailwindcss',
+        message: "'underline' applies the same CSS properties as 'line-through'.",
+        className: {
+          className: 'underline',
+          classList: {
+            classList: 'underline line-through',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'line-through',
+            classList: {
+              classList: 'underline line-through',
+            },
+          },
+        ],
+      },
+      {
+        code: 'cssConflict',
+        source: 'tailwindcss',
+        message: "'line-through' applies the same CSS properties as 'underline'.",
+        className: {
+          className: 'line-through',
+          classList: {
+            classList: 'underline line-through',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'underline',
+            classList: {
+              classList: 'underline line-through',
+            },
+          },
+        ],
       },
     ])
   },
