@@ -738,6 +738,11 @@ export class TW {
 
     this.disposables.push(
       this.documentService.onDidChangeContent((change) => {
+        // Don't push diagnostics to clients supporting the pull model
+        if (this.initializeParams.capabilities.textDocument?.diagnostic) {
+          return
+        }
+
         this.getProject(change.document)?.provideDiagnostics(change.document)
       }),
     )
@@ -850,6 +855,11 @@ export class TW {
   }
 
   private refreshDiagnostics() {
+    // Don't push diagnostics to clients supporting the pull model
+    if (this.initializeParams.capabilities.textDocument?.diagnostic) {
+      return
+    }
+
     for (let doc of this.documentService.getAllDocuments()) {
       let project = this.getProject(doc)
       if (project) {
