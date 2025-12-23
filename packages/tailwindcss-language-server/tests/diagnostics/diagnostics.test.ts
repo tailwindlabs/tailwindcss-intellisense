@@ -3,6 +3,9 @@ import { expect, test } from 'vitest'
 import { withFixture } from '../common'
 import { css, defineTest, json } from '../../src/testing'
 import { createClient } from '../utils/client'
+import {
+  DocumentDiagnosticReport,
+} from 'vscode-languageserver'
 
 withFixture('basic', (c) => {
   function testFixture(fixture) {
@@ -11,14 +14,12 @@ withFixture('basic', (c) => {
 
       let { code, expected, language = 'html' } = JSON.parse(fixture)
 
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -46,14 +47,12 @@ withFixture('v4/basic', (c) => {
 
       let { code, expected, language = 'html' } = JSON.parse(fixture)
 
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -63,14 +62,12 @@ withFixture('v4/basic', (c) => {
 
   function testInline(fixture, { code, expected, language = 'html' }) {
     test(fixture, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -165,14 +162,12 @@ withFixture('v4/basic', (c) => {
 withFixture('v4/with-prefix', (c) => {
   function testInline(fixture, { code, expected, language = 'html' }) {
     test(fixture, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -268,14 +263,12 @@ withFixture('v4/with-prefix', (c) => {
 withFixture('v4/basic', (c) => {
   function testMatch(name, { code, expected, language = 'html' }) {
     test(name, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 

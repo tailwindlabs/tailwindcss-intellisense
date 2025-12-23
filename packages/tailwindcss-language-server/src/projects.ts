@@ -17,6 +17,8 @@ import type {
   DocumentLink,
   CodeLensParams,
   CodeLens,
+  DocumentDiagnosticReport,
+  DocumentDiagnosticParams,
 } from 'vscode-languageserver/node'
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -107,6 +109,7 @@ export interface ProjectService {
   onHover(params: TextDocumentPositionParams): Promise<Hover>
   onCompletion(params: CompletionParams): Promise<CompletionList>
   onCompletionResolve(item: CompletionItem): Promise<CompletionItem>
+  onDiagnostic(params: DocumentDiagnosticParams): Promise<DocumentDiagnosticReport>
   provideDiagnostics(document: TextDocument): void
   provideDiagnosticsForce(document: TextDocument): void
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
@@ -1231,6 +1234,14 @@ export async function createProjectService(
         if (!state.enabled) return null
         return resolveCompletionItem(state, item)
       }, null)
+    },
+    async onDiagnostic(params: DocumentDiagnosticParams): Promise<DocumentDiagnosticReport> {
+      if (!state.enabled) return { kind: 'full', items: [] }
+
+      let document = documentService.getDocument(params.textDocument.uri)
+      if (!document) return { kind: 'full', items: [] }
+
+      return getDocumentDiagnostics(state, document)
     },
     async onCodeAction(params: CodeActionParams): Promise<CodeAction[]> {
       return withFallback(async () => {
