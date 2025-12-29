@@ -35,42 +35,60 @@ export function findLast(re: RegExp, str: string): RegExpMatchArray {
   return matches[matches.length - 1]
 }
 
+const BY_ASCII_WHITESPACE = /([\t\n\f\r ]+)/
+
+/**
+ * Extract class names from a list separated by whitespace
+ *
+ * The HTML spec separates classes by ASCII whitespace:
+ * - U+0009 TAB
+ * - U+000A LF
+ * - U+000C FF
+ * - U+000D CR
+ * - U+0020 SPACE
+ *
+ * The CSS spec also effectively uses the above definition for whitespace.
+ *
+ * @see {@link https://dom.spec.whatwg.org/#concept-getelementsbyclassname}
+ * @see {@link https://dom.spec.whatwg.org/#concept-ordered-set-parser}
+ * @see {@link https://infra.spec.whatwg.org/#ascii-whitespace}
+ * @see {@link https://www.w3.org/TR/css-syntax-3/#whitespace}
+ */
 export function getClassNamesInClassList(
-  { classList, range, important }: DocumentClassList,
+  classList: DocumentClassList,
   blocklist: State['blocklist'],
 ): DocumentClassName[] {
-  const parts = classList.split(/(\s+)/)
-  const names: DocumentClassName[] = []
+  let input = classList.classList
+  let parts = input.split(BY_ASCII_WHITESPACE)
+  let names: DocumentClassName[] = []
   let index = 0
+
   for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 0 && !blocklist.includes(parts[i])) {
-      const start = indexToPosition(classList, index)
-      const end = indexToPosition(classList, index + parts[i].length)
-      names.push({
-        className: parts[i],
-        classList: {
-          classList,
-          range,
-          important,
-        },
-        relativeRange: {
-          start,
-          end,
-        },
-        range: {
-          start: {
-            line: range.start.line + start.line,
-            character: (end.line === 0 ? range.start.character : 0) + start.character,
-          },
-          end: {
-            line: range.start.line + end.line,
-            character: (end.line === 0 ? range.start.character : 0) + end.character,
-          },
-        },
-      })
+    let isWhitespace = i % 2 === 1
+    let className = parts[i]
+
+    let start = index
+    let end = start + className.length
+    index += className.length
+
+    if (isWhitespace) continue
+    if (blocklist.includes(className)) continue
+
+    let relativeRange = {
+      start: indexToPosition(input, start),
+      end: indexToPosition(input, end),
     }
-    index += parts[i].length
+
+    let range = absoluteRange(relativeRange, classList.range)
+
+    names.push({
+      className,
+      classList,
+      relativeRange,
+      range,
+    })
   }
+
   return names
 }
 
