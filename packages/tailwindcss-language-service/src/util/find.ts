@@ -347,24 +347,46 @@ export async function findClassListsInDocument(
     return findClassListsInCssRange(state, doc)
   }
 
+  let settings = await state.editor.getConfiguration(doc.uri)
+
+  let classLists: DocumentClassList[] = []
+
   let boundaries = getLanguageBoundaries(state, doc)
   if (!boundaries) return []
 
-  return dedupeByRange(
-    flatten([
-      ...(await Promise.all(
-        boundaries
-          .filter((b) => b.type === 'html' || b.type === 'jsx')
-          .map(({ type, range }) =>
-            findClassListsInHtmlRange(state, doc, type === 'html' ? 'html' : 'jsx', range),
-          ),
-      )),
-      ...boundaries
-        .filter((b) => b.type === 'css')
-        .map(({ range, lang }) => findClassListsInCssRange(state, doc, range, lang)),
-      await findCustomClassLists(state, doc),
-    ]),
-  )
+  for (let b of boundaries) {
+    if (b.type === 'html') {
+      classLists.push(
+        ...(await findClassListsInHtmlRange(
+          state,
+          doc,
+          b.type === 'html' ? 'html' : 'jsx',
+          b.range,
+        )),
+      )
+    }
+
+    if (b.type === 'js' || b.type === 'jsx') {
+      classLists.push(
+        ...(await findClassListsInHtmlRange(
+          state,
+          doc,
+          b.type === 'html' ? 'html' : 'jsx',
+          b.range,
+        )),
+      )
+    }
+
+    if (b.type === 'css') {
+      classLists.push(...findClassListsInCssRange(state, doc, b.range, b.lang))
+    }
+  }
+
+  classLists.push(...(await findCustomClassLists(state, doc)))
+
+  classLists = dedupeByRange(classLists)
+
+  return classLists
 }
 
 export function findHelperFunctionsInDocument(
