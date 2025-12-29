@@ -188,22 +188,19 @@ export function matchClassFunctions(text: string, fnNames: string[]): RegExpMatc
   return matches
 }
 
-export async function findClassListsInHtmlRange(
-  state: State,
+function findClassListsInHtmlRange(
   doc: TextDocument,
-  type: 'html' | 'js' | 'jsx',
-  range?: Range,
-): Promise<DocumentClassList[]> {
-  if (!state.editor) return []
-
-  let settings = await state.editor.getConfiguration(doc.uri)
+  type: 'html' | 'js',
+  range: Range,
+  settings: Settings,
+): DocumentClassList[] {
   let text = getTextWithoutComments(doc, type, range)
   let matches = matchClassAttributes(text, settings.tailwindCSS.classAttributes)
 
   // For JS/TS contexts we want to look inside specific function calls and
   // tagged template literals for class lists
   let fnNames = settings.tailwindCSS.classFunctions ?? []
-  if (type === 'jsx' && fnNames.length) {
+  if (type === 'js' && fnNames.length) {
     matches.push(...matchClassFunctions(text, fnNames))
   }
 
@@ -341,25 +338,11 @@ export async function findClassListsInDocument(
 
   for (let b of boundaries) {
     if (b.type === 'html') {
-      classLists.push(
-        ...(await findClassListsInHtmlRange(
-          state,
-          doc,
-          b.type === 'html' ? 'html' : 'jsx',
-          b.range,
-        )),
-      )
+      classLists.push(...findClassListsInHtmlRange(doc, 'html', b.range, settings))
     }
 
     if (b.type === 'js' || b.type === 'jsx') {
-      classLists.push(
-        ...(await findClassListsInHtmlRange(
-          state,
-          doc,
-          b.type === 'html' ? 'html' : 'jsx',
-          b.range,
-        )),
-      )
+      classLists.push(...findClassListsInHtmlRange(doc, 'js', b.range, settings))
     }
 
     if (b.type === 'css') {
