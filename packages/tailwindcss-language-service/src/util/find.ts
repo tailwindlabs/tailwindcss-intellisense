@@ -1,6 +1,12 @@
 import { type Range, type Position, LRUCache } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import type { DocumentClassName, DocumentClassList, State, DocumentHelperFunction } from './state'
+import type {
+  DocumentClassName,
+  DocumentClassList,
+  State,
+  DocumentHelperFunction,
+  Settings,
+} from './state'
 import lineColumn from 'line-column'
 import { isCssDoc } from './css'
 import { isWithinRange } from './isWithinRange'
@@ -124,17 +130,14 @@ export function findClassListsInCssRange(
   })
 }
 
-async function findCustomClassLists(
-  state: State,
-  doc: TextDocument,
-  range?: Range,
-): Promise<DocumentClassList[]> {
-  const settings = await state.editor.getConfiguration(doc.uri)
-  const regexes = settings.tailwindCSS.experimental.classRegex
-  if (!Array.isArray(regexes) || regexes.length === 0) return []
+function findCustomClassLists(doc: TextDocument, settings: Settings): DocumentClassList[] {
+  let regexes = settings.tailwindCSS.experimental.classRegex
+  if (!Array.isArray(regexes) || regexes.length === 0) {
+    return []
+  }
 
-  const text = doc.getText(range ? { ...range, start: doc.positionAt(0) } : undefined)
-  const result: DocumentClassList[] = []
+  let text = doc.getText()
+  let result: DocumentClassList[] = []
 
   try {
     for (let match of customClassesIn({ text, filters: regexes })) {
@@ -350,8 +353,7 @@ export async function findClassListsInDocument(
     }
   }
 
-  classLists.push(...(await findCustomClassLists(state, doc)))
-
+  classLists.push(...findCustomClassLists(doc, settings))
   classLists = dedupeByRange(classLists)
 
   return classLists

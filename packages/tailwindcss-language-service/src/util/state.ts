@@ -69,7 +69,7 @@ export type TailwindCssSettings = {
     suggestCanonicalClasses: DiagnosticSeveritySetting
   }
   experimental: {
-    classRegex: string[] | [string, string][]
+    classRegex: (string | [string] | [string, string])[]
     configFile: string | Record<string, string | string[]> | null
   }
   files: {
