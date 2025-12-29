@@ -37,6 +37,15 @@ withFixture('basic', (c) => {
   testFixture('css-conflict/vue-style-lang-sass')
   testFixture('invalid-screen/simple')
   testFixture('invalid-theme/simple')
+  testFixture('invalid-class/simple')
+  testFixture('invalid-class/whitespace-negative')
+  testFixture('invalid-class/variants')
+  testFixture('invalid-class/jsx-concat-positive')
+  testFixture('invalid-class/jsx-template-literal')
+  testFixture('invalid-class/css')
+  testFixture('invalid-class/css-multi-prop')
+  testFixture('invalid-class/css-multi-rule')
+  testFixture('invalid-class/vue-style-lang-sass')
 })
 
 withFixture('v4/basic', (c) => {
@@ -88,6 +97,15 @@ withFixture('v4/basic', (c) => {
   // testFixture('css-conflict/css-multi-rule')
   // testFixture('css-conflict/css-multi-prop')
   // testFixture('invalid-screen/simple')
+  testFixture('invalid-class/simple')
+  testFixture('invalid-class/whitespace-negative')
+  testFixture('invalid-class/variants')
+  testFixture('invalid-class/jsx-concat-positive')
+  testFixture('invalid-class/jsx-template-literal')
+  testFixture('invalid-class/css')
+  testFixture('invalid-class/css-multi-prop')
+  testFixture('invalid-class/css-multi-rule')
+  testFixture('invalid-class/vue-style-lang-sass')
 
   testInline('simple typos in theme keys (in key)', {
     code: '.test { color: theme(--color-red-901) }',
@@ -323,6 +341,17 @@ withFixture('v4/basic', (c) => {
             },
           },
         ],
+      },
+      {
+        code: 'invalidClass',
+        source: 'tailwindcss',
+        message: "Unknown utility class 'foo'.",
+        className: {
+          className: 'foo',
+          classList: {
+            classList: 'foo max-w-4xl max-w-6xl hover:underline',
+          },
+        },
       },
     ],
   })

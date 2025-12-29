@@ -1,0 +1,59 @@
+{
+  "code": ".test { @apply px-4 }\n.test { @apply nonexistent }",
+  "language": "css",
+  "expected": [
+    {
+      "code": "invalidClass",
+      "source": "tailwindcss",
+      "className": {
+        "className": "nonexistent",
+        "classList": {
+          "classList": "nonexistent",
+          "important": false,
+          "range": {
+            "start": {
+              "line": 1,
+              "character": 15
+            },
+            "end": {
+              "line": 1,
+              "character": 26
+            }
+          }
+        },
+        "range": {
+          "start": {
+            "line": 1,
+            "character": 15
+          },
+          "end": {
+            "line": 1,
+            "character": 26
+          }
+        },
+        "relativeRange": {
+          "start": {
+            "line": 0,
+            "character": 0
+          },
+          "end": {
+            "line": 0,
+            "character": 11
+          }
+        }
+      },
+      "range": {
+        "start": {
+          "line": 1,
+          "character": 15
+        },
+        "end": {
+          "line": 1,
+          "character": 26
+        }
+      },
+      "severity": 3,
+      "message": "Unknown utility class 'nonexistent'."
+    }
+  ]
+}

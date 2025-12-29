@@ -36,7 +36,7 @@ export type EditorState = {
   ) => Promise<Array<[string, { isDirectory: boolean }]>>
 }
 
-type DiagnosticSeveritySetting = 'ignore' | 'warning' | 'error'
+type DiagnosticSeveritySetting = 'ignore' | 'info' | 'warning' | 'error'
 
 export type EditorSettings = {
   tabSize: number
@@ -67,6 +67,7 @@ export type TailwindCssSettings = {
     recommendedVariantOrder: DiagnosticSeveritySetting
     usedBlocklistedClass: DiagnosticSeveritySetting
     suggestCanonicalClasses: DiagnosticSeveritySetting
+    invalidClass: DiagnosticSeveritySetting
   }
   experimental: {
     classRegex: string[] | [string, string][]
@@ -207,6 +208,7 @@ export function getDefaultTailwindSettings(): Settings {
         recommendedVariantOrder: 'warning',
         usedBlocklistedClass: 'warning',
         suggestCanonicalClasses: 'warning',
+        invalidClass: 'ignore',
       },
       showPixelEquivalents: true,
       includeLanguages: {},
