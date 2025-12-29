@@ -104,8 +104,34 @@ test('find class lists in functions', async ({ expect }) => {
     `,
   })
 
+  let fileC = createDocument({
+    name: 'file.jsx',
+    lang: 'javascriptreact',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx', 'cva'],
+      },
+    },
+    content: js`
+      // These should not match (commented)
+      // let classes = clsx(
+      //   'flex p-4',
+      //   'block sm:p-0',
+      //   Date.now() > 100 ? 'text-white' : 'text-black',
+      // )
+
+      // These should not match (commented)
+      // let classes = cva(
+      //   'flex p-4',
+      //   'block sm:p-0',
+      //   Date.now() > 100 ? 'text-white' : 'text-black',
+      // )
+    `,
+  })
+
   let classListsA = await findClassListsInDocument(fileA.state, fileA.doc)
   let classListsB = await findClassListsInDocument(fileB.state, fileB.doc)
+  let classListsC = await findClassListsInDocument(fileC.state, fileC.doc)
 
   expect(classListsA).toEqual([
     // from clsx(…)
@@ -171,6 +197,9 @@ test('find class lists in functions', async ({ expect }) => {
 
   // none from cn(…) since it's not in the list of class functions
   expect(classListsB).toEqual([])
+
+  // none from commented code
+  expect(classListsC).toEqual([])
 })
 
 test('find class lists in nested fn calls', async ({ expect }) => {
