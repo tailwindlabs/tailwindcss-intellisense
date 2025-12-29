@@ -6,7 +6,7 @@ import { isCssContext } from './util/css'
 import {
   findAll,
   findClassNameAtPosition,
-  findHelperFunctionsInRange,
+  findHelperFunctionsInDocument,
   indexToPosition,
 } from './util/find'
 import { validateApply } from './util/validateApply'
@@ -46,10 +46,7 @@ async function provideCssHelperHover(
 
   const settings = await state.editor.getConfiguration(document.uri)
 
-  let helperFns = findHelperFunctionsInRange(document, {
-    start: { line: position.line, character: 0 },
-    end: { line: position.line + 1, character: 0 },
-  })
+  let helperFns = findHelperFunctionsInDocument(state, document)
 
   for (let helperFn of helperFns) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
