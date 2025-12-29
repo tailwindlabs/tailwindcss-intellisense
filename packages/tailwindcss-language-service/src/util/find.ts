@@ -196,27 +196,15 @@ export async function findClassListsInHtmlRange(
 ): Promise<DocumentClassList[]> {
   if (!state.editor) return []
 
-  const text = getTextWithoutComments(doc, type, range)
+  let settings = await state.editor.getConfiguration(doc.uri)
+  let text = getTextWithoutComments(doc, type, range)
+  let matches = matchClassAttributes(text, settings.tailwindCSS.classAttributes)
 
-  const settings = (await state.editor.getConfiguration(doc.uri)).tailwindCSS
-  const matches = matchClassAttributes(text, settings.classAttributes)
-
-  let boundaries = getLanguageBoundaries(state, doc)
-
-  for (let boundary of boundaries ?? []) {
-    let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
-    if (!isJsContext) continue
-    if (!settings.classFunctions?.length) continue
-
-    let str = doc.getText(boundary.range)
-    let offset = doc.offsetAt(boundary.range.start)
-    let fnMatches = matchClassFunctions(str, settings.classFunctions)
-
-    fnMatches.forEach((match) => {
-      if (match.index) match.index += offset
-    })
-
-    matches.push(...fnMatches)
+  // For JS/TS contexts we want to look inside specific function calls and
+  // tagged template literals for class lists
+  let fnNames = settings.tailwindCSS.classFunctions ?? []
+  if (type === 'jsx' && fnNames.length) {
+    matches.push(...matchClassFunctions(text, fnNames))
   }
 
   const existingResultSet = new Set<string>()
