@@ -92,30 +92,7 @@ export function getClassNamesInClassList(
   return names
 }
 
-export async function findClassNamesInRange(
-  state: State,
-  doc: TextDocument,
-  range?: Range,
-  mode?: 'html' | 'css' | 'jsx',
-  includeCustom: boolean = true,
-): Promise<DocumentClassName[]> {
-  const classLists = await findClassListsInRange(state, doc, range, mode, includeCustom)
-  return flatten(
-    classLists.map((classList) => getClassNamesInClassList(classList, state.blocklist)),
-  )
-}
-
-export async function findClassNamesInDocument(
-  state: State,
-  doc: TextDocument,
-): Promise<DocumentClassName[]> {
-  const classLists = await findClassListsInDocument(state, doc)
-  return flatten(
-    classLists.map((classList) => getClassNamesInClassList(classList, state.blocklist)),
-  )
-}
-
-export function findClassListsInCssRange(
+function findClassListsInCssRange(
   state: State,
   doc: TextDocument,
   range?: Range,
@@ -240,7 +217,6 @@ function findClassListsInHtmlRange(
     lexer.reset(subtext)
 
     let classLists: { value: string; offset: number }[] = []
-    let token: moo.Token
     let currentClassList: { value: string; offset: number }
 
     try {
@@ -322,26 +298,6 @@ function findClassListsInHtmlRange(
   return results
 }
 
-export async function findClassListsInRange(
-  state: State,
-  doc: TextDocument,
-  range?: Range,
-  mode?: 'html' | 'css' | 'jsx',
-  includeCustom: boolean = true,
-  lang?: string,
-): Promise<DocumentClassList[]> {
-  let classLists: DocumentClassList[] = []
-  if (mode === 'css') {
-    classLists = findClassListsInCssRange(state, doc, range, lang)
-  } else if (mode === 'html' || mode === 'jsx') {
-    classLists = await findClassListsInHtmlRange(state, doc, mode, range)
-  }
-  return dedupeByRange([
-    ...classLists,
-    ...(includeCustom ? await findCustomClassLists(state, doc, range) : []),
-  ])
-}
-
 export async function findClassListsInDocument(
   state: State,
   doc: TextDocument,
@@ -395,26 +351,7 @@ export function findHelperFunctionsInDocument(
   )
 }
 
-function getFirstCommaIndex(str: string): number | null {
-  let quoteChar: string | undefined
-  for (let i = 0; i < str.length; i++) {
-    let char = str[i]
-    if (char === ',' && !quoteChar) {
-      return i
-    }
-    if (!quoteChar && (char === '"' || char === "'")) {
-      quoteChar = char
-    } else if (char === quoteChar) {
-      quoteChar = undefined
-    }
-  }
-  return null
-}
-
-export function findHelperFunctionsInRange(
-  doc: TextDocument,
-  range?: Range,
-): DocumentHelperFunction[] {
+function findHelperFunctionsInRange(doc: TextDocument, range?: Range): DocumentHelperFunction[] {
   let text = getTextWithoutComments(doc, 'css', range)
 
   // Find every instance of a helper function
@@ -456,9 +393,9 @@ export function findHelperFunctionsInRange(
 
   for (let match of matches) {
     let argsStart = match.index + match[0].length
-    let argsEnd = null
+    let argsEnd: number | null = null
     let pathStart = argsStart
-    let pathEnd = null
+    let pathEnd: number | null = null
     let depth = 1
 
     // Scan until we find a `,` or balanced `)` not in quotes
@@ -503,7 +440,7 @@ export function findHelperFunctionsInRange(
       }
     }
 
-    if (argsEnd === null) continue
+    if (argsEnd === null || pathEnd === null) continue
 
     let helper: 'config' | 'theme' | 'var'
 

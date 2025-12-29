@@ -12,6 +12,35 @@ export const html: Dedent = dedent
 export const astro: Dedent = dedent
 export const pug: Dedent = dedent
 
+export function createSettings(settings: DeepPartial<Settings>): Settings {
+  let defaults = getDefaultTailwindSettings()
+  settings ??= {}
+
+  return {
+    ...defaults,
+    ...settings,
+    tailwindCSS: {
+      ...defaults.tailwindCSS,
+      ...settings.tailwindCSS,
+      lint: {
+        ...defaults.tailwindCSS.lint,
+        ...(settings.tailwindCSS?.lint ?? {}),
+      },
+      experimental: {
+        ...defaults.tailwindCSS.experimental,
+        ...(settings.tailwindCSS?.experimental ?? {}),
+      },
+      files: {
+        ...defaults.tailwindCSS.files,
+        ...(settings.tailwindCSS?.files ?? {}),
+      },
+    },
+    editor: {
+      ...defaults.editor,
+      ...settings.editor,
+    },
+  }
+}
 export function createDocument({
   name,
   lang,
@@ -29,34 +58,13 @@ export function createDocument({
     1,
     typeof content === 'string' ? content : content.join('\n'),
   )
-  let defaults = getDefaultTailwindSettings()
-  settings ??= {}
+
+  let documentSettings = createSettings(settings ?? {})
+
   let state = createState({
     editor: {
-      getConfiguration: async () => ({
-        ...defaults,
-        ...settings,
-        tailwindCSS: {
-          ...defaults.tailwindCSS,
-          ...settings.tailwindCSS,
-          lint: {
-            ...defaults.tailwindCSS.lint,
-            ...(settings.tailwindCSS?.lint ?? {}),
-          },
-          experimental: {
-            ...defaults.tailwindCSS.experimental,
-            ...(settings.tailwindCSS?.experimental ?? {}),
-          },
-          files: {
-            ...defaults.tailwindCSS.files,
-            ...(settings.tailwindCSS?.files ?? {}),
-          },
-        },
-        editor: {
-          ...defaults.editor,
-          ...settings.editor,
-        },
-      }),
+      userLanguages: documentSettings.tailwindCSS.includeLanguages ?? {},
+      getConfiguration: async () => documentSettings,
     },
   })
 
