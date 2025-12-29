@@ -225,6 +225,8 @@ export async function findClassListsInHtmlRange(
   const existingResultSet = new Set<string>()
   const results: DocumentClassList[] = []
 
+  matches.sort((a, b) => a.index - b.index)
+
   matches.forEach((match) => {
     const subtext = text.substr(match.index + match[0].length - 1)
 

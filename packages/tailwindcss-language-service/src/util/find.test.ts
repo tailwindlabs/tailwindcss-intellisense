@@ -1114,15 +1114,15 @@ test('class functions work inside astro code fences', async ({ expect }) => {
     {
       classList: 'relative flex bg-red-500',
       range: {
-        start: { line: 3, character: 12 },
-        end: { line: 3, character: 36 },
+        start: { line: 1, character: 14 },
+        end: { line: 1, character: 38 },
       },
     },
     {
       classList: 'relative flex bg-red-500',
       range: {
-        start: { line: 1, character: 14 },
-        end: { line: 1, character: 38 },
+        start: { line: 3, character: 12 },
+        end: { line: 3, character: 36 },
       },
     },
   ])
