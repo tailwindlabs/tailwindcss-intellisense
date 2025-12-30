@@ -108,19 +108,11 @@ function findClassListsInCssRange(
   return matches.map((match) => {
     const start = indexToPosition(text, match.index + match[1].length)
     const end = indexToPosition(text, match.index + match[1].length + match.groups.classList.length)
+    const range = absoluteRange({ start, end }, { start: globalStart, end: globalStart })
     return {
       classList: match.groups.classList,
       important: Boolean(match.groups.important),
-      range: {
-        start: {
-          line: globalStart.line + start.line,
-          character: (end.line === 0 ? globalStart.character : 0) + start.character,
-        },
-        end: {
-          line: globalStart.line + end.line,
-          character: (end.line === 0 ? globalStart.character : 0) + end.character,
-        },
-      },
+      range,
     }
   })
 }
@@ -264,19 +256,11 @@ function findClassListsInHtmlRange(
         text,
         match.index + match[0].length - 1 + offset + value.length + afterOffset,
       )
+      const resultRange = absoluteRange({ start, end }, range)
 
       const result: DocumentClassList = {
         classList: value.substr(beforeOffset, value.length + afterOffset),
-        range: {
-          start: {
-            line: (range?.start.line || 0) + start.line,
-            character: (end.line === 0 ? range?.start.character || 0 : 0) + start.character,
-          },
-          end: {
-            line: (range?.start.line || 0) + end.line,
-            character: (end.line === 0 ? range?.start.character || 0 : 0) + end.character,
-          },
-        },
+        range: resultRange,
       }
 
       const resultKey = [
