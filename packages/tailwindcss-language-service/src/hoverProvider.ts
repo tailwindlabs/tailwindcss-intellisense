@@ -105,7 +105,7 @@ async function provideClassNameHover(
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, toPostCSSAst(root), document.uri),
+        value: jit.stringifyRoot(state, toPostCSSAst(root), settings),
       },
       range: className.range,
     }
@@ -121,7 +121,7 @@ async function provideClassNameHover(
     return {
       contents: {
         language: 'css',
-        value: await jit.stringifyRoot(state, root, document.uri),
+        value: jit.stringifyRoot(state, root, settings),
       },
       range: className.range,
     }

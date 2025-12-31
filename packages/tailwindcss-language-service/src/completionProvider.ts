@@ -2285,6 +2285,8 @@ export async function resolveCompletionItem(
     return item
   }
 
+  let settings = await state.editor.getConfiguration()
+
   let className = item.data?.className ?? item.label
   if (item.data?.important) {
     className = `!${className}`
@@ -2369,7 +2371,7 @@ export async function resolveCompletionItem(
         let root = toPostCSSAst([{ kind: 'rule', selector: '', nodes: decls }])
         let rule = root.nodes[0] as postcss.Rule
 
-        item.detail = await jit.stringifyDecls(state, rule)
+        item.detail = jit.stringifyDecls(state, rule, settings)
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -2381,7 +2383,7 @@ export async function resolveCompletionItem(
         value: [
           //
           '```css',
-          await jit.stringifyRoot(state, toPostCSSAst(rules)),
+          jit.stringifyRoot(state, toPostCSSAst(rules), settings),
           '```',
         ].join('\n'),
       }
@@ -2397,7 +2399,7 @@ export async function resolveCompletionItem(
     if (rules.length === 0) return item
     if (!item.detail) {
       if (rules.length === 1) {
-        item.detail = await jit.stringifyDecls(state, rules[0])
+        item.detail = jit.stringifyDecls(state, rules[0], settings)
       } else {
         item.detail = `${rules.length} rules`
       }
@@ -2405,7 +2407,7 @@ export async function resolveCompletionItem(
     if (!item.documentation) {
       item.documentation = {
         kind: 'markdown' as typeof MarkupKind.Markdown,
-        value: ['```css', await jit.stringifyRoot(state, root), '```'].join('\n'),
+        value: ['```css', jit.stringifyRoot(state, root, settings), '```'].join('\n'),
       }
     }
     return item
@@ -2417,7 +2419,6 @@ export async function resolveCompletionItem(
   } else {
     item.detail = await getCssDetail(state, rules)
     if (!item.documentation) {
-      const settings = await state.editor.getConfiguration()
       const css = stringifyCss([...variants, className].join(':'), rules, settings)
       if (css) {
         item.documentation = {
