@@ -201,27 +201,27 @@ test('Cleans JS', () => {
 
         const tmpl6 = \`
           Template with \${
-               This is a real comment inside interpolation
+            // This is a real comment inside interpolation
             someValue
           } complex interpolation
         \`;
 
                                          
-        const regex1 = /simple/;
-        const regex2 = /with-flags/gi;
-        const regex3 = /multi-flag/gimsuy;
-        const regex4 = /pattern\\/with\\/slashes/g;
-        const regex5 = /pattern with spaces/;
-        const regex6 = /[a-z]+(foo|bar)*\\d{2,4}/i;
+        const regex1 =         ;
+        const regex2 =             gi;
+        const regex3 =             gimsuy;
+        const regex4 =                         g;
+        const regex5 =                      ;
+        const regex6 =                          i;
 
                                          
-        const regex7 = /\\/\\/ not a comment/;
-        const regex8 = /\\/\\* also not a comment \\*\\   
+        const regex7 =                     ;
+        const regex8 =                               ;
 
                                       
         const division = 10 / 2 / 1;
-        const afterParen = (x) => /regex-after-arrow/g;
-        const inCondition = /test/.test(str) ? /yes/g : /no/i;
+        const afterParen = (x) =>                    g;
+        const inCondition =       .test(str) ?      g :     i;
 
                             
         const obj = {
@@ -258,7 +258,7 @@ test('Cleans JS', () => {
                      
         const empty = "";
         const emptyTemplate = \`\`;
-        const emptyRegex = /(?:)/;
+        const emptyRegex =       ;
 
                                          
         const url = "https://example.com/path";
@@ -285,8 +285,8 @@ test('Cleans JS', () => {
         \`;
 
                                         
-        const specialRegex = /[\\[\\]{}()*+?.,\\\\^$|#\\s]/g;
-        const unicodeRegex = /\\p{Script=Latin}/u;
+        const specialRegex =                          g;
+        const unicodeRegex =                   u;
 
                                                         
         const withTrailing = 123;                    
@@ -461,7 +461,7 @@ test('Cleans HTML', () => {
 
         <div>                       </div>
 
-        <div class="                                        ">Content</div>
+        <div class="<!-- not a comment, but in attribute -->">Content</div>
 
                                                            
         <div>Content</div>
@@ -506,13 +506,13 @@ test('Cleans HTML', () => {
         <script>
           // JS comment inside script tag
           /* JS block comment */
-          const str = "                            ";
+          const str = "<!-- not an HTML comment -->";
         </script>
 
         <style>
           /* CSS comment inside style tag */
           .class {
-            content: "                            ";
+            content: "<!-- not an HTML comment -->";
           }
         </style>
 
