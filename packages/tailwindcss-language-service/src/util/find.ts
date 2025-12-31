@@ -49,10 +49,10 @@ const BY_ASCII_WHITESPACE = /([\t\n\f\r ]+)/
  *
  * The CSS spec also effectively uses the above definition for whitespace.
  *
- * @see {@link https://dom.spec.whatwg.org/#concept-getelementsbyclassname}
- * @see {@link https://dom.spec.whatwg.org/#concept-ordered-set-parser}
- * @see {@link https://infra.spec.whatwg.org/#ascii-whitespace}
- * @see {@link https://www.w3.org/TR/css-syntax-3/#whitespace}
+ * @see https://dom.spec.whatwg.org/#concept-getelementsbyclassname
+ * @see https://dom.spec.whatwg.org/#concept-ordered-set-parser
+ * @see https://infra.spec.whatwg.org/#ascii-whitespace
+ * @see https://www.w3.org/TR/css-syntax-3/#whitespace
  */
 export function getClassNamesInClassList(
   classList: DocumentClassList,
