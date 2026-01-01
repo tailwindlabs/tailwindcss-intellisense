@@ -5,19 +5,19 @@ import { spliceChangesIntoString, StringChange } from './splice-changes-into-str
 
 export function getTextWithoutComments(
   doc: TextDocument,
-  type: 'html' | 'js' | 'jsx' | 'css',
+  type: 'html' | 'js' | 'css',
   range?: Range,
 ): string
-export function getTextWithoutComments(text: string, type: 'html' | 'js' | 'jsx' | 'css'): string
+export function getTextWithoutComments(text: string, type: 'html' | 'js' | 'css'): string
 
 export function getTextWithoutComments(
   docOrText: TextDocument | string,
-  type: 'html' | 'js' | 'jsx' | 'css',
+  type: 'html' | 'js' | 'css',
   range?: Range,
 ): string {
   let text = typeof docOrText === 'string' ? docOrText : docOrText.getText(range)
 
-  if (type === 'js' || type === 'jsx') {
+  if (type === 'js') {
     return getJsWithoutComments(text)
   }
 

@@ -1,4 +1,4 @@
-import type { State } from './util/state'
+import type { Settings, State } from './util/state'
 import type { Hover, MarkupContent, Position, Range } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
@@ -6,7 +6,7 @@ import { isCssContext } from './util/css'
 import {
   findAll,
   findClassNameAtPosition,
-  findHelperFunctionsInRange,
+  findHelperFunctionsInDocument,
   indexToPosition,
 } from './util/find'
 import { validateApply } from './util/validateApply'
@@ -46,10 +46,7 @@ async function provideCssHelperHover(
 
   const settings = await state.editor.getConfiguration(document.uri)
 
-  let helperFns = findHelperFunctionsInRange(document, {
-    start: { line: position.line, character: 0 },
-    end: { line: position.line + 1, character: 0 },
-  })
+  let helperFns = findHelperFunctionsInDocument(state, document)
 
   for (let helperFn of helperFns) {
     if (!isWithinRange(position, helperFn.ranges.path)) continue
@@ -97,7 +94,8 @@ async function provideClassNameHover(
   document: TextDocument,
   position: Position,
 ): Promise<Hover> {
-  let className = await findClassNameAtPosition(state, document, position)
+  let settings = await state.editor.getConfiguration(document.uri)
+  let className = findClassNameAtPosition(state, document, settings, position)
   if (className === null) return null
 
   if (state.v4) {
@@ -138,8 +136,6 @@ async function provideClassNameHover(
       return null
     }
   }
-
-  const settings = await state.editor.getConfiguration(document.uri)
 
   const css = stringifyCss(
     className.className,

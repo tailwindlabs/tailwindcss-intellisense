@@ -3,11 +3,11 @@ import type { State, Settings } from '../util/state'
 import { type SuggestCanonicalClassesDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 
-export async function getSuggestCanonicalClassesDiagnostics(
+export function getSuggestCanonicalClassesDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): Promise<SuggestCanonicalClassesDiagnostic[]> {
+): SuggestCanonicalClassesDiagnostic[] {
   if (!state.v4) return []
   if (!state.designSystem.canonicalizeCandidates) return []
 
@@ -16,7 +16,7 @@ export async function getSuggestCanonicalClassesDiagnostics(
 
   let diagnostics: SuggestCanonicalClassesDiagnostic[] = []
 
-  let classLists = await findClassListsInDocument(state, document)
+  let classLists = findClassListsInDocument(state, document, settings)
 
   for (let classList of classLists) {
     let classNames = getClassNamesInClassList(classList, [])

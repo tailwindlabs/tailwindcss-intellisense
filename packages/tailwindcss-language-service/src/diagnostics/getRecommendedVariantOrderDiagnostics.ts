@@ -7,11 +7,11 @@ import { getVariantsFromClassName } from '../util/getVariantsFromClassName'
 import { equalExact } from '../util/array'
 import * as semver from '../util/semver'
 
-export async function getRecommendedVariantOrderDiagnostics(
+export function getRecommendedVariantOrderDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): Promise<RecommendedVariantOrderDiagnostic[]> {
+): RecommendedVariantOrderDiagnostic[] {
   if (state.v4) return []
   if (!state.jit) return []
 
@@ -21,7 +21,7 @@ export async function getRecommendedVariantOrderDiagnostics(
   if (severity === 'ignore') return []
 
   let diagnostics: RecommendedVariantOrderDiagnostic[] = []
-  const classLists = await findClassListsInDocument(state, document)
+  const classLists = findClassListsInDocument(state, document, settings)
 
   classLists.forEach((classList) => {
     const classNames = getClassNamesInClassList(classList, state.blocklist)
