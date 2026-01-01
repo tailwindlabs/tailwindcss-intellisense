@@ -1,4 +1,4 @@
-import type { State } from './util/state'
+import type { Settings, State } from './util/state'
 import type { Hover, MarkupContent, Position, Range } from 'vscode-languageserver'
 import { stringifyCss, stringifyConfigValue } from './util/stringify'
 import dlv from 'dlv'
@@ -94,7 +94,8 @@ async function provideClassNameHover(
   document: TextDocument,
   position: Position,
 ): Promise<Hover> {
-  let className = await findClassNameAtPosition(state, document, position)
+  let settings = await state.editor.getConfiguration(document.uri)
+  let className = findClassNameAtPosition(state, document, settings, position)
   if (className === null) return null
 
   if (state.v4) {
@@ -135,8 +136,6 @@ async function provideClassNameHover(
       return null
     }
   }
-
-  const settings = await state.editor.getConfiguration(document.uri)
 
   const css = stringifyCss(
     className.className,

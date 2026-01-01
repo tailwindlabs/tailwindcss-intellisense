@@ -847,7 +847,7 @@ test('Can find class name inside JS/TS functions in <script> tags (HTML)', async
     `,
   })
 
-  let className = await findClassNameAtPosition(file.state, file.doc, {
+  let className = findClassNameAtPosition(file.state, file.doc, file.settings, {
     line: 1,
     character: 23,
   })
@@ -889,7 +889,7 @@ test('Can find class name inside JS/TS functions in <script> tags (Svelte)', asy
     `,
   })
 
-  let className = await findClassNameAtPosition(file.state, file.doc, {
+  let className = findClassNameAtPosition(file.state, file.doc, file.settings, {
     line: 1,
     character: 23,
   })

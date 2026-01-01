@@ -540,12 +540,12 @@ export function indexToPosition(str: string, index: number): Position {
   return { line: line - 1, character: col - 1 }
 }
 
-export async function findClassNameAtPosition(
+export function findClassNameAtPosition(
   state: State,
   doc: TextDocument,
+  settings: Settings,
   position: Position,
-): Promise<DocumentClassName> {
-  let settings = await state.editor.getConfiguration(doc.uri)
+): DocumentClassName {
   let classLists = findClassListsInDocument(state, doc, settings)
   let classNames = classLists.flatMap((classList) =>
     getClassNamesInClassList(classList, state.blocklist),
