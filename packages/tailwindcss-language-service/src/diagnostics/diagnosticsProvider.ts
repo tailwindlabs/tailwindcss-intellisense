@@ -33,10 +33,10 @@ export async function doValidate(
   return settings.tailwindCSS.validate
     ? [
         ...(only.includes(DiagnosticKind.CssConflict)
-          ? await getCssConflictDiagnostics(state, document, settings)
+          ? getCssConflictDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidApply)
-          ? await getInvalidApplyDiagnostics(state, document, settings)
+          ? getInvalidApplyDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidScreen)
           ? getInvalidScreenDiagnostics(state, document, settings)
@@ -54,13 +54,13 @@ export async function doValidate(
           ? getInvalidSourceDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.RecommendedVariantOrder)
-          ? await getRecommendedVariantOrderDiagnostics(state, document, settings)
+          ? getRecommendedVariantOrderDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.UsedBlocklistedClass)
-          ? await getUsedBlocklistedClassDiagnostics(state, document, settings)
+          ? getUsedBlocklistedClassDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.SuggestCanonicalClasses)
-          ? await getSuggestCanonicalClassesDiagnostics(state, document, settings)
+          ? getSuggestCanonicalClassesDiagnostics(state, document, settings)
           : []),
       ]
     : []

@@ -51,7 +51,7 @@ export function createDocument({
   lang: string
   content: string | string[]
   settings?: DeepPartial<Settings>
-}): { doc: TextDocument; state: State } {
+}): { doc: TextDocument; state: State; settings: Settings } {
   let doc = TextDocument.create(
     `file://${name}`,
     lang,
@@ -71,5 +71,6 @@ export function createDocument({
   return {
     doc,
     state,
+    settings: documentSettings,
   }
 }

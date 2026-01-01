@@ -282,15 +282,14 @@ function findClassListsInHtmlRange(
   return results
 }
 
-export async function findClassListsInDocument(
+export function findClassListsInDocument(
   state: State,
   doc: TextDocument,
-): Promise<DocumentClassList[]> {
+  settings: Settings,
+): DocumentClassList[] {
   if (isCssDoc(state, doc)) {
     return findClassListsInCssRange(state, doc)
   }
-
-  let settings = await state.editor.getConfiguration(doc.uri)
 
   let classLists: DocumentClassList[] = []
 
@@ -546,7 +545,8 @@ export async function findClassNameAtPosition(
   doc: TextDocument,
   position: Position,
 ): Promise<DocumentClassName> {
-  let classLists = await findClassListsInDocument(state, doc)
+  let settings = await state.editor.getConfiguration(doc.uri)
+  let classLists = findClassListsInDocument(state, doc, settings)
   let classNames = classLists.flatMap((classList) =>
     getClassNamesInClassList(classList, state.blocklist),
   )

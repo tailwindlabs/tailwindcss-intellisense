@@ -34,7 +34,7 @@ test('class regex works in astro', async ({ expect }) => {
     ],
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -129,9 +129,9 @@ test('find class lists in functions', async ({ expect }) => {
     `,
   })
 
-  let classListsA = await findClassListsInDocument(fileA.state, fileA.doc)
-  let classListsB = await findClassListsInDocument(fileB.state, fileB.doc)
-  let classListsC = await findClassListsInDocument(fileC.state, fileC.doc)
+  let classListsA = findClassListsInDocument(fileA.state, fileA.doc, fileA.settings)
+  let classListsB = findClassListsInDocument(fileB.state, fileB.doc, fileB.settings)
+  let classListsC = findClassListsInDocument(fileC.state, fileC.doc, fileC.settings)
 
   expect(classListsA).toEqual([
     // from clsx(…)
@@ -243,7 +243,7 @@ test('find class lists in nested fn calls', async ({ expect }) => {
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toMatchObject([
     {
@@ -345,7 +345,7 @@ test('find class lists in nested fn calls (only nested matches)', async ({ expec
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toMatchObject([
     {
@@ -408,8 +408,8 @@ test('find class lists in tagged template literals', async ({ expect }) => {
     `,
   })
 
-  let classListsA = await findClassListsInDocument(fileA.state, fileA.doc)
-  let classListsB = await findClassListsInDocument(fileB.state, fileB.doc)
+  let classListsA = findClassListsInDocument(fileA.state, fileA.doc, fileA.settings)
+  let classListsB = findClassListsInDocument(fileB.state, fileB.doc, fileB.settings)
 
   expect(classListsA).toEqual([
     // from clsx`…`
@@ -490,8 +490,8 @@ test('classFunctions can be a regex', async ({ expect }) => {
     `,
   })
 
-  let classListsA = await findClassListsInDocument(fileA.state, fileA.doc)
-  let classListsB = await findClassListsInDocument(fileB.state, fileB.doc)
+  let classListsA = findClassListsInDocument(fileA.state, fileA.doc, fileA.settings)
+  let classListsB = findClassListsInDocument(fileB.state, fileB.doc, fileB.settings)
 
   expect(classListsA).toEqual([
     {
@@ -523,7 +523,7 @@ test('classFunctions regexes only match on function names', async ({ expect }) =
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([])
 })
@@ -546,7 +546,7 @@ test('Finds consecutive instances of a class function', async ({ expect }) => {
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -609,7 +609,7 @@ test('classFunctions & classAttributes should not duplicate matches', async ({ e
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -688,7 +688,7 @@ test('classFunctions should only match in JS-like contexts', async ({ expect }) 
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -748,7 +748,7 @@ test('classAttributes find class lists inside variables in JS(X)/TS(X)', async (
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -789,7 +789,7 @@ test('classAttributes find class lists inside pug', async ({ expect }) => {
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -818,7 +818,7 @@ test('classAttributes find class lists inside Vue bindings', async ({ expect }) 
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -1137,7 +1137,7 @@ test('class functions work inside astro code fences', async ({ expect }) => {
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
@@ -1173,7 +1173,7 @@ test('classFunctions are detected inside of arrays in javascript just after open
     `,
   })
 
-  let classLists = await findClassListsInDocument(file.state, file.doc)
+  let classLists = findClassListsInDocument(file.state, file.doc, file.settings)
 
   expect(classLists).toEqual([
     {
