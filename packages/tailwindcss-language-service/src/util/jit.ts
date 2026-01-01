@@ -1,4 +1,4 @@
-import type { State } from './state'
+import type { Settings, State } from './state'
 import type { Container, Document, Root, Rule, Node, AtRule } from 'postcss'
 import { addPixelEquivalentsToValue } from './pixelEquivalents'
 import { addEquivalents } from './equivalents'
@@ -35,8 +35,7 @@ export function generateRules(
   }
 }
 
-export async function stringifyRoot(state: State, root: Root, uri?: string): Promise<string> {
-  let settings = await state.editor.getConfiguration(uri)
+export function stringifyRoot(state: State, root: Root, settings: Settings): string {
   let clone = root.clone()
 
   clone.walkAtRules('defaults', (node) => {
@@ -65,9 +64,7 @@ export function stringifyRules(state: State, rules: Rule[], tabSize: number = 2)
     .replace(/^(?:    )+/gm, (indent: string) => ' '.repeat((indent.length / 4) * tabSize))
 }
 
-export async function stringifyDecls(state: State, rule: Rule, uri?: string): Promise<string> {
-  let settings = await state.editor.getConfiguration(uri)
-
+export function stringifyDecls(state: State, rule: Rule, settings: Settings): string {
   let result = []
 
   rule.walkDecls(({ prop, value }) => {
