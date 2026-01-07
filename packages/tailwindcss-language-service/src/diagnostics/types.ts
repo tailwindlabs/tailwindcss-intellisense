@@ -12,6 +12,7 @@ export enum DiagnosticKind {
   RecommendedVariantOrder = 'recommendedVariantOrder',
   UsedBlocklistedClass = 'usedBlocklistedClass',
   SuggestCanonicalClasses = 'suggestCanonicalClasses',
+  SuggestGapUtilities = 'suggestGapUtilities',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -123,6 +124,17 @@ export function isSuggestCanonicalClasses(
   return diagnostic.code === DiagnosticKind.SuggestCanonicalClasses
 }
 
+export type SuggestGapUtilitiesDiagnostic = Diagnostic & {
+  code: DiagnosticKind.SuggestGapUtilities
+  suggestions: string[]
+}
+
+export function isSuggestGapUtilities(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is SuggestGapUtilitiesDiagnostic {
+  return diagnostic.code === DiagnosticKind.SuggestCanonicalClasses
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -134,3 +146,4 @@ export type AugmentedDiagnostic =
   | RecommendedVariantOrderDiagnostic
   | UsedBlocklistedClassDiagnostic
   | SuggestCanonicalClassesDiagnostic
+  | SuggestGapUtilitiesDiagnostic

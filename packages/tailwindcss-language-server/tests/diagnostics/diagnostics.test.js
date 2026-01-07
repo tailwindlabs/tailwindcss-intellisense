@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import { expect, test } from 'vitest'
 import { withFixture } from '../common'
-import { css, defineTest, json } from '../../src/testing'
+import { css, defineTest } from '../../src/testing'
 import { createClient } from '../utils/client'
 
 withFixture('basic', (c) => {
@@ -37,6 +37,20 @@ withFixture('basic', (c) => {
   testFixture('css-conflict/vue-style-lang-sass')
   testFixture('invalid-screen/simple')
   testFixture('invalid-theme/simple')
+  testFixture('suggest-gap-utilities/flex-space-x-y')
+  testFixture('suggest-gap-utilities/flex-space-x')
+  testFixture('suggest-gap-utilities/flex-space-y')
+  testFixture('suggest-gap-utilities/flex-row-space-x-y')
+  testFixture('suggest-gap-utilities/flex-row-space-x')
+  testFixture('suggest-gap-utilities/flex-row-space-y')
+  testFixture('suggest-gap-utilities/flex-col-space-x-y')
+  testFixture('suggest-gap-utilities/flex-col-space-x')
+  testFixture('suggest-gap-utilities/flex-col-space-y')
+  testFixture('suggest-gap-utilities/flex-row-reverse-space-x')
+  testFixture('suggest-gap-utilities/flex-col-reverse-space-y')
+  testFixture('suggest-gap-utilities/arbitrary-value-space')
+  testFixture('suggest-gap-utilities/negative-space')
+  testFixture('suggest-gap-utilities/space-without-flex')
 })
 
 withFixture('v4/basic', (c) => {

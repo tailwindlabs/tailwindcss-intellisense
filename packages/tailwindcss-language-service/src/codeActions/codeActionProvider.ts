@@ -14,6 +14,7 @@ import {
   isInvalidVariantDiagnostic,
   isRecommendedVariantOrderDiagnostic,
   isSuggestCanonicalClasses,
+  isSuggestGapUtilities,
 } from '../diagnostics/types'
 import { flatten, dedupeBy } from '../util/array'
 import { provideCssConflictCodeActions } from './provideCssConflictCodeActions'
@@ -76,7 +77,8 @@ export async function doCodeActions(
         isInvalidScreenDiagnostic(diagnostic) ||
         isInvalidVariantDiagnostic(diagnostic) ||
         isRecommendedVariantOrderDiagnostic(diagnostic) ||
-        isSuggestCanonicalClasses(diagnostic)
+        isSuggestCanonicalClasses(diagnostic) ||
+        isSuggestGapUtilities(diagnostic)
       ) {
         return provideSuggestionCodeActions(state, params, diagnostic)
       }

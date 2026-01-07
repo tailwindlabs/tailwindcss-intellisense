@@ -11,6 +11,7 @@ import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOr
 import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
 import { getUsedBlocklistedClassDiagnostics } from './getUsedBlocklistedClassDiagnostics'
 import { getSuggestCanonicalClassesDiagnostics } from './canonical-classes'
+import { getSuggestGapUtilitiesDiagnostics } from './getSuggestGapUtilitiesDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -26,6 +27,7 @@ export async function doValidate(
     DiagnosticKind.RecommendedVariantOrder,
     DiagnosticKind.UsedBlocklistedClass,
     DiagnosticKind.SuggestCanonicalClasses,
+    DiagnosticKind.SuggestGapUtilities,
   ],
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
@@ -61,6 +63,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.SuggestCanonicalClasses)
           ? await getSuggestCanonicalClassesDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.SuggestGapUtilities)
+          ? await getSuggestGapUtilitiesDiagnostics(state, document, settings)
           : []),
       ]
     : []

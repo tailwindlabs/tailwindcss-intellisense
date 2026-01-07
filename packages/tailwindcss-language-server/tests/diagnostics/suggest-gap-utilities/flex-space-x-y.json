@@ -1,0 +1,17 @@
+{
+  "code": "<div class=\"flex space-y-2 space-x-4\"></div>",
+  "language": "html",
+  "expected": [
+    {
+      "code": "suggestGapUtilities",
+      "source": "tailwindcss",
+      "severity": 2,
+      "message": "Consider using `gap-x-4` instead of `space-x-4` when using flex layouts.",
+      "range": {
+        "start": { "line": 0, "character": 27 },
+        "end": { "line": 0, "character": 36 }
+      },
+      "suggestions": ["gap-x-4"]
+    }
+  ]
+}

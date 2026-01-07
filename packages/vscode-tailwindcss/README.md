@@ -194,6 +194,10 @@ Some examples of the changes this makes:
 | `[color:red]/100`               | `text-[red]`   |
 | `[@media_print]:[display:flex]` | `print:flex`   |
 
+#### `tailwindCSS.lint.suggestGapUtilities`
+
+Detect usage of `space-*` utilities in `flex` layouts where `gap-*` utilities are the more idiomatic and predictable choice. **Default: `warning`**
+
 ### `tailwindCSS.inspectPort`
 
 Enable the Node.js inspector agent for the language server and listen on the specified port. **Default: `null`**
