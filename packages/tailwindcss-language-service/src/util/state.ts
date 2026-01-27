@@ -56,6 +56,7 @@ export type TailwindCssSettings = {
   showPixelEquivalents: boolean
   rootFontSize: number
   colorDecorators: boolean
+  colorSchemePreview: 'light' | 'dark'
   lint: {
     cssConflict: DiagnosticSeveritySetting
     invalidApply: DiagnosticSeveritySetting
@@ -195,6 +196,7 @@ export function getDefaultTailwindSettings(): Settings {
       suggestions: true,
       validate: true,
       colorDecorators: true,
+      colorSchemePreview: 'light',
       rootFontSize: 16,
       lint: {
         cssConflict: 'warning',

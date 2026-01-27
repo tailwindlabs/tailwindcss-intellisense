@@ -49,12 +49,16 @@ function getKeywordColor(value: unknown): KeywordColor | null {
   return null
 }
 
-function getColorsInString(state: State, str: string): ParsedColor[] {
+function getColorsInString(
+  state: State,
+  str: string,
+  colorScheme: 'light' | 'dark' = 'light',
+): ParsedColor[] {
   if (/(?:box|drop)-shadow/.test(str) && !/--tw-drop-shadow/.test(str)) return []
 
   str = replaceCssVarsWithFallbacks(state, str)
   str = removeColorMixWherePossible(str)
-  str = resolveLightDark(str)
+  str = resolveLightDark(str, colorScheme)
 
   return parseColors(str)
 }
@@ -62,6 +66,7 @@ function getColorsInString(state: State, str: string): ParsedColor[] {
 function getColorFromDecls(
   state: State,
   decls: Record<string, string | string[]>,
+  colorScheme: 'light' | 'dark' = 'light',
 ): ParsedColor | null {
   let props = Object.keys(decls).filter((prop) => {
     // ignore content: "";
@@ -104,7 +109,7 @@ function getColorFromDecls(
   const propsToCheck = areAllCustom ? props : nonCustomProps
 
   const colors = propsToCheck.flatMap((prop) =>
-    ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str)),
+    ensureArray(decls[prop]).flatMap((str) => getColorsInString(state, str, colorScheme)),
   )
 
   // check that all of the values are the same color, ignoring alpha
@@ -137,7 +142,11 @@ function getColorFromDecls(
   return null
 }
 
-function getColorFromRoot(state: State, css: AstNode[]): ParsedColor | null {
+function getColorFromRoot(
+  state: State,
+  css: AstNode[],
+  colorScheme: 'light' | 'dark' = 'light',
+): ParsedColor | null {
   let decls: Record<string, string[]> = {}
 
   walk(css, (node) => {
@@ -171,7 +180,7 @@ function getColorFromRoot(state: State, css: AstNode[]): ParsedColor | null {
     return WalkAction.Continue
   })
 
-  return getColorFromDecls(state, decls)
+  return getColorFromDecls(state, decls, colorScheme)
 }
 
 let isNegative = /^-/
@@ -190,13 +199,17 @@ function isLikelyColorless(className: string) {
   return false
 }
 
-export function getColor(state: State, className: string): ParsedColor | null {
+export function getColor(
+  state: State,
+  className: string,
+  colorScheme: 'light' | 'dark' = 'light',
+): ParsedColor | null {
   if (state.v4) {
     // FIXME: This is a performance optimization and not strictly correct
     if (isLikelyColorless(className)) return null
 
     let css = state.designSystem.compile([className])[0]
-    let color = getColorFromRoot(state, css)
+    let color = getColorFromRoot(state, css, colorScheme)
 
     let prefix = state.designSystem.theme.prefix ?? ''
 
@@ -205,7 +218,7 @@ export function getColor(state: State, className: string): ParsedColor | null {
     if (prefix && !color && !className.startsWith(prefix + ':')) {
       className = `${prefix}:${className}`
       css = state.designSystem.compile([className])[0]
-      color = getColorFromRoot(state, css)
+      color = getColorFromRoot(state, css, colorScheme)
     }
 
     return color
@@ -215,7 +228,7 @@ export function getColor(state: State, className: string): ParsedColor | null {
     if (state.classNames) {
       const item = dlv(state.classNames.classNames, [className, '__info'])
       if (item && item.__rule) {
-        return getColorFromDecls(state, removeMeta(item))
+        return getColorFromDecls(state, removeMeta(item), colorScheme)
       }
     }
 
@@ -244,7 +257,7 @@ export function getColor(state: State, className: string): ParsedColor | null {
         decls[decl.prop] = decl.value
       }
     })
-    return getColorFromDecls(state, decls)
+    return getColorFromDecls(state, decls, colorScheme)
   }
 
   let parts = getClassNameParts(state, className)
@@ -253,7 +266,7 @@ export function getColor(state: State, className: string): ParsedColor | null {
   const item = dlv(state.classNames.classNames, [...parts, '__info'])
   if (!item.__rule) return null
 
-  return getColorFromDecls(state, removeMeta(item))
+  return getColorFromDecls(state, removeMeta(item), colorScheme)
 }
 
 export function getColorFromValue(value: unknown): ParsedColor | null {
@@ -315,10 +328,15 @@ function removeColorMixWherePossible(str: string) {
   })
 }
 
-const LIGHT_DARK_REGEX = /light-dark\(\s*(.*?)\s*,\s*.*?\s*\)/g
+const LIGHT_DARK_REGEX = /light-dark\(\s*([^,]+?)\s*,\s*([^,]+)\s*\)/g
 
-function resolveLightDark(str: string) {
-  return str.replace(LIGHT_DARK_REGEX, (_, lightColor) => lightColor)
+export function resolveLightDark(
+  str: string,
+  colorScheme: 'light' | 'dark' = 'light',
+): string {
+  return str.replace(LIGHT_DARK_REGEX, (_, lightColor, darkColor) =>
+    colorScheme === 'light' ? lightColor.trim() : darkColor.trim(),
+  )
 }
 
 const COLOR_FNS = new Set([
