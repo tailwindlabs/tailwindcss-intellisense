@@ -1,7 +1,7 @@
 {
   "scopeName": "tailwindcss.at-apply.injection",
   "fileTypes": [],
-  "injectionSelector": "L:meta.property-list.css -comment, meta.property-list.scss -comment",
+  "injectionSelector": "L:meta.property-list.css -comment, meta.property-list.scss -comment, L:meta.at-rule.utility.body.tailwind -comment, meta.at-rule.utility.body.tailwind -comment",
   "name": "TailwindCSS",
   "patterns": [
     {
