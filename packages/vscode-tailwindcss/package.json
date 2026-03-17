@@ -340,6 +340,16 @@
           "default": null,
           "markdownDescription": "Manually specify the Tailwind config file or files that should be read to provide IntelliSense features. Can either be a single string value, or an object where each key is a config file path and each value is a glob or array of globs representing the set of files that the config file applies to."
         },
+        "tailwindCSS.experimental.v4Root": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "@import\\s*['\"]tailwindcss(?:\\/[^'\"]+)?['\"]"
+          ],
+          "markdownDescription": "Regular expression patterns used to detect Tailwind CSS v4 stylesheet entrypoints. Each value should be a JavaScript regex source string. Overriding this setting replaces the built-in matcher."
+        },
         "tailwindCSS.showPixelEquivalents": {
           "type": "boolean",
           "default": true,

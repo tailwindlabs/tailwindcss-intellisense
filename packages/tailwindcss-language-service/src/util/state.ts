@@ -71,6 +71,7 @@ export type TailwindCssSettings = {
   experimental: {
     classRegex: string[] | [string, string][]
     configFile: string | Record<string, string | string[]> | null
+    v4Root: string[]
   }
   files: {
     exclude: string[]
@@ -247,6 +248,7 @@ export function getDefaultTailwindSettings(): Settings {
       experimental: {
         classRegex: [],
         configFile: null,
+        v4Root: [`@import\\s*['"]tailwindcss(?:\\/[^'"]+)?['"]`],
       },
     },
   }

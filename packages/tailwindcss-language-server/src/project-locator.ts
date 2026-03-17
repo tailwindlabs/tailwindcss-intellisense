@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import { glob } from 'tinyglobby'
 import picomatch from 'picomatch'
-import type { Settings } from '@tailwindcss/language-service/src/util/state'
+import type { Settings, TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import { CONFIG_GLOB, CSS_GLOB } from './lib/constants'
 import { readCssFile } from './util/css'
 import { Graph } from './graph'
@@ -328,7 +328,7 @@ export class ProjectLocator {
     await Promise.all(css.map((entry) => entry.read()))
 
     // Determine what tailwind versions each file might be using
-    await Promise.all(css.map((entry) => entry.resolvePossibleVersions()))
+    await Promise.all(css.map((entry) => entry.resolvePossibleVersions(this.settings.tailwindCSS)))
 
     // Keep track of files that might import or involve Tailwind in some way
     let imports: FileEntry[] = []
@@ -784,8 +784,8 @@ class FileEntry {
   /**
    * Determine which Tailwind versions this file might be using
    */
-  async resolvePossibleVersions() {
-    this.meta ??= this.content ? analyzeStylesheet(this.content) : null
+  async resolvePossibleVersions(settings: TailwindCssSettings) {
+    this.meta ??= this.content ? analyzeStylesheet(this.content, settings) : null
   }
 
   /**

@@ -825,12 +825,14 @@ export async function createProjectService(
     if (state.isCssConfig) {
       try {
         let css = await readCssFile(state.configPath)
+        let settings = await getConfiguration(pathToFileURL(state.configPath).toString())
         let designSystem = await loadDesignSystem(
           resolver,
           state.modules.tailwindcss.module,
           state.configPath,
           css,
           state.v4Fallback ?? false,
+          settings.tailwindCSS,
         )
 
         state.designSystem = designSystem
@@ -1111,6 +1113,7 @@ export async function createProjectService(
       console.log(`---- ${state.configPath} ----`)
 
       let css = await readCssFile(state.configPath)
+      let settings = await getConfiguration(pathToFileURL(state.configPath).toString())
       let designSystem: DesignSystem
 
       let start = process.hrtime.bigint()
@@ -1122,6 +1125,7 @@ export async function createProjectService(
           state.configPath,
           css,
           state.v4Fallback ?? false,
+          settings.tailwindCSS,
         )
       } catch (err) {
         console.error(err)
