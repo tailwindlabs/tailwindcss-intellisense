@@ -25,6 +25,12 @@ test('default v4 entrypoint matcher does not match similarly named packages', ()
     explicitImport: false,
   })
 
+  expect(analyzeStylesheet(`@import "my-self-tailwindcss/oom.css";`)).toMatchObject({
+    root: true,
+    versions: ['4', '3'],
+    explicitImport: false,
+  })
+
   expect(analyzeStylesheet(`@import "@acme/tailwindcss";`)).toMatchObject({
     root: true,
     versions: ['4', '3'],
