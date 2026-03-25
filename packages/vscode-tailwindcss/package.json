@@ -398,7 +398,7 @@
     "minimist": "^1.2.8",
     "move-file-cli": "3.0.0",
     "normalize-path": "3.0.0",
-    "picomatch": "^4.0.1",
+    "picomatch": "^4.0.4",
     "rimraf": "3.0.2",
     "typescript": "5.8.3",
     "vscode-languageclient": "8.0.2"
