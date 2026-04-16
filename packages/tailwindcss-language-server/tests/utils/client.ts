@@ -641,7 +641,7 @@ export async function createClientWorkspace({
 
       currentDiagnostics = new Promise<Diagnostic[]>((resolve) => {
         notifications.onPublishedDiagnostics(uri.toString(), (params) => {
-          // We recieved diagnostics for different version of this document
+          // We received diagnostics for different version of this document
           if (params.version !== undefined) {
             if (params.version !== version) return
           }
