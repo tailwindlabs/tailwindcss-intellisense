@@ -1,35 +1,12 @@
 import type { State, Settings } from '../util/state'
 import { type InvalidClassDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
-import { visit } from './getCssConflictDiagnostics'
-import { getClassNameDecls } from '../util/getClassNameDecls'
 import * as jit from '../util/jit'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 
-function isCustomProperty(property: string): boolean {
-  return property.startsWith('--')
-}
-
 function isClassValid(state: State, className: string): boolean {
   if (state.v4) {
-    // V4: Use design system compilation
-    let roots = state.designSystem.compile([className])
-    let hasDeclarations = false
-    let hasNonCustomProperties = false
-
-    visit([roots[0]], (node) => {
-      if ((node.type === 'rule' || node.type === 'atrule') && node.nodes) {
-        for (let child of node.nodes) {
-          if (child.type === 'decl') {
-            hasDeclarations = true
-            if (!isCustomProperty(child.prop)) {
-              hasNonCustomProperties = true
-            }
-          }
-        }
-      }
-    })
-    return hasDeclarations && hasNonCustomProperties
+    return state.designSystem.compile([className])[0].length > 0
   } else if (state.jit) {
     // JIT: Try to generate rules
     let { rules } = jit.generateRules(state, [className])
