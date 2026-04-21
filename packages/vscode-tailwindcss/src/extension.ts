@@ -1,4 +1,6 @@
 import * as path from 'path'
+import { spawn } from 'node:child_process'
+import braces from 'braces'
 import type {
   ExtensionContext,
   TextDocument,
@@ -14,6 +16,10 @@ import {
   SymbolInformation,
   Position,
   Range,
+  RelativePattern,
+  ProgressLocation,
+  WorkspaceEdit,
+  languages,
 } from 'vscode'
 import type {
   DocumentFilter,
@@ -33,7 +39,7 @@ import namedColors from 'color-name'
 import { CONFIG_GLOB, CSS_GLOB } from '@tailwindcss/language-server/src/lib/constants'
 import normalizePath from 'normalize-path'
 import * as servers from './servers/index'
-import { isExcluded, mergeExcludes } from './exclusions'
+import { getExcludePatterns, isExcluded, mergeExcludes } from './exclusions'
 import { createApi } from './api'
 
 const colorNames = Object.keys(namedColors)
@@ -103,6 +109,64 @@ async function activeTextEditorSupportsClassSorting(): Promise<boolean> {
   }
   // TODO: Use feature detection instead of version checking
   return semver.gte(project.version, '3.0.0')
+}
+
+function getWorkspaceFolderExcludeGlob(folder: WorkspaceFolder): string | undefined {
+  let exclusions = getExcludePatterns(folder).flatMap((pattern) => braces.expand(pattern))
+
+  if (exclusions.length === 0) {
+    return undefined
+  }
+
+  return `{${exclusions.join(',').replace(/{/g, '%7B').replace(/}/g, '%7D')}}`
+}
+
+function getCanonicalClassDiagnostics(uri: Uri) {
+  return languages
+    .getDiagnostics(uri)
+    .filter((diagnostic) => diagnostic.source === 'tailwindcss')
+    .filter((diagnostic) => diagnostic.code === 'suggestCanonicalClasses')
+}
+
+async function getGitIgnoredFiles(folder: WorkspaceFolder, files: Uri[]): Promise<Set<string>> {
+  if (files.length === 0) {
+    return new Set()
+  }
+
+  let relativePaths = files.map((file) => normalizePath(path.relative(folder.uri.fsPath, file.fsPath)))
+  let ignored = new Set<string>()
+
+  await new Promise<void>((resolve) => {
+    let child = spawn('git', ['check-ignore', '--stdin', '-z'], {
+      cwd: folder.uri.fsPath,
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+
+    let stdout = Buffer.alloc(0)
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout = Buffer.concat([stdout, chunk])
+    })
+
+    child.on('error', () => {
+      resolve()
+    })
+
+    child.on('close', (code) => {
+      if (code === 0 && stdout.length > 0) {
+        for (let item of stdout.toString('utf8').split('\0')) {
+          if (!item) continue
+          ignored.add(path.resolve(folder.uri.fsPath, item))
+        }
+      }
+
+      resolve()
+    })
+
+    child.stdin.end(relativePaths.join('\0') + '\0')
+  })
+
+  return ignored
 }
 
 async function updateActiveTextEditorContext(): Promise<void> {
@@ -201,6 +265,136 @@ export async function activate(context: ExtensionContext) {
         await sortSelection()
       } catch (error) {
         Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${(error as any)?.message}`)
+      }
+    }),
+  )
+
+  async function fixAllCanonicalClassesInWorkspace(): Promise<void> {
+    let editor = Window.activeTextEditor
+
+    if (!editor) {
+      return
+    }
+
+    let folder = Workspace.getWorkspaceFolder(editor.document.uri)
+
+    if (!folder || isExcluded(editor.document.uri.fsPath, folder)) {
+      throw Error(`No active workspace folder found for file ${editor.document.uri.fsPath}`)
+    }
+
+    await bootWorkspaceClient()
+
+    if (!currentClient) {
+      throw Error('No active Tailwind project found for this workspace folder')
+    }
+
+    let client = await currentClient
+
+    if (!client.isRunning()) {
+      throw Error('Tailwind CSS language server is not running')
+    }
+
+    let exclude = getWorkspaceFolderExcludeGlob(folder)
+    let workspaceEdit = new WorkspaceEdit()
+    let supportedLanguages = new Set([...defaultLanguages, ...Object.keys(getUserLanguages(folder))])
+    let files = await Workspace.findFiles(new RelativePattern(folder, '**/*'), exclude)
+    let gitIgnoredFiles = await getGitIgnoredFiles(folder, files)
+    let processedFiles = 0
+    let changedFiles = 0
+    let totalSuggestions = 0
+
+    await Window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title: 'Tailwind CSS: Fixing canonical class suggestions in workspace',
+        cancellable: true,
+      },
+      async (progress, token) => {
+        let searchableFiles = files.filter((uri) => !gitIgnoredFiles.has(uri.fsPath))
+
+        for (let [index, uri] of searchableFiles.entries()) {
+          if (token.isCancellationRequested) {
+            break
+          }
+
+          progress.report({
+            message: `${index + 1}/${searchableFiles.length}: ${Workspace.asRelativePath(uri, false)}`,
+            increment: searchableFiles.length > 0 ? 100 / searchableFiles.length : undefined,
+          })
+
+          let document: TextDocument
+
+          try {
+            document = await Workspace.openTextDocument(uri)
+          } catch {
+            continue
+          }
+
+          if (!supportedLanguages.has(document.languageId)) {
+            continue
+          }
+
+          processedFiles += 1
+
+          let codeActions = await client.sendRequest<any[]>('textDocument/codeAction', {
+            textDocument: {
+              uri: uri.toString(),
+            },
+            context: {
+              diagnostics: [],
+              only: ['source.fixAll'],
+            },
+          })
+
+          let fixAllAction = codeActions?.find(
+            (action) => action?.kind === 'source.fixAll.tailwindcss' && action?.edit?.changes?.[uri.toString()],
+          )
+
+          let edits = fixAllAction?.edit?.changes?.[uri.toString()]
+
+          if (!Array.isArray(edits) || edits.length === 0) {
+            continue
+          }
+
+          for (let edit of edits) {
+            workspaceEdit.replace(uri, edit.range, edit.newText)
+          }
+
+          totalSuggestions += edits.length
+          changedFiles += 1
+        }
+      },
+    )
+
+    if (totalSuggestions === 0) {
+      Window.showInformationMessage(
+        'No Tailwind canonical class suggestions found in this workspace folder.',
+      )
+      return
+    }
+
+    let success = await Workspace.applyEdit(workspaceEdit)
+
+    if (!success) {
+      Window.showWarningMessage(
+        'Failed to apply Tailwind canonical class suggestions in the workspace folder.',
+      )
+      return
+    }
+
+    Window.showInformationMessage(
+      `Applied ${totalSuggestions} canonical class suggestion${totalSuggestions === 1 ? '' : 's'} across ${changedFiles} file${changedFiles === 1 ? '' : 's'} in ${processedFiles} scanned file${processedFiles === 1 ? '' : 's'}.`,
+    )
+  }
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.fixAllCanonicalClassesInWorkspace', async () => {
+      try {
+        await fixAllCanonicalClassesInWorkspace()
+      } catch (error) {
+        Window.showWarningMessage(
+          `Couldn’t fix Tailwind canonical class suggestions in the workspace: ${(error as any)?.message}`,
+        )
       }
     }),
   )
