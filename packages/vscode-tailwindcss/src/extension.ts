@@ -137,6 +137,7 @@ async function getGitIgnoredFiles(folder: WorkspaceFolder, files: Uri[]): Promis
   let ignored = new Set<string>()
 
   await new Promise<void>((resolve) => {
+    let settled = false
     let child = spawn('git', ['check-ignore', '--stdin', '-z'], {
       cwd: folder.uri.fsPath,
       stdio: ['pipe', 'pipe', 'ignore'],
@@ -144,12 +145,24 @@ async function getGitIgnoredFiles(folder: WorkspaceFolder, files: Uri[]): Promis
 
     let stdout = Buffer.alloc(0)
 
+    function finish() {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+
     child.stdout.on('data', (chunk: Buffer) => {
       stdout = Buffer.concat([stdout, chunk])
     })
 
+    child.stdin.on('error', () => {
+      // `git check-ignore` can exit before consuming stdin, especially outside
+      // a Git repo. Ignore write-side stream errors and let the process close
+      // handler finish the request without crashing the extension host.
+    })
+
     child.on('error', () => {
-      resolve()
+      finish()
     })
 
     child.on('close', (code) => {
@@ -160,7 +173,7 @@ async function getGitIgnoredFiles(folder: WorkspaceFolder, files: Uri[]): Promis
         }
       }
 
-      resolve()
+      finish()
     })
 
     child.stdin.end(relativePaths.join('\0') + '\0')
