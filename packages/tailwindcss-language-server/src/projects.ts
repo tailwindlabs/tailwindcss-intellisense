@@ -17,6 +17,7 @@ import type {
   DocumentLink,
   CodeLensParams,
   CodeLens,
+  TextEdit,
 } from 'vscode-languageserver/node'
 import { FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -53,6 +54,7 @@ import type {
 } from '@tailwindcss/language-service/src/util/state'
 import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
+import { doValidate } from '@tailwindcss/language-service/src/diagnostics/diagnosticsProvider'
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
@@ -112,6 +114,7 @@ export interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  fixAllProblems(params: { uri: string }): Promise<{ error?: string }>
   onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
   onCodeLens(params: CodeLensParams): Promise<CodeLens[]>
   sortClassLists(classLists: string[]): string[]
@@ -1241,6 +1244,68 @@ export async function createProjectService(
         if (!settings.tailwindCSS.codeActions) return null
         return doCodeActions(state, params, document)
       }, null)
+    },
+    async fixAllProblems(params: { uri: string }): Promise<{ error?: string }> {
+      try {
+        if (!state.enabled) {
+          return { error: 'Tailwind CSS is not enabled' }
+        }
+        let document = documentService.getDocument(params.uri)
+        if (!document) {
+          return { error: 'Document not found' }
+        }
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.codeActions) {
+          return { error: 'Code actions are disabled' }
+        }
+
+        let diagnostics = await doValidate(state, document)
+        if (!diagnostics || diagnostics.length === 0) {
+          return {}
+        }
+
+        let allEdits: TextEdit[] = []
+        let processedRanges = new Set<string>()
+
+        for (let diagnostic of diagnostics) {
+          let codeActionParams: CodeActionParams = {
+            textDocument: { uri: params.uri },
+            range: diagnostic.range,
+            context: { diagnostics: [diagnostic] },
+          }
+
+          let codeActions = await doCodeActions(state, codeActionParams, document)
+          if (!codeActions || codeActions.length === 0) continue
+
+          for (let action of codeActions) {
+            if (action.edit?.changes) {
+              let edits = action.edit.changes[params.uri]
+              if (edits) {
+                for (let edit of edits) {
+                  let rangeKey = `${edit.range.start.line}:${edit.range.start.character}-${edit.range.end.line}:${edit.range.end.character}`
+                  if (!processedRanges.has(rangeKey)) {
+                    allEdits.push(edit)
+                    processedRanges.add(rangeKey)
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (allEdits.length > 0) {
+          let workspaceEdit = {
+            changes: {
+              [params.uri]: allEdits,
+            },
+          }
+          await connection.workspace.applyEdit(workspaceEdit)
+        }
+
+        return {}
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Failed to fix problems' }
+      }
     },
     onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
       if (!state.enabled) return null

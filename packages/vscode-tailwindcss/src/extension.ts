@@ -200,8 +200,48 @@ export async function activate(context: ExtensionContext) {
       try {
         await sortSelection()
       } catch (error) {
-        Window.showWarningMessage(`Couldn’t sort Tailwind classes: ${(error as any)?.message}`)
+        Window.showWarningMessage(`Couldn't sort Tailwind classes: ${(error as any)?.message}`)
       }
+    }),
+  )
+
+  async function fixAllProblems(): Promise<void> {
+    if (!Window.activeTextEditor) return
+
+    let { document } = Window.activeTextEditor
+    let folder = Workspace.getWorkspaceFolder(document.uri)
+
+    if (!currentClient || !folder || isExcluded(document.uri.fsPath, folder)) {
+      throw Error(`No active Tailwind project found for file ${document.uri.fsPath}`)
+    }
+
+    let client = await currentClient
+
+    let result = await client.sendRequest<{ error?: string; edits?: any }>(
+      '@/tailwindCSS/fixAll',
+      {
+        uri: document.uri.toString(),
+      },
+    )
+
+    if ('error' in result) {
+      throw Error(result.error || 'Unknown error')
+    }
+  }
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.fixAll', async () => {
+      try {
+        await fixAllProblems()
+      } catch (error) {
+        Window.showWarningMessage(`Couldn't fix Tailwind problems: ${(error as any)?.message}`)
+      }
+    }),
+  )
+
+  context.subscriptions.push(
+    Window.onDidChangeActiveTextEditor(async () => {
+      await updateActiveTextEditorContext()
     }),
   )
 
