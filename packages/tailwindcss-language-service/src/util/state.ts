@@ -61,6 +61,7 @@ export type TailwindCssSettings = {
     invalidApply: DiagnosticSeveritySetting
     invalidScreen: DiagnosticSeveritySetting
     invalidVariant: DiagnosticSeveritySetting
+    deprecatedVariantDefinitionSyntax: DiagnosticSeveritySetting
     invalidConfigPath: DiagnosticSeveritySetting
     invalidTailwindDirective: DiagnosticSeveritySetting
     invalidSourceDirective: DiagnosticSeveritySetting
@@ -201,6 +202,7 @@ export function getDefaultTailwindSettings(): Settings {
         invalidApply: 'error',
         invalidScreen: 'error',
         invalidVariant: 'error',
+        deprecatedVariantDefinitionSyntax: 'warning',
         invalidConfigPath: 'error',
         invalidTailwindDirective: 'error',
         invalidSourceDirective: 'error',

@@ -272,6 +272,17 @@
           "markdownDescription": "Unknown variant name used with the [`@variants` directive](https://tailwindcss.com/docs/functions-and-directives/#variants)",
           "scope": "language-overridable"
         },
+        "tailwindCSS.lint.deprecatedVariantDefinitionSyntax": {
+          "type": "string",
+          "enum": [
+            "ignore",
+            "warning",
+            "error"
+          ],
+          "default": "warning",
+          "markdownDescription": "Deprecated syntax for defining custom variants with [`@variant`](https://tailwindcss.com/docs/functions-and-directives/#variant). Use `@custom-variant` instead.",
+          "scope": "language-overridable"
+        },
         "tailwindCSS.lint.invalidConfigPath": {
           "type": "string",
           "enum": [

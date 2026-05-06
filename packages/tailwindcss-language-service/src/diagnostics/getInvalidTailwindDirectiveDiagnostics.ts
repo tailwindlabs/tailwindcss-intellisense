@@ -1,5 +1,5 @@
 import type { State, Settings } from '../util/state'
-import type { Range } from 'vscode-languageserver'
+import { type Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { type InvalidTailwindDirectiveDiagnostic, DiagnosticKind } from './types'
 import { isCssDoc } from '../util/css'

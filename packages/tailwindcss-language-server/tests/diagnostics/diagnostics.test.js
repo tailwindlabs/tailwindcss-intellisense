@@ -399,6 +399,47 @@ withFixture('v4/basic', (c) => {
       },
     ],
   })
+
+  testMatch('Defining custom variants with @variant warns in a v4 project', {
+    language: 'css',
+    code: `
+      @variant hocus (&:hover, &:focus);
+    `,
+    expected: [
+      {
+        code: 'deprecatedVariantDefinitionSyntax',
+        source: 'tailwindcss',
+        message:
+          '`@variant` is deprecated for defining custom variants. Use `@custom-variant` instead.',
+        suggestions: ['@custom-variant'],
+        range: {
+          start: { line: 1, character: 6 },
+          end: { line: 1, character: 14 },
+        },
+        severity: 2,
+      },
+    ],
+  })
+
+  testMatch('Using @variant does not warn in a v4 project', {
+    language: 'css',
+    code: `
+      .foo {
+        @variant hover {
+          color: red;
+        }
+
+        @variant focus, disabled {
+          color: green;
+        }
+
+        @variant hover:focus {
+          color: blue;
+        }
+      }
+    `,
+    expected: [],
+  })
 })
 
 defineTest({

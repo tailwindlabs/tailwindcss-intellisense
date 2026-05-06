@@ -12,6 +12,7 @@ import {
   isInvalidTailwindDirectiveDiagnostic,
   isInvalidScreenDiagnostic,
   isInvalidVariantDiagnostic,
+  isDeprecatedVariantDefinitionSyntaxDiagnostic,
   isRecommendedVariantOrderDiagnostic,
   isSuggestCanonicalClasses,
 } from '../diagnostics/types'
@@ -75,6 +76,7 @@ export async function doCodeActions(
         isInvalidTailwindDirectiveDiagnostic(diagnostic) ||
         isInvalidScreenDiagnostic(diagnostic) ||
         isInvalidVariantDiagnostic(diagnostic) ||
+        isDeprecatedVariantDefinitionSyntaxDiagnostic(diagnostic) ||
         isRecommendedVariantOrderDiagnostic(diagnostic) ||
         isSuggestCanonicalClasses(diagnostic)
       ) {

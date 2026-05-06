@@ -5,6 +5,7 @@ import { getCssConflictDiagnostics } from './getCssConflictDiagnostics'
 import { getInvalidApplyDiagnostics } from './getInvalidApplyDiagnostics'
 import { getInvalidScreenDiagnostics } from './getInvalidScreenDiagnostics'
 import { getInvalidVariantDiagnostics } from './getInvalidVariantDiagnostics'
+import { getDeprecatedVariantDefinitionSyntaxDiagnostics } from './getDeprecatedVariantDefinitionSyntaxDiagnostics'
 import { getInvalidConfigPathDiagnostics } from './getInvalidConfigPathDiagnostics'
 import { getInvalidTailwindDirectiveDiagnostics } from './getInvalidTailwindDirectiveDiagnostics'
 import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOrderDiagnostics'
@@ -20,6 +21,7 @@ export async function doValidate(
     DiagnosticKind.InvalidApply,
     DiagnosticKind.InvalidScreen,
     DiagnosticKind.InvalidVariant,
+    DiagnosticKind.DeprecatedVariantDefinitionSyntax,
     DiagnosticKind.InvalidConfigPath,
     DiagnosticKind.InvalidTailwindDirective,
     DiagnosticKind.InvalidSourceDirective,
@@ -43,6 +45,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.InvalidVariant)
           ? getInvalidVariantDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.DeprecatedVariantDefinitionSyntax)
+          ? getDeprecatedVariantDefinitionSyntaxDiagnostics(state, document, settings)
           : []),
         ...(only.includes(DiagnosticKind.InvalidConfigPath)
           ? getInvalidConfigPathDiagnostics(state, document, settings)
