@@ -407,7 +407,7 @@ withFixture('v4/basic', (c) => {
     `,
     expected: [
       {
-        code: 'deprecatedVariantDefinitionSyntax',
+        code: 'deprecatedAtRule',
         source: 'tailwindcss',
         message:
           '`@variant` is deprecated for defining custom variants. Use `@custom-variant` instead.',

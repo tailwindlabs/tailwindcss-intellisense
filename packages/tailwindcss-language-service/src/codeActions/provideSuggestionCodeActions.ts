@@ -5,7 +5,7 @@ import type {
   InvalidTailwindDirectiveDiagnostic,
   InvalidScreenDiagnostic,
   InvalidVariantDiagnostic,
-  DeprecatedVariantDefinitionSyntaxDiagnostic,
+  DeprecatedAtRuleDiagnostic,
   RecommendedVariantOrderDiagnostic,
   SuggestCanonicalClassesDiagnostic,
 } from '../diagnostics/types'
@@ -18,7 +18,7 @@ export function provideSuggestionCodeActions(
     | InvalidTailwindDirectiveDiagnostic
     | InvalidScreenDiagnostic
     | InvalidVariantDiagnostic
-    | DeprecatedVariantDefinitionSyntaxDiagnostic
+    | DeprecatedAtRuleDiagnostic
     | RecommendedVariantOrderDiagnostic
     | SuggestCanonicalClassesDiagnostic,
 ): CodeAction[] {

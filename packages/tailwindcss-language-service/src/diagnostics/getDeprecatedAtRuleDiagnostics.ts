@@ -1,24 +1,24 @@
 import type { State, Settings } from '../util/state'
 import type { Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { DiagnosticKind, type DeprecatedVariantDefinitionSyntaxDiagnostic } from './types'
+import { DiagnosticKind, type DeprecatedAtRuleDiagnostic } from './types'
 import { absoluteRange } from '../util/absoluteRange'
 import { isCssDoc } from '../util/css'
 import { getTextWithoutComments } from '../util/doc'
 import { findAll, indexToPosition } from '../util/find'
 import { getLanguageBoundaries } from '../util/getLanguageBoundaries'
 
-export function getDeprecatedVariantDefinitionSyntaxDiagnostics(
+export function getDeprecatedAtRuleDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): DeprecatedVariantDefinitionSyntaxDiagnostic[] {
+): DeprecatedAtRuleDiagnostic[] {
   if (!state.v4) return []
 
-  let severity = settings.tailwindCSS.lint.deprecatedVariantDefinitionSyntax
+  let severity = settings.tailwindCSS.lint.deprecatedAtRule
   if (severity === 'ignore') return []
 
-  let diagnostics: DeprecatedVariantDefinitionSyntaxDiagnostic[] = []
+  let diagnostics: DeprecatedAtRuleDiagnostic[] = []
 
   let ranges: Range[] = []
 
@@ -38,7 +38,7 @@ export function getDeprecatedVariantDefinitionSyntaxDiagnostics(
       let variantStartIndex = match.index + match[0].indexOf('@variant')
 
       diagnostics.push({
-        code: DiagnosticKind.DeprecatedVariantDefinitionSyntax,
+        code: DiagnosticKind.DeprecatedAtRule,
         source: 'tailwindcss',
         range: absoluteRange(
           {

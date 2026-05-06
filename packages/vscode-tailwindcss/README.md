@@ -159,9 +159,9 @@ Unknown screen name used with the [`@screen` directive](https://tailwindcss.com/
 
 Unknown variant name used with the [`@variants` directive](https://tailwindcss.com/docs/functions-and-directives/#variants). **Default: `error`**
 
-#### `tailwindCSS.lint.deprecatedVariantDefinitionSyntax`
+#### `tailwindCSS.lint.deprecatedAtRule`
 
-Deprecated syntax for defining custom variants with [`@variant`](https://tailwindcss.com/docs/functions-and-directives/#variant). Use `@custom-variant` instead. **Default: `warning`**
+Deprecated Tailwind CSS at-rules. **Default: `warning`**
 
 #### `tailwindCSS.lint.invalidTailwindDirective`
 

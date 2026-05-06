@@ -6,7 +6,7 @@ export enum DiagnosticKind {
   InvalidApply = 'invalidApply',
   InvalidScreen = 'invalidScreen',
   InvalidVariant = 'invalidVariant',
-  DeprecatedVariantDefinitionSyntax = 'deprecatedVariantDefinitionSyntax',
+  DeprecatedAtRule = 'deprecatedAtRule',
   InvalidConfigPath = 'invalidConfigPath',
   InvalidTailwindDirective = 'invalidTailwindDirective',
   InvalidSourceDirective = 'invalidSourceDirective',
@@ -60,15 +60,15 @@ export function isInvalidVariantDiagnostic(
   return diagnostic.code === DiagnosticKind.InvalidVariant
 }
 
-export type DeprecatedVariantDefinitionSyntaxDiagnostic = Diagnostic & {
-  code: DiagnosticKind.DeprecatedVariantDefinitionSyntax
+export type DeprecatedAtRuleDiagnostic = Diagnostic & {
+  code: DiagnosticKind.DeprecatedAtRule
   suggestions: string[]
 }
 
-export function isDeprecatedVariantDefinitionSyntaxDiagnostic(
+export function isDeprecatedAtRuleDiagnostic(
   diagnostic: AugmentedDiagnostic,
-): diagnostic is DeprecatedVariantDefinitionSyntaxDiagnostic {
-  return diagnostic.code === DiagnosticKind.DeprecatedVariantDefinitionSyntax
+): diagnostic is DeprecatedAtRuleDiagnostic {
+  return diagnostic.code === DiagnosticKind.DeprecatedAtRule
 }
 
 export type InvalidConfigPathDiagnostic = Diagnostic & {
@@ -140,7 +140,7 @@ export type AugmentedDiagnostic =
   | InvalidApplyDiagnostic
   | InvalidScreenDiagnostic
   | InvalidVariantDiagnostic
-  | DeprecatedVariantDefinitionSyntaxDiagnostic
+  | DeprecatedAtRuleDiagnostic
   | InvalidConfigPathDiagnostic
   | InvalidTailwindDirectiveDiagnostic
   | InvalidSourceDirectiveDiagnostic
