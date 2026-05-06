@@ -26,6 +26,7 @@ export type EditorState = {
   capabilities: {
     configuration: boolean
     diagnosticRelatedInformation: boolean
+    diagnosticTagSupport: boolean
     itemDefaults: string[]
   }
   getConfiguration: (uri?: string) => Promise<Settings>
@@ -276,6 +277,7 @@ export function createState(
       capabilities: {
         configuration: true,
         diagnosticRelatedInformation: true,
+        diagnosticTagSupport: false,
         itemDefaults: [],
       },
       getConfiguration: () => {

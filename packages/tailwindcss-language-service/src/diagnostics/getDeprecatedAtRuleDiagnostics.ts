@@ -1,5 +1,5 @@
 import type { State, Settings } from '../util/state'
-import type { Range } from 'vscode-languageserver'
+import { DiagnosticTag, type Range } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { DiagnosticKind, type DeprecatedAtRuleDiagnostic } from './types'
 import { absoluteRange } from '../util/absoluteRange'
@@ -54,6 +54,9 @@ export function getDeprecatedAtRuleDiagnostics(
         message:
           '`@variant` is deprecated for defining custom variants. Use `@custom-variant` instead.',
         suggestions: ['@custom-variant'],
+        ...(state.editor.capabilities.diagnosticTagSupport
+          ? { tags: [DiagnosticTag.Deprecated] }
+          : {}),
       })
     })
   })

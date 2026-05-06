@@ -18,7 +18,7 @@ import type {
   CodeLensParams,
   CodeLens,
 } from 'vscode-languageserver/node'
-import { FileChangeType } from 'vscode-languageserver/node'
+import { DiagnosticTag, FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import { showError, showWarning, SilentError } from './util/error'
@@ -207,6 +207,13 @@ export async function createProjectService(
   let itemDefaults =
     params.capabilities.textDocument?.completion?.completionList?.itemDefaults ?? []
 
+  // Introduced in LSP 3.15.0, so we have to check whether it's available in the
+  // current version.
+  let diagnosticTagSupport =
+    params.capabilities.textDocument?.publishDiagnostics?.tagSupport?.valueSet?.includes(
+      DiagnosticTag.Deprecated,
+    ) ?? false
+
   // VS Code _does_ support `itemDefaults.data` since at least 1.67.0 (this extension's min version)
   // but it doesn't advertise it in its capabilities. So we manually add it here.
   // See also: https://github.com/microsoft/vscode-languageserver-node/issues/1181
@@ -228,6 +235,7 @@ export async function createProjectService(
       capabilities: {
         configuration: true,
         diagnosticRelatedInformation: true,
+        diagnosticTagSupport,
         itemDefaults,
       },
       getConfiguration,
