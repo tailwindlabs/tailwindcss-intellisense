@@ -6,6 +6,7 @@
 - Improve performance in large files ([#1507](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1507))
 - Improve utility lookup performance when using v4 ([#1509](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1509), [#1512](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1512))
 - Fix project initalization when stylesheet is named `tailwindcss.css` ([#1517](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1517))
+- Mark `@variant` as deprecated when defining custom variants ([#1578](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1578))
 
 ## 0.14.29
 
