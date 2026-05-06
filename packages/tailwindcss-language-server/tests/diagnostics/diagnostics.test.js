@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises'
 import { expect, test } from 'vitest'
+import { DiagnosticTag } from 'vscode-languageserver'
 import { withFixture } from '../common'
 import { css, defineTest, json } from '../../src/testing'
 import { createClient } from '../utils/client'
@@ -545,5 +546,55 @@ defineTest({
         suggestions: ['mt-4'],
       },
     ])
+  },
+})
+
+defineTest({
+  name: 'Deprecated at-rules include deprecated tags when supported',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      capabilities(caps) {
+        caps.textDocument.publishDiagnostics.tagSupport = {
+          valueSet: [DiagnosticTag.Deprecated],
+        }
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'css',
+      text: '@variant hocus (&:hover);',
+    })
+
+    expect(await doc.diagnostics()).toMatchObject([
+      {
+        code: 'deprecatedAtRule',
+        tags: [DiagnosticTag.Deprecated],
+      },
+    ])
+  },
+})
+
+defineTest({
+  name: 'Deprecated at-rules omit deprecated tags when unsupported',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'css',
+      text: '@variant hocus (&:hover);',
+    })
+
+    expect((await doc.diagnostics())[0]).not.toHaveProperty('tags')
   },
 })
