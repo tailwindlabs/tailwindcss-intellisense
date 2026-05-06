@@ -43,5 +43,3 @@ jobs:
         run: >
           cd packages/tailwindcss-language-server &&
           pnpm publish --tag insiders --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
