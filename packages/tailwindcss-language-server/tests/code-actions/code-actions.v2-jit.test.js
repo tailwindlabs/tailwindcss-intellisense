@@ -9,14 +9,11 @@ withFixture('v2-jit', (c) => {
 
       let { code, expected, language = 'html' } = JSON.parse(fixture)
 
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
-      })
-
       let textDocument = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let report = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: textDocument.uri },
+      })
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       let res = await c.sendRequest('textDocument/codeAction', {
         textDocument,
@@ -24,7 +21,6 @@ withFixture('v2-jit', (c) => {
           diagnostics,
         },
       })
-      // console.log(JSON.stringify(res))
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', textDocument.uri))
 

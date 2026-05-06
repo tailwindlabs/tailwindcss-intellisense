@@ -1,7 +1,7 @@
 import type { CodeAction, CodeActionParams } from 'vscode-languageserver'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { State } from '../util/state'
-import { doValidate } from '../diagnostics/diagnosticsProvider'
+import { getDocumentDiagnostics } from '../diagnostics/diagnosticsProvider'
 import { rangesEqual } from '../util/rangesEqual'
 import {
   type DiagnosticKind,
@@ -27,7 +27,8 @@ async function getDiagnosticsFromCodeActionParams(
   only?: DiagnosticKind[],
 ): Promise<AugmentedDiagnostic[]> {
   if (!document) return []
-  let diagnostics = await doValidate(state, document, only)
+  let report = await getDocumentDiagnostics(state, document, only)
+  let diagnostics = report.items as AugmentedDiagnostic[]
 
   return params.context.diagnostics
     .map((diagnostic) => {

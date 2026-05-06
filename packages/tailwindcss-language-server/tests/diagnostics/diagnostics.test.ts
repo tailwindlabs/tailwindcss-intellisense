@@ -3,6 +3,11 @@ import { expect, test } from 'vitest'
 import { withFixture } from '../common'
 import { css, defineTest, json } from '../../src/testing'
 import { createClient } from '../utils/client'
+import {
+  DocumentDiagnosticReport,
+  PublishDiagnosticsNotification,
+  PublishDiagnosticsParams,
+} from 'vscode-languageserver'
 
 withFixture('basic', (c) => {
   function testFixture(fixture) {
@@ -11,14 +16,12 @@ withFixture('basic', (c) => {
 
       let { code, expected, language = 'html' } = JSON.parse(fixture)
 
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -46,14 +49,12 @@ withFixture('v4/basic', (c) => {
 
       let { code, expected, language = 'html' } = JSON.parse(fixture)
 
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -63,14 +64,12 @@ withFixture('v4/basic', (c) => {
 
   function testInline(fixture, { code, expected, language = 'html' }) {
     test(fixture, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -165,14 +164,12 @@ withFixture('v4/basic', (c) => {
 withFixture('v4/with-prefix', (c) => {
   function testInline(fixture, { code, expected, language = 'html' }) {
     test(fixture, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -268,14 +265,12 @@ withFixture('v4/with-prefix', (c) => {
 withFixture('v4/basic', (c) => {
   function testMatch(name, { code, expected, language = 'html' }) {
     test(name, async () => {
-      let promise = new Promise((resolve) => {
-        c.onNotification('textDocument/publishDiagnostics', ({ diagnostics }) => {
-          resolve(diagnostics)
-        })
+      let doc = await c.openDocument({ text: code, lang: language })
+      let report: DocumentDiagnosticReport = await c.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri: doc.uri },
       })
 
-      let doc = await c.openDocument({ text: code, lang: language })
-      let diagnostics = await promise
+      let diagnostics = report.kind === 'unchanged' ? [] : report.items
 
       expected = JSON.parse(JSON.stringify(expected).replaceAll('{{URI}}', doc.uri))
 
@@ -502,6 +497,78 @@ defineTest({
         },
         severity: 2,
         suggestions: ['mt-4'],
+      },
+    ])
+  },
+})
+
+defineTest({
+  name: 'Clients not supporting pull-model diagnostics will have them pushed',
+  fs: {
+    'app.css': '@import "tailwindcss"',
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      capabilities(caps) {
+        // Disable pull-model diagnostics
+        delete caps.textDocument!.diagnostic
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let didPublishDiagnostics = new Promise<PublishDiagnosticsParams>((resolve) => {
+      client.conn.onNotification(PublishDiagnosticsNotification.type, resolve)
+    })
+
+    // We open a document so a project gets initialized
+    // This will cause the server to push diagnostics to the client
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="underline line-through">',
+    })
+
+    let result = await didPublishDiagnostics
+
+    expect(result.uri).toEqual(doc.uri.toString())
+    expect(result.diagnostics).toMatchObject([
+      {
+        code: 'cssConflict',
+        source: 'tailwindcss',
+        message: "'underline' applies the same CSS properties as 'line-through'.",
+        className: {
+          className: 'underline',
+          classList: {
+            classList: 'underline line-through',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'line-through',
+            classList: {
+              classList: 'underline line-through',
+            },
+          },
+        ],
+      },
+      {
+        code: 'cssConflict',
+        source: 'tailwindcss',
+        message: "'line-through' applies the same CSS properties as 'underline'.",
+        className: {
+          className: 'line-through',
+          classList: {
+            classList: 'underline line-through',
+          },
+        },
+        otherClassNames: [
+          {
+            className: 'underline',
+            classList: {
+              classList: 'underline line-through',
+            },
+          },
+        ],
       },
     ])
   },

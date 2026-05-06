@@ -12,6 +12,13 @@ import {
   ConfigurationRequest,
   CompletionItemKind,
   Connection,
+  DocumentDiagnosticReportKind,
+  DocumentDiagnosticParams,
+  CancellationToken,
+  Diagnostic,
+  DocumentDiagnosticReport,
+  ResponseError,
+  LSPErrorCodes,
 } from 'vscode-languageserver/node'
 import { Position, TextDocument } from 'vscode-languageserver-textdocument'
 import { Utils, URI } from 'vscode-uri'
@@ -29,8 +36,21 @@ export class CssServer {
   setup() {
     let connection = this.connection
     let documents = this.documents
+    let runtime: RuntimeEnvironment = {
+      timer: {
+        setImmediate(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+          const handle = setImmediate(callback, ms, ...args)
+          return { dispose: () => clearImmediate(handle) }
+        },
+        setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+          const handle = setTimeout(callback, ms, ...args)
+          return { dispose: () => clearTimeout(handle) }
+        },
+      },
+    }
 
     let cssLanguageService = getCSSLanguageService()
+    let diagnosticsSupport: DiagnosticsSupport | undefined
 
     let workspaceFolders: WorkspaceFolder[]
 
@@ -67,6 +87,23 @@ export class CssServer {
         Number.MAX_VALUE,
       )
 
+      let supportsDiagnosticPull = dlv(params.capabilities, 'textDocument.diagnostic', undefined)
+      if (supportsDiagnosticPull === undefined) {
+        diagnosticsSupport = registerDiagnosticsPushSupport(
+          documents,
+          connection,
+          runtime,
+          validateTextDocument,
+        )
+      } else {
+        diagnosticsSupport = registerDiagnosticsPullSupport(
+          documents,
+          connection,
+          runtime,
+          validateTextDocument,
+        )
+      }
+
       return {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Full,
@@ -82,6 +119,11 @@ export class CssServer {
           codeActionProvider: true,
           documentLinkProvider: { resolveProvider: false },
           renameProvider: true,
+          diagnosticProvider: {
+            documentSelector: null,
+            interFileDependencies: false,
+            workspaceDiagnostics: false,
+          },
         },
       }
     })
@@ -352,42 +394,7 @@ export class CssServer {
       cssLanguageService.configure(settings)
       // reset all document settings
       documentSettings = {}
-      documents.all().forEach(triggerValidation)
-    }
-
-    const pendingValidationRequests: { [uri: string]: Disposable } = {}
-    const validationDelayMs = 500
-
-    const timer = {
-      setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
-        const handle = setTimeout(callback, ms, ...args)
-        return { dispose: () => clearTimeout(handle) }
-      },
-    }
-
-    documents.onDidChangeContent((change) => {
-      triggerValidation(change.document)
-    })
-
-    documents.onDidClose((event) => {
-      cleanPendingValidation(event.document)
-      connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
-    })
-
-    function cleanPendingValidation(textDocument: TextDocument): void {
-      const request = pendingValidationRequests[textDocument.uri]
-      if (request) {
-        request.dispose()
-        delete pendingValidationRequests[textDocument.uri]
-      }
-    }
-
-    function triggerValidation(textDocument: TextDocument): void {
-      cleanPendingValidation(textDocument)
-      pendingValidationRequests[textDocument.uri] = timer.setTimeout(() => {
-        delete pendingValidationRequests[textDocument.uri]
-        validateTextDocument(textDocument)
-      }, validationDelayMs)
+      diagnosticsSupport?.requestRefresh()
     }
 
     function createVirtualCssDocument(textDocument: TextDocument): TextDocument {
@@ -401,12 +408,12 @@ export class CssServer {
       )
     }
 
-    async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+    async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
       textDocument = createVirtualCssDocument(textDocument)
 
       let settings = await getDocumentSettings(textDocument)
 
-      let diagnostics = cssLanguageService
+      let items = cssLanguageService
         .doValidation(textDocument, cssLanguageService.parseStylesheet(textDocument), settings)
         .filter((diagnostic) => {
           if (
@@ -420,7 +427,7 @@ export class CssServer {
           return true
         })
 
-      connection.sendDiagnostics({ uri: textDocument.uri, diagnostics })
+      return items
     }
   }
 
@@ -428,4 +435,182 @@ export class CssServer {
     this.documents.listen(this.connection)
     this.connection.listen()
   }
+}
+
+type Validator = (textDocument: TextDocument) => Promise<Diagnostic[]>
+type DiagnosticsSupport = {
+  dispose(): void
+  requestRefresh(): void
+}
+
+export interface RuntimeEnvironment {
+  readonly timer: {
+    setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable
+    setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable
+  }
+}
+
+function formatError(message: string, err: any): string {
+  if (err instanceof Error) {
+    const error = <Error>err
+    return `${message}: ${error.message}\n${error.stack}`
+  } else if (typeof err === 'string') {
+    return `${message}: ${err}`
+  } else if (err) {
+    return `${message}: ${err.toString()}`
+  }
+  return message
+}
+
+function registerDiagnosticsPushSupport(
+  documents: TextDocuments<TextDocument>,
+  connection: Connection,
+  runtime: RuntimeEnvironment,
+  validate: Validator,
+): DiagnosticsSupport {
+  const pendingValidationRequests: { [uri: string]: Disposable } = {}
+  const validationDelayMs = 500
+
+  const disposables: Disposable[] = []
+
+  // The content of a text document has changed. This event is emitted
+  // when the text document first opened or when its content has changed.
+  documents.onDidChangeContent(
+    (change) => {
+      triggerValidation(change.document)
+    },
+    undefined,
+    disposables,
+  )
+
+  // a document has closed: clear all diagnostics
+  documents.onDidClose(
+    (event) => {
+      cleanPendingValidation(event.document)
+      connection.sendDiagnostics({ uri: event.document.uri, diagnostics: [] })
+    },
+    undefined,
+    disposables,
+  )
+
+  function cleanPendingValidation(textDocument: TextDocument): void {
+    const request = pendingValidationRequests[textDocument.uri]
+    if (request) {
+      request.dispose()
+      delete pendingValidationRequests[textDocument.uri]
+    }
+  }
+
+  function triggerValidation(textDocument: TextDocument): void {
+    cleanPendingValidation(textDocument)
+    const request = (pendingValidationRequests[textDocument.uri] = runtime.timer.setTimeout(
+      async () => {
+        if (request === pendingValidationRequests[textDocument.uri]) {
+          try {
+            const diagnostics = await validate(textDocument)
+            if (request === pendingValidationRequests[textDocument.uri]) {
+              connection.sendDiagnostics({ uri: textDocument.uri, diagnostics })
+            }
+            delete pendingValidationRequests[textDocument.uri]
+          } catch (e) {
+            connection.console.error(formatError(`Error while validating ${textDocument.uri}`, e))
+          }
+        }
+      },
+      validationDelayMs,
+    ))
+  }
+
+  return {
+    requestRefresh: () => {
+      documents.all().forEach(triggerValidation)
+    },
+    dispose: () => {
+      disposables.forEach((d) => d.dispose())
+      disposables.length = 0
+      const keys = Object.keys(pendingValidationRequests)
+      for (const key of keys) {
+        pendingValidationRequests[key].dispose()
+        delete pendingValidationRequests[key]
+      }
+    },
+  }
+}
+
+function registerDiagnosticsPullSupport(
+  documents: TextDocuments<TextDocument>,
+  connection: Connection,
+  runtime: RuntimeEnvironment,
+  validate: Validator,
+): DiagnosticsSupport {
+  function newDocumentDiagnosticReport(diagnostics: Diagnostic[]): DocumentDiagnosticReport {
+    return {
+      kind: DocumentDiagnosticReportKind.Full,
+      items: diagnostics,
+    }
+  }
+
+  const registration = connection.languages.diagnostics.on(
+    async (params: DocumentDiagnosticParams, token: CancellationToken) => {
+      return runSafeAsync(
+        runtime,
+        async () => {
+          const document = documents.get(params.textDocument.uri)
+          if (document) {
+            return newDocumentDiagnosticReport(await validate(document))
+          }
+          return newDocumentDiagnosticReport([])
+        },
+        newDocumentDiagnosticReport([]),
+        `Error while computing diagnostics for ${params.textDocument.uri}`,
+        token,
+      )
+    },
+  )
+
+  function requestRefresh(): void {
+    connection.languages.diagnostics.refresh()
+  }
+
+  return {
+    requestRefresh,
+    dispose: () => {
+      registration.dispose()
+    },
+  }
+}
+
+export function runSafeAsync<T>(
+  runtime: RuntimeEnvironment,
+  func: () => Thenable<T>,
+  errorVal: T,
+  errorMessage: string,
+  token: CancellationToken,
+): Thenable<T | ResponseError<any>> {
+  return new Promise<T | ResponseError<any>>((resolve) => {
+    runtime.timer.setImmediate(() => {
+      if (token.isCancellationRequested) {
+        resolve(cancelValue())
+        return
+      }
+      return func().then(
+        (result) => {
+          if (token.isCancellationRequested) {
+            resolve(cancelValue())
+            return
+          } else {
+            resolve(result)
+          }
+        },
+        (e) => {
+          console.error(formatError(errorMessage, e))
+          resolve(errorVal)
+        },
+      )
+    })
+  })
+}
+
+function cancelValue<E>() {
+  return new ResponseError<E>(LSPErrorCodes.RequestCancelled, 'Request cancelled')
 }

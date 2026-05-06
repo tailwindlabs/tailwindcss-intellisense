@@ -1,5 +1,5 @@
 export { doComplete, resolveCompletionItem, completionsFromClassList } from './completionProvider'
-export { doValidate } from './diagnostics/diagnosticsProvider'
+export { doValidate, getDocumentDiagnostics } from './diagnostics/diagnosticsProvider'
 export { doHover } from './hoverProvider'
 export { doCodeActions } from './codeActions/codeActionProvider'
 export { getDocumentColors } from './documentColorProvider'
