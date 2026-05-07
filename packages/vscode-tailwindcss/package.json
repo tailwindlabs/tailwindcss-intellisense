@@ -68,7 +68,12 @@
       },
       {
         "command": "tailwindCSS.fixAll",
-        "title": "Tailwind CSS: Fix All Auto-fixable Problems",
+        "title": "Tailwind CSS: Fix All Auto-fixable Problems (Current File)",
+        "category": "Tailwind CSS"
+      },
+      {
+        "command": "tailwindCSS.fixAllWorkspace",
+        "title": "Tailwind CSS: Fix All Auto-fixable Problems (Workspace)",
         "category": "Tailwind CSS"
       }
     ],
@@ -214,6 +219,16 @@
           "default": true,
           "markdownDescription": "Enable code actions.",
           "scope": "language-overridable"
+        },
+        "tailwindCSS.codeActions.autoSave": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Automatically save files after applying fixes with 'Fix All Auto-fixable Problems' commands."
+        },
+        "tailwindCSS.codeActions.fixAll.batchSize": {
+          "type": "number",
+          "default": 10,
+          "markdownDescription": "Number of files to process simultaneously during workspace-wide fix operations."
         },
         "tailwindCSS.codeLens": {
           "type": "boolean",

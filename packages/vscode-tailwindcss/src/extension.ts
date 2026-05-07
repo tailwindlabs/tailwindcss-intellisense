@@ -217,16 +217,167 @@ export async function activate(context: ExtensionContext) {
 
     let client = await currentClient
 
-    let result = await client.sendRequest<{ error?: string; edits?: any }>(
+    let result = await client.sendRequest<{ error?: string; fixed?: number; remaining?: number }>(
       '@/tailwindCSS/fixAll',
       {
         uri: document.uri.toString(),
+        mode: 'local',
       },
     )
 
-    if ('error' in result) {
-      throw Error(result.error || 'Unknown error')
+    if ('error' in result && result.error) {
+      throw Error(result.error)
     }
+
+    let shouldAutoSave = Workspace.getConfiguration('tailwindCSS', folder).get<boolean>(
+      'codeActions.autoSave',
+      true,
+    )
+
+    if (shouldAutoSave && result.fixed && result.fixed > 0) {
+      await document.save()
+    }
+  }
+
+  async function fixAllWorkspaceProblems(): Promise<void> {
+    if (!currentClient) {
+      throw Error('No active Tailwind project found')
+    }
+
+    let client = await currentClient
+    let workspaceFolders = Workspace.workspaceFolders
+
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      throw Error('No workspace folders found')
+    }
+
+    await Window.withProgress(
+      {
+        location: { viewId: 'workbench.view.explorer' },
+        title: 'Fixing Tailwind CSS problems',
+        cancellable: true,
+      },
+      async (progress, token) => {
+        let totalFixed = 0
+        let totalFilesProcessed = 0
+        let totalFilesWithErrors = 0
+        let filesModified: string[] = []
+
+        for (let folder of workspaceFolders) {
+          if (token.isCancellationRequested) break
+
+          progress.report({ message: `Scanning ${folder.name}...` })
+
+          let contentFilesResult = await client.sendRequest<{
+            error?: string
+            files?: string[]
+          }>('@/tailwindCSS/getContentFiles', {
+            workspaceFolder: folder.uri.toString(),
+          })
+
+          if (contentFilesResult.error || !contentFilesResult.files) {
+            continue
+          }
+
+          let files = contentFilesResult.files
+          let batchSize =
+            Workspace.getConfiguration('tailwindCSS', folder).get<number>(
+              'codeActions.fixAll.batchSize',
+              10,
+            ) || 10
+
+          for (let i = 0; i < files.length; i += batchSize) {
+            if (token.isCancellationRequested) break
+
+            let batch = files.slice(i, Math.min(i + batchSize, files.length))
+            progress.report({
+              message: `Processing files ${i + 1}-${Math.min(i + batchSize, files.length)} of ${files.length}`,
+              increment: (batchSize / files.length) * 100,
+            })
+
+            await Promise.all(
+              batch.map(async (fileUri) => {
+                try {
+                  let result = await client.sendRequest<{
+                    error?: string
+                    fixed?: number
+                    remaining?: number
+                  }>('@/tailwindCSS/fixAll', {
+                    uri: fileUri,
+                    mode: 'global',
+                  })
+
+                  if (result.error) {
+                    totalFilesWithErrors++
+                    return
+                  }
+
+                  if (result.fixed && result.fixed > 0) {
+                    totalFixed += result.fixed
+                    filesModified.push(fileUri)
+
+                    let uri = Uri.parse(fileUri)
+                    let document = Workspace.textDocuments.find(
+                      (doc) => doc.uri.toString() === fileUri,
+                    )
+
+                    if (document) {
+                      await document.save()
+                    }
+                  }
+
+                  totalFilesProcessed++
+                } catch (error) {
+                  totalFilesWithErrors++
+                }
+              }),
+            )
+          }
+        }
+
+        if (token.isCancellationRequested) {
+          Window.showInformationMessage('Tailwind CSS fix operation cancelled')
+          return
+        }
+
+        let verificationPassed = true
+        if (filesModified.length > 0) {
+          progress.report({ message: 'Verifying fixes...' })
+
+          for (let fileUri of filesModified.slice(0, Math.min(10, filesModified.length))) {
+            let result = await client.sendRequest<{
+              error?: string
+              fixed?: number
+              remaining?: number
+            }>('@/tailwindCSS/fixAll', {
+              uri: fileUri,
+              mode: 'global',
+            })
+
+            if (result.remaining && result.remaining > 0) {
+              verificationPassed = false
+              break
+            }
+          }
+        }
+
+        let message = `Fixed ${totalFixed} issue${totalFixed !== 1 ? 's' : ''} across ${filesModified.length} file${filesModified.length !== 1 ? 's' : ''}`
+
+        if (totalFilesWithErrors > 0) {
+          message += ` (${totalFilesWithErrors} file${totalFilesWithErrors !== 1 ? 's' : ''} had errors)`
+        }
+
+        if (!verificationPassed) {
+          message += ' - Some issues may remain'
+        }
+
+        if (totalFixed > 0) {
+          Window.showInformationMessage(message)
+        } else {
+          Window.showInformationMessage('No auto-fixable Tailwind CSS problems found')
+        }
+      },
+    )
   }
 
   context.subscriptions.push(
@@ -235,6 +386,18 @@ export async function activate(context: ExtensionContext) {
         await fixAllProblems()
       } catch (error) {
         Window.showWarningMessage(`Couldn't fix Tailwind problems: ${(error as any)?.message}`)
+      }
+    }),
+  )
+
+  context.subscriptions.push(
+    commands.registerCommand('tailwindCSS.fixAllWorkspace', async () => {
+      try {
+        await fixAllWorkspaceProblems()
+      } catch (error) {
+        Window.showWarningMessage(
+          `Couldn't fix workspace Tailwind problems: ${(error as any)?.message}`,
+        )
       }
     }),
   )
