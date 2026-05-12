@@ -205,6 +205,7 @@ export async function findClassListsInHtmlRange(
   const matches = matchClassAttributes(text, settings.classAttributes)
 
   let boundaries = getLanguageBoundaries(state, doc)
+  let rangeStartOffset = range ? doc.offsetAt(range.start) : 0
 
   for (let boundary of boundaries ?? []) {
     let isJsContext = boundary.type === 'js' || boundary.type === 'jsx'
@@ -212,14 +213,14 @@ export async function findClassListsInHtmlRange(
     if (!settings.classFunctions?.length) continue
 
     let str = doc.getText(boundary.range)
-    let offset = doc.offsetAt(boundary.range.start)
+    let offset = doc.offsetAt(boundary.range.start) - rangeStartOffset
     let fnMatches = matchClassFunctions(str, settings.classFunctions)
 
     fnMatches.forEach((match) => {
       if (match.index) match.index += offset
     })
 
-    matches.push(...fnMatches)
+    matches.push(...fnMatches.filter((match) => match.index >= 0 && match.index < text.length))
   }
 
   const existingResultSet = new Set<string>()
