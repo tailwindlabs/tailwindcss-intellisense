@@ -71,7 +71,7 @@ function getPixelEquivalentsForMediaQuery(params: string): Comment[] {
 }
 
 export function addPixelEquivalentsToMediaQuery(query: string): string {
-  return query.replace(/(?<=^\s*@media\s*).*?$/, (params) => {
+  return query.replace(/(?<=^\s*@(?:media|container)\s*).*?$/, (params) => {
     let comments = getPixelEquivalentsForMediaQuery(params)
     return applyComments(params, comments)
   })
@@ -90,6 +90,19 @@ export const equivalentPixelValues: PluginCreator<any> = Object.assign(
           comments.push(
             ...getPixelEquivalentsForMediaQuery(atRule.params).map(({ index, value }) => ({
               index: index + atRule.source.start.offset + `@media${atRule.raws.afterName}`.length,
+              value,
+            })),
+          )
+        },
+
+        container(atRule) {
+          if (!atRule.params.includes('em')) {
+            return
+          }
+
+          comments.push(
+            ...getPixelEquivalentsForMediaQuery(atRule.params).map(({ index, value }) => ({
+              index: index + atRule.source.start.offset + `@container${atRule.raws.afterName}`.length,
               value,
             })),
           )
