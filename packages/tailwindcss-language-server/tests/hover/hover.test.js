@@ -413,6 +413,26 @@ withFixture('v4/basic', (c) => {
       },
     },
   })
+
+  testHover('@media queries include pixel equivalents', {
+    text: '<div class="sm:flex">',
+    position: { line: 0, character: 13 },
+    expected: '.sm\\:flex {\n  @media (width >= 40rem /* 640px */) {\n    display: flex;\n  }\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 19 },
+    },
+  })
+
+  testHover('@container queries include pixel equivalents', {
+    text: '<div class="@xs:flex">',
+    position: { line: 0, character: 13 },
+    expected: '.\\@xs\\:flex {\n  @container (width >= 20rem /* 320px */) {\n    display: flex;\n  }\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 20 },
+    },
+  })
 })
 
 withFixture('v4/css-loading-js', (c) => {
