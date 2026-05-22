@@ -427,10 +427,22 @@ withFixture('v4/basic', (c) => {
   testHover('@container queries include pixel equivalents', {
     text: '<div class="@xs:flex">',
     position: { line: 0, character: 13 },
-    expected: '.\\@xs\\:flex {\n  @container (width >= 20rem /* 320px */) {\n    display: flex;\n  }\n}',
+    expected:
+      '.\\@xs\\:flex {\n  @container (width >= 20rem /* 320px */) {\n    display: flex;\n  }\n}',
     expectedRange: {
       start: { line: 0, character: 12 },
       end: { line: 0, character: 20 },
+    },
+  })
+
+  testHover('named @container queries include pixel equivalents', {
+    text: '<div class="@xs/named:flex">',
+    position: { line: 0, character: 13 },
+    expected:
+      '.\\@xs\\/named\\:flex {\n  @container named (width >= 20rem /* 320px */) {\n    display: flex;\n  }\n}',
+    expectedRange: {
+      start: { line: 0, character: 12 },
+      end: { line: 0, character: 26 },
     },
   })
 })
