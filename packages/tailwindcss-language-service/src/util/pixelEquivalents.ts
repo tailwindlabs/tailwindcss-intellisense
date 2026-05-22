@@ -49,7 +49,16 @@ function getPixelEquivalentsForMediaQuery(params: string): Comment[] {
   let comments: Comment[] = []
 
   try {
-    parseMediaQueryList(params).forEach((mediaQuery) => {
+    parseMediaQueryList(params, {
+      // `@container` queries look like `@media` queries, but a named
+      // `@container` is the `@container`, followed by the `name`, followed by
+      // the `queries`. This is technically an invalid `@media` query, but
+      // everything else parses correctly.
+      //
+      // Using this option we can ignore the `name` while still parsing the
+      // conditions themselves correctly.
+      preserveInvalidMediaQueries: true,
+    }).forEach((mediaQuery) => {
       mediaQuery.walk(({ node }) => {
         if (
           isTokenNode(node) &&
@@ -102,7 +111,8 @@ export const equivalentPixelValues: PluginCreator<any> = Object.assign(
 
           comments.push(
             ...getPixelEquivalentsForMediaQuery(atRule.params).map(({ index, value }) => ({
-              index: index + atRule.source.start.offset + `@container${atRule.raws.afterName}`.length,
+              index:
+                index + atRule.source.start.offset + `@container${atRule.raws.afterName}`.length,
               value,
             })),
           )
