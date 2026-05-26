@@ -41,16 +41,16 @@ function getRuleProperties(rule: Rule): string[] {
   return properties
 }
 
-export async function getCssConflictDiagnostics(
+export function getCssConflictDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): Promise<CssConflictDiagnostic[]> {
+): CssConflictDiagnostic[] {
   let severity = settings.tailwindCSS.lint.cssConflict
   if (severity === 'ignore') return []
 
   let diagnostics: CssConflictDiagnostic[] = []
-  const classLists = await findClassListsInDocument(state, document)
+  const classLists = findClassListsInDocument(state, document, settings)
 
   classLists.forEach((classList) => {
     const classNames = getClassNamesInClassList(classList, state.blocklist)

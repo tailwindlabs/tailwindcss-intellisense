@@ -3,11 +3,11 @@ import type { State, Settings } from '../util/state'
 import { type UsedBlocklistedClassDiagnostic, DiagnosticKind } from './types'
 import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 
-export async function getUsedBlocklistedClassDiagnostics(
+export function getUsedBlocklistedClassDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): Promise<UsedBlocklistedClassDiagnostic[]> {
+): UsedBlocklistedClassDiagnostic[] {
   if (!state.v4) return []
   if (!state.blocklist?.length) return []
 
@@ -17,7 +17,7 @@ export async function getUsedBlocklistedClassDiagnostics(
   let blocklist = new Set(state.blocklist ?? [])
   let diagnostics: UsedBlocklistedClassDiagnostic[] = []
 
-  let classLists = await findClassListsInDocument(state, document)
+  let classLists = findClassListsInDocument(state, document, settings)
 
   for (let classList of classLists) {
     let classNames = getClassNamesInClassList(classList, [])

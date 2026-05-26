@@ -21,7 +21,7 @@ export async function getDocumentColors(
   let settings = await state.editor.getConfiguration(document.uri)
   if (settings.tailwindCSS.colorDecorators === false) return colors
 
-  let classLists = await findClassListsInDocument(state, document)
+  let classLists = findClassListsInDocument(state, document, settings)
   classLists.forEach((classList) => {
     let classNames = getClassNamesInClassList(classList, state.blocklist)
     classNames.forEach((className) => {

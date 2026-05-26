@@ -1,18 +1,23 @@
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { findClassNamesInRange } from '../util/find'
+import { findClassListsInDocument, getClassNamesInClassList } from '../util/find'
 import { type InvalidApplyDiagnostic, DiagnosticKind } from './types'
 import type { Settings, State } from '../util/state'
 import { validateApply } from '../util/validateApply'
+import { isCssDoc } from '../util/css'
 
-export async function getInvalidApplyDiagnostics(
+export function getInvalidApplyDiagnostics(
   state: State,
   document: TextDocument,
   settings: Settings,
-): Promise<InvalidApplyDiagnostic[]> {
+): InvalidApplyDiagnostic[] {
   let severity = settings.tailwindCSS.lint.invalidApply
   if (severity === 'ignore') return []
+  if (!isCssDoc(state, document)) return []
 
-  const classNames = await findClassNamesInRange(state, document, undefined, 'css', false)
+  const classLists = findClassListsInDocument(state, document, settings)
+  const classNames = classLists.flatMap((classList) =>
+    getClassNamesInClassList(classList, state.blocklist),
+  )
 
   let diagnostics: InvalidApplyDiagnostic[] = classNames.map((className) => {
     let result = validateApply(state, className.className)
