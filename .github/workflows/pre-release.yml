@@ -35,7 +35,7 @@ jobs:
       - name: 'Version LSP based on commit: 0.0.0-insiders.${{ env.SHA_SHORT }}'
         run: >
           cd packages/tailwindcss-language-server &&
-          npm version 0.0.0-insiders.${{ env.SHA_SHORT }} --force --no-git-tag-version
+          npm version 0.0.0-insiders.${SHA_SHORT} --force --no-git-tag-version
       - name: Publish IntelliSense
         env:
           VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
