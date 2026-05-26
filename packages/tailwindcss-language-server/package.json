@@ -79,7 +79,7 @@
     "klona": "2.0.4",
     "minimist": "^1.2.8",
     "normalize-path": "3.0.0",
-    "picomatch": "^4.0.1",
+    "picomatch": "^4.0.4",
     "pkg-up": "3.1.0",
     "postcss": "8.5.4",
     "postcss-import": "^16.1.0",
