@@ -8,6 +8,7 @@
 import * as path from 'node:path'
 import * as tsconfig from 'tsconfig-paths'
 import * as tsconfck from 'tsconfck'
+import picomatch from 'picomatch'
 import { normalizeDriveLetter, normalizePath } from '../utils'
 import { DefaultMap } from '../util/default-map'
 
@@ -52,8 +53,15 @@ export interface TSConfigApi {
   errors: unknown[]
 }
 
-export async function loadTsConfig(root: string): Promise<TSConfigApi> {
-  let { configs, errors } = await findConfigs(root)
+export interface TSConfigLoadOptions {
+  exclude?: string[]
+}
+
+export async function loadTsConfig(
+  root: string,
+  options: TSConfigLoadOptions = {},
+): Promise<TSConfigApi> {
+  let { configs, errors } = await findConfigs(root, options.exclude ?? [])
 
   let matchers = await createMatchers(configs)
 
@@ -105,7 +113,7 @@ export async function loadTsConfig(root: string): Promise<TSConfigApi> {
   }
 
   async function refresh() {
-    let { configs, errors } = await findConfigs(root)
+    let { configs, errors } = await findConfigs(root, options.exclude ?? [])
 
     matchers = await createMatchers(configs)
 
@@ -123,10 +131,15 @@ export async function loadTsConfig(root: string): Promise<TSConfigApi> {
   }
 }
 
-async function findConfigs(root: string): Promise<{
+async function findConfigs(
+  root: string,
+  exclude: string[],
+): Promise<{
   configs: Set<tsconfck.TSConfckParseResult>
   errors: unknown[]
 }> {
+  let isExcluded = createExcludeMatcher(root, exclude)
+
   // 1. Find all tsconfig files in the project
   let files = await tsconfck.findAll(root, {
     configNames: ['tsconfig.json', 'jsconfig.json'],
@@ -134,17 +147,10 @@ async function findConfigs(root: string): Promise<{
       if (dir === 'node_modules') return true
       if (dir === '.git') return true
 
-      // TODO: Incorporate thee `exclude` option from VSCode settings.
-      //
-      // Doing so here is complicated because we don't have access to the
-      // full path to the file here and we need that to match it against the
-      // exclude patterns.
-      //
-      // This probably means we need to filter them after we've found them all.
-
       return false
     },
   })
+  files = files.filter((file) => !isExcluded(file))
 
   // 2. Load them all
   let options: tsconfck.TSConfckParseOptions = {
@@ -170,6 +176,7 @@ async function findConfigs(root: string): Promise<{
 
     // Mach against referenced projects rather than the project itself
     for (let ref of result.referenced) {
+      if (isExcluded(ref.tsconfigFile)) continue
       parsed.add(ref)
     }
 
@@ -282,4 +289,55 @@ function findBaseDir(project: tsconfck.TSConfckParseResult): string {
   }
 
   return path.dirname(project.tsconfigFile)
+}
+
+function createExcludeMatcher(root: string, patterns: string[]) {
+  if (patterns.length === 0) return (_filepath: string) => false
+
+  let normalizedRoot = normalizeDriveLetter(normalizePath(root))
+
+  let absoluteMatchers: Array<(filepath: string) => boolean> = []
+  let relativeMatchers: Array<(filepath: string) => boolean> = []
+
+  for (let pattern of patterns) {
+    pattern = normalizePath(pattern)
+
+    let isWorkspaceRootRelativePattern =
+      pattern.startsWith('/') &&
+      !pattern.startsWith('//') &&
+      !pattern.startsWith(`${normalizedRoot}/`) &&
+      pattern !== normalizedRoot
+
+    if (isWorkspaceRootRelativePattern) {
+      relativeMatchers.push(picomatch(pattern.slice(1), { dot: true }))
+      continue
+    }
+
+    if (path.isAbsolute(pattern)) {
+      absoluteMatchers.push(picomatch(normalizeDriveLetter(pattern), { dot: true }))
+      continue
+    }
+
+    if (pattern.startsWith('/')) {
+      pattern = pattern.slice(1)
+    }
+
+    relativeMatchers.push(picomatch(pattern, { dot: true }))
+  }
+
+  return (filepath: string) => {
+    let normalizedFile = normalizeDriveLetter(normalizePath(filepath))
+
+    for (let matcher of absoluteMatchers) {
+      if (matcher(normalizedFile)) return true
+    }
+
+    let relativeFile = normalizePath(path.relative(normalizedRoot, normalizedFile))
+
+    for (let matcher of relativeMatchers) {
+      if (matcher(relativeFile)) return true
+    }
+
+    return false
+  }
 }
