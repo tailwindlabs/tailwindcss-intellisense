@@ -1115,11 +1115,12 @@ exports[`@utility 1`] = `
              ^                         1: meta.at-rule.utility.body.tailwind punctuation.section.utility.begin.bracket.curly.tailwind
 
   @apply flex;
-^^^^^^^^^^^^^^                         5: source.css.tailwind meta.at-rule.utility.body.tailwind
-  ^^^^^^^^^^^^                         4: meta.at-rule.header.css
-  ^^^^^^                               2: keyword.control.at-rule.css
+^^^^^^^^^^^^^^                         9: source.css.tailwind meta.at-rule.utility.body.tailwind
+  ^^^^^^^^^^^^                         8: meta.at-rule.apply.tailwind
+  ^^^^^^                               2: keyword.control.at-rule.apply.tailwind
   ^                                    1: punctuation.definition.keyword.css
-             ^                         1: punctuation.terminator.rule.css
+         ^^^^                          4: entity.other.attribute-name.class.css
+             ^                         1: punctuation.terminator.apply.tailwind
 
 }
 ^                                      1: source.css.tailwind meta.at-rule.utility.body.tailwind punctuation.section.utility.end.bracket.curly.tailwind
