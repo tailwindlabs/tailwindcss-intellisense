@@ -8,6 +8,7 @@
 - Fix project initalization when stylesheet is named `tailwindcss.css` ([#1517](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1517))
 - Mark `@variant` as deprecated when defining custom variants ([#1578](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1578))
 - Show pixel equivalents for `@container` ([#1585](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1585))
+- Fix class hover in Vue `<script></script>` tags when they exist after `<template></template>` tags ([#1580](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1580))
 
 ## 0.14.29
 
