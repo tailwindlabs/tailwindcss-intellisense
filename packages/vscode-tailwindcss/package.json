@@ -405,7 +405,7 @@
     "braces": "3.0.3",
     "color-name": "1.1.4",
     "concurrently": "9.1.2",
-    "esbuild": "^0.25.5",
+    "esbuild": "^0.28.1",
     "minimist": "^1.2.8",
     "move-file-cli": "3.0.0",
     "normalize-path": "3.0.0",
