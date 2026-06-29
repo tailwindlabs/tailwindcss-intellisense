@@ -6,7 +6,7 @@
     "@types/culori": "^2.1.0",
     "@types/license-checker": "^25.0.6",
     "culori": "^4.0.1",
-    "esbuild": "^0.25.5",
+    "esbuild": "^0.28.1",
     "license-checker": "25.0.1",
     "minimist": "^1.2.8",
     "prettier": "^3.2.5",
