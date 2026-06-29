@@ -220,7 +220,7 @@ export async function findClassListsInHtmlRange(
       if (match.index) match.index += offset
     })
 
-    matches.push(...fnMatches.filter((match) => match.index >= 0 && match.index < text.length))
+    matches.push(...fnMatches)
   }
 
   const existingResultSet = new Set<string>()
