@@ -844,6 +844,52 @@ test('Can find class name inside JS/TS functions in <script> tags (HTML)', async
   })
 })
 
+test('Can find class name inside JS/TS functions in Vue <script> tags after <template>', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.vue',
+    lang: 'vue',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['clsx'],
+      },
+    },
+    content: html`
+      <template>
+        <div></div>
+      </template>
+
+      <script lang="ts">
+        let classes = clsx('flex relative')
+      </script>
+    `,
+  })
+
+  let className = await findClassNameAtPosition(file.state, file.doc, {
+    line: 5,
+    character: 22,
+  })
+
+  expect(className).toEqual({
+    className: 'flex',
+    range: {
+      start: { line: 5, character: 22 },
+      end: { line: 5, character: 26 },
+    },
+    relativeRange: {
+      start: { line: 0, character: 0 },
+      end: { line: 0, character: 4 },
+    },
+    classList: {
+      classList: 'flex relative',
+      important: undefined,
+      range: {
+        start: { character: 22, line: 5 },
+        end: { character: 35, line: 5 },
+      },
+    },
+  })
+})
+
 test('Can find class name inside JS/TS functions in <script> tags (Svelte)', async ({ expect }) => {
   let file = createDocument({
     name: 'file.svelte',
