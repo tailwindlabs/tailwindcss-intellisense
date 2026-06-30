@@ -1,3 +1,5 @@
+import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
+
 export type TailwindVersion = '3' | '4'
 
 export interface TailwindStylesheet {
@@ -21,7 +23,39 @@ export interface TailwindStylesheet {
 // - `@import "tailwindcss"`
 // - `@import "tailwindcss/theme"
 // - etc…
-const HAS_V4_IMPORT = /@import\s*['"]tailwindcss(?:\/[^'"]+)?['"]/
+export const DEFAULT_V4_ENTRYPOINT_PATTERNS = [`@import\\s*['"]tailwindcss(?:\\/[^'"]+)?['"]`]
+const v4EntrypointPatternCache = new Map<string, RegExp[]>()
+
+function getV4EntrypointPatterns(settings?: TailwindCssSettings): string[] {
+  return settings?.experimental.v4Root ?? DEFAULT_V4_ENTRYPOINT_PATTERNS
+}
+
+export function compileV4EntrypointPatterns(settings?: TailwindCssSettings): RegExp[] {
+  let patterns = getV4EntrypointPatterns(settings)
+  let cacheKey = JSON.stringify(patterns)
+  let cached = v4EntrypointPatternCache.get(cacheKey)
+
+  if (cached) {
+    return cached
+  }
+
+  let compiled = patterns.flatMap((pattern) => {
+    try {
+      return [new RegExp(pattern)]
+    } catch (error) {
+      console.error(`Invalid \`tailwindCSS.experimental.v4Root\` pattern: ${pattern}`, error)
+      return []
+    }
+  })
+
+  v4EntrypointPatternCache.set(cacheKey, compiled)
+
+  return compiled
+}
+
+export function hasV4Entrypoint(content: string, settings?: TailwindCssSettings): boolean {
+  return compileV4EntrypointPatterns(settings).some((pattern) => pattern.test(content))
+}
 
 // It's likely this is a v4 file if it has a v4-specific feature:
 // - @plugin
@@ -60,9 +94,12 @@ const HAS_NON_URL_IMPORT = /@import\s*['"](?!([a-z]+:|\/\/))/
  *
  * The order *does* matter, as the first item is the most likely version.
  */
-export function analyzeStylesheet(content: string): TailwindStylesheet {
+export function analyzeStylesheet(
+  content: string,
+  settings?: TailwindCssSettings,
+): TailwindStylesheet {
   // An import for v4 definitely means it can be a v4 root
-  if (HAS_V4_IMPORT.test(content)) {
+  if (hasV4Entrypoint(content, settings)) {
     return {
       root: true,
       versions: ['4'],
