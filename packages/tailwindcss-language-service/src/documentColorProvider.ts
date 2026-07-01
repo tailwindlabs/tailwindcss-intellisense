@@ -25,7 +25,7 @@ export async function getDocumentColors(
   classLists.forEach((classList) => {
     let classNames = getClassNamesInClassList(classList, state.blocklist)
     classNames.forEach((className) => {
-      let color = getColor(state, className.className)
+      let color = getColor(state, className.className, settings.tailwindCSS.colorSchemePreview)
       if (color === null || typeof color === 'string' || (color.alpha ?? 1) === 0) {
         return
       }
