@@ -80,6 +80,8 @@ const TRIGGER_CHARACTERS = [
   '-',
 ] as const
 
+const CODE_ACTION_KINDS = ['quickfix', 'source.fixAll.tailwindcss']
+
 async function getConfigFileFromCssFile(cssFile: string): Promise<string | null> {
   let css = await readCssFile(cssFile)
   if (!css) return null
@@ -925,7 +927,10 @@ export class TW {
     }
 
     if (client.textDocument?.codeAction?.dynamicRegistration) {
-      capabilities.add(CodeActionRequest.type, { documentSelector: null })
+      capabilities.add(CodeActionRequest.type, {
+        documentSelector: null,
+        codeActionKinds: CODE_ACTION_KINDS,
+      })
     }
 
     if (client.textDocument?.codeLens?.dynamicRegistration) {
@@ -1139,7 +1144,9 @@ export class TW {
     }
 
     if (!client.textDocument?.codeAction?.dynamicRegistration) {
-      capabilities.codeActionProvider = true
+      capabilities.codeActionProvider = {
+        codeActionKinds: CODE_ACTION_KINDS,
+      }
     }
 
     if (!client.textDocument?.codeLens?.dynamicRegistration) {
