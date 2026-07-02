@@ -320,6 +320,7 @@ export class TW {
       root: base,
       pnp: true,
       tsconfig: true,
+      tsconfigExclude: ignore,
     })
 
     let locator = new ProjectLocator(base, globalSettings, resolver)
