@@ -913,31 +913,42 @@ export class TW {
   private commonRegistrations: BulkUnregistration | undefined
   private async updateCommonCapabilities() {
     let capabilities = BulkRegistration.create()
+    let hasRegistration = false
 
     let client = this.initializeParams.capabilities
 
     if (client.textDocument?.hover?.dynamicRegistration) {
       capabilities.add(HoverRequest.type, { documentSelector: null })
+      hasRegistration = true
     }
 
     if (client.textDocument?.colorProvider?.dynamicRegistration) {
       capabilities.add(DocumentColorRequest.type, { documentSelector: null })
+      hasRegistration = true
     }
 
     if (client.textDocument?.codeAction?.dynamicRegistration) {
       capabilities.add(CodeActionRequest.type, { documentSelector: null })
+      hasRegistration = true
     }
 
     if (client.textDocument?.codeLens?.dynamicRegistration) {
       capabilities.add(CodeLensRequest.type, { documentSelector: null })
+      hasRegistration = true
     }
 
     if (client.textDocument?.documentLink?.dynamicRegistration) {
       capabilities.add(DocumentLinkRequest.type, { documentSelector: null })
+      hasRegistration = true
     }
 
     if (client.workspace?.didChangeConfiguration?.dynamicRegistration) {
       capabilities.add(DidChangeConfigurationNotification.type, undefined)
+      hasRegistration = true
+    }
+
+    if (!hasRegistration) {
+      return
     }
 
     this.commonRegistrations?.dispose()
