@@ -53,50 +53,97 @@ export class OxideSession {
   }
 
   startIfNeeded(): Promise<ServerHandle> {
+    // Assign the promise synchronously so parallel callers (e.g. Promise.all
+    // over many CSS roots in ProjectLocator.search) share one helper process.
+    // See: https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1519
+    // See: https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1553
     this.server ??= this.start()
 
     return this.server
   }
 
-  private async start(): Promise<ServerHandle> {
+  private start(): Promise<ServerHandle> {
     // 1. Start the new process
     let helper = proc.fork(helperPath)
 
-    // 2. If the process fails to spawn we want to throw
-    //
-    // We do end up caching the failed promise but that should be
-    // fine. It seems unlikely that, if this fails, trying again
-    // would "fix" whatever problem there was and succeed.
-    await new Promise((resolve, reject) => {
-      helper.on('spawn', resolve)
-      helper.on('error', reject)
+    let serverPromise = (async (): Promise<ServerHandle> => {
+      try {
+        // 2. If the process fails to spawn we want to throw
+        await new Promise<void>((resolve, reject) => {
+          helper.once('spawn', () => resolve())
+          helper.once('error', reject)
+        })
+
+        // 3. Setup a channel to talk to the server
+        let connection = rpc.createMessageConnection(
+          new rpc.IPCMessageReader(helper),
+          new rpc.IPCMessageWriter(helper),
+        )
+
+        // 4. If the process exits we can tear down everything
+        helper.once('close', () => {
+          connection.dispose()
+          if (this.server === serverPromise) {
+            this.server = null
+          }
+        })
+
+        // 5. Start listening for messages
+        connection.listen()
+
+        return { helper, connection }
+      } catch (err) {
+        // Fork succeeded but setup failed — don't leave an orphan helper around.
+        helper.kill()
+        throw err
+      }
+    })()
+
+    // Clear a failed startup so a later call can retry (rebuilds, etc.)
+    serverPromise.catch(() => {
+      if (this.server === serverPromise) {
+        this.server = null
+      }
     })
 
-    // 3. Setup a channel to talk to the server
-    let connection = rpc.createMessageConnection(
-      new rpc.IPCMessageReader(helper),
-      new rpc.IPCMessageWriter(helper),
-    )
-
-    // 4. If the process exits we can tear down everything
-    helper.on('close', () => {
-      connection.dispose()
-      this.server = null
-    })
-
-    // 5. Start listening for messages
-    connection.listen()
-
-    return { helper, connection }
+    return serverPromise
   }
 
   async stop() {
-    if (!this.server) return
+    let serverPromise = this.server
+    if (!serverPromise) return
 
-    let server = await this.server
+    // Drop the cached handle immediately so concurrent startIfNeeded() calls
+    // open a fresh session instead of talking to a process we're killing.
+    // Without this, file-change restarts can accumulate live oxide-helpers
+    // (#1553) when an old helper's `close` is delayed.
+    this.server = null
 
-    // We terminate the server because, if for some reason it gets stuck,
-    // we don't want it to stick around.
-    server.helper.kill()
+    let server: ServerHandle
+    try {
+      server = await serverPromise
+    } catch {
+      return
+    }
+
+    await new Promise<void>((resolve) => {
+      let settled = false
+      let done = () => {
+        if (settled) return
+        settled = true
+        resolve()
+      }
+
+      server.helper.once('close', done)
+      server.helper.kill()
+
+      // Fallback: some platforms leave the child in an uninterruptible wait.
+      setTimeout(() => {
+        if (!server.helper.killed) {
+          server.helper.kill('SIGKILL')
+        }
+        done()
+      }, 1000)
+    })
   }
 }
