@@ -598,3 +598,56 @@ defineTest({
     expect((await doc.diagnostics())[0]).not.toHaveProperty('tags')
   },
 })
+
+// https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1600
+defineTest({
+  name: 'conflicts consider variants in flattened selectors (v4.3.3+)',
+  fs: {
+    'package.json': json`
+      {
+        "dependencies": {
+          "tailwindcss": "4.3.3"
+        }
+      }
+    `,
+    'app.css': css`
+      @import 'tailwindcss';
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: [
+        '<div class="bg-white backdrop:bg-black/25">',
+        '<div class="sm:bg-white sm:bg-black">',
+        '<div class="bg-white sm:bg-black">',
+      ].join('\n'),
+    })
+
+    let diagnostics = await doc.diagnostics()
+
+    // `bg-white` and `backdrop:bg-black/25` target different elements so they
+    // do not conflict. Neither do `bg-white` and `sm:bg-black`. However,
+    // `sm:bg-white` and `sm:bg-black` do conflict with each other.
+    expect(diagnostics).toMatchObject([
+      {
+        code: 'cssConflict',
+        message: "'sm:bg-white' applies the same CSS properties as 'sm:bg-black'.",
+        range: {
+          start: { line: 1, character: 12 },
+          end: { line: 1, character: 23 },
+        },
+      },
+      {
+        code: 'cssConflict',
+        message: "'sm:bg-black' applies the same CSS properties as 'sm:bg-white'.",
+        range: {
+          start: { line: 1, character: 24 },
+          end: { line: 1, character: 35 },
+        },
+      },
+    ])
+    expect(diagnostics).toHaveLength(2)
+  },
+})

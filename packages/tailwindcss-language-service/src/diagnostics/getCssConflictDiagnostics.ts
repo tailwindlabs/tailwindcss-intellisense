@@ -10,6 +10,7 @@ import * as postcss from 'postcss'
 import type { AtRule, Node, Rule } from 'postcss'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import { walk, WalkAction } from '../util/walk'
+import escapeClassName from 'css.escape'
 
 function isCustomProperty(property: string): boolean {
   return property.startsWith('--')
@@ -260,8 +261,13 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
 
       if (properties.length === 0) return WalkAction.Continue
 
-      // We have to slice off the first `context` item because it's the class name and that's always different
-      let path = [...ctx.path(), node].slice(1)
+      let path = [...ctx.path(), node]
+
+      // The selector containing the class name itself is not relevant for
+      // conflict detection, so we replace it with `&`. Depending on the
+      // Tailwind CSS version the class can appear in a top-level selector (e.g.
+      // `.backdrop\:bg-black\/25::backdrop`) or in a nested one.
+      let classSelector = `.${escapeClassName(className)}`
 
       groups[className] ??= []
       groups[className].push({
@@ -269,14 +275,14 @@ function recordClassDetails(state: State, classes: DocumentClassName[]): ClassDe
         context: path
           .map((node) => {
             if (node.kind === 'rule') {
-              return node.selector
+              return node.selector.replaceAll(classSelector, '&')
             } else if (node.kind === 'at-rule') {
               return `${node.name} ${node.params}`
             }
 
             return ''
           })
-          .filter(Boolean),
+          .filter((selector) => selector !== '' && selector !== '&'),
       })
 
       return WalkAction.Continue
