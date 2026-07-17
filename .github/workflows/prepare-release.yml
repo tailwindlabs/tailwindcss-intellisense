@@ -1,0 +1,45 @@
+name: Prepare Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Resolve version
+        run: |
+          echo "TAG_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Get release notes
+        run: |
+          RELEASE_NOTES=$(node ./scripts/release-notes.mjs ${TAG_NAME})
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Prepare GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${TAG_NAME}" \
+              --draft \
+              --title "${TAG_NAME}" \
+              --notes "${RELEASE_NOTES}"
