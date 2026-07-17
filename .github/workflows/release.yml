@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel to publish
+        required: true
+        default: insiders
+        type: choice
+        options:
+          - insiders
+          - release
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      # https://docs.npmjs.com/trusted-publishers
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build everything
+        run: pnpm -r run build
+
+      - name: Run tests
+        run: pnpm --filter ./packages/tailwindcss-language-server run test
+
+      # npm trusted publishing validates the caller workflow filename, so both the
+      # insiders and releases must be published from this workflow.
+      - name: Resolve release metadata
+        env:
+          INPUT_CHANNEL: ${{ github.event.inputs.channel || '' }}
+        run: |
+          if [[ "${{ github.event_name }}" == "release" || "$INPUT_CHANNEL" == "release" ]]; then
+            echo "RELEASE_KIND=release" >> $GITHUB_ENV
+            echo "RELEASE_CHANNEL=latest" >> $GITHUB_ENV
+          else
+            sha_short=$(git rev-parse --short HEAD)
+
+            echo "RELEASE_KIND=insiders" >> $GITHUB_ENV
+            echo "RELEASE_CHANNEL=insiders" >> $GITHUB_ENV
+            echo "SHA_SHORT=$sha_short" >> $GITHUB_ENV
+            echo "INSIDERS_VERSION=0.0.0-insiders.$sha_short" >> $GITHUB_ENV
+          fi
+
+      - name: 'Version packages based on commit: ${{ env.INSIDERS_VERSION }}'
+        if: env.RELEASE_KIND == 'insiders'
+        run: pnpm run version-packages ${INSIDERS_VERSION}
+
+      # The marketplace does not support insiders versions, so the extension is
+      # bumped to the next pre-release version instead
+      - name: Bump IntelliSense version
+        if: env.RELEASE_KIND == 'insiders'
+        run: >
+          node ./scripts/bump-version.mjs &&
+          cat packages/vscode-tailwindcss/package.json
+
+      - name: Publish to npm
+        run: >
+          pnpm --recursive --filter='!vscode-tailwindcss' publish --tag ${RELEASE_CHANNEL} --access public --no-git-checks
+
+      - name: Publish IntelliSense (pre-release)
+        if: env.RELEASE_KIND == 'insiders'
+        env:
+          VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
+        run: >
+          cd packages/vscode-tailwindcss &&
+          pnpm run publish --pre-release -p $VSCODE_TOKEN
+
+      - name: Publish IntelliSense
+        if: env.RELEASE_KIND == 'release'
+        env:
+          VSCODE_TOKEN: ${{ secrets.VSCODE_TOKEN }}
+        run: >
+          cd packages/vscode-tailwindcss &&
+          pnpm run publish -p $VSCODE_TOKEN
