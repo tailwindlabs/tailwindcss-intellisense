@@ -1,6 +1,9 @@
 {
   "name": "tailwindcss-intellisense",
   "private": true,
+  "scripts": {
+    "version-packages": "node ./scripts/version-packages.mjs"
+  },
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
     "@types/culori": "^2.1.0",
