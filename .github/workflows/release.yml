@@ -5,16 +5,6 @@ on:
     branches: [main]
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      channel:
-        description: Release channel to publish
-        required: true
-        default: insiders
-        type: choice
-        options:
-          - insiders
-          - release
 
 permissions:
   contents: read
@@ -58,10 +48,8 @@ jobs:
       # npm trusted publishing validates the caller workflow filename, so both the
       # insiders and releases must be published from this workflow.
       - name: Resolve release metadata
-        env:
-          INPUT_CHANNEL: ${{ github.event.inputs.channel || '' }}
         run: |
-          if [[ "${{ github.event_name }}" == "release" || "$INPUT_CHANNEL" == "release" ]]; then
+          if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "RELEASE_KIND=release" >> $GITHUB_ENV
             echo "RELEASE_CHANNEL=latest" >> $GITHUB_ENV
           else
