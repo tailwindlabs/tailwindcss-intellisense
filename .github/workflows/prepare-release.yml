@@ -30,7 +30,7 @@ jobs:
 
       - name: Get release notes
         run: |
-          RELEASE_NOTES=$(node ./scripts/release-notes.mjs ${TAG_NAME})
+          RELEASE_NOTES=$(node ./scripts/release-notes.mjs "${TAG_NAME}")
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
