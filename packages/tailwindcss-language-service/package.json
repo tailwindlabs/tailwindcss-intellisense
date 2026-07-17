@@ -3,6 +3,14 @@
   "version": "0.14.29",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tailwindlabs/tailwindcss-intellisense.git",
+    "directory": "packages/tailwindcss-language-service"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist"
   ],
