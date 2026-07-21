@@ -12,6 +12,7 @@ import { getRecommendedVariantOrderDiagnostics } from './getRecommendedVariantOr
 import { getInvalidSourceDiagnostics } from './getInvalidSourceDiagnostics'
 import { getUsedBlocklistedClassDiagnostics } from './getUsedBlocklistedClassDiagnostics'
 import { getSuggestCanonicalClassesDiagnostics } from './canonical-classes'
+import { getInvalidClassDiagnostics } from './getInvalidClassDiagnostics'
 
 export async function doValidate(
   state: State,
@@ -28,6 +29,7 @@ export async function doValidate(
     DiagnosticKind.RecommendedVariantOrder,
     DiagnosticKind.UsedBlocklistedClass,
     DiagnosticKind.SuggestCanonicalClasses,
+    DiagnosticKind.InvalidClass,
   ],
 ): Promise<AugmentedDiagnostic[]> {
   const settings = await state.editor.getConfiguration(document.uri)
@@ -66,6 +68,9 @@ export async function doValidate(
           : []),
         ...(only.includes(DiagnosticKind.SuggestCanonicalClasses)
           ? await getSuggestCanonicalClassesDiagnostics(state, document, settings)
+          : []),
+        ...(only.includes(DiagnosticKind.InvalidClass)
+          ? await getInvalidClassDiagnostics(state, document, settings)
           : []),
       ]
     : []
