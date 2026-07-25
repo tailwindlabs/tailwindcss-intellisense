@@ -4,6 +4,32 @@ import { createClient } from '../utils/client'
 import * as fs from 'node:fs/promises'
 
 defineTest({
+  name: 'Code actions advertise Tailwind fix-all support',
+  fs: {
+    'app.css': '@import "tailwindcss"',
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    expect(client.serverCapabilities).toEqual([])
+
+    await client.open({
+      lang: 'html',
+      text: '<div class="[@media_print]:flex">',
+    })
+
+    expect(client.serverCapabilities).toContainEqual(
+      expect.objectContaining({
+        method: 'textDocument/codeAction',
+        registerOptions: {
+          documentSelector: null,
+          codeActionKinds: ['quickfix', 'source.fixAll.tailwindcss'],
+        },
+      }),
+    )
+  },
+})
+
+defineTest({
   name: 'Changing the separator registers new trigger characters',
   fs: {
     'tailwind.config.js': js`
