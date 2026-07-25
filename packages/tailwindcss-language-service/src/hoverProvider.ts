@@ -100,6 +100,27 @@ async function provideClassNameHover(
   let className = await findClassNameAtPosition(state, document, position)
   if (className === null) return null
 
+  // Check if this is a custom CSS class
+  if (state.customCssClasses && state.customCssClasses.length > 0) {
+    const customClass = state.customCssClasses.find((cls) => cls.label === className.className)
+    if (customClass) {
+      const declarations = customClass.data?.declarations as Record<string, string>
+      if (declarations) {
+        const cssRules = Object.entries(declarations)
+          .map(([prop, value]) => `  ${prop}: ${value};`)
+          .join('\n')
+
+        return {
+          contents: {
+            language: 'css',
+            value: `.${className.className} {\n${cssRules}\n}`,
+          },
+          range: className.range,
+        }
+      }
+    }
+  }
+
   if (state.v4) {
     let root = state.designSystem.compile([className.className])[0]
     if (root.length === 0) return null
