@@ -1,3 +1,4 @@
+import type { TailwindCssSettings } from '@tailwindcss/language-service/src/util/state'
 import type { DesignSystem } from '@tailwindcss/language-service/src/util/v4'
 
 import { createJiti } from 'jiti'
@@ -11,12 +12,12 @@ import { assets } from './assets'
 import { plugins } from './plugins'
 import { AstNode, cloneAstNode, parse } from '@tailwindcss/language-service/src/css'
 import { walk, WalkAction } from '@tailwindcss/language-service/src/util/walk'
+import { hasV4Entrypoint } from '../../version-guesser'
 
-const HAS_V4_IMPORT = /@import\s*(?:'tailwindcss'|"tailwindcss")/
 const HAS_V4_THEME = /@theme\s*\{/
 const COMPILE_CACHE = Symbol('LSP_COMPILE_CACHE')
 
-export async function isMaybeV4(css: string): Promise<boolean> {
+export async function isMaybeV4(css: string, settings?: TailwindCssSettings): Promise<boolean> {
   // Look for:
   // 1. An import of Tailwind CSS; OR
   // - @import 'tailwindcss'
@@ -25,7 +26,7 @@ export async function isMaybeV4(css: string): Promise<boolean> {
   // 2. A theme block
   // - @theme { … }
 
-  return HAS_V4_THEME.test(css) || HAS_V4_IMPORT.test(css)
+  return HAS_V4_THEME.test(css) || hasV4Entrypoint(css, settings)
 }
 
 /**
@@ -106,12 +107,13 @@ export async function loadDesignSystem(
   filepath: string,
   css: string,
   isFallback: boolean,
+  settings?: TailwindCssSettings,
 ): Promise<DesignSystem | null> {
   // This isn't a v4 project
   if (!tailwindcss.__unstable__loadDesignSystem) return null
 
   // We don't have any theme stuff we can use
-  if (!isMaybeV4(css)) {
+  if (!(await isMaybeV4(css, settings))) {
     return null
   }
 

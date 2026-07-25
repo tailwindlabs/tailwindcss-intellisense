@@ -524,6 +524,61 @@ defineTest({
 })
 
 defineTest({
+  name: 'v4, using fallback, with custom v4 root detection',
+  fs: {
+    'app.css': css`
+      @reference "tailwindcss";
+
+      @theme {
+        --color-primary: #c0ffee;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      root,
+      settings: {
+        tailwindCSS: {
+          experimental: {
+            v4Root: [`@reference\\s*["']tailwindcss["']`],
+          },
+        },
+      },
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'html',
+      text: '<div class="bg-primary">',
+    })
+
+    expect(await client.project()).toMatchObject({
+      tailwind: {
+        version: '4.1.18',
+        isDefaultVersion: true,
+      },
+    })
+
+    let hover = await doc.hover({ line: 0, character: 13 })
+
+    expect(hover).toEqual({
+      contents: {
+        language: 'css',
+        value: dedent`
+          .bg-primary {
+            background-color: var(--color-primary) /* #c0ffee */;
+          }
+        `,
+      },
+      range: {
+        start: { line: 0, character: 12 },
+        end: { line: 0, character: 22 },
+      },
+    })
+  },
+})
+
+defineTest({
   name: 'script + lang=tsx is treated as containing JSX',
   fs: {
     'app.css': css`
