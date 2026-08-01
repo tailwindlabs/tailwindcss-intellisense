@@ -1102,6 +1102,41 @@ test('Helper functions can start with --', async ({ expect }) => {
   ])
 })
 
+test('Helper functions can span multiple lines', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.css',
+    lang: 'css',
+    content: `
+      .a {
+        color: theme(
+          'colors.red.500'
+        );
+      }
+      .b {
+        color: theme(
+          'colors.red.500',
+          red
+        );
+      }
+    `,
+  })
+
+  let fns = findHelperFunctionsInDocument(file.state, file.doc)
+
+  expect(fns).toEqual([
+    {
+      helper: 'theme',
+      path: 'colors.red.500',
+      ranges: { full: range(2, 21, 4, 8), path: range(3, 11, 3, 25) },
+    },
+    {
+      helper: 'theme',
+      path: 'colors.red.500',
+      ranges: { full: range(7, 21, 10, 8), path: range(8, 11, 8, 25) },
+    },
+  ])
+})
+
 test('Can find helper functions in SCSS', async ({ expect }) => {
   let file = createDocument({
     name: 'file.scss',

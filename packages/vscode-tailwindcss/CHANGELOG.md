@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix incorrect `invalidConfigPath` warnings when a `theme(…)` or `config(…)` call spans multiple lines ([#0000](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/0000))
 
 ## 0.16.0
 
