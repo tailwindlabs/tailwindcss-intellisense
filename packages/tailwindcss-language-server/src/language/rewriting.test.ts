@@ -462,3 +462,59 @@ test('rewritten at-rules preserve line breaks in their preludes', () => {
 
   expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
 })
+
+test('comment markers inside unquoted urls do not start comments', () => {
+  let input = [
+    //
+    '.a { background: url(/icons/*.svg); }',
+    '@media screen(sm) { .b { color: red; } }',
+    '.c { background: URL( "/*" ) /* @variant */; }',
+    '@variant foo {',
+    '  @slot;',
+    '}',
+  ]
+
+  let output = [
+    //
+    '.a { background: url(/icons/*.svg); }',
+    '@media (℘)        { .b { color: red; } }',
+    '.c { background: URL( "/*" ) /* @variant */; }',
+    '._______     {',
+    '  @slot;',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
+test('escaped quotes outside of strings do not start strings', () => {
+  let input = [
+    //
+    '.foo\\"bar {} /* @variant */',
+    '@theme { --color-brand: #000; }',
+  ]
+
+  let output = [
+    //
+    '.foo\\"bar {} /* @variant */',
+    '._____ { --color-brand: #000; }',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
+test('multiline @custom-variant with the semicolon on its own line keeps columns', () => {
+  let input = [
+    //
+    '@custom-variant foo (&:hover)',
+    ';.a { color: red; }',
+  ]
+
+  let output = [
+    //
+    '@media(℘){',
+    '}.a { color: red; }',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})

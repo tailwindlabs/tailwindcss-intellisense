@@ -33,7 +33,8 @@ type Range = [start: number, end: number]
 /**
  * Find the ranges of all `/* … *\/` comments in the given CSS
  *
- * Strings are skipped so that something like `content: "/*"` doesn't start a
+ * Strings, escapes, and unquoted `url(…)` contents are skipped so that
+ * something like `content: "/*"` or `url(/icons/*.svg)` doesn't start a
  * comment. An unterminated comment runs until the end of the input.
  */
 function findComments(css: string): Range[] {
@@ -41,6 +42,12 @@ function findComments(css: string): Range[] {
 
   for (let i = 0; i < css.length; i++) {
     let char = css.charCodeAt(i)
+
+    // Skip over escapes so that something like `.foo\"bar` doesn't start a string
+    if (char === 0x5c /* \ */) {
+      i++
+      continue
+    }
 
     // Skip over strings
     if (char === 0x22 /* " */ || char === 0x27 /* ' */) {
@@ -55,6 +62,36 @@ function findComments(css: string): Range[] {
       continue
     }
 
+    // Skip over the contents of unquoted `url(…)`s
+    if (
+      (char === 0x75 /* u */ || char === 0x55) /* U */ &&
+      css.charCodeAt(i + 3) === 0x28 /* ( */ &&
+      css.slice(i, i + 3).toLowerCase() === 'url' &&
+      !isIdentChar(css.charCodeAt(i - 1))
+    ) {
+      let j = i + 4
+      while (j < css.length && isWhitespace(css.charCodeAt(j))) j++
+
+      // A quoted url is a regular function containing a string
+      let next = css.charCodeAt(j)
+      if (next === 0x22 /* " */ || next === 0x27 /* ' */) {
+        i = j - 1
+        continue
+      }
+
+      for (; j < css.length; j++) {
+        let next = css.charCodeAt(j)
+        if (next === 0x5c /* \ */) {
+          j++
+        } else if (next === 0x29 /* ) */) {
+          break
+        }
+      }
+
+      i = j
+      continue
+    }
+
     if (char === 0x2f /* / */ && css.charCodeAt(i + 1) === 0x2a /* * */) {
       let end = css.indexOf('*/', i + 2)
       end = end === -1 ? css.length : end + 2
@@ -66,13 +103,31 @@ function findComments(css: string): Range[] {
   return comments
 }
 
+function isWhitespace(char: number) {
+  return char === 0x20 || char === 0x09 || char === 0x0a || char === 0x0c || char === 0x0d
+}
+
+function isIdentChar(char: number) {
+  return (
+    (char >= 0x61 /* a */ && char <= 0x7a) /* z */ ||
+    (char >= 0x41 /* A */ && char <= 0x5a) /* Z */ ||
+    (char >= 0x30 /* 0 */ && char <= 0x39) /* 9 */ ||
+    char === 0x2d /* - */ ||
+    char === 0x5f /* _ */ ||
+    char === 0x5c /* \ */ ||
+    char >= 0x80
+  )
+}
+
 /**
  * Like `String.prototype.replace` with a global regex, except matches that
  * start or end inside a comment are left alone.
  *
- * When a match is skipped matching resumes from the next character rather
- * than from the end of the skipped match. Otherwise a match that starts in a
- * comment and runs past it could swallow a real at-rule that follows.
+ * When a match that starts inside a comment is skipped matching resumes at the
+ * end of that comment rather than at the end of the skipped match. Otherwise a
+ * match that starts in a comment and runs past it could swallow a real at-rule
+ * that follows. A match that only ends inside a comment resumes from the next
+ * character.
  */
 function replaceOutsideComments(
   css: string,
@@ -83,17 +138,17 @@ function replaceOutsideComments(
   if (comments.length === 0) return css.replace(regex, replacer)
 
   // Comments are sorted and don't overlap so we can binary search them
-  let isInComment = (offset: number) => {
+  let findComment = (offset: number): Range | null => {
     let lo = 0
     let hi = comments.length - 1
     while (lo <= hi) {
       let mid = (lo + hi) >> 1
-      let [start, end] = comments[mid]
-      if (offset < start) hi = mid - 1
-      else if (offset >= end) lo = mid + 1
-      else return true
+      let comment = comments[mid]
+      if (offset < comment[0]) hi = mid - 1
+      else if (offset >= comment[1]) lo = mid + 1
+      else return comment
     }
-    return false
+    return null
   }
 
   let result = ''
@@ -104,9 +159,17 @@ function replaceOutsideComments(
     let start = match.index
     let end = start + match[0].length
 
-    // The match starts inside a comment or ends inside one (which means that
-    // replacing it would remove the start of that comment)
-    if (isInComment(start) || (end > start && isInComment(end - 1))) {
+    // The match starts inside a comment so no match can start before the end
+    // of that comment
+    let comment = findComment(start)
+    if (comment) {
+      regex.lastIndex = comment[1]
+      continue
+    }
+
+    // The match ends inside a comment (which means that replacing it would
+    // remove the start of that comment)
+    if (end > start && findComment(end - 1)) {
       regex.lastIndex = start + 1
       continue
     }
@@ -138,10 +201,17 @@ export function rewriteCss(css: string) {
   css = replaceOutsideComments(css, /@(custom-variant)(\s+[^;{]+);/g, (match, name, p1) => {
     let lines = p1.split('\n')
     if (lines.length > 1) {
+      // When the `;` is at the start of its line there is no prelude character
+      // to put the `{` in so it goes on the first line instead and only the `}`
+      // replaces the `;`
+      if (lines[lines.length - 1].length === 0) {
+        return `@media(${MEDIA_MARKER}){${'\n'.repeat(lines.length - 1)}}`
+      }
+
       // `@media(℘)` is 9 characters long, `{}` replaces the `;` and the last
       // character of the prelude
       return `@media(${MEDIA_MARKER})${'\n'.repeat(lines.length - 1)}${' '.repeat(
-        Math.max(0, lines[lines.length - 1].length - 1),
+        lines[lines.length - 1].length - 1,
       )}{}`
     }
 
