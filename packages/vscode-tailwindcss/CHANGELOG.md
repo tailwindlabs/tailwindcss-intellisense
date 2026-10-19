@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Don't show syntax errors caused by at-rules mentioned inside CSS comments ([#1625](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1625))
 
 ## 0.16.0
 
