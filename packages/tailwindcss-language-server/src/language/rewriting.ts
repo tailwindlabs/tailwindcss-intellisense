@@ -67,7 +67,10 @@ function findComments(css: string): Range[] {
       (char === 0x75 /* u */ || char === 0x55) /* U */ &&
       css.charCodeAt(i + 3) === 0x28 /* ( */ &&
       css.slice(i, i + 3).toLowerCase() === 'url' &&
-      !isIdentChar(css.charCodeAt(i - 1))
+      !isIdentChar(css.charCodeAt(i - 1)) &&
+      // `#url(` and `@url(` are a hash token and an at-keyword, not a url
+      css.charCodeAt(i - 1) !== 0x23 /* # */ &&
+      css.charCodeAt(i - 1) !== 0x40 /* @ */
     ) {
       let j = i + 4
       while (j < css.length && isWhitespace(css.charCodeAt(j))) j++

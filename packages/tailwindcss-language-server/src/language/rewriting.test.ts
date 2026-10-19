@@ -487,6 +487,26 @@ test('comment markers inside unquoted urls do not start comments', () => {
   expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
 })
 
+test('hash tokens and at-keywords named url are not unquoted urls', () => {
+  let input = [
+    //
+    '.a { --x: #url(/* @variant */); }',
+    '@theme { --color-brand: #000; }',
+    '.b { --y: @url(/* @variant */); }',
+    '@theme { --color-brand: #fff; }',
+  ]
+
+  let output = [
+    //
+    '.a { --x: #url(/* @variant */); }',
+    '._____ { --color-brand: #000; }',
+    '.b { --y: @url(/* @variant */); }',
+    '._____ { --color-brand: #fff; }',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
 test('escaped quotes outside of strings do not start strings', () => {
   let input = [
     //
