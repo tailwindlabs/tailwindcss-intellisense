@@ -359,3 +359,106 @@ describe('v3', () => {
     expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
   })
 })
+
+// https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1615
+test('at-rules mentioned inside comments are not rewritten', () => {
+  let input = [
+    //
+    '/**',
+    ' * This comment mentions the @variant at-rule in prose.',
+    ' */',
+    '@theme {',
+    '  --color-brand: #000;',
+    '}',
+    '/* @screen, @variants, @responsive, @utility and @custom-variant foo; */',
+    '/* @media screen(sm) @reference "./app.css" --font-*/',
+    '.a {',
+    '  /* A label */',
+    '  color: red;',
+    '}',
+  ]
+
+  let output = [
+    //
+    '/**',
+    ' * This comment mentions the @variant at-rule in prose.',
+    ' */',
+    '._____ {',
+    '  --color-brand: #000;',
+    '}',
+    '/* @screen, @variants, @responsive, @utility and @custom-variant foo; */',
+    '/* @media screen(sm) @reference "./app.css" --font-*/',
+    '.a {',
+    '  /* A label */',
+    '  color: red;',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
+test('at-rules following a comment that mentions them are still rewritten', () => {
+  let input = [
+    //
+    '/* @variant */',
+    '@variant foo {',
+    '  @slot;',
+    '}',
+    '/* "@utility" */ @utility bar /* note */ {',
+    '  color: red;',
+    '}',
+    '.b { content: "/* @variant"; }',
+    '@variant baz {',
+    '  @slot;',
+    '}',
+  ]
+
+  let output = [
+    //
+    '/* @variant */',
+    '._______     {',
+    '  @slot;',
+    '}',
+    '/* "@utility" */ ._______                {',
+    '  color: red;',
+    '}',
+    '.b { content: "/* @variant"; }',
+    '._______     {',
+    '  @slot;',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
+
+test('rewritten at-rules preserve line breaks in their preludes', () => {
+  let input = [
+    //
+    '@utility foo',
+    '{',
+    '  color: red;',
+    '}',
+    '@custom-variant bar',
+    '  (&:hover);',
+    '@variant baz',
+    '{',
+    '  @slot;',
+    '}',
+  ]
+
+  let output = [
+    //
+    '._______',
+    '{',
+    '  color: red;',
+    '}',
+    '@media(℘)',
+    '          {}',
+    '._______',
+    '{',
+    '  @slot;',
+    '}',
+  ]
+
+  expect(rewriteCss(input.join('\n'))).toBe(output.join('\n'))
+})
