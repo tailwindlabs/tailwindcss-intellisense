@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Fix content detection helper writing to stdout, which corrupted the JSON-RPC stream in non-VS Code clients ([#1607](https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1607))
+- Fix content detection helper writing to stdout, which corrupted the JSON-RPC stream in non-VS Code clients ([#1628](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1628))
 
 ## 0.16.0
 
