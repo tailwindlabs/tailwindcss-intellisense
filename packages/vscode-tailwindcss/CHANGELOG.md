@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Fix `classFunctions` not matching directly after a spread operator ([#1632](https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1632))
 
 ## 0.16.0
 
