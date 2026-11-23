@@ -12,9 +12,8 @@ let scanRequest = new rpc.RequestType<ScanOptions, ScanResult, void>('scan')
 connection.onRequest<ScanOptions, ScanResult, void>(scanRequest, (options) => scan(options))
 connection.listen()
 
-console.log('Listening for messages...')
-
+// No console output here: the helper is forked with inherited stdio, so stdout
+// is the language server's own JSON-RPC stream when run over stdin/stdout.
 process.on('disconnect', () => {
-  console.log('Shutting down...')
   process.exit(0)
 })
