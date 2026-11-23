@@ -193,6 +193,8 @@ defineTest({
 
 defineTest({
   name: 'Creating a CSS config in an empty folder initalizes a project',
+  // Allow extra time for project initialization on standard GitHub-hosted runners.
+  options: { timeout: 30000 },
   fs: {
     'app.css': css`
       /* this file is not a Tailwind CSS config yet */
@@ -213,6 +215,16 @@ defineTest({
 
     expect(hover).toEqual(null)
 
+    // Listen before writing the config so a fast filesystem notification cannot be missed.
+    let didRestart = Promise.race([
+      new Promise((resolve) => {
+        client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Did not restart in time')), 15000),
+      ),
+    ])
+
     // Create a CSS config file
     await fs.writeFile(
       `${root}/app.css`,
@@ -225,17 +237,7 @@ defineTest({
       `,
     )
 
-    // Create a CSS config file
     // Notify the server of the config change
-    let didRestart = Promise.race([
-      new Promise((resolve) => {
-        client.conn.onNotification('@/tailwindCSS/serverRestarted', resolve)
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Did not restart in time')), 5000),
-      ),
-    ])
-
     await client.notifyChangedFiles({
       changed: [`${root}/app.css`],
     })
