@@ -17,6 +17,7 @@ import type {
   DocumentLink,
   CodeLensParams,
   CodeLens,
+  TextEdit,
 } from 'vscode-languageserver/node'
 import { DiagnosticTag, FileChangeType } from 'vscode-languageserver/node'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -53,6 +54,7 @@ import type {
 } from '@tailwindcss/language-service/src/util/state'
 import { provideDiagnostics } from './lsp/diagnosticsProvider'
 import { doCodeActions } from '@tailwindcss/language-service/src/codeActions/codeActionProvider'
+import { doValidate } from '@tailwindcss/language-service/src/diagnostics/diagnosticsProvider'
 import { getDocumentColors } from '@tailwindcss/language-service/src/documentColorProvider'
 import { getDocumentLinks } from '@tailwindcss/language-service/src/documentLinksProvider'
 import { debounce } from 'debounce'
@@ -112,6 +114,11 @@ export interface ProjectService {
   onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]>
   onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]>
   onCodeAction(params: CodeActionParams): Promise<CodeAction[]>
+  fixAllProblems(params: {
+    uri: string
+    mode?: 'local' | 'global'
+  }): Promise<{ error?: string; fixed?: number; remaining?: number }>
+  getContentFiles(): Promise<{ error?: string; files?: string[] }>
   onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]>
   onCodeLens(params: CodeLensParams): Promise<CodeLens[]>
   sortClassLists(classLists: string[]): string[]
@@ -177,6 +184,28 @@ function getWatchPatternsForFile(file: string, root: string): string[] {
     }
   }
   return patterns
+}
+
+function getLanguageIdFromPath(filePath: string): string {
+  let ext = path.extname(filePath).toLowerCase()
+  let extToLanguage: Record<string, string> = {
+    '.js': 'javascript',
+    '.jsx': 'javascriptreact',
+    '.ts': 'typescript',
+    '.tsx': 'typescriptreact',
+    '.vue': 'vue',
+    '.svelte': 'svelte',
+    '.html': 'html',
+    '.htm': 'html',
+    '.php': 'php',
+    '.css': 'css',
+    '.scss': 'scss',
+    '.sass': 'sass',
+    '.less': 'less',
+    '.md': 'markdown',
+    '.mdx': 'mdx',
+  }
+  return extToLanguage[ext] || 'plaintext'
 }
 
 export async function createProjectService(
@@ -1249,6 +1278,173 @@ export async function createProjectService(
         if (!settings.tailwindCSS.codeActions) return null
         return doCodeActions(state, params, document)
       }, null)
+    },
+    async fixAllProblems(params: {
+      uri: string
+      mode?: 'local' | 'global'
+    }): Promise<{ error?: string; fixed?: number; remaining?: number }> {
+      try {
+        if (!state.enabled) {
+          return { error: 'Tailwind CSS is not enabled' }
+        }
+
+        let document = documentService.getDocument(params.uri)
+        let isGlobalMode = params.mode === 'global'
+
+        if (!document && isGlobalMode) {
+          try {
+            let filePath = URI.parse(params.uri).fsPath
+            let content = await fs.promises.readFile(filePath, 'utf-8')
+            let { TextDocument } = await import('vscode-languageserver-textdocument')
+            let languageId = getLanguageIdFromPath(filePath)
+            document = TextDocument.create(params.uri, languageId, 1, content)
+          } catch (error) {
+            return { error: 'Could not read file' }
+          }
+        }
+
+        if (!document) {
+          return { error: 'Document not found' }
+        }
+
+        let settings = await state.editor.getConfiguration(document.uri)
+        if (!settings.tailwindCSS.codeActions) {
+          return { error: 'Code actions are disabled' }
+        }
+
+        let diagnostics = await doValidate(state, document)
+        if (!diagnostics || diagnostics.length === 0) {
+          return { fixed: 0, remaining: 0 }
+        }
+
+        let allEdits: TextEdit[] = []
+        let processedRanges = new Set<string>()
+
+        for (let diagnostic of diagnostics) {
+          let codeActionParams: CodeActionParams = {
+            textDocument: { uri: params.uri },
+            range: diagnostic.range,
+            context: { diagnostics: [diagnostic] },
+          }
+
+          let codeActions = await doCodeActions(state, codeActionParams, document)
+          if (!codeActions || codeActions.length === 0) continue
+
+          for (let action of codeActions) {
+            if (action.edit?.changes) {
+              let edits = action.edit.changes[params.uri]
+              if (edits) {
+                for (let edit of edits) {
+                  let rangeKey = `${edit.range.start.line}:${edit.range.start.character}-${edit.range.end.line}:${edit.range.end.character}`
+                  if (!processedRanges.has(rangeKey)) {
+                    allEdits.push(edit)
+                    processedRanges.add(rangeKey)
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (allEdits.length > 0) {
+          let workspaceEdit = {
+            changes: {
+              [params.uri]: allEdits,
+            },
+          }
+          await connection.workspace.applyEdit(workspaceEdit)
+        }
+
+        let remainingDiagnostics = await doValidate(state, document)
+        let remainingFixable = 0
+        if (remainingDiagnostics) {
+          for (let diag of remainingDiagnostics) {
+            let actions = await doCodeActions(
+              state,
+              {
+                textDocument: { uri: params.uri },
+                range: diag.range,
+                context: { diagnostics: [diag] },
+              },
+              document,
+            )
+            if (actions && actions.length > 0) {
+              remainingFixable++
+            }
+          }
+        }
+
+        return {
+          fixed: allEdits.length,
+          remaining: remainingFixable,
+        }
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Failed to fix problems' }
+      }
+    },
+    async getContentFiles(): Promise<{ error?: string; files?: string[] }> {
+      try {
+        if (!state.enabled || !state.config) {
+          return { error: 'Tailwind CSS is not enabled or configured' }
+        }
+
+        let files: string[] = []
+        let projectFolder = folder
+
+        if (!projectFolder) {
+          return { error: 'No project folder found' }
+        }
+
+        let contentPatterns: string[] = []
+        if (state.config.content) {
+          if (Array.isArray(state.config.content)) {
+            contentPatterns = state.config.content.filter(
+              (item: any) => typeof item === 'string',
+            )
+          } else if (state.config.content.files) {
+            contentPatterns = state.config.content.files.filter(
+              (item: any) => typeof item === 'string',
+            )
+          }
+        }
+
+        if (contentPatterns.length === 0) {
+          contentPatterns = [
+            './src/**/*.{js,jsx,ts,tsx,vue,svelte,html}',
+            './pages/**/*.{js,jsx,ts,tsx,vue,svelte,html}',
+            './components/**/*.{js,jsx,ts,tsx,vue,svelte,html}',
+            './app/**/*.{js,jsx,ts,tsx,vue,svelte,html}',
+            './**/*.html',
+          ]
+        }
+
+        let { glob } = await import('tinyglobby')
+
+        for (let pattern of contentPatterns) {
+          if (pattern.startsWith('!')) continue
+
+          let resolvedPattern = path.isAbsolute(pattern)
+            ? pattern
+            : path.join(projectFolder, pattern)
+
+          try {
+            let matches = await glob([resolvedPattern], {
+              cwd: projectFolder,
+              absolute: true,
+              ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**'],
+            })
+
+            for (let match of matches) {
+              files.push(URI.file(match).toString())
+            }
+          } catch (error) {
+          }
+        }
+
+        return { files: [...new Set(files)] }
+      } catch (error) {
+        return { error: error instanceof Error ? error.message : 'Failed to get content files' }
+      }
     },
     onDocumentLinks(params: DocumentLinkParams): Promise<DocumentLink[]> {
       if (!state.enabled) return null

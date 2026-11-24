@@ -40,6 +40,7 @@ import {
   RegistrationRequest,
   MessageType,
   LogMessageNotification,
+  ApplyWorkspaceEditRequest,
 } from 'vscode-languageserver'
 import { URI, Utils as URIUtils } from 'vscode-uri'
 import {
@@ -517,6 +518,13 @@ export async function createClient(opts: ClientOptions): Promise<Client> {
 
       return sections
     })
+  })
+
+  // Handle workspace/applyEdit requests from server
+  conn.onRequest(ApplyWorkspaceEditRequest.type, (params) => {
+    trace('Applying workspace edit')
+    // For tests, we just acknowledge the edit was applied
+    return { applied: true }
   })
 
   let notifications = await createDocumentNotifications(conn)

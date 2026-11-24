@@ -877,6 +877,14 @@ export class TW {
     params: { uri: string; classLists: string[] },
   ): { error: string } | { classLists: string[] }
   private onRequest(
+    method: '@/tailwindCSS/fixAll',
+    params: { uri: string; mode?: 'local' | 'global' },
+  ): Promise<{ error?: string; fixed?: number; remaining?: number }>
+  private onRequest(
+    method: '@/tailwindCSS/getContentFiles',
+    params: { workspaceFolder: string },
+  ): Promise<{ error?: string; files?: string[] }>
+  private onRequest(
     method: '@/tailwindCSS/getProject',
     params: { uri: string },
   ): { version: string } | null
@@ -891,6 +899,32 @@ export class TW {
       } catch {
         return { error: 'unknown' }
       }
+    }
+
+    if (method === '@/tailwindCSS/fixAll') {
+      let project = this.getProject({ uri: params.uri })
+      if (!project) {
+        return { error: 'no-project' }
+      }
+      return project.fixAllProblems({ uri: params.uri, mode: params.mode })
+    }
+
+    if (method === '@/tailwindCSS/getContentFiles') {
+      let projects = Array.from(this.projects.values())
+      let workspaceFolderUri = params.workspaceFolder
+
+      let matchingProject = projects.find((project) => {
+        let projectFolder = project.projectConfig.folder
+        if (!projectFolder) return false
+        let projectFolderUri = URI.file(projectFolder).toString()
+        return workspaceFolderUri.startsWith(projectFolderUri)
+      })
+
+      if (!matchingProject) {
+        return { error: 'no-project' }
+      }
+
+      return matchingProject.getContentFiles()
     }
 
     if (method === '@/tailwindCSS/getProject') {
