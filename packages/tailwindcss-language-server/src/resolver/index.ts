@@ -7,7 +7,7 @@ import {
   FileSystem,
 } from 'enhanced-resolve'
 import { loadPnPApi, type PnpApi } from './pnp'
-import { loadTsConfig, type TSConfigApi } from './tsconfig'
+import { loadTsConfig, type TSConfigApi, type TSConfigLoadOptions } from './tsconfig'
 import { normalizeYarnPnPDriveLetter } from '../utils'
 
 export interface ResolverOptions {
@@ -33,6 +33,13 @@ export interface ResolverOptions {
    * provided, the resolver will use that API to resolve module paths.
    */
   tsconfig?: boolean | TSConfigApi
+
+  /**
+   * Glob patterns to exclude while discovering tsconfig files.
+   *
+   * This mirrors the semantics of `tailwindCSS.files.exclude`.
+   */
+  tsconfigExclude?: TSConfigLoadOptions['exclude']
 
   /**
    * A filesystem to use for resolution. If not provided, the resolver will
@@ -132,7 +139,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
     tsconfig = opts.tsconfig
   } else if (opts.tsconfig) {
     try {
-      tsconfig = await loadTsConfig(opts.root)
+      tsconfig = await loadTsConfig(opts.root, { exclude: opts.tsconfigExclude })
     } catch (err) {
       // We don't want to hard crash in case of an error handling tsconfigs
       // It does affect what projects we can resolve or how we load files
@@ -302,6 +309,7 @@ export async function createResolver(opts: ResolverOptions): Promise<Resolver> {
         // Inherit defaults from parent
         pnp: childOpts.pnp ?? pnpApi,
         tsconfig: childOpts.tsconfig ?? tsconfig,
+        tsconfigExclude: childOpts.tsconfigExclude ?? opts.tsconfigExclude,
         fileSystem: childOpts.fileSystem ?? fileSystem,
       })
     },
