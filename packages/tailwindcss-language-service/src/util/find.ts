@@ -353,7 +353,7 @@ export async function findClassListsInDocument(
     flatten([
       ...(await Promise.all(
         boundaries
-          .filter((b) => b.type === 'html' || b.type === 'jsx')
+          .filter((b) => b.type === 'html' || b.type === 'jsx' || b.type === 'js')
           .map(({ type, range }) =>
             findClassListsInHtmlRange(state, doc, type === 'html' ? 'html' : 'jsx', range),
           ),
