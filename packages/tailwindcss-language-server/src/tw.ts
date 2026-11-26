@@ -479,7 +479,7 @@ export class TW {
             let content = await readCssFile(change.file)
             if (!content) continue
 
-            let stylesheet = analyzeStylesheet(content)
+            let stylesheet = analyzeStylesheet(content, globalSettings.tailwindCSS)
             if (!stylesheet.root) continue
 
             if (!stylesheet.versions.includes('4')) continue

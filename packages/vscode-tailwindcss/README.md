@@ -255,6 +255,20 @@ For projects with multiple config files, use an object where each key is a confi
 }
 ```
 
+### `tailwindCSS.experimental.v4Root`
+
+**Default: `["@import\\s*['\"]tailwindcss(?:\\/[^'\"]+)?['\"]"]`**
+
+Regular expression patterns used to detect Tailwind CSS v4 stylesheet entrypoints during automatic project discovery. Each item must be a JavaScript regex source string. Setting this value replaces the built-in matcher.
+
+For example, to treat `@reference "tailwindcss"` as a v4 entrypoint:
+
+```json
+"tailwindCSS.experimental.v4Root": [
+  "@reference\\s*['\"]tailwindcss['\"]"
+]
+```
+
 ## Troubleshooting
 
 If you’re having issues getting the IntelliSense features to activate, there are a few things you can check:
