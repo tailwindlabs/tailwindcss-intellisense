@@ -13,6 +13,7 @@ export enum DiagnosticKind {
   RecommendedVariantOrder = 'recommendedVariantOrder',
   UsedBlocklistedClass = 'usedBlocklistedClass',
   SuggestCanonicalClasses = 'suggestCanonicalClasses',
+  InvalidClass = 'invalidClass',
 }
 
 export type CssConflictDiagnostic = Diagnostic & {
@@ -135,6 +136,17 @@ export function isSuggestCanonicalClasses(
   return diagnostic.code === DiagnosticKind.SuggestCanonicalClasses
 }
 
+export type InvalidClassDiagnostic = Diagnostic & {
+  code: DiagnosticKind.InvalidClass
+  className: DocumentClassName
+}
+
+export function isInvalidClassDiagnostic(
+  diagnostic: AugmentedDiagnostic,
+): diagnostic is InvalidClassDiagnostic {
+  return diagnostic.code === DiagnosticKind.InvalidClass
+}
+
 export type AugmentedDiagnostic =
   | CssConflictDiagnostic
   | InvalidApplyDiagnostic
@@ -147,3 +159,4 @@ export type AugmentedDiagnostic =
   | RecommendedVariantOrderDiagnostic
   | UsedBlocklistedClassDiagnostic
   | SuggestCanonicalClassesDiagnostic
+  | InvalidClassDiagnostic
