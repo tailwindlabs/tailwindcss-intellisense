@@ -38,7 +38,7 @@
     "line-column": "1.0.2",
     "moo": "0.5.1",
     "postcss": "8.5.10",
-    "postcss-selector-parser": "6.0.2",
+    "postcss-selector-parser": "7.1.6",
     "postcss-value-parser": "4.2.0",
     "semver": "7.7.1",
     "sift-string": "0.0.2",
