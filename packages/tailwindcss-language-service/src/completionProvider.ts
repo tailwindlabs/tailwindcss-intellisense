@@ -1063,7 +1063,7 @@ function provideCssHelperCompletions(
       match.groups.helper === 'theme' ||
       match.groups.helper === 'var')
   ) {
-    let items: CompletionItem[] = themeKeyCompletions(state)
+    let items: CompletionItem[] = themeKeyCompletions(state, match.groups.helper)
 
     editRange.start.character = match.indices.groups.helper[1] + 1
 
@@ -2563,15 +2563,20 @@ async function knownUtilityFunctionArguments(state: State, fn: UtilityFn): Promi
   return args
 }
 
-export function themeKeyCompletions(state: State): CompletionItem[] {
+export function themeKeyCompletions(state: State, helper?: string): CompletionItem[] {
   if (!state.v4) return null
   if (!state.designSystem) return null
 
   let knownThemeKeys = resolveKnownThemeKeys(state.designSystem)
 
+  // `var(…)` refers to the emitted CSS variables, which include the prefix
+  let prefix = state.designSystem.theme.prefix
+  let variablePrefix = helper === 'var' && prefix ? `--${prefix}-` : '--'
+
   return knownThemeKeys.map((themeKey, index) => {
     let value = state.designSystem.resolveThemeValue(themeKey, true)
     let documentation: string | undefined
+    let label = variablePrefix + themeKey.slice(2)
 
     let color = getColorFromValue(value)
     if (color !== null) {
@@ -2580,7 +2585,7 @@ export function themeKeyCompletions(state: State): CompletionItem[] {
       }
 
       return {
-        label: themeKey,
+        label,
         kind: CompletionItemKind.Color,
         sortText: naturalExpand(index, knownThemeKeys.length),
         detail: value,
@@ -2589,7 +2594,7 @@ export function themeKeyCompletions(state: State): CompletionItem[] {
     }
 
     return {
-      label: themeKey,
+      label,
       kind: CompletionItemKind.Variable,
       sortText: naturalExpand(index, knownThemeKeys.length),
       detail: value,

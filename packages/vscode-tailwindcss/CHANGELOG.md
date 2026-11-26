@@ -2,7 +2,7 @@
 
 ## Prerelease
 
-- Nothing yet!
+- Include the theme prefix in variable completions inside `var(…)` ([#1630](https://github.com/tailwindlabs/tailwindcss-intellisense/pull/1630))
 
 ## 0.16.0
 

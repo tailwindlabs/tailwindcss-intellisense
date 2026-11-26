@@ -958,6 +958,81 @@ defineTest({
 })
 
 defineTest({
+  name: 'v4: Theme key completions in var(…) include the prefix',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+
+      @theme {
+        --color-custom: #000;
+      }
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'css',
+      text: css`
+        .foo {
+          color: var();
+        }
+      `,
+    })
+
+    //   color: var();
+    //             ^
+    let completion = await document.completions({ line: 1, character: 13 })
+
+    expect(completion).toEqual({
+      isIncomplete: false,
+      items: expect.arrayContaining([
+        expect.objectContaining({ label: '--tw-font-sans' }),
+        expect.objectContaining({
+          label: '--tw-color-custom',
+          kind: CompletionItemKind.Color,
+          documentation: '#000000',
+        }),
+      ]),
+    })
+
+    let unprefixed = completion.items.filter((item) => !item.label.startsWith('--tw-'))
+    expect(unprefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
+  name: 'v4: Theme key completions in --theme(…) do not include the prefix',
+  fs: {
+    'app.css': css`
+      @import 'tailwindcss' prefix(tw);
+    `,
+  },
+  prepare: async ({ root }) => ({ client: await createClient({ root }) }),
+  handle: async ({ client }) => {
+    let document = await client.open({
+      lang: 'css',
+      text: css`
+        .foo {
+          color: --theme();
+        }
+      `,
+    })
+
+    //   color: --theme();
+    //                 ^
+    let completion = await document.completions({ line: 1, character: 17 })
+
+    expect(completion).toEqual({
+      isIncomplete: false,
+      items: expect.arrayContaining([expect.objectContaining({ label: '--font-sans' })]),
+    })
+
+    let prefixed = completion.items.filter((item) => item.label.startsWith('--tw-'))
+    expect(prefixed).toHaveLength(0)
+  },
+})
+
+defineTest({
   name: 'v4: class function completions mixed with class attribute completions work',
   fs: {
     'app.css': css`
