@@ -713,3 +713,70 @@ defineTest({
     expect(completionsF).toEqual({ isIncomplete: false, items: [] })
   },
 })
+
+// https://github.com/tailwindlabs/tailwindcss-intellisense/issues/1615
+defineTest({
+  name: 'at-rules mentioned in comments do not cause diagnostics',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        /**
+         * This comment mentions the @variant at-rule in prose.
+         */
+        @theme {
+          --color-brand: #000;
+        }
+        .a {
+          /* A label */
+          color: red;
+          background: blue;
+        }
+      `,
+    })
+
+    expect(await doc.diagnostics()).toEqual([])
+  },
+})
+
+defineTest({
+  name: 'diagnostics after multi-line at-rule preludes are reported on the right line',
+  prepare: async ({ root }) => ({
+    client: await createClient({
+      server: 'css',
+      root,
+    }),
+  }),
+  handle: async ({ client }) => {
+    let doc = await client.open({
+      lang: 'tailwindcss',
+      name: 'file-1.css',
+      text: css`
+        @utility foo
+        {
+          color: red;
+        }
+        @custom-variant bar
+          (&:hover);
+        .a {
+          color red;
+        }
+      `,
+    })
+
+    let diagnostics = await doc.diagnostics()
+
+    expect(diagnostics).toHaveLength(1)
+    expect(diagnostics[0].range).toEqual({
+      start: { line: 7, character: 8 },
+      end: { line: 7, character: 11 },
+    })
+  },
+})
