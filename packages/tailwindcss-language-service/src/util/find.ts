@@ -509,12 +509,12 @@ export function findHelperFunctionsInRange(
     let path = text.slice(pathStart, pathEnd)
 
     // Skip leading/trailing whitespace
-    pathStart += path.match(/^\s+/)?.length ?? 0
-    pathEnd -= path.match(/\s+$/)?.length ?? 0
+    pathStart += path.match(/^\s+/)?.[0].length ?? 0
+    pathEnd -= path.match(/\s+$/)?.[0].length ?? 0
 
     // Skip leading/trailing quotes
-    let quoteStart = path.match(/^['"]+/)?.length ?? 0
-    let quoteEnd = path.match(/['"]+$/)?.length ?? 0
+    let quoteStart = path.match(/^['"]+/)?.[0].length ?? 0
+    let quoteEnd = path.match(/['"]+$/)?.[0].length ?? 0
 
     if (quoteStart && quoteEnd) {
       pathStart += quoteStart
@@ -542,15 +542,15 @@ export function findHelperFunctionsInRange(
     // Skip leading/trailing whitespace
     //
     // This can happen if we've clipped the path down to before the `/`
-    pathStart += path.match(/^\s+/)?.length ?? 0
-    pathEnd -= path.match(/\s+$/)?.length ?? 0
+    pathStart += path.match(/^\s+/)?.[0].length ?? 0
+    pathEnd -= path.match(/\s+$/)?.[0].length ?? 0
 
     // Re-slice
     path = text.slice(pathStart, pathEnd)
 
     // Skip leading/trailing quotes
-    quoteStart = path.match(/^['"]+/)?.length ?? 0
-    quoteEnd = path.match(/['"]+$/)?.length ?? 0
+    quoteStart = path.match(/^['"]+/)?.[0].length ?? 0
+    quoteEnd = path.match(/['"]+$/)?.[0].length ?? 0
 
     pathStart += quoteStart
     pathEnd -= quoteEnd
