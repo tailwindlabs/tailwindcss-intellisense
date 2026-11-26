@@ -1203,6 +1203,33 @@ test('classFunctions are detected inside of arrays in javascript just after open
   ])
 })
 
+test('classFunctions are detected after a spread operator', async ({ expect }) => {
+  let file = createDocument({
+    name: 'file.js',
+    lang: 'javascript',
+    settings: {
+      tailwindCSS: {
+        classFunctions: ['cn'],
+      },
+    },
+    content: js`
+      const list = [...cn('relative')]
+    `,
+  })
+
+  let classLists = await findClassListsInHtmlRange(file.state, file.doc, 'js')
+
+  expect(classLists).toEqual([
+    {
+      classList: 'relative',
+      range: {
+        start: { line: 0, character: 21 },
+        end: { line: 0, character: 29 },
+      },
+    },
+  ])
+})
+
 test("--theme's inline helper is not considered part of the path", async ({ expect }) => {
   let file = createDocument({
     name: 'file.css',
