@@ -1,6 +1,6 @@
-import { test, expect } from 'vitest'
+import { test, expect, describe } from 'vitest'
 import namedColors from 'color-name'
-import { findColors } from './color'
+import { findColors, resolveLightDark } from './color'
 
 let table: string[] = []
 
@@ -79,4 +79,54 @@ test('invalid named', () => {
 test('invalid hex', () => {
   expect(findColors(`#7f7f7fz`)).toEqual([])
   expect(findColorsRegex(`#7f7f7fz`)).toEqual([])
+})
+
+describe('resolveLightDark', () => {
+  test('extracts light color by default', () => {
+    const input = 'light-dark(oklch(0.5 0.1 50), oklch(0.8 0.2 60))'
+    expect(resolveLightDark(input)).toBe('oklch(0.5 0.1 50)')
+  })
+
+  test('extracts light color when colorScheme is light', () => {
+    const input = 'light-dark(oklch(0.5 0.1 50), oklch(0.8 0.2 60))'
+    expect(resolveLightDark(input, 'light')).toBe('oklch(0.5 0.1 50)')
+  })
+
+  test('extracts dark color when colorScheme is dark', () => {
+    const input = 'light-dark(oklch(0.5 0.1 50), oklch(0.8 0.2 60))'
+    expect(resolveLightDark(input, 'dark')).toBe('oklch(0.8 0.2 60)')
+  })
+
+  test('handles hex colors', () => {
+    const input = 'light-dark(#ffffff, #000000)'
+    expect(resolveLightDark(input, 'light')).toBe('#ffffff')
+    expect(resolveLightDark(input, 'dark')).toBe('#000000')
+  })
+
+  test('handles rgb colors', () => {
+    const input = 'light-dark(rgb(255 255 255), rgb(0 0 0))'
+    expect(resolveLightDark(input, 'light')).toBe('rgb(255 255 255)')
+    expect(resolveLightDark(input, 'dark')).toBe('rgb(0 0 0)')
+  })
+
+  test('handles multiple light-dark functions in string', () => {
+    const input =
+      'color: light-dark(#fff, #000); background: light-dark(#eee, #111);'
+    expect(resolveLightDark(input, 'light')).toBe(
+      'color: #fff; background: #eee;',
+    )
+    expect(resolveLightDark(input, 'dark')).toBe('color: #000; background: #111;')
+  })
+
+  test('trims whitespace from colors', () => {
+    const input = 'light-dark(  #ffffff  ,   #000000   )'
+    expect(resolveLightDark(input, 'light')).toBe('#ffffff')
+    expect(resolveLightDark(input, 'dark')).toBe('#000000')
+  })
+
+  test('returns input unchanged when no light-dark function', () => {
+    const input = '#ffffff'
+    expect(resolveLightDark(input, 'light')).toBe('#ffffff')
+    expect(resolveLightDark(input, 'dark')).toBe('#ffffff')
+  })
 })

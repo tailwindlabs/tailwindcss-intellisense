@@ -222,6 +222,12 @@
           "markdownDescription": "Controls whether the editor should render inline color decorators for Tailwind CSS classes and helper functions.",
           "scope": "language-overridable"
         },
+        "tailwindCSS.colorSchemePreview": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "default": "light",
+          "markdownDescription": "Which color value to preview for `light-dark()` CSS functions."
+        },
         "tailwindCSS.validate": {
           "type": "boolean",
           "default": true,
