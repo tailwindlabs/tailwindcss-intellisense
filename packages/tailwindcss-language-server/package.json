@@ -84,7 +84,7 @@
     "postcss": "8.5.10",
     "postcss-import": "^16.1.0",
     "postcss-load-config": "3.0.1",
-    "postcss-selector-parser": "6.0.2",
+    "postcss-selector-parser": "7.1.6",
     "resolve": "1.20.0",
     "rimraf": "3.0.2",
     "stack-trace": "0.0.10",

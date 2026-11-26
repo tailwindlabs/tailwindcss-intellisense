@@ -189,8 +189,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       postcss-selector-parser:
-        specifier: 6.0.2
-        version: 6.0.2
+        specifier: 7.1.6
+        version: 7.1.6
       resolve:
         specifier: 1.20.0
         version: 1.20.0
@@ -303,8 +303,8 @@ importers:
         specifier: 8.5.10
         version: 8.5.10
       postcss-selector-parser:
-        specifier: 6.0.2
-        version: 6.0.2
+        specifier: 7.1.6
+        version: 7.1.6
       postcss-value-parser:
         specifier: 4.2.0
         version: 4.2.0
@@ -1851,9 +1851,6 @@ packages:
     resolution: {integrity: sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==}
     engines: {node: '>=12'}
 
-  indexes-of@1.0.1:
-    resolution: {integrity: sha512-bup+4tap3Hympa+JBJUG7XuOsdNQ6fxt0MHyXMKuLBKn0OqsTfvUxkUrroEX1+B2VsSHvCjiIcZVxRtYa4nllA==}
-
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
     deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
@@ -2338,12 +2335,12 @@ packages:
     resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
     engines: {node: '>=4'}
 
-  postcss-selector-parser@6.0.2:
-    resolution: {integrity: sha512-36P2QR59jDTOAiIkqEprfJDsoNrvwFei3eCqKd1Y0tUsBimsq39BLp7RD+JWny3WgB1zGhJX8XVePwm9k4wdBg==}
+  postcss-selector-parser@6.1.4:
+    resolution: {integrity: sha512-bIoJLOmjCO1S9XdY/DcnR5hJxvrDir1PbGChrzXG3vw0/FOliy/fA3dmdhQ441kah4gKv+TwckGzex6wNS5cnQ==}
     engines: {node: '>=4'}
 
-  postcss-selector-parser@6.1.2:
-    resolution: {integrity: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==}
+  postcss-selector-parser@7.1.6:
+    resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
     engines: {node: '>=4'}
 
   postcss-value-parser@4.2.0:
@@ -2754,9 +2751,6 @@ packages:
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-
-  uniq@1.0.1:
-    resolution: {integrity: sha512-Gw+zz50YNKPDKXs+9d+aKAjVwpjNwqzvNpLigIruT4HA9lMZNdMqs9x07kKHB/L9WRzqp4+DlTU5s4wG2esdoA==}
 
   update-browserslist-db@1.1.0:
     resolution: {integrity: sha512-EdRAaAyk2cUE1wOf2DkEhzxqOQvFOoRJFNS6NeyJ01Gp2beMRpBAINjM2iDXE3KCuKhwnvHIQCJm6ThL2Z+HzQ==}
@@ -4182,8 +4176,6 @@ snapshots:
 
   indent-string@5.0.0: {}
 
-  indexes-of@1.0.1: {}
-
   inflight@1.0.6:
     dependencies:
       once: 1.4.0
@@ -4617,20 +4609,19 @@ snapshots:
   postcss-nested@6.2.0(postcss@8.5.10):
     dependencies:
       postcss: 8.5.10
-      postcss-selector-parser: 6.1.2
+      postcss-selector-parser: 6.1.4
 
   postcss-selector-parser@6.0.10:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
 
-  postcss-selector-parser@6.0.2:
+  postcss-selector-parser@6.1.4:
     dependencies:
       cssesc: 3.0.0
-      indexes-of: 1.0.1
-      uniq: 1.0.1
+      util-deprecate: 1.0.2
 
-  postcss-selector-parser@6.1.2:
+  postcss-selector-parser@7.1.6:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
@@ -4994,7 +4985,7 @@ snapshots:
       postcss-js: 4.0.1(postcss@8.5.10)
       postcss-load-config: 4.0.2(postcss@8.5.10)
       postcss-nested: 6.2.0(postcss@8.5.10)
-      postcss-selector-parser: 6.1.2
+      postcss-selector-parser: 6.1.4
       resolve: 1.22.8
       sucrase: 3.35.0
     transitivePeerDependencies:
@@ -5101,8 +5092,6 @@ snapshots:
   underscore@1.13.7: {}
 
   undici-types@5.26.5: {}
-
-  uniq@1.0.1: {}
 
   update-browserslist-db@1.1.0(browserslist@4.23.3):
     dependencies:
