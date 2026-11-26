@@ -15,7 +15,12 @@ import removeMeta from './util/removeMeta'
 import { formatColor, getColor, getColorFromValue } from './util/color'
 import { isHtmlContext, isHtmlDoc } from './util/html'
 import { isCssContext } from './util/css'
-import { findLast, matchClassAttributes, matchClassFunctions } from './util/find'
+import {
+  findClassNamesInRange,
+  findLast,
+  matchClassAttributes,
+  matchClassFunctions,
+} from './util/find'
 import { stringifyConfigValue, stringifyCss } from './util/stringify'
 import { stringifyScreen, Screen } from './util/screens'
 import isObject from './util/isObject'
@@ -296,36 +301,44 @@ export function completionsFromClassList(
       }
     }
 
+    // Add custom CSS classes to completions
+    let allItems = items.concat(
+      state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
+        if (state.blocklist?.includes([...existingVariants, className].join(state.separator))) {
+          return items
+        }
+
+        let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
+        let documentation: string | undefined
+
+        if (color && typeof color !== 'string') {
+          documentation = formatColor(color)
+        }
+
+        if (prefix.length > 0 && existingVariants.length === 0) {
+          className = `${prefix}:${className}`
+        }
+
+        items.push({
+          label: className,
+          kind,
+          ...(documentation ? { documentation } : {}),
+          sortText: naturalExpand(index, state.classList.length),
+        })
+
+        return items
+      }, [] as CompletionItem[]),
+    )
+
+    // Add custom CSS classes if they exist
+    if (state.customCssClasses && state.customCssClasses.length > 0) {
+      allItems = allItems.concat(state.customCssClasses)
+    }
+
     return withDefaults(
       {
         isIncomplete: false,
-        items: items.concat(
-          state.classList.reduce<CompletionItem[]>((items, [className, { color }], index) => {
-            if (state.blocklist?.includes([...existingVariants, className].join(state.separator))) {
-              return items
-            }
-
-            let kind = color ? CompletionItemKind.Color : CompletionItemKind.Constant
-            let documentation: string | undefined
-
-            if (color && typeof color !== 'string') {
-              documentation = formatColor(color)
-            }
-
-            if (prefix.length > 0 && existingVariants.length === 0) {
-              className = `${prefix}:${className}`
-            }
-
-            items.push({
-              label: className,
-              kind,
-              ...(documentation ? { documentation } : {}),
-              sortText: naturalExpand(index, state.classList.length),
-            })
-
-            return items
-          }, [] as CompletionItem[]),
-        ),
+        items: allItems,
       },
       {
         data: {
@@ -2245,6 +2258,13 @@ export async function doComplete(
 ): Promise<CompletionList | null> {
   if (state === null) return { items: [], isIncomplete: false }
 
+  const customClassNames = await provideCustomClassNameCompletions(
+    state,
+    document,
+    position,
+    context,
+  )
+
   const result =
     (await provideClassNameCompletions(state, document, position, context)) ||
     (await provideThemeDirectiveCompletions(state, document, position)) ||
@@ -2275,6 +2295,22 @@ export async function resolveCompletionItem(
       item.data?._type,
     )
   ) {
+    return item
+  }
+
+  // Handle custom CSS classes
+  if (item.data?._type === 'custom-css-class') {
+    const declarations = item.data.declarations as Record<string, string>
+    if (declarations) {
+      const cssRules = Object.entries(declarations)
+        .map(([prop, value]) => `  ${prop}: ${value};`)
+        .join('\n')
+
+      item.documentation = {
+        kind: 'markdown' as typeof MarkupKind.Markdown,
+        value: `\`\`\`css\n.${item.label} {\n${cssRules}\n}\n\`\`\``,
+      }
+    }
     return item
   }
 
